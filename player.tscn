@@ -11,7 +11,6 @@
 [ext_resource type="AnimationLibrary" uid="uid://644rf8bwa6wn" path="res://addons/3d_player_controller/assets/mixamo/animations/running_rm.fbx" id="7_ha6ty"]
 [ext_resource type="AnimationLibrary" uid="uid://ca8fbtpb8rq4t" path="res://addons/3d_player_controller/assets/mixamo/animations/walking_rm.fbx" id="7_hb8is"]
 [ext_resource type="AnimationLibrary" uid="uid://cyu2uimyjjrrp" path="res://addons/3d_player_controller/assets/mixamo/animations/waving.fbx" id="10_fjdng"]
-[ext_resource type="Script" uid="uid://c7sgvm3s5tfny" path="res://addons/3d_player_controller/camera.gd" id="11_ha6ty"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_lbjl4"]
 height = 1.8
@@ -253,12 +252,8 @@ transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 1
 transform = Transform3D(-1, 2.990035e-08, -8.2150535e-08, 0, 0.9396926, 0.34202012, 8.742278e-08, 0.34202012, -0.9396926, 0, 0, 0)
 spring_length = 2.4
 
-[node name="Camera3D" type="Camera3D" parent="CameraBase/CameraRot/SpringArm3D" unique_id=951512925 node_paths=PackedStringArray("cameraContainerNode", "cameraPivotNode", "bodyNode")]
+[node name="Camera3D" type="Camera3D" parent="CameraBase/CameraRot/SpringArm3D" unique_id=951512925]
 far = 300.0
-script = ExtResource("11_ha6ty")
-cameraContainerNode = NodePath("../..")
-cameraPivotNode = NodePath("../../..")
-bodyNode = NodePath("../../../..")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=76698604]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)

@@ -41,7 +41,7 @@ _subresources={
 "animations": {
 "mixamo_com": {
 "save_to_file/enabled": true,
-"save_to_file/fallback_path": "res://addons/3d_player_controller/assets/mixamo/animations/walking.tres",
+"save_to_file/fallback_path": "res://addons/3d_player_controller/assets/mixamo/animations/walking_rm.tres",
 "save_to_file/keep_custom_tracks": true,
 "save_to_file/path": "uid://c4a2oveqql8i5",
 "settings/loop_mode": 0,
