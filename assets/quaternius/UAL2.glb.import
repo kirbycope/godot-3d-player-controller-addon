@@ -51441,9 +51441,9 @@ _subresources={
 },
 "Walk_Fwd_R": {
 "save_to_file/enabled": true,
-"save_to_file/fallback_path": "res://addons/3d_player_controller/assets/quaterniusWalk_Fwd_R.tres",
+"save_to_file/fallback_path": "res://addons/3d_player_controller/assets/quaternius/Walk_Fwd_R.tres",
 "save_to_file/keep_custom_tracks": true,
-"save_to_file/path": "uid://biwjlwhvusi0j",
+"save_to_file/path": "uid://bpe12o2otyck8",
 "settings/loop_mode": 1,
 "slice_1/end_frame": 0,
 "slice_1/loop_mode": 0,
