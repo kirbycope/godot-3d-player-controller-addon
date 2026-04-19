@@ -7,7 +7,7 @@ extends CharacterBody3D
 @export var speed: float = 5.0
 @export var transition_speed: float = 0.1
 
-@onready var player_model: Node3D = $PlayerModel
+@onready var player_model: Node3D = $Pivot/RootMotion/PlayerModel
 
 var input_dir: Vector2 ## The current [Input] vector
 

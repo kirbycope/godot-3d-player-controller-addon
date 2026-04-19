@@ -41,10 +41,10 @@ _subresources={
 "animations": {
 "mixamo_com": {
 "save_to_file/enabled": false,
-"save_to_file/fallback_path": "",
-"save_to_file/keep_custom_tracks": "",
+"save_to_file/fallback_path": "res://addons/3d_player_controller/assets/mixamo/animations/locomotion_pack/jump.tres",
+"save_to_file/keep_custom_tracks": false,
 "save_to_file/path": "",
-"settings/loop_mode": 1,
+"settings/loop_mode": 0,
 "slice_1/end_frame": 0,
 "slice_1/loop_mode": 0,
 "slice_1/name": "",
