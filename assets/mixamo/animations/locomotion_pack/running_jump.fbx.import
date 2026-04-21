@@ -3,13 +3,13 @@
 importer="animation_library"
 importer_version=1
 type="AnimationLibrary"
-uid="uid://bob28n7p5wh2e"
-path="res://.godot/imported/jump start.fbx-b5a9c4c3f9f6b1274d64e6ce1eab8927.res"
+uid="uid://chloki3j3qf5s"
+path="res://.godot/imported/running_jump.fbx-a060d23ea9ca5cfca5f0637f644e61f1.res"
 
 [deps]
 
-source_file="res://addons/3d_player_controller/assets/mixamo/animations/locomotion_pack/jump start.fbx"
-dest_files=["res://.godot/imported/jump start.fbx-b5a9c4c3f9f6b1274d64e6ce1eab8927.res"]
+source_file="res://addons/3d_player_controller/assets/mixamo/animations/locomotion_pack/running_jump.fbx"
+dest_files=["res://.godot/imported/running_jump.fbx-a060d23ea9ca5cfca5f0637f644e61f1.res"]
 
 [params]
 
@@ -41,9 +41,9 @@ _subresources={
 "animations": {
 "mixamo_com": {
 "save_to_file/enabled": true,
-"save_to_file/fallback_path": "res://addons/3d_player_controller/assets/mixamo/animations/locomotion_pack/jump start.tres",
+"save_to_file/fallback_path": "res://addons/3d_player_controller/assets/mixamo/animations/locomotion_pack/running jump.tres",
 "save_to_file/keep_custom_tracks": true,
-"save_to_file/path": "uid://5wso1a4slyo0",
+"save_to_file/path": "uid://ckeb6u16fec46",
 "settings/loop_mode": 0,
 "slice_1/end_frame": 0,
 "slice_1/loop_mode": 0,
