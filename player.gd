@@ -8,9 +8,7 @@ extends CharacterBody3D
 @export var locomotion_blend_path: String = "parameters/LocomotionStateMachine/Locomotion/blend_position"
 @export var locomotion_state_playback_path: String = "parameters/LocomotionStateMachine/playback"
 @export var locomotion_state_name: String = "Locomotion"
-@export var falling_state_name: String = "Falling"
 @export var jumping_state_name: String = "Jumping"
-@export var landing_state_name: String = "Landing"
 @export var running_jump_state_name: String = "RunningJump"
 @export var transition_speed: float = 0.10
 
@@ -20,7 +18,6 @@ extends CharacterBody3D
 var current_input_vector: Vector2 ## The current [Input] vector
 var current_velocity: Vector2 ## The current velocity of the player (no verticality)
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
-var falling: bool ## Is the player "falling"?
 var jump_queued: bool ## Is the "jump" state queued (button _just_ pressed)
 var playback: AnimationNodeStateMachinePlayback:
 	get:
@@ -66,48 +63,13 @@ func _physics_process(delta: float) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
 
-	# Add the gravity.
-	#if not is_on_floor():
-	#	velocity += get_gravity() * delta
-
-	# Handle jump.
-	#if Input.is_action_just_pressed("ui_accept") and is_on_floor():
-	#	velocity.y = jump_velocity
-
-	# Check if the player is _not_ on the floor
-	
 	if not is_on_floor():
-		# Apply gravity
 		velocity.y -= gravity * delta
-		# Set the "jump queued" flag to false
 		jump_queued = false
-		# Check if not already "falling"
-		if not falling:
-			# Set the "falling" flag to true
-			falling = true
-			# Travel to the falling state
-			playback.travel(falling_state_name)
-	# The player must be on the floor
-	else:
-		# Check if the player was previously "falling"
-		if falling:
-			# Set the "falling" flag to false
-			falling = false
-			if abs(velocity.length()) < 0.05:
-				# Travel to the landing state
-				playback.travel(landing_state_name)
-			else:
-				# Travel to the locomotion state
-				playback.travel(locomotion_state_name)
-
-	# Putting it after the falling handler makes sure that the transition doesn't
-	# automatically force it into a falling animation instead of letting the jump animation
-	# naturally finish.
 	
 	if jump_queued:
-		velocity.y = jump_velocity
+		velocity.y += jump_velocity
 		jump_queued = false
-		falling = true
 
 	# Get the input direction and handle the movement/deceleration.
 	# As good practice, you should replace UI actions with custom gameplay actions.

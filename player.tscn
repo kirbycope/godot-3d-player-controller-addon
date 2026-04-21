@@ -122,7 +122,8 @@ advance_mode = 2
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_u6ny4"]
 xfade_time = 0.3
-advance_condition = &"on_ground_still"
+advance_mode = 2
+advance_expression = "is_on_floor() and velocity.length() < 0.05"
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_gblby"]
 xfade_time = 0.3
@@ -131,7 +132,8 @@ advance_mode = 2
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_50bk4"]
 xfade_time = 0.3
-advance_condition = &"is_falling"
+advance_mode = 2
+advance_expression = "not is_on_floor()"
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_q6nkd"]
 xfade_time = 0.3
@@ -143,7 +145,8 @@ advance_mode = 2
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_fminn"]
 xfade_time = 0.3
-advance_condition = &"on_ground_moving"
+advance_mode = 2
+advance_expression = "is_on_floor() and velocity.length() >= 0.05"
 
 [sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_b226b"]
 states/End/position = Vector2(410.07404, -6.886154)
@@ -359,10 +362,8 @@ stream = SubResource("AudioStreamRandomizer_1c1ip")
 [node name="AnimationTree" type="AnimationTree" parent="." unique_id=2142957693]
 root_node = NodePath("../Pivot/RootMotion/PlayerModel")
 tree_root = SubResource("AnimationNodeBlendTree_5cw3m")
+advance_expression_base_node = NodePath("..")
 anim_player = NodePath("../Pivot/RootMotion/PlayerModel/AnimationPlayer")
-parameters/LocomotionStateMachine/conditions/is_falling = false
-parameters/LocomotionStateMachine/conditions/on_ground_moving = false
-parameters/LocomotionStateMachine/conditions/on_ground_still = false
 parameters/LocomotionStateMachine/Locomotion/blend_position = Vector2(0, 0)
 parameters/LocomotionTimeScale/scale = 1.0
 parameters/UpperBodyBlend/blend_amount = 1.0
