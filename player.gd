@@ -5,29 +5,40 @@ extends CharacterBody3D
 # https://www.youtube.com/watch?v=fBcKIxgJv-c&t=247s
 @export var animation_tree: AnimationTree
 @export var camera: Camera3D
-@export var locomotion_forward_blend_path: String = "parameters/LocomotionStateMachine/Locomotion/ForwardBlend/blend_position"
-@export var locomotion_strafe_blend_path: String = "parameters/LocomotionStateMachine/Locomotion/StrafeBlend/blend_position"
-@export var locomotion_mode_path: String = "parameters/LocomotionStateMachine/Locomotion/LocomotionSwitch/blend_amount"
+@export var locomotion_forward_blend_path: String = "parameters/LocomotionStateMachine/Locomotion/StanceStateMachine/Standing/ForwardBlend/blend_position"
+@export var locomotion_strafe_blend_path: String = "parameters/LocomotionStateMachine/Locomotion/StanceStateMachine/Standing/StrafeBlend/blend_position"
+@export var locomotion_crouch_blend_path: String = "parameters/LocomotionStateMachine/Locomotion/StanceStateMachine/Crouching/blend_position"
+@export var locomotion_mode_path: String = "parameters/LocomotionStateMachine/Locomotion/StanceStateMachine/Standing/LocomotionSwitch/blend_amount"
+@export var locomotion_stance_playback_path: String = "parameters/LocomotionStateMachine/Locomotion/StanceStateMachine/playback"
 @export var locomotion_state_playback_path: String = "parameters/LocomotionStateMachine/playback"
 @export var locomotion_state_name: String = "Locomotion"
 @export var jumping_state_name: String = "Jumping"
 @export var running_jump_state_name: String = "RunningJump"
 @export var running_slide_state_name: String = "RunningSlide"
+@export var standing_state_name: String = "Standing"
+@export var standing_to_crouched_state_name: String = "StandingToCrouched"
+@export var crouching_state_name: String = "Crouching"
+@export var crouched_to_standing_state_name: String = "CrouchedToStanding"
 @export var transition_speed: float = 0.10
 @export var turn_speed: float = 120.0
 
 @export var jump_velocity: float = 4.5
 @export var speed: float = 5.0
+@export var crouch_speed: float = 2.5
 
 @onready var physical_bone_simulator: PhysicalBoneSimulator3D = $Pivot/RootMotion/PlayerModel/GeneralSkeleton/PhysicalBoneSimulator3D
 
 var current_input_vector: Vector2 ## The current [Input] vector
 var current_velocity: Vector2 ## The current velocity of the player (no verticality)
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
+var is_crouching: bool
 var jump_queued: bool ## Is the "jump" state queued (button _just_ pressed)
 var playback: AnimationNodeStateMachinePlayback:
 	get:
 		return animation_tree.get(locomotion_state_playback_path) as AnimationNodeStateMachinePlayback
+var stance_playback: AnimationNodeStateMachinePlayback:
+	get:
+		return animation_tree.get(locomotion_stance_playback_path) as AnimationNodeStateMachinePlayback
 
 
 func _ready() -> void:
@@ -58,12 +69,21 @@ func _process(delta: float) -> void:
 	# animation_tree.set(locomotion_blend_path, current_velocity)
 
 	# Sync player input and state machine's blend values
-	var is_crouching = Input.is_action_just_pressed("crouch")
-	var is_sprinting = Input.is_action_pressed("sprint")
+	var crouch_pressed := Input.is_action_just_pressed("crouch")
+	var wants_crouch := Input.is_action_pressed("crouch")
+	var is_sprinting := Input.is_action_pressed("sprint") and not is_crouching
 	var is_strafing := Input.is_action_pressed("turn_camera")
-	if is_crouching and is_sprinting:
+	if crouch_pressed and Input.is_action_pressed("sprint"):
 		begin_running_slide()
-	if is_strafing:
+	if wants_crouch and not is_crouching:
+		begin_crouch()
+	elif not wants_crouch and is_crouching:
+		end_crouch()
+
+	if is_crouching:
+		animation_tree.set(locomotion_crouch_blend_path, current_input_vector)
+		speed = crouch_speed
+	elif is_strafing:
 		animation_tree.set(locomotion_mode_path, 1.0)
 		if is_sprinting:
 			animation_tree.set(locomotion_strafe_blend_path, current_input_vector * 1.5)
@@ -104,7 +124,7 @@ func _physics_process(delta: float) -> void:
 	var raw_input := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
 	var is_strafing := Input.is_action_pressed("turn_camera")
 
-	if is_strafing:
+	if is_strafing or is_crouching:
 		# Strafe mode: full 2D blend, camera controls facing direction
 		var direction := (transform.basis * Vector3(raw_input.x, 0, raw_input.y)).normalized()
 		if direction:
@@ -145,6 +165,16 @@ func begin_running_jump():
 
 func begin_running_slide():
 	playback.travel(running_slide_state_name)
+
+
+func begin_crouch() -> void:
+	is_crouching = true
+	stance_playback.travel(standing_to_crouched_state_name)
+
+
+func end_crouch() -> void:
+	is_crouching = false
+	stance_playback.travel(crouched_to_standing_state_name)
 
 func execute_jump_velocity():
 	jump_queued = true

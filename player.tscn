@@ -10,9 +10,14 @@
 [ext_resource type="AnimationLibrary" uid="uid://b42lpfljtpbkp" path="res://addons/3d_player_controller/assets/mixamo/animations/locomotion_pack/falling idle.fbx" id="4_yqsj4"]
 [ext_resource type="AnimationLibrary" uid="uid://moha51xk18m2" path="res://addons/3d_player_controller/assets/mixamo/animations/locomotion_pack/falling to landing.fbx" id="5_hxj2c"]
 [ext_resource type="AnimationLibrary" uid="uid://bds43crfeg8eu" path="res://addons/3d_player_controller/assets/mixamo/animations/locomotion_pack/idle.fbx" id="5_oyon5"]
+[ext_resource type="AnimationLibrary" uid="uid://mmubopd7770m" path="res://addons/3d_player_controller/assets/mixamo/animations/locomotion_pack/crouched sneaking left.fbx" id="6_2dxso"]
+[ext_resource type="AnimationLibrary" uid="uid://cjerj2vtr0s25" path="res://addons/3d_player_controller/assets/mixamo/animations/locomotion_pack/crouched walking.fbx" id="6_kaeqx"]
 [ext_resource type="AnimationLibrary" uid="uid://vvy2p5o6jmj0" path="res://addons/3d_player_controller/assets/mixamo/animations/locomotion_pack/jump.fbx" id="6_llea5"]
+[ext_resource type="AnimationLibrary" uid="uid://dvtl0lgi7ldid" path="res://addons/3d_player_controller/assets/mixamo/animations/locomotion_pack/crouching idle.fbx" id="7_njchi"]
 [ext_resource type="AnimationLibrary" uid="uid://dhblc2su80gcd" path="res://addons/3d_player_controller/assets/mixamo/animations/locomotion_pack/left strafe.fbx" id="7_ro8tf"]
+[ext_resource type="AnimationLibrary" uid="uid://cavaf8ou8x2ke" path="res://addons/3d_player_controller/assets/mixamo/animations/locomotion_pack/crouched sneaking right.fbx" id="7_vxfhe"]
 [ext_resource type="AnimationLibrary" uid="uid://gtyq1kbvygi1" path="res://addons/3d_player_controller/assets/mixamo/animations/locomotion_pack/left strafe walking.fbx" id="8_07327"]
+[ext_resource type="AnimationLibrary" uid="uid://cu0u2728awrej" path="res://addons/3d_player_controller/assets/mixamo/animations/locomotion_pack/crouched to standing.fbx" id="8_v0rb4"]
 [ext_resource type="AnimationLibrary" uid="uid://fkmhh7tbyc5e" path="res://addons/3d_player_controller/assets/mixamo/animations/locomotion_pack/jump backward.fbx" id="8_y12aw"]
 [ext_resource type="AnimationLibrary" uid="uid://bob28n7p5wh2e" path="res://addons/3d_player_controller/assets/mixamo/animations/locomotion_pack/jump start.fbx" id="9_sjxju"]
 [ext_resource type="AnimationLibrary" uid="uid://cusgy506u42sr" path="res://addons/3d_player_controller/assets/mixamo/animations/locomotion_pack/left turn.fbx" id="9_t7djy"]
@@ -36,6 +41,7 @@
 [ext_resource type="AnimationLibrary" uid="uid://771u0ymwwpx5" path="res://addons/3d_player_controller/assets/mixamo/animations/locomotion_pack/running right turn.fbx" id="27_md63x"]
 [ext_resource type="AnimationLibrary" uid="uid://fhrxrqcqrcgu" path="res://addons/3d_player_controller/assets/mixamo/animations/locomotion_pack/sprinting forward roll.fbx" id="27_qu57g"]
 [ext_resource type="AnimationLibrary" uid="uid://yp1exdfcd7j5" path="res://addons/3d_player_controller/assets/mixamo/animations/locomotion_pack/sprint.fbx" id="27_u7c7f"]
+[ext_resource type="AnimationLibrary" uid="uid://dckk3xdcrcm1t" path="res://addons/3d_player_controller/assets/mixamo/animations/locomotion_pack/standing to crouched.fbx" id="37_cxirm"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_fminn"]
 resource_name = "Alpha_Body_MAT"
@@ -133,6 +139,37 @@ max_space = Vector2(1, 1.1)
 
 [sub_resource type="AnimationNodeBlend2" id="AnimationNodeBlend2_loco_switch"]
 
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_mv4yd"]
+animation = &"crouched to standing/mixamo_com"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_2dxso"]
+animation = &"crouching idle/mixamo_com"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_vxfhe"]
+animation = &"crouched walking/mixamo_com"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_v0rb4"]
+animation = &"crouched walking/mixamo_com"
+play_mode = 1
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_cxirm"]
+animation = &"crouched sneaking left/mixamo_com"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_wwmmk"]
+animation = &"crouched sneaking right/mixamo_com"
+
+[sub_resource type="AnimationNodeBlendSpace2D" id="AnimationNodeBlendSpace2D_xf1pq"]
+blend_point_0/node = SubResource("AnimationNodeAnimation_2dxso")
+blend_point_0/pos = Vector2(0, 0)
+blend_point_1/node = SubResource("AnimationNodeAnimation_vxfhe")
+blend_point_1/pos = Vector2(0, 1)
+blend_point_2/node = SubResource("AnimationNodeAnimation_v0rb4")
+blend_point_2/pos = Vector2(0, -1)
+blend_point_3/node = SubResource("AnimationNodeAnimation_cxirm")
+blend_point_3/pos = Vector2(-1, 0)
+blend_point_4/node = SubResource("AnimationNodeAnimation_wwmmk")
+blend_point_4/pos = Vector2(1, 0)
+
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_wyssh"]
 animation = &"idle/mixamo_com"
 
@@ -192,8 +229,47 @@ blend_point_10/node = SubResource("AnimationNodeAnimation_u7c7f")
 blend_point_10/pos = Vector2(0, 1.1)
 max_space = Vector2(1, 1.1)
 
+[sub_resource type="AnimationNodeBlendTree" id="AnimationNodeBlendTree_standing"]
+graph_offset = Vector2(-624, -251.33333)
+nodes/output/position = Vector2(313.33334, 0)
+nodes/ForwardBlend/node = SubResource("AnimationNodeBlendSpace2D_fwd")
+nodes/ForwardBlend/position = Vector2(-293.33334, -80)
+nodes/StrafeBlend/node = SubResource("AnimationNodeBlendSpace2D_oyon5")
+nodes/StrafeBlend/position = Vector2(-293.33334, 160)
+nodes/LocomotionSwitch/node = SubResource("AnimationNodeBlend2_loco_switch")
+nodes/LocomotionSwitch/position = Vector2(20, 0)
+node_connections = [&"output", 0, &"LocomotionSwitch", &"LocomotionSwitch", 0, &"ForwardBlend", &"LocomotionSwitch", 1, &"StrafeBlend"]
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_2axys"]
+animation = &"standing to crouched/mixamo_com"
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_9v1m8"]
+advance_mode = 2
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_5y4ng"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_3qlwy"]
+switch_mode = 2
+advance_mode = 2
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_jfrfv"]
+
+[sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_stance"]
+states/CrouchedToStanding/node = SubResource("AnimationNodeAnimation_mv4yd")
+states/CrouchedToStanding/position = Vector2(618.6667, 274.66666)
+states/Crouching/node = SubResource("AnimationNodeBlendSpace2D_xf1pq")
+states/Crouching/position = Vector2(853.3333, 66.66667)
+states/End/position = Vector2(1000, 194.88889)
+states/Standing/node = SubResource("AnimationNodeBlendTree_standing")
+states/Standing/position = Vector2(384, 66.66667)
+states/StandingToCrouched/node = SubResource("AnimationNodeAnimation_2axys")
+states/StandingToCrouched/position = Vector2(618.8889, 66.66667)
+states/Start/position = Vector2(158.66667, 196)
+transitions = ["Start", "Standing", SubResource("AnimationNodeStateMachineTransition_9v1m8"), "Standing", "StandingToCrouched", SubResource("AnimationNodeStateMachineTransition_5y4ng"), "StandingToCrouched", "Crouching", SubResource("AnimationNodeStateMachineTransition_3qlwy"), "Crouching", "CrouchedToStanding", SubResource("AnimationNodeStateMachineTransition_jfrfv"), "CrouchedToStanding", "Standing", SubResource("AnimationNodeStateMachineTransition_3qlwy")]
+graph_offset = Vector2(-233.66666, -105.66666)
+
 [sub_resource type="AnimationNodeBlendTree" id="AnimationNodeBlendTree_loco"]
-graph_offset = Vector2(-755.37555, -142.86777)
+graph_offset = Vector2(-779.59106, -141.65173)
 nodes/output/position = Vector2(400, 0)
 nodes/ForwardBlend/node = SubResource("AnimationNodeBlendSpace2D_fwd")
 nodes/ForwardBlend/position = Vector2(-200, -100)
@@ -201,7 +277,9 @@ nodes/StrafeBlend/node = SubResource("AnimationNodeBlendSpace2D_oyon5")
 nodes/StrafeBlend/position = Vector2(-200, 133.33333)
 nodes/LocomotionSwitch/node = SubResource("AnimationNodeBlend2_loco_switch")
 nodes/LocomotionSwitch/position = Vector2(100, 0)
-node_connections = [&"output", 0, &"LocomotionSwitch", &"LocomotionSwitch", 0, &"ForwardBlend", &"LocomotionSwitch", 1, &"StrafeBlend"]
+nodes/StanceStateMachine/node = SubResource("AnimationNodeStateMachine_stance")
+nodes/StanceStateMachine/position = Vector2(66.666664, 320)
+node_connections = [&"output", 0, &"StanceStateMachine", &"LocomotionSwitch", 0, &"ForwardBlend", &"LocomotionSwitch", 1, &"StrafeBlend"]
 
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_u6ny4"]
 animation = &"running_jump/mixamo_com"
@@ -270,7 +348,7 @@ states/RunningSlide/node = SubResource("AnimationNodeAnimation_fminn")
 states/RunningSlide/position = Vector2(715.4168, 91.94864)
 states/Start/position = Vector2(206.66666, 92.576126)
 transitions = ["Start", "Locomotion", SubResource("AnimationNodeStateMachineTransition_t7djy"), "Locomotion", "Jumping", SubResource("AnimationNodeStateMachineTransition_yqsj4"), "Jumping", "Falling", SubResource("AnimationNodeStateMachineTransition_45pxl"), "Falling", "Landing", SubResource("AnimationNodeStateMachineTransition_u6ny4"), "Landing", "Locomotion", SubResource("AnimationNodeStateMachineTransition_gblby"), "Locomotion", "Falling", SubResource("AnimationNodeStateMachineTransition_50bk4"), "Locomotion", "RunningJump", SubResource("AnimationNodeStateMachineTransition_q6nkd"), "RunningJump", "Falling", SubResource("AnimationNodeStateMachineTransition_u7c7f"), "Falling", "Locomotion", SubResource("AnimationNodeStateMachineTransition_fminn"), "Locomotion", "RunningSlide", SubResource("AnimationNodeStateMachineTransition_qu57g"), "RunningSlide", "Locomotion", SubResource("AnimationNodeStateMachineTransition_h6wsa")]
-graph_offset = Vector2(-273.26825, -44.715935)
+graph_offset = Vector2(-305.26825, -208.71594)
 
 [sub_resource type="AnimationNodeTimeScale" id="AnimationNodeTimeScale_osckp"]
 
@@ -306,7 +384,7 @@ transitions = ["Start", "UAL1_Idle", SubResource("AnimationNodeStateMachineTrans
 graph_offset = Vector2(187.40152, 0)
 
 [sub_resource type="AnimationNodeBlendTree" id="AnimationNodeBlendTree_5cw3m"]
-graph_offset = Vector2(-506, 84.666664)
+graph_offset = Vector2(-552, 148)
 nodes/output/position = Vector2(493.33334, 266.66666)
 nodes/LocomotionStateMachine/node = SubResource("AnimationNodeStateMachine_b226b")
 nodes/LocomotionStateMachine/position = Vector2(-320, 266.66666)
@@ -336,17 +414,17 @@ metadata/_custom_type_script = "uid://dn4se40svqtym"
 [node name="PlayerModel" parent="Pivot/RootMotion" unique_id=1513730412 instance=ExtResource("3_45pxl")]
 
 [node name="GeneralSkeleton" parent="Pivot/RootMotion/PlayerModel" index="0" unique_id=124629806]
-bones/0/position = Vector3(0.0024803395, 0.99013186, 0.00013822531)
-bones/0/rotation = Quaternion(-0.029441874, -0.050875667, -0.029773308, 0.9978269)
-bones/1/rotation = Quaternion(0.029159073, 0.012113407, 0.021366112, 0.999273)
-bones/2/rotation = Quaternion(0.0102253705, 0.0033285164, 0.013639355, 0.99984926)
-bones/3/rotation = Quaternion(0.0099894, 0.0035004541, 0.01364936, 0.99985087)
-bones/4/rotation = Quaternion(0.04825431, -0.0011012013, 0.0044403113, 0.99882466)
-bones/5/rotation = Quaternion(-0.06710256, 0.01052945, -0.0009836938, 0.99769)
-bones/7/rotation = Quaternion(0.4571215, 0.5003442, 0.6318746, -0.37607187)
-bones/8/rotation = Quaternion(0.12329455, 0.8032984, -0.5680824, -0.12958641)
-bones/9/rotation = Quaternion(0.009157866, -0.70704746, 0.009157928, 0.70704746)
-bones/10/rotation = Quaternion(0.052272025, 0.4765975, -0.017143447, 0.8773988)
+bones/0/position = Vector3(-0.0025431712, 0.9903882, 0.0051969313)
+bones/0/rotation = Quaternion(-0.03545018, -0.04415927, -0.023454612, 0.99811983)
+bones/1/rotation = Quaternion(0.025538417, 0.014826158, 0.023903847, 0.99927807)
+bones/2/rotation = Quaternion(0.009267925, 0.0037710294, 0.014288705, 0.9998479)
+bones/3/rotation = Quaternion(0.008802123, 0.0038875022, 0.014299805, 0.9998515)
+bones/4/rotation = Quaternion(0.04569064, -0.0019286517, 0.005355581, 0.9989395)
+bones/5/rotation = Quaternion(-0.066505454, 0.010346547, -0.0021777598, 0.99773014)
+bones/7/rotation = Quaternion(0.45838588, 0.5003398, 0.62724286, -0.38224187)
+bones/8/rotation = Quaternion(0.12395686, 0.7979033, -0.57629323, -0.12598139)
+bones/9/rotation = Quaternion(0.009965706, -0.7070367, 0.009965862, 0.70703655)
+bones/10/rotation = Quaternion(0.055530198, 0.48145002, -0.020288013, 0.8744774)
 bones/11/rotation = Quaternion(-0.23049821, 0.682892, 0.17169991, 0.67160124)
 bones/12/rotation = Quaternion(0.2014946, 0.20389192, -0.059591476, 0.9561783)
 bones/13/rotation = Quaternion(0.04001291, -0.0528761, -0.1285876, 0.9894788)
@@ -363,10 +441,10 @@ bones/25/rotation = Quaternion(0.15521277, -1.4901161e-07, -0.01590553, 0.987753
 bones/27/rotation = Quaternion(0.23386712, -0.0035056775, -0.049008526, 0.97102636)
 bones/28/rotation = Quaternion(0.15125789, -1.1920929e-07, -0.015500367, 0.98837286)
 bones/29/rotation = Quaternion(0.14349762, -8.940698e-08, -0.014705034, 0.9895415)
-bones/31/rotation = Quaternion(0.47646773, -0.47898233, -0.63398206, -0.37632596)
-bones/32/rotation = Quaternion(-0.15155582, 0.8274753, -0.49638277, 0.21428862)
-bones/33/rotation = Quaternion(0.041139316, 0.7059091, -0.04113919, 0.7059091)
-bones/34/rotation = Quaternion(0.046277273, -0.5714927, 0.038051732, 0.81841713)
+bones/31/rotation = Quaternion(0.47672802, -0.47881797, -0.6335803, -0.3768818)
+bones/32/rotation = Quaternion(-0.1514296, 0.8282524, -0.4946967, 0.2152727)
+bones/33/rotation = Quaternion(0.040697925, 0.7059345, -0.040698007, 0.70593464)
+bones/34/rotation = Quaternion(0.041536998, -0.57205933, 0.03572946, 0.8183803)
 bones/35/rotation = Quaternion(-0.24051939, -0.6719299, -0.18474646, 0.6756696)
 bones/36/rotation = Quaternion(0.23822677, -0.20985533, 0.051183645, 0.94688386)
 bones/37/rotation = Quaternion(0.045545384, 0.046079352, 0.16169313, 0.984712)
@@ -383,14 +461,14 @@ bones/49/rotation = Quaternion(0.15551054, 5.9604645e-08, 0.012668192, 0.9877530
 bones/51/rotation = Quaternion(0.22849345, 0.003403008, 0.04298061, 0.9725903)
 bones/52/rotation = Quaternion(0.15154804, 8.940697e-08, 0.012345463, 0.98837286)
 bones/53/rotation = Quaternion(0.14377284, 1.7881393e-07, 0.011711955, 0.9895414)
-bones/55/rotation = Quaternion(0.1360677, 0.08588071, 0.9839153, -0.07759302)
-bones/56/rotation = Quaternion(-0.03855764, 0.9924284, -0.1154051, 0.016756274)
-bones/57/rotation = Quaternion(-0.04142646, 0.7099892, -0.701285, 0.04897567)
+bones/55/rotation = Quaternion(0.1347815, 0.070876904, 0.98568964, -0.07229328)
+bones/56/rotation = Quaternion(-0.03884457, 0.99389935, -0.10247053, 0.012450769)
+bones/57/rotation = Quaternion(-0.04239572, 0.71330875, -0.6977803, 0.049960453)
 bones/58/rotation = Quaternion(-1.04873216e-07, 0.9990753, 0.042996258, -1.8274612e-08)
-bones/60/rotation = Quaternion(-0.08995844, -0.011192271, 0.9954216, -0.03029992)
-bones/61/rotation = Quaternion(0.03240494, 0.9946576, -0.05082075, -0.083807565)
-bones/62/rotation = Quaternion(0.011520446, 0.6869669, -0.72613406, -0.02594526)
-bones/63/rotation = Quaternion(-1.4144041e-07, 0.99804384, 0.06251773, -1.4672234e-08)
+bones/60/rotation = Quaternion(-0.093407236, -0.016446415, 0.9951807, -0.02489975)
+bones/61/rotation = Quaternion(0.033611324, 0.994158, -0.05977672, -0.08334831)
+bones/62/rotation = Quaternion(0.009608625, 0.68011576, -0.7324825, -0.02862802)
+bones/63/rotation = Quaternion(4.489718e-08, 0.9981549, 0.060720563, 6.13016e-09)
 
 [node name="Alpha_Surface" parent="Pivot/RootMotion/PlayerModel/GeneralSkeleton" index="0" unique_id=1596646119]
 surface_material_override/0 = SubResource("StandardMaterial3D_fminn")
@@ -403,6 +481,11 @@ surface_material_override/0 = SubResource("StandardMaterial3D_qu57g")
 [node name="AnimationPlayer" parent="Pivot/RootMotion/PlayerModel" index="1" unique_id=1798787493]
 deterministic = true
 libraries/backflip = ExtResource("4_q6nkd")
+"libraries/crouched sneaking left" = ExtResource("6_2dxso")
+"libraries/crouched sneaking right" = ExtResource("7_vxfhe")
+"libraries/crouched to standing" = ExtResource("8_v0rb4")
+"libraries/crouched walking" = ExtResource("6_kaeqx")
+"libraries/crouching idle" = ExtResource("7_njchi")
 libraries/crying = ExtResource("4_b226b")
 "libraries/falling idle" = ExtResource("4_yqsj4")
 "libraries/falling to landing" = ExtResource("5_hxj2c")
@@ -429,6 +512,7 @@ libraries/running = ExtResource("15_osckp")
 libraries/running_jump = ExtResource("23_ithc2")
 libraries/sprint = ExtResource("27_u7c7f")
 "libraries/sprinting forward roll" = ExtResource("27_qu57g")
+"libraries/standing to crouched" = ExtResource("37_cxirm")
 libraries/walking = ExtResource("16_ithc2")
 "libraries/walking backwards" = ExtResource("17_ro8tf")
 "libraries/waving right hand" = ExtResource("25_gblby")
@@ -488,6 +572,10 @@ anim_player = NodePath("../Pivot/RootMotion/PlayerModel/AnimationPlayer")
 parameters/LocomotionStateMachine/Locomotion/ForwardBlend/blend_position = Vector2(0, 0)
 parameters/LocomotionStateMachine/Locomotion/StrafeBlend/blend_position = Vector2(0, 0)
 parameters/LocomotionStateMachine/Locomotion/LocomotionSwitch/blend_amount = 0.0
+parameters/LocomotionStateMachine/Locomotion/StanceStateMachine/Crouching/blend_position = Vector2(0, 0)
+parameters/LocomotionStateMachine/Locomotion/StanceStateMachine/Standing/ForwardBlend/blend_position = Vector2(0, 0)
+parameters/LocomotionStateMachine/Locomotion/StanceStateMachine/Standing/StrafeBlend/blend_position = Vector2(0, 0)
+parameters/LocomotionStateMachine/Locomotion/StanceStateMachine/Standing/LocomotionSwitch/blend_amount = 0.0
 parameters/LocomotionTimeScale/scale = 1.0
 parameters/UpperBodyBlend/blend_amount = 1.0
 
