@@ -10,10 +10,13 @@ extends CharacterBody3D
 @export var locomotion_state_name: String = "Locomotion"
 @export var jumping_state_name: String = "Jumping"
 @export var running_jump_state_name: String = "RunningJump"
+@export var running_slide_state_name: String = "RunningSlide"
 @export var transition_speed: float = 0.10
 
 @export var jump_velocity: float = 4.5
 @export var speed: float = 5.0
+
+@onready var physical_bone_simulator: PhysicalBoneSimulator3D = $Pivot/RootMotion/PlayerModel/GeneralSkeleton/PhysicalBoneSimulator3D
 
 var current_input_vector: Vector2 ## The current [Input] vector
 var current_velocity: Vector2 ## The current velocity of the player (no verticality)
@@ -24,17 +27,21 @@ var playback: AnimationNodeStateMachinePlayback:
 		return animation_tree.get(locomotion_state_playback_path) as AnimationNodeStateMachinePlayback
 
 
+func _ready() -> void:
+	physical_bone_simulator.physical_bones_add_collision_exception(self)
+
+
 func _input(event: InputEvent) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
 
-	# Jump
-	if is_on_floor() \
-	and Input.is_action_just_pressed("ui_accept"):
-		if velocity.length() > 0.1:
-			begin_running_jump()
-		else:
-			begin_jump()
+	if is_on_floor():
+		# Jump
+		if Input.is_action_just_pressed("jump"):
+			if velocity.length() > 0.1:
+				begin_running_jump()
+			else:
+				begin_jump()
 
 
 func _process(delta: float) -> void:
@@ -48,7 +55,16 @@ func _process(delta: float) -> void:
 	# animation_tree.set(locomotion_blend_path, current_velocity)
 
 	# Sync player input and state machine's blend values
-	animation_tree.set(locomotion_blend_path, current_input_vector)
+	var is_crouching = Input.is_action_just_pressed("crouch")
+	var is_sprinting = Input.is_action_pressed("sprint")
+	if is_crouching and is_sprinting:
+		begin_running_slide()
+	if is_sprinting:
+		animation_tree.set(locomotion_blend_path, current_input_vector * 1.5)
+		speed = 7.5
+	else:
+		animation_tree.set(locomotion_blend_path, current_input_vector)
+		speed = 5.0
 
 	# DEBUGGING
 	$Debug/List/Input/X.text = "X: "+  str(current_input_vector.x)
@@ -97,6 +113,9 @@ func begin_jump():
 func begin_running_jump():
 	playback.travel(running_jump_state_name)
 
+
+func begin_running_slide():
+	playback.travel(running_slide_state_name)
 
 func execute_jump_velocity():
 	jump_queued = true
