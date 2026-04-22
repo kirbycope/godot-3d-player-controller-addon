@@ -5,13 +5,16 @@ extends CharacterBody3D
 # https://www.youtube.com/watch?v=fBcKIxgJv-c&t=247s
 @export var animation_tree: AnimationTree
 @export var camera: Camera3D
-@export var locomotion_blend_path: String = "parameters/LocomotionStateMachine/Locomotion/blend_position"
+@export var locomotion_forward_blend_path: String = "parameters/LocomotionStateMachine/Locomotion/ForwardBlend/blend_position"
+@export var locomotion_strafe_blend_path: String = "parameters/LocomotionStateMachine/Locomotion/StrafeBlend/blend_position"
+@export var locomotion_mode_path: String = "parameters/LocomotionStateMachine/Locomotion/LocomotionSwitch/blend_amount"
 @export var locomotion_state_playback_path: String = "parameters/LocomotionStateMachine/playback"
 @export var locomotion_state_name: String = "Locomotion"
 @export var jumping_state_name: String = "Jumping"
 @export var running_jump_state_name: String = "RunningJump"
 @export var running_slide_state_name: String = "RunningSlide"
 @export var transition_speed: float = 0.10
+@export var turn_speed: float = 120.0
 
 @export var jump_velocity: float = 4.5
 @export var speed: float = 5.0
@@ -57,14 +60,25 @@ func _process(delta: float) -> void:
 	# Sync player input and state machine's blend values
 	var is_crouching = Input.is_action_just_pressed("crouch")
 	var is_sprinting = Input.is_action_pressed("sprint")
+	var is_strafing := Input.is_action_pressed("turn_camera")
 	if is_crouching and is_sprinting:
 		begin_running_slide()
-	if is_sprinting:
-		animation_tree.set(locomotion_blend_path, current_input_vector * 1.5)
-		speed = 7.5
+	if is_strafing:
+		animation_tree.set(locomotion_mode_path, 1.0)
+		if is_sprinting:
+			animation_tree.set(locomotion_strafe_blend_path, current_input_vector * 1.5)
+			speed = 7.5
+		else:
+			animation_tree.set(locomotion_strafe_blend_path, current_input_vector)
+			speed = 5.0
 	else:
-		animation_tree.set(locomotion_blend_path, current_input_vector)
-		speed = 5.0
+		animation_tree.set(locomotion_mode_path, 0.0)
+		if is_sprinting:
+			animation_tree.set(locomotion_forward_blend_path, current_input_vector * Vector2(1, 1.5))
+			speed = 7.5
+		else:
+			animation_tree.set(locomotion_forward_blend_path, current_input_vector)
+			speed = 5.0
 
 	# DEBUGGING
 	$Debug/List/Input/X.text = "X: "+  str(current_input_vector.x)
@@ -87,21 +101,36 @@ func _physics_process(delta: float) -> void:
 		velocity.y += jump_velocity
 		jump_queued = false
 
-	# Get the input direction and handle the movement/deceleration.
-	# As good practice, you should replace UI actions with custom gameplay actions.
-	current_input_vector = Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
-	var direction := (transform.basis * Vector3(current_input_vector.x, 0, current_input_vector.y)).normalized()
-	if direction:
-		velocity.x = direction.x * speed
-		velocity.z = direction.z * speed
-		var current_normalized_velocity = to_local(global_position + velocity)
-		current_input_vector = Vector2(current_normalized_velocity.x, -current_normalized_velocity.z).limit_length(1)
-	else:
-		velocity.x = move_toward(velocity.x, 0, speed)
-		velocity.z = move_toward(velocity.z, 0, speed)
-		current_input_vector = Vector2.ZERO
+	var raw_input := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
+	var is_strafing := Input.is_action_pressed("turn_camera")
 
-	#rotation_degrees.y = camera.rotation_degrees.y
+	if is_strafing:
+		# Strafe mode: full 2D blend, camera controls facing direction
+		var direction := (transform.basis * Vector3(raw_input.x, 0, raw_input.y)).normalized()
+		if direction:
+			velocity.x = direction.x * speed
+			velocity.z = direction.z * speed
+			var cnv := to_local(global_position + velocity)
+			current_input_vector = Vector2(cnv.x, -cnv.z).limit_length(1)
+		else:
+			velocity.x = move_toward(velocity.x, 0, speed)
+			velocity.z = move_toward(velocity.z, 0, speed)
+			current_input_vector = Vector2.ZERO
+	else:
+		# Free-move mode: A/D rotates player + turn animation, W/S = forward/backward
+		if raw_input.x != 0.0:
+			rotate(basis.y, deg_to_rad(-raw_input.x * turn_speed * delta))
+		var forward_input := raw_input.y
+		if abs(forward_input) > 0.01 or abs(raw_input.x) > 0.01:
+			var direction := (transform.basis * Vector3(0, 0, forward_input)).normalized()
+			velocity.x = direction.x * speed
+			velocity.z = direction.z * speed
+			current_input_vector = Vector2(raw_input.x, -raw_input.y)
+		else:
+			velocity.x = move_toward(velocity.x, 0, speed)
+			velocity.z = move_toward(velocity.z, 0, speed)
+			current_input_vector = Vector2.ZERO
+		look_at(global_position - transform.basis.z, Vector3.UP)
 
 	move_and_slide()
 
