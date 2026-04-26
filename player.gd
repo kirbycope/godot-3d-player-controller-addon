@@ -75,20 +75,17 @@ func _input(event: InputEvent) -> void:
 	if is_on_floor():
 
 		# If the "crouch" button was just pressed...
-		if Input.is_action_just_pressed("crouch"):
+		if Input.is_action_pressed("crouch") and not is_crouching:
 			# If the player has some velocity and the "sprint" button is held...
 			if velocity.length() > 0.1 and Input.is_action_pressed("sprint"):
-				print_debug("Queueing running slide")
 				# Queue a "running slide"
 				begin_running_slide()
 			# The player must be standing still
 			else:
-				print_debug("Queueing crouch")
 				# Queue start "crouch"
 				begin_crouch()
 		# If the "crouch" button was just released...
-		elif Input.is_action_just_released("crouch") and is_crouching and velocity.length() < 0.1:
-			print_debug("Queueing end crouch")
+		elif Input.is_action_just_released("crouch") and is_crouching: # and velocity.length() < 0.1:
 			# Queue "end crouch"
 			end_crouch()
 
@@ -96,12 +93,10 @@ func _input(event: InputEvent) -> void:
 		if Input.is_action_just_pressed("jump"):
 			# If the player has some velocity...
 			if velocity.length() > 0.1:
-				print_debug("Queueing running jump")
 				# Queue a "running jump"
 				begin_running_jump()
 			# The player must be standing still
 			else:
-				print_debug("Queueing standing jump")
 				# Queue a "standing jump"
 				begin_standing_jump()
 
