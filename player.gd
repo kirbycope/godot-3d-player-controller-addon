@@ -169,7 +169,7 @@ func _physics_process(delta: float) -> void:
 	var stance_state := stance_playback.get_current_node()
 
 	# Cache if the player is "crouching"
-	is_crouching = stance_state == crouching_state_name
+	is_crouching = stance_state in [standing_to_crouched_state_name, crouching_state_name, crouched_to_standing_state_name]
 
 	# Cache if the player is "sliding"
 	is_sliding = locomotion_state == running_slide_state_name
@@ -231,23 +231,27 @@ func begin_running_slide():
 	if not capsule_shape:
 		return
 	var slide_collision_y := standing_collision_y - ((standing_collision_height - slide_collision_height) * 0.5)
+	# Create a [Tween] to resize the player's collision shape
 	var tween_slide := create_tween()
+	# Make the collision shape shorter, over time
 	tween_slide.tween_property($CollisionShape3D.shape, "height", slide_collision_height, 0.4)
+	# At the same time, move the collision shape's position so it stays at the player's feet
 	tween_slide.parallel().tween_property($CollisionShape3D, "position:y", slide_collision_y, 0.4)
+	# Wait for 0.4 seconds before continuing
 	tween_slide.tween_interval(0.4)
+	# Make the collision shape bigger, over time
 	tween_slide.tween_property($CollisionShape3D.shape, "height", standing_collision_height, 0.4)
+	# At the same time, move the collision shape's position so it stays at the player's feet
 	tween_slide.parallel().tween_property($CollisionShape3D, "position:y", standing_collision_y, 0.4)
 
 
 ## Called when the "crouch" (while standing) action is first executed. Transitions to the [standing_to_crouched_state_name] state in the animation tree.
 func begin_crouch() -> void:
-	is_crouching = true
 	stance_playback.travel(standing_to_crouched_state_name)
 
 
 ## Called when the "end crouch" action is first executed. Transitions to the [crouched_to_standing_state_name] state in the animation tree.
 func end_crouch() -> void:
-	is_crouching = false
 	stance_playback.travel(crouched_to_standing_state_name)
 
 
