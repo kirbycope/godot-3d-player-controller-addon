@@ -35,16 +35,15 @@ func _input(event: InputEvent) -> void:
 
 ## Rotate camera using the mouse motion.
 func camera_rotate_by_mouse(event: InputEvent) -> void:
+	# Clamp the camera rotation (to prevent over rotating) and apply sensitivity
 	camera_pitch = clamp(camera_pitch - event.relative.y * look_sensitivity_mouse, -80, 90)
+	# Get the relative mouse movement in the x direction
 	var relative_x = event.relative.x
+	# Define the new rotation in the y direction based on the relative x movement and sensitivity
 	var new_rotation_y = -relative_x * look_sensitivity_mouse
+	# Rotate the player along the y-axis by the new rotation value
+	player.rotate(player.basis.y, deg_to_rad(new_rotation_y))
 
-	if Input.is_action_pressed("turn_camera"):
-		# Strafe mode: orbit camera around player
-		camera_base.rotation_degrees.y += new_rotation_y
-	else:
-		# Free-move mode: rotate player (camera follows)
-		player.rotate(player.basis.y, deg_to_rad(new_rotation_y))
-
-	# Rotate the camera to match the mouse movement on the X axis (up/down)
-	camera_base.rotation_degrees.x = -camera_pitch
+	# Rotate the player model along the y-axis by the new rotation value (for visual feedback)	
+	#player_model.rotate_y(deg_to_rad(relative_x * look_sensitivity_mouse))
+	#player_model.rotate_y(deg_to_rad(new_rotation_y))
