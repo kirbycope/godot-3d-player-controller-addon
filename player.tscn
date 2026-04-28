@@ -42,15 +42,39 @@
 [ext_resource type="AnimationLibrary" uid="uid://yp1exdfcd7j5" path="res://addons/3d_player_controller/assets/mixamo/animations/locomotion_pack/sprint.fbx" id="27_u7c7f"]
 [ext_resource type="AnimationLibrary" uid="uid://dckk3xdcrcm1t" path="res://addons/3d_player_controller/assets/mixamo/animations/locomotion_pack/standing to crouched.fbx" id="37_cxirm"]
 [ext_resource type="Texture2D" uid="uid://dba2rvntnnfdh" path="res://addons/3d_player_controller/assets/kenney_nl/2D assets/Crosshair Pack/Vector/crosshairs_vector_white.svg" id="42_cxirm"]
+[ext_resource type="Texture2D" uid="uid://bwakie8y4nx58" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_dpad_none.svg" id="43_6b7s3"]
 [ext_resource type="Script" uid="uid://bkanfpbod6cqc" path="res://addons/3d_player_controller/debug.gd" id="43_cxirm"]
+[ext_resource type="Texture2D" uid="uid://csiyxsrpxy1x8" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_button_outline.svg" id="43_ladmy"]
 [ext_resource type="Texture2D" uid="uid://bn5f4wvar6tor" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_button_a_outline.svg" id="43_oaa2s"]
 [ext_resource type="Texture2D" uid="uid://corxgxm4mi0l8" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_button_a.svg" id="44_tkxeg"]
+[ext_resource type="Texture2D" uid="uid://cmsulqu82gpu5" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_dpad_up_outline.svg" id="44_yx0mh"]
 [ext_resource type="Texture2D" uid="uid://dpc825bf8ua8i" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_button_b_outline.svg" id="45_1hnrs"]
 [ext_resource type="Texture2D" uid="uid://bumejmnr3to5g" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_button_b.svg" id="46_ahqpo"]
+[ext_resource type="Texture2D" uid="uid://w7di1j7to3hb" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_dpad_down_outline.svg" id="46_qrmb0"]
 [ext_resource type="Texture2D" uid="uid://bojfftndyi7ux" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_button_x_outline.svg" id="47_sd0ff"]
+[ext_resource type="Texture2D" uid="uid://cm5rvc87h5ajy" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_dpad_left_outline.svg" id="47_xf6l6"]
 [ext_resource type="Texture2D" uid="uid://uhxr6ne3h322" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_button_x.svg" id="48_1520m"]
+[ext_resource type="Texture2D" uid="uid://ciq2qdvx0khbj" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_dpad_right_outline.svg" id="48_xf6l6"]
 [ext_resource type="Texture2D" uid="uid://f71afsg8l76k" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_button_y_outline.svg" id="49_xrkl1"]
 [ext_resource type="Texture2D" uid="uid://na0ycwh1x0k8" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_button_y.svg" id="50_7pm0t"]
+[ext_resource type="Texture2D" uid="uid://dv0iqqk34c7ve" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_lb_outline.svg" id="51_ufkdo"]
+[ext_resource type="Texture2D" uid="uid://bji81b6l8eid0" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_lb.svg" id="52_jo435"]
+[ext_resource type="Texture2D" uid="uid://c1n1m3jo7bisj" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_lt_outline.svg" id="53_6b7s3"]
+[ext_resource type="Texture2D" uid="uid://3uks54sktwjm" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_lt.svg" id="54_yx0mh"]
+[ext_resource type="Texture2D" uid="uid://ci86323vtaa6m" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_button_view_outline.svg" id="55_wwnia"]
+[ext_resource type="Texture2D" uid="uid://b3issnm7j2by5" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_button_view.svg" id="56_qrmb0"]
+[ext_resource type="Texture2D" uid="uid://cj7q5injyl13i" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_button_share_outline.svg" id="57_xf6l6"]
+[ext_resource type="Texture2D" uid="uid://boy5is2mgxje5" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_button_share.svg" id="58_rs4nb"]
+[ext_resource type="Texture2D" uid="uid://cxqt76lu3fyed" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_ls_outline.svg" id="59_eljlq"]
+[ext_resource type="Texture2D" uid="uid://df2ggww1swume" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_button_menu_outline.svg" id="59_kwisa"]
+[ext_resource type="Texture2D" uid="uid://bpspmyqfy4ke2" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_button_menu.svg" id="60_q7kt0"]
+[ext_resource type="Texture2D" uid="uid://7eg1mh64qwip" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_ls.svg" id="60_qcvw7"]
+[ext_resource type="Texture2D" uid="uid://bfvw48aix1fw2" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_rb_outline.svg" id="61_ladmy"]
+[ext_resource type="Texture2D" uid="uid://ci5djbpqh6int" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_rb.svg" id="62_eljlq"]
+[ext_resource type="Texture2D" uid="uid://yhfs0k0sb43n" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_rt_outline.svg" id="63_qcvw7"]
+[ext_resource type="Texture2D" uid="uid://bbcey1dfwnf15" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_rt.svg" id="64_ni3ff"]
+[ext_resource type="Texture2D" uid="uid://cdjddgf556kjt" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_rs_outline.svg" id="71_ni3ff"]
+[ext_resource type="Texture2D" uid="uid://o15ln4wybn4a" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_rs.svg" id="72_goiqs"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_fminn"]
 resource_name = "Alpha_Body_MAT"
@@ -407,6 +431,33 @@ nodes/UpperBodyStateMachine/node = SubResource("AnimationNodeStateMachine_u6ny4"
 nodes/UpperBodyStateMachine/position = Vector2(-53.333332, 520)
 node_connections = [&"output", 0, &"LocomotionTimeScale", &"LocomotionTimeScale", 0, &"LocomotionStateMachine", &"UpperBodyBlend", 1, &"UpperBodyStateMachine"]
 
+[sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_rs4nb"]
+points = PackedVector2Array(-9, -9, -9, -24, 9, -24, 9, -9, 0, 0)
+
+[sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_kwisa"]
+points = PackedVector2Array(-9, 9, -9, 24, 9, 24, 9, 9, 0, 0)
+
+[sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_qrmb0"]
+points = PackedVector2Array(-9, 9, -24, 9, -24, -9, -9, -9, 0, 0)
+
+[sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_wwnia"]
+points = PackedVector2Array(9, 9, 24, 9, 24, -9, 9, -9, 0, 0)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_rs4nb"]
+radius = 24.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_wwnia"]
+radius = 24.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_qrmb0"]
+radius = 24.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_xf6l6"]
+radius = 24.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_q7kt0"]
+radius = 24.0
+
 [node name="Player" type="CharacterBody3D" unique_id=1919664999 node_paths=PackedStringArray("animation_tree", "camera")]
 script = ExtResource("1_ikfak")
 animation_tree = NodePath("AnimationTree")
@@ -425,17 +476,17 @@ metadata/_custom_type_script = "uid://dn4se40svqtym"
 [node name="PlayerModel" parent="Pivot/RootMotion" unique_id=1513730412 instance=ExtResource("3_45pxl")]
 
 [node name="GeneralSkeleton" parent="Pivot/RootMotion/PlayerModel" index="0" unique_id=124629806]
-bones/0/position = Vector3(-0.0040026587, 0.9899467, 0.0056294925)
-bones/0/rotation = Quaternion(-0.036447067, -0.04257912, -0.023677804, 0.9981473)
-bones/1/rotation = Quaternion(0.0283167, 0.015210699, 0.024303056, 0.9991878)
-bones/2/rotation = Quaternion(0.009645336, 0.003934924, 0.0143612195, 0.99984264)
-bones/3/rotation = Quaternion(0.00950095, 0.004062788, 0.014419761, 0.99984264)
-bones/4/rotation = Quaternion(0.048044153, -0.0022892042, 0.005564961, 0.9988271)
-bones/5/rotation = Quaternion(-0.06793025, 0.008484955, -0.0009627838, 0.99765354)
-bones/7/rotation = Quaternion(0.45774665, 0.50072247, 0.62823933, -0.38086796)
-bones/8/rotation = Quaternion(0.12508653, 0.79873514, -0.5751986, -0.124588124)
-bones/9/rotation = Quaternion(0.009887521, -0.70703775, 0.009887668, 0.7070376)
-bones/10/rotation = Quaternion(0.055166136, 0.47833115, -0.017353708, 0.8762734)
+bones/0/position = Vector3(-0.0013323078, 0.9899367, 0.0034693256)
+bones/0/rotation = Quaternion(-0.032047622, -0.043984424, -0.026510103, 0.9981662)
+bones/1/rotation = Quaternion(0.031991523, 0.016885832, 0.023453431, 0.9990703)
+bones/2/rotation = Quaternion(0.010952616, 0.0045433827, 0.014054296, 0.99983096)
+bones/3/rotation = Quaternion(0.010739069, 0.004747645, 0.014072759, 0.9998321)
+bones/4/rotation = Quaternion(0.049398497, -0.0020292674, 0.0034298697, 0.99877125)
+bones/5/rotation = Quaternion(-0.07366619, 0.00781552, -0.0020530517, 0.9972502)
+bones/7/rotation = Quaternion(0.4581504, 0.4984982, 0.6345327, -0.37278152)
+bones/8/rotation = Quaternion(0.12573668, 0.80493474, -0.56676656, -0.12266256)
+bones/9/rotation = Quaternion(0.009418112, -0.70704406, 0.0094182035, 0.70704406)
+bones/10/rotation = Quaternion(0.052493654, 0.4761735, -0.012766661, 0.8776903)
 bones/11/rotation = Quaternion(-0.23049821, 0.682892, 0.17169991, 0.67160124)
 bones/12/rotation = Quaternion(0.2014946, 0.20389192, -0.059591476, 0.9561783)
 bones/13/rotation = Quaternion(0.04001291, -0.0528761, -0.1285876, 0.9894788)
@@ -452,10 +503,10 @@ bones/25/rotation = Quaternion(0.15521277, -1.4901161e-07, -0.01590553, 0.987753
 bones/27/rotation = Quaternion(0.23386712, -0.0035056775, -0.049008526, 0.97102636)
 bones/28/rotation = Quaternion(0.15125789, -1.1920929e-07, -0.015500367, 0.98837286)
 bones/29/rotation = Quaternion(0.14349762, -8.940698e-08, -0.014705034, 0.9895415)
-bones/31/rotation = Quaternion(0.47596303, -0.4790342, -0.63561296, -0.3741412)
-bones/32/rotation = Quaternion(-0.14962594, 0.82842875, -0.4954516, 0.21411633)
-bones/33/rotation = Quaternion(0.040569745, 0.7059419, -0.040569827, 0.70594203)
-bones/34/rotation = Quaternion(0.041531645, -0.57170004, 0.035132382, 0.81865746)
+bones/31/rotation = Quaternion(0.47486424, -0.4792671, -0.638673, -0.37000537)
+bones/32/rotation = Quaternion(-0.14836101, 0.82810843, -0.49586368, 0.2152781)
+bones/33/rotation = Quaternion(0.040897407, 0.70592314, -0.040897362, 0.70592314)
+bones/34/rotation = Quaternion(0.042474914, -0.5686668, 0.036086343, 0.82067764)
 bones/35/rotation = Quaternion(-0.24051939, -0.6719299, -0.18474646, 0.6756696)
 bones/36/rotation = Quaternion(0.23822677, -0.20985533, 0.051183645, 0.94688386)
 bones/37/rotation = Quaternion(0.045545384, 0.046079352, 0.16169313, 0.984712)
@@ -472,14 +523,14 @@ bones/49/rotation = Quaternion(0.15551054, 5.9604645e-08, 0.012668192, 0.9877530
 bones/51/rotation = Quaternion(0.22849345, 0.003403008, 0.04298061, 0.9725903)
 bones/52/rotation = Quaternion(0.15154804, 8.940697e-08, 0.012345463, 0.98837286)
 bones/53/rotation = Quaternion(0.14377284, 1.7881393e-07, 0.011711955, 0.9895414)
-bones/55/rotation = Quaternion(0.13590814, 0.07200657, 0.9853487, -0.073702455)
-bones/56/rotation = Quaternion(-0.038676474, 0.9935721, -0.105986275, 0.009249246)
-bones/57/rotation = Quaternion(-0.04245607, 0.7125061, -0.69858617, 0.050100006)
+bones/55/rotation = Quaternion(0.13692431, 0.08078126, 0.9843738, -0.075726435)
+bones/56/rotation = Quaternion(-0.037978224, 0.99296963, -0.11170725, 0.009522999)
+bones/57/rotation = Quaternion(-0.0418554, 0.71083397, -0.7003704, 0.049443245)
 bones/58/rotation = Quaternion(-1.04873216e-07, 0.9990753, 0.042996258, -1.8274612e-08)
-bones/60/rotation = Quaternion(-0.09335418, -0.0152905, 0.995178, -0.025922544)
-bones/61/rotation = Quaternion(0.03429268, 0.993797, -0.06526327, -0.08326063)
-bones/62/rotation = Quaternion(0.008248674, 0.677585, -0.7347928, -0.029834554)
-bones/63/rotation = Quaternion(2.6351541e-08, 0.9981443, 0.060893003, 4.029686e-09)
+bones/60/rotation = Quaternion(-0.091392346, -0.012481651, 0.9953313, -0.02841278)
+bones/61/rotation = Quaternion(0.033951912, 0.9941002, -0.060519714, -0.083362885)
+bones/62/rotation = Quaternion(0.009126315, 0.6809664, -0.7316725, -0.029272553)
+bones/63/rotation = Quaternion(-8.499227e-08, 0.9980806, 0.061928295, -8.581078e-09)
 
 [node name="Alpha_Surface" parent="Pivot/RootMotion/PlayerModel/GeneralSkeleton" index="0" unique_id=1596646119]
 surface_material_override/0 = SubResource("StandardMaterial3D_fminn")
@@ -593,101 +644,200 @@ target_position = Vector3(0, 0, -1)
 
 [node name="Controls" type="CanvasLayer" parent="." unique_id=1527628397]
 
-[node name="Control" type="Control" parent="Controls" unique_id=811976476]
+[node name="BottomLeft" type="Control" parent="Controls" unique_id=935023433]
+layout_mode = 3
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -320.0
+offset_right = 320.0
+grow_vertical = 0
+
+[node name="DPadBase" type="TextureRect" parent="Controls/BottomLeft" unique_id=1019781285]
+layout_mode = 0
+offset_left = 192.0
+offset_top = 192.0
+offset_right = 256.0
+offset_bottom = 256.0
+scale = Vector2(2, 2)
+texture = ExtResource("43_6b7s3")
+
+[node name="DPadUp" type="TouchScreenButton" parent="Controls/BottomLeft" unique_id=823832395]
+position = Vector2(192, 192)
+scale = Vector2(2, 2)
+texture_normal = ExtResource("43_6b7s3")
+texture_pressed = ExtResource("44_yx0mh")
+shape = SubResource("ConvexPolygonShape2D_rs4nb")
+passby_press = true
+action = "ui_up"
+
+[node name="DPadDown" type="TouchScreenButton" parent="Controls/BottomLeft" unique_id=2056079490]
+position = Vector2(192, 192)
+scale = Vector2(2, 2)
+texture_normal = ExtResource("43_6b7s3")
+texture_pressed = ExtResource("46_qrmb0")
+shape = SubResource("ConvexPolygonShape2D_kwisa")
+passby_press = true
+action = "ui_down"
+
+[node name="DPadLeft" type="TouchScreenButton" parent="Controls/BottomLeft" unique_id=639652535]
+position = Vector2(192, 192)
+scale = Vector2(2, 2)
+texture_normal = ExtResource("43_6b7s3")
+texture_pressed = ExtResource("47_xf6l6")
+shape = SubResource("ConvexPolygonShape2D_qrmb0")
+passby_press = true
+action = "ui_left"
+
+[node name="DPadRight" type="TouchScreenButton" parent="Controls/BottomLeft" unique_id=1638558906]
+position = Vector2(192, 192)
+scale = Vector2(2, 2)
+texture_normal = ExtResource("43_6b7s3")
+texture_pressed = ExtResource("48_xf6l6")
+shape = SubResource("ConvexPolygonShape2D_wwnia")
+passby_press = true
+action = "ui_right"
+
+[node name="LeftStickBase" type="TextureRect" parent="Controls/BottomLeft" unique_id=753212055]
+layout_mode = 0
+offset_left = 48.0
+offset_top = 32.0
+offset_right = 112.0
+offset_bottom = 96.0
+scale = Vector2(2, 2)
+texture = ExtResource("43_ladmy")
+
+[node name="LS" type="TouchScreenButton" parent="Controls/BottomLeft" unique_id=1340888250]
+position = Vector2(0, 256)
+texture_normal = ExtResource("59_eljlq")
+texture_pressed = ExtResource("60_qcvw7")
+shape = SubResource("CircleShape2D_rs4nb")
+
+[node name="BottomRight" type="Control" parent="Controls" unique_id=811976476]
 layout_mode = 3
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -112.0
-offset_top = -112.0
-offset_right = -16.0
-offset_bottom = -16.0
+offset_left = -320.0
+offset_top = -320.0
 grow_horizontal = 0
 grow_vertical = 0
 
-[node name="A" type="TouchScreenButton" parent="Controls/Control" unique_id=778659740]
-position = Vector2(32, 56)
-scale = Vector2(0.5, 0.5)
+[node name="RightStickBase" type="TextureRect" parent="Controls/BottomRight" unique_id=1975455359]
+layout_mode = 0
+offset_left = 32.0
+offset_top = 160.0
+offset_right = 96.0
+offset_bottom = 224.0
+scale = Vector2(2, 2)
+texture = ExtResource("43_ladmy")
+
+[node name="A" type="TouchScreenButton" parent="Controls/BottomRight" unique_id=778659740]
+position = Vector2(192, 128)
 texture_normal = ExtResource("43_oaa2s")
 texture_pressed = ExtResource("44_tkxeg")
+shape = SubResource("CircleShape2D_wwnia")
 passby_press = true
 action = "crouch"
 
-[node name="Label" type="Label" parent="Controls/Control/A" unique_id=1131876468]
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -28.0
-offset_top = -7.0
-offset_right = 28.0
-offset_bottom = 16.0
-grow_horizontal = 2
-grow_vertical = 0
-text = "Crouch"
-
-[node name="B" type="TouchScreenButton" parent="Controls/Control" unique_id=1362051953]
-position = Vector2(56, 32)
-scale = Vector2(0.5, 0.5)
+[node name="B" type="TouchScreenButton" parent="Controls/BottomRight" unique_id=1362051953]
+position = Vector2(256, 64)
 texture_normal = ExtResource("45_1hnrs")
 texture_pressed = ExtResource("46_ahqpo")
+shape = SubResource("CircleShape2D_qrmb0")
 passby_press = true
 action = "sprint"
 
-[node name="Label" type="Label" parent="Controls/Control/B" unique_id=1842770625]
-anchors_preset = 6
-anchor_left = 1.0
-anchor_top = 0.5
-anchor_right = 1.0
-anchor_bottom = 0.5
-offset_left = 1.0
-offset_top = -11.5
-offset_right = 48.0
-offset_bottom = 11.5
-grow_horizontal = 0
-grow_vertical = 2
-text = "Sprint"
-
-[node name="X" type="TouchScreenButton" parent="Controls/Control" unique_id=55770263]
-position = Vector2(8, 32)
-scale = Vector2(0.5, 0.5)
+[node name="X" type="TouchScreenButton" parent="Controls/BottomRight" unique_id=55770263]
+position = Vector2(128, 64)
 texture_normal = ExtResource("47_sd0ff")
 texture_pressed = ExtResource("48_1520m")
+shape = SubResource("CircleShape2D_wwnia")
 passby_press = true
 action = "use"
 
-[node name="Label" type="Label" parent="Controls/Control/X" unique_id=1195428643]
-anchors_preset = 4
-anchor_top = 0.5
-anchor_bottom = 0.5
-offset_left = -32.0
-offset_top = -11.5
-offset_right = 8.0
-offset_bottom = 11.5
-grow_vertical = 2
-text = "Use"
-
-[node name="Y" type="TouchScreenButton" parent="Controls/Control" unique_id=91782728]
-position = Vector2(32, 8)
-scale = Vector2(0.5, 0.5)
+[node name="Y" type="TouchScreenButton" parent="Controls/BottomRight" unique_id=91782728]
+position = Vector2(192, 0)
 texture_normal = ExtResource("49_xrkl1")
 texture_pressed = ExtResource("50_7pm0t")
+shape = SubResource("CircleShape2D_xf6l6")
 passby_press = true
 action = "jump"
 
-[node name="Label" type="Label" parent="Controls/Control/Y" unique_id=328601991]
+[node name="RS" type="TouchScreenButton" parent="Controls/BottomRight" unique_id=410093888]
+position = Vector2(256, 256)
+texture_normal = ExtResource("71_ni3ff")
+texture_pressed = ExtResource("72_goiqs")
+shape = SubResource("CircleShape2D_rs4nb")
+
+[node name="TopLeft" type="Control" parent="Controls" unique_id=1897273005]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 64.0
+offset_bottom = 128.0
+
+[node name="LB" type="TouchScreenButton" parent="Controls/TopLeft" unique_id=162954276]
+texture_normal = ExtResource("51_ufkdo")
+texture_pressed = ExtResource("52_jo435")
+shape = SubResource("CircleShape2D_rs4nb")
+
+[node name="LT" type="TouchScreenButton" parent="Controls/TopLeft" unique_id=1822657516]
+position = Vector2(0, 64)
+texture_normal = ExtResource("53_6b7s3")
+texture_pressed = ExtResource("54_yx0mh")
+shape = SubResource("CircleShape2D_rs4nb")
+
+[node name="TopCenter" type="Control" parent="Controls" unique_id=1179733104]
+layout_mode = 3
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -20.0
-offset_top = -16.0
-offset_right = 20.0
-offset_bottom = 7.0
+offset_left = -96.0
+offset_right = 96.0
+offset_bottom = 64.0
 grow_horizontal = 2
-text = "Jump"
+
+[node name="Select" type="TouchScreenButton" parent="Controls/TopCenter" unique_id=671767958]
+texture_normal = ExtResource("55_wwnia")
+texture_pressed = ExtResource("56_qrmb0")
+shape = SubResource("CircleShape2D_rs4nb")
+action = "select"
+
+[node name="Share" type="TouchScreenButton" parent="Controls/TopCenter" unique_id=1101901297]
+position = Vector2(64, 0)
+texture_normal = ExtResource("57_xf6l6")
+texture_pressed = ExtResource("58_rs4nb")
+shape = SubResource("CircleShape2D_rs4nb")
+action = "share"
+
+[node name="Start" type="TouchScreenButton" parent="Controls/TopCenter" unique_id=2035261840]
+position = Vector2(128, 0)
+texture_normal = ExtResource("59_kwisa")
+texture_pressed = ExtResource("60_q7kt0")
+shape = SubResource("CircleShape2D_q7kt0")
+action = "start"
+
+[node name="TopRight" type="Control" parent="Controls" unique_id=2077087666]
+layout_mode = 3
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -64.0
+offset_bottom = 128.0
+grow_horizontal = 0
+
+[node name="RB" type="TouchScreenButton" parent="Controls/TopRight" unique_id=518481470]
+texture_normal = ExtResource("61_ladmy")
+texture_pressed = ExtResource("62_eljlq")
+shape = SubResource("CircleShape2D_rs4nb")
+
+[node name="RT" type="TouchScreenButton" parent="Controls/TopRight" unique_id=46098103]
+position = Vector2(0, 64)
+texture_normal = ExtResource("63_qcvw7")
+texture_pressed = ExtResource("64_ni3ff")
+shape = SubResource("CircleShape2D_rs4nb")
 
 [node name="Debug" type="CanvasLayer" parent="." unique_id=2093937718 node_paths=PackedStringArray("player")]
 script = ExtResource("43_cxirm")
@@ -752,10 +902,14 @@ layout_mode = 2
 text = "Idle"
 
 [node name="States" type="VBoxContainer" parent="Debug" unique_id=1847269074]
-offset_left = 16.0
-offset_top = 16.0
-offset_right = 140.0
-offset_bottom = 56.0
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 8.0
+offset_top = -81.5
+offset_right = 132.0
+offset_bottom = 81.5
+grow_vertical = 2
 
 [node name="PanelContainer" type="PanelContainer" parent="Debug/States" unique_id=1167004595]
 layout_mode = 2

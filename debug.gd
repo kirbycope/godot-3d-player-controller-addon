@@ -2,13 +2,13 @@ extends CanvasLayer
 
 @export var player: Player
 
-@onready var button_a: TouchScreenButton = $"../Controls/Control/A"
+@onready var button_a: TouchScreenButton = $"../Controls/BottomRight/A"
 @onready var button_a_normal_texture: Texture2D = button_a.texture_normal
-@onready var button_b: TouchScreenButton = $"../Controls/Control/B"
+@onready var button_b: TouchScreenButton = $"../Controls/BottomRight/B"
 @onready var button_b_normal_texture: Texture2D = button_b.texture_normal
-@onready var button_x: TouchScreenButton = $"../Controls/Control/X"
+@onready var button_x: TouchScreenButton = $"../Controls/BottomRight/X"
 @onready var button_x_normal_texture: Texture2D = button_x.texture_normal
-@onready var button_y: TouchScreenButton = $"../Controls/Control/Y"
+@onready var button_y: TouchScreenButton = $"../Controls/BottomRight/Y"
 @onready var button_y_normal_texture: Texture2D = button_y.texture_normal
 
 
