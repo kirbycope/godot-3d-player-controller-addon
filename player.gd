@@ -18,6 +18,7 @@ extends CharacterBody3D
 @export var turn_in_place_yaw_deadzone: float = 0.002 ## Minimum yaw delta (radians/frame) to trigger turn-in-place blend
 
 @export var crouch_speed: float = 2.5 ## The player's movement speed while crouching
+@export var crouch_exit_to_standing_speed_threshold: float = 0.1 ## If moving faster than this when uncrouching, skip transition clip
 @export var jump_velocity: float = 4.5 ## The initial velocity applied to the player when a jump is executed
 @export var speed: float = 5.0 ## The player's movement speed while standing/walking (not crouching or sprinting)
 @export var slide_collision_height: float = 0.5 ## The capsule height used during running slide
@@ -257,7 +258,11 @@ func begin_crouch() -> void:
 
 ## Called when the "end crouch" action is first executed. Transitions to the [crouched_to_standing_state_name] state in the animation tree.
 func end_crouch() -> void:
-	stance_playback.travel(crouched_to_standing_state_name)
+	var horizontal_speed := Vector2(velocity.x, velocity.z).length()
+	if horizontal_speed > crouch_exit_to_standing_speed_threshold:
+		stance_playback.travel(standing_state_name)
+	else:
+		stance_playback.travel(crouched_to_standing_state_name)
 
 
 ## Called by the "jump start/mixamo_com" animation to execute the jump velocity at the correct time (0.5s) in the animation.

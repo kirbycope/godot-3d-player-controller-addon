@@ -293,15 +293,15 @@ xfade_time = 0.3
 
 [sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_stance"]
 states/CrouchedToStanding/node = SubResource("AnimationNodeAnimation_mv4yd")
-states/CrouchedToStanding/position = Vector2(618.6667, 274.66666)
+states/CrouchedToStanding/position = Vector2(176.66669, 173.7284)
 states/Crouching/node = SubResource("AnimationNodeBlendSpace2D_xf1pq")
-states/Crouching/position = Vector2(853.3333, 66.66667)
+states/Crouching/position = Vector2(383.99997, 272)
 states/End/position = Vector2(1000, 194.88889)
 states/Standing/node = SubResource("AnimationNodeBlendTree_standing")
 states/Standing/position = Vector2(384, 66.66667)
 states/StandingToCrouched/node = SubResource("AnimationNodeAnimation_2axys")
-states/StandingToCrouched/position = Vector2(618.7408, 66.66667)
-states/Start/position = Vector2(158.66667, 196)
+states/StandingToCrouched/position = Vector2(585.4074, 173.92593)
+states/Start/position = Vector2(122.66667, 68.22223)
 transitions = ["Start", "Standing", SubResource("AnimationNodeStateMachineTransition_9v1m8"), "Standing", "StandingToCrouched", SubResource("AnimationNodeStateMachineTransition_5y4ng"), "StandingToCrouched", "Crouching", SubResource("AnimationNodeStateMachineTransition_3qlwy"), "Crouching", "CrouchedToStanding", SubResource("AnimationNodeStateMachineTransition_jfrfv"), "CrouchedToStanding", "Standing", SubResource("AnimationNodeStateMachineTransition_3qlwy")]
 graph_offset = Vector2(-108.66666, -399.66666)
 
