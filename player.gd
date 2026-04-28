@@ -12,8 +12,10 @@ extends CharacterBody3D
 @export var locomotion_stance_playback_path: String = "parameters/LocomotionStateMachine/Locomotion/StanceStateMachine/playback"
 @export var locomotion_state_playback_path: String = "parameters/LocomotionStateMachine/playback"
 
-@export var transition_speed: float = 0.10
+@export var transition_speed: float = 12.0 ## Blend interpolation rate (higher = snappier)
 @export var turn_speed: float = 120.0
+@export var turn_in_place_blend_gain: float = 32.0 ## Scales yaw delta into blend-space X while standing still
+@export var turn_in_place_yaw_deadzone: float = 0.002 ## Minimum yaw delta (radians/frame) to trigger turn-in-place blend
 
 @export var crouch_speed: float = 2.5 ## The player's movement speed while crouching
 @export var jump_velocity: float = 4.5 ## The initial velocity applied to the player when a jump is executed
@@ -32,7 +34,8 @@ extends CharacterBody3D
 
 @onready var physical_bone_simulator: PhysicalBoneSimulator3D = $Pivot/RootMotion/PlayerModel/GeneralSkeleton/PhysicalBoneSimulator3D
 
-var current_input_vector: Vector2 ## The current [Input] vector
+var current_input_vector: Vector2 = Vector2.ZERO ## The smoothed [Input] vector used by animation blending
+var target_input_vector: Vector2 = Vector2.ZERO ## The raw [Input] vector target set by movement logic
 var current_velocity: Vector2 ## The current velocity of the player (no verticality)
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 var is_crouching: bool = false ## Is the player "crouching"?
@@ -42,6 +45,7 @@ var is_strafing: bool = false ## Is the player "strafing"?
 var jump_queued: bool ## Is the "jump" state queued (was the button _just_ pressed)
 var standing_collision_height: float ## The standing capsule height used to restore after slide
 var standing_collision_y: float ## The standing collision shape local Y position
+var previous_rotation_y: float = 0.0 ## Cached yaw from previous physics frame for turn-in-place detection
 var playback: AnimationNodeStateMachinePlayback:
 	get:
 		return animation_tree.get(locomotion_state_playback_path) as AnimationNodeStateMachinePlayback
@@ -60,6 +64,7 @@ func _ready() -> void:
 	else:
 		standing_collision_height = 1.8
 	standing_collision_y = $CollisionShape3D.position.y
+	previous_rotation_y = rotation.y
 
 
 ## Called when there is an input event.
@@ -104,12 +109,10 @@ func _input(event: InputEvent) -> void:
 func _process(delta: float) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
-	
-	# var new_delta = current_input_vector - current_velocity
-	# if (new_delta.length() > transition_speed * delta):
-	# 	new_delta = new_delta * transition_speed * delta
-	# current_velocity += new_delta
-	# animation_tree.set(locomotion_blend_path, current_velocity)
+
+	# Smooth target blend input with time-scaled lerp.
+	var blend_weight := clamp(transition_speed * delta, 0.0, 1.0)
+	current_input_vector = current_input_vector.lerp(target_input_vector, blend_weight)
 
 	if is_crouching:
 		animation_tree.set(locomotion_crouch_blend_path, current_input_vector)
@@ -140,7 +143,7 @@ func _physics_process(delta: float) -> void:
 	if is_on_floor() and playback.get_current_node() == jumping_state_name:
 		velocity.x = move_toward(velocity.x, 0, speed)
 		velocity.z = move_toward(velocity.z, 0, speed)
-		current_input_vector = Vector2.ZERO
+		target_input_vector = Vector2.ZERO
 		move_and_slide()
 		return
 
@@ -160,6 +163,8 @@ func _physics_process(delta: float) -> void:
 
 	# Get the vector from the player input
 	var input_vector := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
+	var yaw_delta := wrapf(rotation.y - previous_rotation_y, -PI, PI)
+	previous_rotation_y = rotation.y
 	var locomotion_state := playback.get_current_node()
 	var stance_state := stance_playback.get_current_node()
 
@@ -184,11 +189,11 @@ func _physics_process(delta: float) -> void:
 			velocity.x = direction.x * speed
 			velocity.z = direction.z * speed
 			var local_velocity_point := to_local(global_position + velocity)
-			current_input_vector = Vector2(local_velocity_point.x, -local_velocity_point.z).limit_length(1)
+			target_input_vector = Vector2(local_velocity_point.x, -local_velocity_point.z).limit_length(1)
 		else:
 			velocity.x = move_toward(velocity.x, 0, speed)
 			velocity.z = move_toward(velocity.z, 0, speed)
-			current_input_vector = Vector2.ZERO
+			target_input_vector = Vector2.ZERO
 	else:
 		# Free-move mode: A/D rotates player + turn animation, W/S = forward/backward
 		if input_vector.x != 0.0:
@@ -198,11 +203,16 @@ func _physics_process(delta: float) -> void:
 			var direction := (transform.basis * Vector3(0, 0, forward_input)).normalized()
 			velocity.x = direction.x * speed
 			velocity.z = direction.z * speed
-			current_input_vector = Vector2(input_vector.x, -input_vector.y)
+			target_input_vector = Vector2(input_vector.x, -input_vector.y)
+		elif abs(yaw_delta) > turn_in_place_yaw_deadzone and Vector2(velocity.x, velocity.z).length() < 0.05:
+			# Camera-driven idle rotation should drive left/right turn clips in ForwardBlend.
+			target_input_vector = Vector2(clamp(yaw_delta * turn_in_place_blend_gain, -1.0, 1.0), 0.0)
+			velocity.x = 0.0
+			velocity.z = 0.0
 		else:
 			velocity.x = move_toward(velocity.x, 0, speed)
 			velocity.z = move_toward(velocity.z, 0, speed)
-			current_input_vector = Vector2.ZERO
+			target_input_vector = Vector2.ZERO
 		look_at(global_position - transform.basis.z, Vector3.UP)
 
 	# Move the body based on `velocity`
