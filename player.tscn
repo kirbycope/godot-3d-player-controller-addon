@@ -476,17 +476,17 @@ metadata/_custom_type_script = "uid://dn4se40svqtym"
 [node name="PlayerModel" parent="Pivot/RootMotion" unique_id=1513730412 instance=ExtResource("3_45pxl")]
 
 [node name="GeneralSkeleton" parent="Pivot/RootMotion/PlayerModel" index="0" unique_id=124629806]
-bones/0/position = Vector3(-0.0013323078, 0.9899367, 0.0034693256)
-bones/0/rotation = Quaternion(-0.032047622, -0.043984424, -0.026510103, 0.9981662)
-bones/1/rotation = Quaternion(0.031991523, 0.016885832, 0.023453431, 0.9990703)
-bones/2/rotation = Quaternion(0.010952616, 0.0045433827, 0.014054296, 0.99983096)
-bones/3/rotation = Quaternion(0.010739069, 0.004747645, 0.014072759, 0.9998321)
-bones/4/rotation = Quaternion(0.049398497, -0.0020292674, 0.0034298697, 0.99877125)
-bones/5/rotation = Quaternion(-0.07366619, 0.00781552, -0.0020530517, 0.9972502)
-bones/7/rotation = Quaternion(0.4581504, 0.4984982, 0.6345327, -0.37278152)
-bones/8/rotation = Quaternion(0.12573668, 0.80493474, -0.56676656, -0.12266256)
-bones/9/rotation = Quaternion(0.009418112, -0.70704406, 0.0094182035, 0.70704406)
-bones/10/rotation = Quaternion(0.052493654, 0.4761735, -0.012766661, 0.8776903)
+bones/0/position = Vector3(-0.004876121, 0.98936, 0.006431006)
+bones/0/rotation = Quaternion(-0.037681457, -0.04062535, -0.025484046, 0.9981384)
+bones/1/rotation = Quaternion(0.03178101, 0.016971756, 0.024081519, 0.99906063)
+bones/2/rotation = Quaternion(0.010388142, 0.0042207027, 0.014347053, 0.9998343)
+bones/3/rotation = Quaternion(0.010049705, 0.0043104338, 0.014344176, 0.9998374)
+bones/4/rotation = Quaternion(0.05159262, -0.0023791806, 0.003235512, 0.99866015)
+bones/5/rotation = Quaternion(-0.07427641, 0.006577949, -0.0017588057, 0.99721456)
+bones/7/rotation = Quaternion(0.45853925, 0.4984553, 0.6333264, -0.37440857)
+bones/8/rotation = Quaternion(0.1258867, 0.8043485, -0.5678828, -0.121182695)
+bones/9/rotation = Quaternion(0.009728244, -0.70703995, 0.009728372, 0.70703983)
+bones/10/rotation = Quaternion(0.052000765, 0.4756116, -0.013362062, 0.87801546)
 bones/11/rotation = Quaternion(-0.23049821, 0.682892, 0.17169991, 0.67160124)
 bones/12/rotation = Quaternion(0.2014946, 0.20389192, -0.059591476, 0.9561783)
 bones/13/rotation = Quaternion(0.04001291, -0.0528761, -0.1285876, 0.9894788)
@@ -503,10 +503,10 @@ bones/25/rotation = Quaternion(0.15521277, -1.4901161e-07, -0.01590553, 0.987753
 bones/27/rotation = Quaternion(0.23386712, -0.0035056775, -0.049008526, 0.97102636)
 bones/28/rotation = Quaternion(0.15125789, -1.1920929e-07, -0.015500367, 0.98837286)
 bones/29/rotation = Quaternion(0.14349762, -8.940698e-08, -0.014705034, 0.9895415)
-bones/31/rotation = Quaternion(0.47486424, -0.4792671, -0.638673, -0.37000537)
-bones/32/rotation = Quaternion(-0.14836101, 0.82810843, -0.49586368, 0.2152781)
-bones/33/rotation = Quaternion(0.040897407, 0.70592314, -0.040897362, 0.70592314)
-bones/34/rotation = Quaternion(0.042474914, -0.5686668, 0.036086343, 0.82067764)
+bones/31/rotation = Quaternion(0.47499955, -0.479398, -0.6378014, -0.37116346)
+bones/32/rotation = Quaternion(-0.14722694, 0.82780725, -0.49712223, 0.2143105)
+bones/33/rotation = Quaternion(0.040609125, 0.7059397, -0.040609177, 0.7059397)
+bones/34/rotation = Quaternion(0.041954957, -0.570017, 0.03674775, 0.81973785)
 bones/35/rotation = Quaternion(-0.24051939, -0.6719299, -0.18474646, 0.6756696)
 bones/36/rotation = Quaternion(0.23822677, -0.20985533, 0.051183645, 0.94688386)
 bones/37/rotation = Quaternion(0.045545384, 0.046079352, 0.16169313, 0.984712)
@@ -523,14 +523,14 @@ bones/49/rotation = Quaternion(0.15551054, 5.9604645e-08, 0.012668192, 0.9877530
 bones/51/rotation = Quaternion(0.22849345, 0.003403008, 0.04298061, 0.9725903)
 bones/52/rotation = Quaternion(0.15154804, 8.940697e-08, 0.012345463, 0.98837286)
 bones/53/rotation = Quaternion(0.14377284, 1.7881393e-07, 0.011711955, 0.9895414)
-bones/55/rotation = Quaternion(0.13692431, 0.08078126, 0.9843738, -0.075726435)
-bones/56/rotation = Quaternion(-0.037978224, 0.99296963, -0.11170725, 0.009522999)
-bones/57/rotation = Quaternion(-0.0418554, 0.71083397, -0.7003704, 0.049443245)
+bones/55/rotation = Quaternion(0.13804156, 0.07491692, 0.9845977, -0.07680757)
+bones/56/rotation = Quaternion(-0.038159497, 0.9927896, -0.11356712, 0.003887278)
+bones/57/rotation = Quaternion(-0.04239591, 0.71014684, -0.70098096, 0.05019638)
 bones/58/rotation = Quaternion(-1.04873216e-07, 0.9990753, 0.042996258, -1.8274612e-08)
-bones/60/rotation = Quaternion(-0.091392346, -0.012481651, 0.9953313, -0.02841278)
-bones/61/rotation = Quaternion(0.033951912, 0.9941002, -0.060519714, -0.083362885)
-bones/62/rotation = Quaternion(0.009126315, 0.6809664, -0.7316725, -0.029272553)
-bones/63/rotation = Quaternion(-8.499227e-08, 0.9980806, 0.061928295, -8.581078e-09)
+bones/60/rotation = Quaternion(-0.093078986, -0.017057644, 0.99511194, -0.028241396)
+bones/61/rotation = Quaternion(0.034562476, 0.9937161, -0.06630668, -0.08329008)
+bones/62/rotation = Quaternion(0.006884414, 0.6763208, -0.73591125, -0.03126331)
+bones/63/rotation = Quaternion(-1.142914e-08, 0.9981228, 0.0612443, -2.4934158e-10)
 
 [node name="Alpha_Surface" parent="Pivot/RootMotion/PlayerModel/GeneralSkeleton" index="0" unique_id=1596646119]
 surface_material_override/0 = SubResource("StandardMaterial3D_fminn")
@@ -782,12 +782,15 @@ offset_bottom = 128.0
 texture_normal = ExtResource("51_ufkdo")
 texture_pressed = ExtResource("52_jo435")
 shape = SubResource("CircleShape2D_rs4nb")
+passby_press = true
 
 [node name="LT" type="TouchScreenButton" parent="Controls/TopLeft" unique_id=1822657516]
 position = Vector2(0, 64)
 texture_normal = ExtResource("53_6b7s3")
 texture_pressed = ExtResource("54_yx0mh")
 shape = SubResource("CircleShape2D_rs4nb")
+passby_press = true
+action = "aim"
 
 [node name="TopCenter" type="Control" parent="Controls" unique_id=1179733104]
 layout_mode = 3
@@ -832,12 +835,15 @@ grow_horizontal = 0
 texture_normal = ExtResource("61_ladmy")
 texture_pressed = ExtResource("62_eljlq")
 shape = SubResource("CircleShape2D_rs4nb")
+passby_press = true
 
 [node name="RT" type="TouchScreenButton" parent="Controls/TopRight" unique_id=46098103]
 position = Vector2(0, 64)
 texture_normal = ExtResource("63_qcvw7")
 texture_pressed = ExtResource("64_ni3ff")
 shape = SubResource("CircleShape2D_rs4nb")
+passby_press = true
+action = "shoot"
 
 [node name="Debug" type="CanvasLayer" parent="." unique_id=2093937718 node_paths=PackedStringArray("player")]
 script = ExtResource("43_cxirm")

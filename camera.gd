@@ -37,6 +37,8 @@ func _input(event: InputEvent) -> void:
 func camera_rotate_by_mouse(event: InputEvent) -> void:
 	# Clamp the camera rotation (to prevent over rotating) and apply sensitivity
 	camera_pitch = clamp(camera_pitch - event.relative.y * look_sensitivity_mouse, -80, 90)
+	# Apply pitch to the camera pivot (or this camera if pivot is not assigned)
+	camera_base.rotation_degrees.x = -camera_pitch
 	# Get the relative mouse movement in the x direction
 	var relative_x = event.relative.x
 	# Define the new rotation in the y direction based on the relative x movement and sensitivity

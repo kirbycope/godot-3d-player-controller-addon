@@ -173,7 +173,7 @@ func _physics_process(delta: float) -> void:
 	is_sprinting = Input.is_action_pressed("sprint") and not is_crouching
 
 	# Cache if the player is "strafing"
-	is_strafing = false # Input.is_action_pressed("turn_camera")
+	is_strafing = Input.is_action_pressed("aim")
 
 	# Check if the player is "strafing" or "crouching"
 	if is_strafing \
