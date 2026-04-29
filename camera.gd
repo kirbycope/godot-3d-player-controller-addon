@@ -49,3 +49,7 @@ func camera_rotate_by_mouse(event: InputEvent) -> void:
 	# Rotate the player model along the y-axis by the new rotation value (for visual feedback)	
 	#player_model.rotate_y(deg_to_rad(relative_x * look_sensitivity_mouse))
 	#player_model.rotate_y(deg_to_rad(new_rotation_y))
+
+	# If the player is strafing, rotate the camera around the player
+	if player.is_strafing:
+		camera_base.rotate_y(deg_to_rad(new_rotation_y))
