@@ -107,7 +107,10 @@ func _process(delta: float) -> void:
 		animation_tree.set(locomotion_mode_path, 1.0)
 		if is_sprinting:
 			animation_tree.set(locomotion_strafe_blend_path, current_input_vector * 1.5)
-			speed = 7.5
+			if current_input_vector.y < -0.01:
+				speed = 5.0
+			else:
+				speed = 7.5
 		else:
 			animation_tree.set(locomotion_strafe_blend_path, current_input_vector)
 			speed = 5.0
@@ -115,7 +118,10 @@ func _process(delta: float) -> void:
 		animation_tree.set(locomotion_mode_path, 0.0)
 		if is_sprinting:
 			animation_tree.set(locomotion_forward_blend_path, current_input_vector * Vector2(1, 1.5))
-			speed = 7.5
+			if current_input_vector.y < -0.01:
+				speed = 5.0
+			else:
+				speed = 7.5
 		else:
 			animation_tree.set(locomotion_forward_blend_path, current_input_vector)
 			speed = 5.0
@@ -201,7 +207,7 @@ func _physics_process(delta: float) -> void:
 			var direction := (transform.basis * Vector3(0, 0, forward_input)).normalized()
 			velocity.x = direction.x * speed
 			velocity.z = direction.z * speed
-			target_input_vector = Vector2(input_vector.x, -input_vector.y)
+			target_input_vector = Vector2(input_vector.x, -input_vector.y).limit_length(1)
 		elif abs(yaw_delta) > turn_in_place_yaw_deadzone and Vector2(velocity.x, velocity.z).length() < 0.05:
 			# Camera-driven idle rotation should drive left/right turn clips in ForwardBlend.
 			target_input_vector = Vector2(clamp(yaw_delta * turn_in_place_blend_gain, -1.0, 1.0), 0.0)
@@ -214,6 +220,10 @@ func _physics_process(delta: float) -> void:
 		look_at(global_position - transform.basis.z, Vector3.UP)
 
 	# Move the body based on `velocity`
+	if Vector2(velocity.x, velocity.z).length() > speed:
+		var clamped = Vector2(velocity.x, velocity.z).limit_length(speed)
+		velocity.x = clamped.x
+		velocity.z = clamped.y
 	move_and_slide()
 
 

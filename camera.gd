@@ -6,7 +6,7 @@ enum Perspective {
 }
 
 @export var camera_base: Node3D ## Reference to the $CameraBase
-@export var look_sensitivity_controller := 50.0 ## Controller look sensitivity
+@export var look_sensitivity_controller := 150.0 ## Controller look sensitivity
 @export var look_sensitivity_mouse := 0.2 ## Mouse look sensitivity
 @export var perspective: Perspective = Perspective.THIRD_PERSON ## The current camera perspective
 @export var player: Player ## Reference to the [Player] node
