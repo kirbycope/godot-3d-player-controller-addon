@@ -38,12 +38,13 @@ extends CharacterBody3D
 var current_input_vector: Vector2 = Vector2.ZERO ## The smoothed [Input] vector used by animation blending
 var target_input_vector: Vector2 = Vector2.ZERO ## The raw [Input] vector target set by movement logic
 var current_velocity: Vector2 ## The current velocity of the player (no verticality)
-var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
+var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")#  * 1.5
 var is_crouching: bool = false ## Is the player "crouching"?
 var is_sliding: bool = false ## Is the player "sliding"?
 var is_sprinting: bool = false ## Is the player "sprinting"?
 var is_strafing: bool = false ## Is the player "strafing"?
 var jump_queued: bool ## Is the "jump" state queued (was the button _just_ pressed)
+var skip_landing_once: bool = false ## One-shot flag: when true, bypass Landing after Falling and return directly to Locomotion
 var standing_collision_height: float ## The standing capsule height used to restore after slide
 var standing_collision_y: float ## The standing collision shape local Y position
 var previous_rotation_y: float = 0.0 ## Cached yaw from previous physics frame for turn-in-place detection
@@ -159,6 +160,8 @@ func _physics_process(delta: float) -> void:
 	previous_rotation_y = rotation.y
 	var locomotion_state := playback.get_current_node()
 	var stance_state := stance_playback.get_current_node()
+	if skip_landing_once and is_on_floor() and locomotion_state == locomotion_state_name:
+		skip_landing_once = false
 
 	# Cache if the player is "crouching"
 	is_crouching = stance_state in [standing_to_crouched_state_name, crouching_state_name, crouched_to_standing_state_name]
@@ -229,11 +232,13 @@ func _physics_process(delta: float) -> void:
 
 ## Called when the "jump" (while standing) action is first executed. Transitions to the [jumping_state_name] state in the animation tree.
 func begin_standing_jump():
+	skip_landing_once = false
 	playback.travel(jumping_state_name)
 
 
 ## Called when the "jump" (while running) action is first executed. Transitions to the [running_jump_state_name] state in the animation tree.
 func begin_running_jump():
+	skip_landing_once = true
 	playback.travel(running_jump_state_name)
 
 

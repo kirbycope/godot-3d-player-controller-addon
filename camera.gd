@@ -41,7 +41,8 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		# Check if the mouse is captured or hidden -> Rotate camera
 		if Input.get_mouse_mode() in [Input.MOUSE_MODE_CAPTURED, Input.MOUSE_MODE_HIDDEN]:
-			camera_rotate_by_mouse(event)
+			#camera_rotate_by_mouse(event)
+			pass
 
 
 func _process(delta: float) -> void:

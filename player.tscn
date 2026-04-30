@@ -332,7 +332,7 @@ advance_mode = 2
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_u6ny4"]
 xfade_time = 0.3
 advance_mode = 2
-advance_expression = "is_on_floor() and velocity.length() < 0.05"
+advance_expression = "is_on_floor() and velocity.length() < 0.05 and not skip_landing_once"
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_gblby"]
 xfade_time = 0.3
@@ -355,7 +355,7 @@ advance_mode = 2
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_fminn"]
 xfade_time = 0.3
 advance_mode = 2
-advance_expression = "is_on_floor() and velocity.length() >= 0.05"
+advance_expression = "is_on_floor() and (velocity.length() >= 0.05 or skip_landing_once)"
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_qu57g"]
 
