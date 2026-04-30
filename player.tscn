@@ -415,7 +415,7 @@ transitions = ["Start", "UAL1_Idle", SubResource("AnimationNodeStateMachineTrans
 graph_offset = Vector2(187.40152, 0)
 
 [sub_resource type="AnimationNodeBlendTree" id="AnimationNodeBlendTree_5cw3m"]
-graph_offset = Vector2(-733.3333, -28)
+graph_offset = Vector2(-319.33334, 0)
 nodes/output/position = Vector2(276.66666, 273.33334)
 nodes/LocomotionStateMachine/node = SubResource("AnimationNodeStateMachine_b226b")
 nodes/LocomotionStateMachine/position = Vector2(-319.33334, 300)
@@ -472,17 +472,17 @@ metadata/_custom_type_script = "uid://dn4se40svqtym"
 [node name="PlayerModel" parent="Pivot/RootMotion" unique_id=1513730412 instance=ExtResource("3_45pxl")]
 
 [node name="GeneralSkeleton" parent="Pivot/RootMotion/PlayerModel" index="0" unique_id=124629806]
-bones/0/position = Vector3(-0.0016825252, 0.9899119, 0.003479221)
-bones/0/rotation = Quaternion(-0.032118652, -0.044167202, -0.026365412, 0.99815965)
-bones/1/rotation = Quaternion(0.032171935, 0.01707491, 0.023567218, 0.9990586)
-bones/2/rotation = Quaternion(0.010978171, 0.004582276, 0.014088832, 0.99983007)
-bones/3/rotation = Quaternion(0.010703168, 0.0047248756, 0.014086895, 0.9998324)
-bones/4/rotation = Quaternion(0.049507428, -0.0020329442, 0.0033785608, 0.99876595)
-bones/5/rotation = Quaternion(-0.07370709, 0.0076216306, -0.0018966814, 0.997249)
-bones/7/rotation = Quaternion(0.45813885, 0.49853274, 0.6344567, -0.37287882)
-bones/8/rotation = Quaternion(0.12573954, 0.80492115, -0.5668011, -0.12258874)
-bones/9/rotation = Quaternion(0.009434263, -0.7070439, 0.009434358, 0.7070439)
-bones/10/rotation = Quaternion(0.052480623, 0.47612, -0.01276151, 0.87772024)
+bones/0/position = Vector3(-0.0030425687, 0.98961186, 0.0048508286)
+bones/0/rotation = Quaternion(-0.035182737, -0.04372908, -0.025986053, 0.9980855)
+bones/1/rotation = Quaternion(0.032458168, 0.016870392, 0.023913413, 0.9990446)
+bones/2/rotation = Quaternion(0.010626328, 0.004366664, 0.014242814, 0.99983263)
+bones/3/rotation = Quaternion(0.010313499, 0.0044777375, 0.014240315, 0.99983543)
+bones/4/rotation = Quaternion(0.050655145, -0.0021924507, 0.0030571735, 0.9987092)
+bones/5/rotation = Quaternion(-0.07511769, 0.0066605327, -0.00120476, 0.9971518)
+bones/7/rotation = Quaternion(0.458228, 0.49864835, 0.6337587, -0.3738005)
+bones/8/rotation = Quaternion(0.12578422, 0.8047277, -0.56724054, -0.12177869)
+bones/9/rotation = Quaternion(0.009609568, -0.70704156, 0.009609683, 0.70704144)
+bones/10/rotation = Quaternion(0.052339207, 0.47553962, -0.012705592, 0.878044)
 bones/11/rotation = Quaternion(-0.23049821, 0.682892, 0.17169991, 0.67160124)
 bones/12/rotation = Quaternion(0.2014946, 0.20389192, -0.059591476, 0.9561783)
 bones/13/rotation = Quaternion(0.04001291, -0.0528761, -0.1285876, 0.9894788)
@@ -499,10 +499,10 @@ bones/25/rotation = Quaternion(0.15521277, -1.4901161e-07, -0.01590553, 0.987753
 bones/27/rotation = Quaternion(0.23386712, -0.0035056775, -0.049008526, 0.97102636)
 bones/28/rotation = Quaternion(0.15125789, -1.1920929e-07, -0.015500367, 0.98837286)
 bones/29/rotation = Quaternion(0.14349762, -8.940698e-08, -0.014705034, 0.9895415)
-bones/31/rotation = Quaternion(0.47463083, -0.47945225, -0.6388803, -0.36970693)
-bones/32/rotation = Quaternion(-0.14860883, 0.8281299, -0.4956, 0.21563183)
-bones/33/rotation = Quaternion(0.040882394, 0.705924, -0.040882356, 0.705924)
-bones/34/rotation = Quaternion(0.04226012, -0.5686882, 0.0360461, 0.8206756)
+bones/31/rotation = Quaternion(0.4748599, -0.47934866, -0.63843596, -0.3703141)
+bones/32/rotation = Quaternion(-0.1471201, 0.8280854, -0.49638605, 0.21501434)
+bones/33/rotation = Quaternion(0.04071945, 0.70593333, -0.040719457, 0.70593345)
+bones/34/rotation = Quaternion(0.041323703, -0.5695281, 0.036265608, 0.820131)
 bones/35/rotation = Quaternion(-0.24051939, -0.6719299, -0.18474646, 0.6756696)
 bones/36/rotation = Quaternion(0.23822677, -0.20985533, 0.051183645, 0.94688386)
 bones/37/rotation = Quaternion(0.045545384, 0.046079352, 0.16169313, 0.984712)
@@ -519,14 +519,14 @@ bones/49/rotation = Quaternion(0.15551054, 5.9604645e-08, 0.012668192, 0.9877530
 bones/51/rotation = Quaternion(0.22849345, 0.003403008, 0.04298061, 0.9725903)
 bones/52/rotation = Quaternion(0.15154804, 8.940697e-08, 0.012345463, 0.98837286)
 bones/53/rotation = Quaternion(0.14377284, 1.7881393e-07, 0.011711955, 0.9895414)
-bones/55/rotation = Quaternion(0.13692392, 0.08055074, 0.9844, -0.075632185)
-bones/56/rotation = Quaternion(-0.03801606, 0.9930208, -0.11124958, 0.009390723)
-bones/57/rotation = Quaternion(-0.04192319, 0.71106195, -0.70013046, 0.049506105)
+bones/55/rotation = Quaternion(0.13806851, 0.077111304, 0.9844571, -0.07638877)
+bones/56/rotation = Quaternion(-0.03793991, 0.99287117, -0.11273712, 0.007604945)
+bones/57/rotation = Quaternion(-0.042089313, 0.7101255, -0.7010488, 0.04980956)
 bones/58/rotation = Quaternion(-1.04873216e-07, 0.9990753, 0.042996258, -1.8274612e-08)
-bones/60/rotation = Quaternion(-0.091454156, -0.012559614, 0.9953264, -0.02835384)
-bones/61/rotation = Quaternion(0.03396553, 0.9940748, -0.06093491, -0.08335911)
-bones/62/rotation = Quaternion(0.008945687, 0.6807558, -0.73187166, -0.029248063)
-bones/63/rotation = Quaternion(-8.1161176e-08, 0.9980829, 0.061892673, -8.147168e-09)
+bones/60/rotation = Quaternion(-0.092263184, -0.01438722, 0.9952328, -0.028145056)
+bones/61/rotation = Quaternion(0.03440101, 0.99388415, -0.06381662, -0.08329714)
+bones/62/rotation = Quaternion(0.008917569, 0.6786562, -0.7338104, -0.029471084)
+bones/63/rotation = Quaternion(-3.95789e-08, 0.9981067, 0.06150604, -3.437574e-09)
 
 [node name="Alpha_Surface" parent="Pivot/RootMotion/PlayerModel/GeneralSkeleton" index="0" unique_id=1596646119]
 surface_material_override/0 = SubResource("StandardMaterial3D_fminn")
@@ -661,7 +661,7 @@ texture_normal = ExtResource("43_6b7s3")
 texture_pressed = ExtResource("44_yx0mh")
 shape = SubResource("ConvexPolygonShape2D_rs4nb")
 passby_press = true
-action = "ui_up"
+action = "move_up"
 
 [node name="DPadDown" type="TouchScreenButton" parent="Controls/BottomLeft" unique_id=2056079490]
 position = Vector2(192, 192)
@@ -670,7 +670,7 @@ texture_normal = ExtResource("43_6b7s3")
 texture_pressed = ExtResource("46_qrmb0")
 shape = SubResource("ConvexPolygonShape2D_kwisa")
 passby_press = true
-action = "ui_down"
+action = "move_down"
 
 [node name="DPadLeft" type="TouchScreenButton" parent="Controls/BottomLeft" unique_id=639652535]
 position = Vector2(192, 192)
@@ -679,7 +679,7 @@ texture_normal = ExtResource("43_6b7s3")
 texture_pressed = ExtResource("47_xf6l6")
 shape = SubResource("ConvexPolygonShape2D_qrmb0")
 passby_press = true
-action = "ui_left"
+action = "move_left"
 
 [node name="DPadRight" type="TouchScreenButton" parent="Controls/BottomLeft" unique_id=1638558906]
 position = Vector2(192, 192)
@@ -688,7 +688,7 @@ texture_normal = ExtResource("43_6b7s3")
 texture_pressed = ExtResource("48_xf6l6")
 shape = SubResource("ConvexPolygonShape2D_wwnia")
 passby_press = true
-action = "ui_right"
+action = "move_right"
 
 [node name="LeftStickBase" type="TextureRect" parent="Controls/BottomLeft" unique_id=753212055]
 layout_mode = 0

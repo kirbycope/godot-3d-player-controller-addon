@@ -80,21 +80,6 @@ func _input(event: InputEvent) -> void:
 	# If the player is on the floor...
 	if is_on_floor():
 
-		# If the "crouch" button was just pressed...
-		if Input.is_action_pressed("crouch") and not is_crouching:
-			# If the player has some velocity and the "sprint" button is held...
-			if velocity.length() > 0.1 and Input.is_action_pressed("sprint"):
-				# Queue a "running slide"
-				begin_running_slide()
-			# The player must be standing still
-			else:
-				# Queue start "crouch"
-				begin_crouch()
-		# If the "crouch" button was just released...
-		elif Input.is_action_just_released("crouch") and is_crouching: # and velocity.length() < 0.1:
-			# Queue "end crouch"
-			end_crouch()
-
 		# If the "jump" button was just pressed...
 		if Input.is_action_just_pressed("jump"):
 			# If the player has some velocity...
@@ -163,7 +148,7 @@ func _physics_process(delta: float) -> void:
 		jump_queued = false
 
 	# Get the vector from the player input
-	var input_vector := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
+	var input_vector := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	var yaw_delta := wrapf(rotation.y - previous_rotation_y, -PI, PI)
 	previous_rotation_y = rotation.y
 	var locomotion_state := playback.get_current_node()
@@ -171,6 +156,18 @@ func _physics_process(delta: float) -> void:
 
 	# Cache if the player is "crouching"
 	is_crouching = stance_state in [standing_to_crouched_state_name, crouching_state_name, crouched_to_standing_state_name]
+	var crouch_held := Input.is_action_pressed("crouch")
+
+	# Start crouch/slide on crouch press while grounded.
+	if is_on_floor() and Input.is_action_just_pressed("crouch") and not is_crouching:
+		if velocity.length() > 0.1 and Input.is_action_pressed("sprint"):
+			begin_running_slide()
+		else:
+			begin_crouch()
+
+	# If crouch key is no longer held, exit crouch as soon as crouch state is active.
+	if is_on_floor() and not crouch_held and is_crouching and stance_state != crouched_to_standing_state_name:
+		end_crouch()
 
 	# Cache if the player is "sliding"
 	is_sliding = locomotion_state == running_slide_state_name
