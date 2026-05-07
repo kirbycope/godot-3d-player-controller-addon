@@ -5,6 +5,7 @@ extends CharacterBody3D
 # https://www.youtube.com/watch?v=fBcKIxgJv-c&t=247s
 @export var animation_tree: AnimationTree
 @export var camera: Camera3D
+@export var use_root_motion_movement: bool = true ## If true, use AnimationTree root motion delta for horizontal movement.
 @export var locomotion_forward_blend_path: String = "parameters/LocomotionStateMachine/Locomotion/StanceStateMachine/Standing/ForwardBlend/blend_position"
 @export var locomotion_strafe_blend_path: String = "parameters/LocomotionStateMachine/Locomotion/StanceStateMachine/Standing/StrafeBlend/blend_position"
 @export var locomotion_crouch_blend_path: String = "parameters/LocomotionStateMachine/Locomotion/StanceStateMachine/Crouching/blend_position"
@@ -34,6 +35,7 @@ extends CharacterBody3D
 @export var crouched_to_standing_state_name: String = "CrouchedToStanding"
 
 @onready var physical_bone_simulator: PhysicalBoneSimulator3D = $Pivot/RootMotion/PlayerModel/GeneralSkeleton/PhysicalBoneSimulator3D
+@onready var pivot: Node3D = $Pivot
 
 var current_input_vector: Vector2 = Vector2.ZERO ## The smoothed [Input] vector used by animation blending
 var target_input_vector: Vector2 = Vector2.ZERO ## The raw [Input] vector target set by movement logic
@@ -237,11 +239,32 @@ func _physics_process(delta: float) -> void:
 		look_at(global_position - transform.basis.z, Vector3.UP)
 
 	# Move the body based on `velocity`
-	if Vector2(velocity.x, velocity.z).length() > speed:
+	var used_root_motion := _apply_root_motion_horizontal(delta)
+	if not used_root_motion and Vector2(velocity.x, velocity.z).length() > speed:
 		var clamped = Vector2(velocity.x, velocity.z).limit_length(speed)
 		velocity.x = clamped.x
 		velocity.z = clamped.y
 	move_and_slide()
+
+
+func _apply_root_motion_horizontal(delta: float) -> bool:
+	if not use_root_motion_movement:
+		return false
+	if animation_tree == null or animation_tree.root_motion_track == NodePath(""):
+		return false
+	if delta <= 0.0:
+		return false
+
+	var root_motion_delta := animation_tree.get_root_motion_position()
+	if root_motion_delta == Vector3.ZERO:
+		return false
+
+	# Root motion comes from skeleton/pivot orientation, not body transform.
+	var pivot_rotation := pivot.global_transform.basis.get_rotation_quaternion()
+	var root_motion_velocity := pivot_rotation * (root_motion_delta / delta)
+	velocity.x = root_motion_velocity.x
+	velocity.z = root_motion_velocity.z
+	return true
 
 
 ## Called when the "jump" (while standing) action is first executed. Transitions to the [jumping_state_name] state in the animation tree.
