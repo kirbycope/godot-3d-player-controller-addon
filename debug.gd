@@ -2,14 +2,15 @@ extends CanvasLayer
 
 @export var player: Player
 
-@onready var button_a: TouchScreenButton = $"../Controls/BottomRight/A"
-@onready var button_a_normal_texture: Texture2D = button_a.texture_normal
-@onready var button_b: TouchScreenButton = $"../Controls/BottomRight/B"
-@onready var button_b_normal_texture: Texture2D = button_b.texture_normal
-@onready var button_x: TouchScreenButton = $"../Controls/BottomRight/X"
-@onready var button_x_normal_texture: Texture2D = button_x.texture_normal
-@onready var button_y: TouchScreenButton = $"../Controls/BottomRight/Y"
-@onready var button_y_normal_texture: Texture2D = button_y.texture_normal
+@onready var controls: CanvasLayer = $"../Controls"
+
+var touch_buttons: Array[TouchScreenButton] = []
+var button_normal_textures: Dictionary = {}
+
+
+## Called when the node enters the scene tree for the first time.
+func _ready() -> void:
+	cache_touch_buttons(controls)
 
 
 ## Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -28,14 +29,25 @@ func _process(delta: float) -> void:
 		$States/is_sprinting.button_pressed = player.is_sprinting
 		$States/is_strafing.button_pressed = player.is_strafing
 
-		set_touch_button_state(button_a, "crouch", button_a_normal_texture)
-		set_touch_button_state(button_b, "sprint", button_b_normal_texture)
-		set_touch_button_state(button_x, "use", button_x_normal_texture)
-		set_touch_button_state(button_y, "jump", button_y_normal_texture)
+		for button in touch_buttons:
+			set_touch_button_state(button, button.action, button_normal_textures.get(button))
+
+
+func cache_touch_buttons(node: Node) -> void:
+	for child in node.get_children():
+		if child is TouchScreenButton:
+			var button := child as TouchScreenButton
+			touch_buttons.append(button)
+			button_normal_textures[button] = button.texture_normal
+		cache_touch_buttons(child)
 
 
 ## Swaps the "normal" texture with the "pressed" texture of a TouchScreenButton based on whether the corresponding action is pressed or not.
 func set_touch_button_state(button: TouchScreenButton, action: StringName, normal_texture: Texture2D) -> void:
+	if action.is_empty():
+		button.texture_normal = normal_texture
+		return
+
 	if Input.is_action_pressed(action) and button.texture_pressed:
 		button.texture_normal = button.texture_pressed
 	else:

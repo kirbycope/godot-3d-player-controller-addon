@@ -2,6 +2,7 @@ extends Camera3D
 
 enum Perspective {
 	FIRST_PERSON,
+	SECOND_PERSON,
 	THIRD_PERSON,
 }
 
@@ -45,6 +46,7 @@ func _input(event: InputEvent) -> void:
 			pass
 
 
+## Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return

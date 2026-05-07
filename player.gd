@@ -59,13 +59,20 @@ var stance_playback: AnimationNodeStateMachinePlayback:
 ## Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	# Ensure the player's [PhysicalBone3D]s do not collide with the [CollisionShape3D] required by the [CharacterBody3D]
-	physical_bone_simulator.physical_bones_add_collision_exception(self)
+	physical_bone_simulator.physical_bones_add_collision_exception(get_rid())
+
+	# Get the player's [CollisionShape3D]
 	var capsule_shape := $CollisionShape3D.shape as CapsuleShape3D
+	# If the player has a capsule collision shape...
 	if capsule_shape:
+		# Cache the standing collision height
 		standing_collision_height = capsule_shape.height
+	# There is no capsule collision shape, so use a default height value (magic number)
 	else:
 		standing_collision_height = 1.8
+	# Cache the standing collision Y-position
 	standing_collision_y = $CollisionShape3D.position.y
+	# Cache the initial Y-rotation
 	previous_rotation_y = rotation.y
 
 
@@ -80,19 +87,19 @@ func _input(event: InputEvent) -> void:
 
 	# If the player is on the floor...
 	if is_on_floor():
-
 		# If the "jump" button was just pressed...
 		if Input.is_action_just_pressed("jump"):
 			# If the player has some velocity...
 			if velocity.length() > 0.1:
 				# Queue a "running jump"
 				begin_running_jump()
-			# The player must be standing still
+			# The player must be standing still...
 			else:
 				# Queue a "standing jump"
 				begin_standing_jump()
 
 
+## Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
@@ -101,12 +108,19 @@ func _process(delta: float) -> void:
 	var blend_weight := clamp(transition_speed * delta, 0.0, 1.0)
 	current_input_vector = current_input_vector.lerp(target_input_vector, blend_weight)
 
+	# If the player is crouching...
 	if is_crouching:
+		# Set the animation tree to crouch blend path and apply the current input vector to the crouch blend space
 		animation_tree.set(locomotion_crouch_blend_path, current_input_vector)
+		# Set the movement speed to the crouch speed
 		speed = crouch_speed
+	# Otherwise, if the player is strafing...
 	elif is_strafing:
+		# Set the animation tree to strafe blend mode by passing a value of 1.0 to the locomotion mode blend parameter
 		animation_tree.set(locomotion_mode_path, 1.0)
+		# If the player is also sprinting...
 		if is_sprinting:
+			# Set the animation tree 
 			animation_tree.set(locomotion_strafe_blend_path, current_input_vector * 1.5)
 			if current_input_vector.y < -0.01:
 				speed = 5.0
@@ -155,7 +169,7 @@ func _physics_process(delta: float) -> void:
 		jump_queued = false
 
 	# Get the vector from the player input
-	var input_vector := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	var input_vector := Input.get_vector("move_left", "move_right", "move_up", "move_down", 0.2)
 	var yaw_delta := wrapf(rotation.y - previous_rotation_y, -PI, PI)
 	previous_rotation_y = rotation.y
 	var locomotion_state := playback.get_current_node()
