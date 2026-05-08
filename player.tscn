@@ -471,6 +471,31 @@ points = PackedVector2Array(9, 9, 24, 9, 24, -9, 9, -9, 0, 0)
 [sub_resource type="CircleShape2D" id="CircleShape2D_rs4nb"]
 radius = 24.0
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xf6l6"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+bg_color = Color(0.1, 0.1, 0.1, 0.6)
+draw_center = false
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+corner_radius_top_left = 10000
+corner_radius_top_right = 10000
+corner_radius_bottom_right = 10000
+corner_radius_bottom_left = 10000
+corner_detail = 20
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rs4nb"]
+bg_color = Color(1, 1, 1, 0.6)
+corner_radius_top_left = 10000
+corner_radius_top_right = 10000
+corner_radius_bottom_right = 10000
+corner_radius_bottom_left = 10000
+corner_detail = 20
+
 [sub_resource type="CircleShape2D" id="CircleShape2D_wwnia"]
 radius = 24.0
 
@@ -501,17 +526,17 @@ metadata/_custom_type_script = "uid://dn4se40svqtym"
 [node name="PlayerModel" parent="Pivot/RootMotion" unique_id=1513730412 instance=ExtResource("3_45pxl")]
 
 [node name="GeneralSkeleton" parent="Pivot/RootMotion/PlayerModel" index="0" unique_id=124629806]
-bones/0/position = Vector3(-0.002590231, 0.99032307, 0.0058858427)
-bones/0/rotation = Quaternion(-0.034206845, -0.045205608, -0.024714436, 0.998086)
-bones/1/rotation = Quaternion(0.026299996, 0.014031216, 0.02286021, 0.9992942)
-bones/2/rotation = Quaternion(0.009697123, 0.0035762605, 0.014214875, 0.99984556)
-bones/3/rotation = Quaternion(0.009323913, 0.0036291368, 0.014173394, 0.99984956)
-bones/4/rotation = Quaternion(0.045934066, -0.0014301726, 0.0047445847, 0.99893224)
-bones/5/rotation = Quaternion(-0.06761986, 0.011631015, -0.0022205764, 0.99764097)
-bones/7/rotation = Quaternion(0.4588346, 0.49962372, 0.62816674, -0.38112146)
-bones/8/rotation = Quaternion(0.12369244, 0.7998097, -0.5738117, -0.12547904)
-bones/9/rotation = Quaternion(0.010155919, -0.70703393, 0.0101561, 0.7070338)
-bones/10/rotation = Quaternion(0.053358592, 0.48078597, -0.016694264, 0.87505376)
+bones/0/position = Vector3(0.0032627517, 0.99012876, -0.0026145068)
+bones/0/rotation = Quaternion(-0.033535697, -0.047806174, -0.02767677, 0.9979098)
+bones/1/rotation = Quaternion(0.030221438, 0.013264247, 0.022815231, 0.99919486)
+bones/2/rotation = Quaternion(0.010482872, 0.0030420877, 0.013886433, 0.999844)
+bones/3/rotation = Quaternion(0.010259451, 0.0032391907, 0.013912334, 0.9998454)
+bones/4/rotation = Quaternion(0.04903462, -0.0012268331, 0.0044588256, 0.99878645)
+bones/5/rotation = Quaternion(-0.067173555, 0.011312899, -0.0012715451, 0.9976764)
+bones/7/rotation = Quaternion(0.4568163, 0.5006786, 0.63177586, -0.37616375)
+bones/8/rotation = Quaternion(0.123940356, 0.8026695, -0.5696748, -0.12582178)
+bones/9/rotation = Quaternion(0.009222902, -0.7070466, 0.0092229545, 0.7070466)
+bones/10/rotation = Quaternion(0.054065283, 0.4750961, -0.015451269, 0.87813556)
 bones/11/rotation = Quaternion(-0.23049821, 0.682892, 0.17169991, 0.67160124)
 bones/12/rotation = Quaternion(0.2014946, 0.20389192, -0.059591476, 0.9561783)
 bones/13/rotation = Quaternion(0.04001291, -0.0528761, -0.1285876, 0.9894788)
@@ -528,10 +553,10 @@ bones/25/rotation = Quaternion(0.15521277, -1.4901161e-07, -0.01590553, 0.987753
 bones/27/rotation = Quaternion(0.23386712, -0.0035056775, -0.049008526, 0.97102636)
 bones/28/rotation = Quaternion(0.15125789, -1.1920929e-07, -0.015500367, 0.98837286)
 bones/29/rotation = Quaternion(0.14349762, -8.940698e-08, -0.014705034, 0.9895415)
-bones/31/rotation = Quaternion(0.4778185, -0.47742337, -0.63431346, -0.37603575)
-bones/32/rotation = Quaternion(-0.15051986, 0.8278475, -0.4948828, 0.21703313)
-bones/33/rotation = Quaternion(0.04100978, 0.7059166, -0.041009862, 0.7059167)
-bones/34/rotation = Quaternion(0.042215075, -0.57156146, 0.036093794, 0.81867737)
+bones/31/rotation = Quaternion(0.47515267, -0.48011094, -0.6349489, -0.37491778)
+bones/32/rotation = Quaternion(-0.15183556, 0.82723016, -0.49750185, 0.21243395)
+bones/33/rotation = Quaternion(0.041257553, 0.7059021, -0.04125773, 0.7059021)
+bones/34/rotation = Quaternion(0.043174006, -0.57128555, 0.03590354, 0.8188283)
 bones/35/rotation = Quaternion(-0.24051939, -0.6719299, -0.18474646, 0.6756696)
 bones/36/rotation = Quaternion(0.23822677, -0.20985533, 0.051183645, 0.94688386)
 bones/37/rotation = Quaternion(0.045545384, 0.046079352, 0.16169313, 0.984712)
@@ -548,14 +573,14 @@ bones/49/rotation = Quaternion(0.15551054, 5.9604645e-08, 0.012668192, 0.9877530
 bones/51/rotation = Quaternion(0.22849345, 0.003403008, 0.04298061, 0.9725903)
 bones/52/rotation = Quaternion(0.15154804, 8.940697e-08, 0.012345463, 0.98837286)
 bones/53/rotation = Quaternion(0.14377284, 1.7881393e-07, 0.011711955, 0.9895414)
-bones/55/rotation = Quaternion(0.13475105, 0.07342223, 0.9854031, -0.073702306)
-bones/56/rotation = Quaternion(-0.0393339, 0.99353886, -0.105629854, 0.013257594)
-bones/57/rotation = Quaternion(-0.042600725, 0.7122513, -0.69882584, 0.050256286)
+bones/55/rotation = Quaternion(0.13478856, 0.08065747, 0.98478967, -0.07426831)
+bones/56/rotation = Quaternion(-0.038743697, 0.9930037, -0.11046019, 0.015533078)
+bones/57/rotation = Quaternion(-0.041020587, 0.71223295, -0.69907236, 0.048367884)
 bones/58/rotation = Quaternion(-1.04873216e-07, 0.9990753, 0.042996258, -1.8274612e-08)
-bones/60/rotation = Quaternion(-0.09271685, -0.01691666, 0.99519664, -0.026480503)
-bones/61/rotation = Quaternion(0.033494078, 0.994314, -0.05707163, -0.08343072)
-bones/62/rotation = Quaternion(0.010031292, 0.6810049, -0.73167837, -0.027902018)
-bones/63/rotation = Quaternion(9.0016734e-08, 0.99818027, 0.060301006, 1.1240385e-08)
+bones/60/rotation = Quaternion(-0.09139145, -0.009780285, 0.9953935, -0.027270988)
+bones/61/rotation = Quaternion(0.033328418, 0.9942439, -0.058712997, -0.08319257)
+bones/62/rotation = Quaternion(0.011226419, 0.6850793, -0.7278612, -0.02754062)
+bones/63/rotation = Quaternion(-9.285782e-08, 0.99801886, 0.0629154, -8.951767e-09)
 
 [node name="Alpha_Surface" parent="Pivot/RootMotion/PlayerModel/GeneralSkeleton" index="0" unique_id=1596646119]
 surface_material_override/0 = SubResource("StandardMaterial3D_fminn")
@@ -806,7 +831,7 @@ offset_bottom = 96.0
 scale = Vector2(2, 2)
 texture = ExtResource("43_ladmy")
 
-[node name="VirtualJoystick" type="VirtualJoystick" parent="Controls/BottomLeft" unique_id=740973537]
+[node name="LeftJoystick" type="VirtualJoystick" parent="Controls/BottomLeft" unique_id=740973537]
 layout_mode = 1
 anchors_preset = 2
 anchor_top = 1.0
@@ -816,12 +841,14 @@ offset_top = -243.0
 offset_right = 132.0
 offset_bottom = -203.0
 grow_vertical = 0
+theme_override_styles/normal_tip = SubResource("StyleBoxFlat_xf6l6")
+theme_override_styles/pressed_tip = SubResource("StyleBoxFlat_rs4nb")
 action_left = &"move_left"
 action_right = &"move_right"
 action_up = &"move_up"
 action_down = &"move_down"
 
-[node name="Label" type="Label" parent="Controls/BottomLeft/VirtualJoystick" unique_id=2050464283]
+[node name="Label" type="Label" parent="Controls/BottomLeft/LeftJoystick" unique_id=2050464283]
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
@@ -951,18 +978,20 @@ offset_bottom = 224.0
 scale = Vector2(2, 2)
 texture = ExtResource("43_ladmy")
 
-[node name="VirtualJoystick" type="VirtualJoystick" parent="Controls/BottomRight" unique_id=227267623]
+[node name="RightJoystick" type="VirtualJoystick" parent="Controls/BottomRight" unique_id=227267623]
 layout_mode = 0
 offset_left = 76.0
 offset_top = 204.0
 offset_right = 116.0
 offset_bottom = 244.0
+theme_override_styles/normal_tip = SubResource("StyleBoxFlat_xf6l6")
+theme_override_styles/pressed_tip = SubResource("StyleBoxFlat_rs4nb")
 action_left = &"look_left"
 action_right = &"look_right"
 action_up = &"look_up"
 action_down = &"look_down"
 
-[node name="Label" type="Label" parent="Controls/BottomRight/VirtualJoystick" unique_id=1916923726]
+[node name="Label" type="Label" parent="Controls/BottomRight/RightJoystick" unique_id=1916923726]
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5

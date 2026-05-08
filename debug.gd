@@ -3,14 +3,23 @@ extends CanvasLayer
 @export var player: Player
 
 @onready var controls: CanvasLayer = $"../Controls"
+@onready var left_joystick: VirtualJoystick = $"../Controls/BottomLeft/LeftJoystick"
+@onready var right_joystick: VirtualJoystick = $"../Controls/BottomRight/RightJoystick"
 
 var touch_buttons: Array[TouchScreenButton] = []
 var button_normal_textures: Dictionary = {}
+var joystick_normal_styleboxes: Dictionary = {}
+var joystick_pressed_styleboxes: Dictionary = {}
 
 
 ## Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	cache_touch_buttons(controls)
+	# cache joystick styleboxes once; helper reads from these maps
+	joystick_normal_styleboxes[left_joystick] = left_joystick.get_theme_stylebox("normal_tip", "VirtualJoystick")
+	joystick_normal_styleboxes[right_joystick] = right_joystick.get_theme_stylebox("normal_tip", "VirtualJoystick")
+	joystick_pressed_styleboxes[left_joystick] = left_joystick.get_theme_stylebox("pressed_tip", "VirtualJoystick")
+	joystick_pressed_styleboxes[right_joystick] = right_joystick.get_theme_stylebox("pressed_tip", "VirtualJoystick")
 
 
 ## Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -29,8 +38,16 @@ func _process(delta: float) -> void:
 		$States/is_sprinting.button_pressed = player.is_sprinting
 		$States/is_strafing.button_pressed = player.is_strafing
 
+		# Visually update the touch buttons to reflect the controller/keyboard input
 		for button in touch_buttons:
-			set_touch_button_state(button, button.action, button_normal_textures.get(button))
+			set_touch_button_state(
+				button, button.action,
+				button_normal_textures.get(button),
+			)
+
+		# Visually update the joysticks to reflect the controller/keyboard input
+		set_virtual_control_state(left_joystick)
+		set_virtual_control_state(right_joystick)
 
 
 func cache_touch_buttons(node: Node) -> void:
@@ -40,6 +57,29 @@ func cache_touch_buttons(node: Node) -> void:
 			touch_buttons.append(button)
 			button_normal_textures[button] = button.texture_normal
 		cache_touch_buttons(child)
+
+
+## Swaps the joystick "normal_tip" style based on whether related input actions are currently pressed.
+func set_virtual_control_state(
+	joystick: VirtualJoystick,
+	deadzone: float = 0.2
+) -> void:
+	var normal_stylebox: StyleBox = joystick_normal_styleboxes.get(joystick)
+	var pressed_stylebox: StyleBox = joystick_pressed_styleboxes.get(joystick)
+	if normal_stylebox == null or pressed_stylebox == null:
+		return
+
+	var input_vector := Input.get_vector(
+		joystick.action_left,
+		joystick.action_right,
+		joystick.action_up,
+		joystick.action_down,
+		deadzone
+	)
+	if input_vector.length() > deadzone:
+		joystick.add_theme_stylebox_override("normal_tip", pressed_stylebox)
+	else:
+		joystick.add_theme_stylebox_override("normal_tip", normal_stylebox)
 
 
 ## Swaps the "normal" texture with the "pressed" texture of a TouchScreenButton based on whether the corresponding action is pressed or not.
