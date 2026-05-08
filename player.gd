@@ -19,7 +19,7 @@ extends CharacterBody3D
 @export var turn_in_place_yaw_deadzone: float = 0.002 ## Minimum yaw delta (radians/frame) to trigger turn-in-place blend
 
 @export var crouch_speed: float = 2.5 ## The player's movement speed while crouching
-@export var crouch_exit_to_standing_speed_threshold: float = 0.1 ## If moving faster than this when uncrouching, skip transition clip
+@export var crouch_exit_to_standing_speed_threshold: float = 0.1 ## If moving faster than this when un-crouching, skip transition clip
 @export var jump_velocity: float = 4.5 ## The initial velocity applied to the player when a jump is executed
 @export var speed: float = 5.0 ## The player's movement speed while standing/walking (not crouching or sprinting)
 @export var slide_collision_height: float = 0.5 ## The capsule height used during running slide
@@ -49,7 +49,6 @@ var jump_queued: bool ## Is the "jump" state queued (was the button _just_ press
 var skip_landing_once: bool = false ## One-shot flag: when true, bypass Landing after Falling and return directly to Locomotion
 var standing_collision_height: float ## The standing capsule height used to restore after slide
 var standing_collision_y: float ## The standing collision shape local Y position
-var previous_rotation_y: float = 0.0 ## Cached yaw from previous physics frame for turn-in-place detection
 var playback: AnimationNodeStateMachinePlayback:
 	get:
 		return animation_tree.get(locomotion_state_playback_path) as AnimationNodeStateMachinePlayback
@@ -74,8 +73,6 @@ func _ready() -> void:
 		standing_collision_height = 1.8
 	# Cache the standing collision Y-position
 	standing_collision_y = $CollisionShape3D.position.y
-	# Cache the initial Y-rotation
-	previous_rotation_y = rotation.y
 
 
 ## Called when there is an input event.
@@ -148,14 +145,6 @@ func _physics_process(delta: float) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
 
-	# Ignore movement input while in grounded standing jump state
-	if is_on_floor() and playback.get_current_node() == jumping_state_name:
-		velocity.x = move_toward(velocity.x, 0, speed)
-		velocity.z = move_toward(velocity.z, 0, speed)
-		target_input_vector = Vector2.ZERO
-		move_and_slide()
-		return
-
 	# If the player is not on the floor...
 	if not is_on_floor():
 		# Apply gravity
@@ -172,8 +161,6 @@ func _physics_process(delta: float) -> void:
 
 	# Get the vector from the player input
 	var input_vector := Input.get_vector("move_left", "move_right", "move_up", "move_down", 0.2)
-	var yaw_delta := wrapf(rotation.y - previous_rotation_y, -PI, PI)
-	previous_rotation_y = rotation.y
 	var locomotion_state := playback.get_current_node()
 	var stance_state := stance_playback.get_current_node()
 	if skip_landing_once and is_on_floor() and locomotion_state == locomotion_state_name:
@@ -227,11 +214,6 @@ func _physics_process(delta: float) -> void:
 			velocity.x = direction.x * speed
 			velocity.z = direction.z * speed
 			target_input_vector = Vector2(input_vector.x, -input_vector.y).limit_length(1)
-		elif abs(yaw_delta) > turn_in_place_yaw_deadzone and Vector2(velocity.x, velocity.z).length() < 0.05:
-			# Camera-driven idle rotation should drive left/right turn clips in ForwardBlend.
-			target_input_vector = Vector2(clamp(yaw_delta * turn_in_place_blend_gain, -1.0, 1.0), 0.0)
-			velocity.x = 0.0
-			velocity.z = 0.0
 		else:
 			velocity.x = move_toward(velocity.x, 0, speed)
 			velocity.z = move_toward(velocity.z, 0, speed)
