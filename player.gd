@@ -1,8 +1,9 @@
 class_name Player
 extends CharacterBody3D
 
-const SPEED = 5.0
 const JUMP_VELOCITY = 4.5
+const TURN_SPEED = 8.0
+const SPEED = 5.0
 
 @export_group("Animation Tree")
 @export var animation_tree: AnimationTree
@@ -71,8 +72,11 @@ func _physics_process(delta: float) -> void:
 
 	# Get the input direction and handle the movement/deceleration
 	var input_dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
-	var direction := (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
+	var direction := camera_sprint_arm.global_transform.basis * Vector3(input_dir.x, 0, input_dir.y)
+	direction.y = 0
+	direction = direction.normalized()
 	if direction:
+		pivot.rotation.y = lerp_angle(pivot.rotation.y, atan2(direction.x, direction.z), TURN_SPEED * delta)
 		velocity.x = direction.x * SPEED
 		velocity.z = direction.z * SPEED
 	else:
