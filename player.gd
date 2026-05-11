@@ -25,6 +25,9 @@ const SPEED = 5.0
 @export var state_name_crouching_to_standing: String = "CrouchingToStanding"
 
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
+var playback: AnimationNodeStateMachinePlayback:
+	get:
+		return animation_tree.get(locomotion_state_playback_path) as AnimationNodeStateMachinePlayback
 
 @onready var camera_sprint_arm: SpringArm3D = $CameraSpringArm
 @onready var pivot: Node3D = $Pivot ## Rotates the character 180°, without affecting its parent [Player] node or being overwritten by its child [RootMotion] node
@@ -56,6 +59,18 @@ func _input(event: InputEvent) -> void:
 func _process(delta: float) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
+
+	# Get the currently running animation state
+	#var locomotion_state := playback.get_current_node()
+
+	# Get the vector from the player input
+	var input_vector := Input.get_vector("move_left", "move_right", "move_up", "move_down", 0.2)
+
+	# Always play forward animation based on input magnitude
+	var forward_vector := Vector2(0, input_vector.length())
+	
+	# Set the locomotion blend values in the [AnimationTree] using the player input vector
+	animation_tree.set(locomotion_forward_blend_path, forward_vector)
 
 
 func _physics_process(delta: float) -> void:
