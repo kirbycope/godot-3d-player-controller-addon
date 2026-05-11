@@ -54,10 +54,8 @@ func _input(event: InputEvent) -> void:
 	# Toggle mouse capture
 	if event.is_action_pressed("start"):
 		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-			print_debug("Showing mouse")
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		else:
-			print_debug("Hiding mouse")
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
