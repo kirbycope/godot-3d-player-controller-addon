@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://bwaf0jtyc2evu"
+path="res://.godot/imported/shouting_8_karen.wav-e9dea0718b4156a029b473983edf59eb.sample"
+
+[deps]
+
+source_file="res://addons/3d_player_controller/assets/dillon_becker/10 - Shouting/Female/Karen Cenon/shouting_8_karen.wav"
+dest_files=["res://.godot/imported/shouting_8_karen.wav-e9dea0718b4156a029b473983edf59eb.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://c2p3syrgg8tro"
+path="res://.godot/imported/completion_9_karen.wav-707eb2b9358c577d2a65dff45afa8f68.sample"
+
+[deps]
+
+source_file="res://addons/3d_player_controller/assets/dillon_becker/1 - Completion/Female/Karen Cenon/completion_9_karen.wav"
+dest_files=["res://.godot/imported/completion_9_karen.wav-707eb2b9358c577d2a65dff45afa8f68.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

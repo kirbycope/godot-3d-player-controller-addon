@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://dcj3yt5yre2e3"
+path="res://.godot/imported/greeting_7_karen.wav-d78e0b4c67e05919b8fc753ca7fc5fc3.sample"
+
+[deps]
+
+source_file="res://addons/3d_player_controller/assets/dillon_becker/3 - Greeting/Female/Karen Cenon/greeting_7_karen.wav"
+dest_files=["res://.godot/imported/greeting_7_karen.wav-d78e0b4c67e05919b8fc753ca7fc5fc3.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

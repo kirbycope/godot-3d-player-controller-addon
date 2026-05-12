@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://5p74whwo7dve"
+path="res://.godot/imported/miscellaneous_5_ian.wav-6a1aaaaf35e9cd3f9e9939b901043d39.sample"
+
+[deps]
+
+source_file="res://addons/3d_player_controller/assets/dillon_becker/6 - Miscellaneous/Male/Ian Lampert/miscellaneous_5_ian.wav"
+dest_files=["res://.godot/imported/miscellaneous_5_ian.wav-6a1aaaaf35e9cd3f9e9939b901043d39.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://ktygkriusm70"
+path="res://.godot/imported/confirmation_10_ian.wav-34fb202b717b11bd4a0633cb149d8fcb.sample"
+
+[deps]
+
+source_file="res://addons/3d_player_controller/assets/dillon_becker/2 - Confirmation/Male/Ian Lampert/confirmation_10_ian.wav"
+dest_files=["res://.godot/imported/confirmation_10_ian.wav-34fb202b717b11bd4a0633cb149d8fcb.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

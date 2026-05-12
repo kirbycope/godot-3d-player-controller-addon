@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://b4re5nqe8lc8y"
+path="res://.godot/imported/greeting_10_alex.wav-eaec5cc3043f046c8a56e0e210d90c3e.sample"
+
+[deps]
+
+source_file="res://addons/3d_player_controller/assets/dillon_becker/3 - Greeting/Male/Alex Brodie/greeting_10_alex.wav"
+dest_files=["res://.godot/imported/greeting_10_alex.wav-eaec5cc3043f046c8a56e0e210d90c3e.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

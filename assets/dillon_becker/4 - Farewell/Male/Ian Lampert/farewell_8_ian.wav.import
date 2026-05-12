@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://b5rqsyvx31b33"
+path="res://.godot/imported/farewell_8_ian.wav-8dbd3ddde562f712f35ffb5e0a626029.sample"
+
+[deps]
+
+source_file="res://addons/3d_player_controller/assets/dillon_becker/4 - Farewell/Male/Ian Lampert/farewell_8_ian.wav"
+dest_files=["res://.godot/imported/farewell_8_ian.wav-8dbd3ddde562f712f35ffb5e0a626029.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

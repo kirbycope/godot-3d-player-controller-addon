@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://bevdy8dfnltv4"
+path="res://.godot/imported/damage_9_ian.wav-68edc19d368c109d788dbb2906cdd955.sample"
+
+[deps]
+
+source_file="res://addons/3d_player_controller/assets/dillon_becker/7 - Damage/Male/Ian Lampert/damage_9_ian.wav"
+dest_files=["res://.godot/imported/damage_9_ian.wav-68edc19d368c109d788dbb2906cdd955.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://cy5bhqbfdkw1t"
+path="res://.godot/imported/grunting_8_ian.wav-7d435b7b8a37a79e0ee0619f02c3d409.sample"
+
+[deps]
+
+source_file="res://addons/3d_player_controller/assets/dillon_becker/9 - Grunting/Male/Ian Lampert/grunting_8_ian.wav"
+dest_files=["res://.godot/imported/grunting_8_ian.wav-7d435b7b8a37a79e0ee0619f02c3d409.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

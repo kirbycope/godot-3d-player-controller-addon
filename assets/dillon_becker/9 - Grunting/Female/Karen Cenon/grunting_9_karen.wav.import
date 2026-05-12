@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://71xmyt1n7n6f"
+path="res://.godot/imported/grunting_9_karen.wav-0f86132e03f451d5eff7bb39945a6f79.sample"
+
+[deps]
+
+source_file="res://addons/3d_player_controller/assets/dillon_becker/9 - Grunting/Female/Karen Cenon/grunting_9_karen.wav"
+dest_files=["res://.godot/imported/grunting_9_karen.wav-0f86132e03f451d5eff7bb39945a6f79.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

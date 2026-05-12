@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://bbfkehsecoira"
+path="res://.godot/imported/death_6_karen.wav-c741843fdf304c1000d2e2effb78b6e6.sample"
+
+[deps]
+
+source_file="res://addons/3d_player_controller/assets/dillon_becker/8 - Death/Female/Karen Cenon/death_6_karen.wav"
+dest_files=["res://.godot/imported/death_6_karen.wav-c741843fdf304c1000d2e2effb78b6e6.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://rhexdijidcd3"
+path="res://.godot/imported/miscellaneous_19_karen.wav-6c680c7fe64f46ca83f00136dbb0e502.sample"
+
+[deps]
+
+source_file="res://addons/3d_player_controller/assets/dillon_becker/6 - Miscellaneous/Female/Karen Cenon/miscellaneous_19_karen.wav"
+dest_files=["res://.godot/imported/miscellaneous_19_karen.wav-6c680c7fe64f46ca83f00136dbb0e502.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2
