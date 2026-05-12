@@ -31,12 +31,14 @@ func _process(delta: float) -> void:
 		$List/Velocity/X.text = "X: %.2f" % player.velocity.x
 		$List/Velocity/Y.text = "Y: %.2f" % player.velocity.y
 		$List/Velocity/Z.text = "Z: %.2f" % player.velocity.z
-		#$List/State/Value.text = str(player.playback.get_current_node())
+		$List/State/Value.text = str(player.playback_locomotion.get_current_node())
 
-		#$States/is_crouching.button_pressed = player.is_crouching
-		#$States/is_sliding.button_pressed = player.is_sliding
-		#$States/is_sprinting.button_pressed = player.is_sprinting
-		#$States/is_strafing.button_pressed = player.is_strafing
+		$States/is_crouching.button_pressed = player.is_crouching
+		$States/is_falling.button_pressed = player.is_falling
+		$States/is_jumping.button_pressed = player.is_jumping
+		$States/is_sliding.button_pressed = player.is_sliding
+		$States/is_sprinting.button_pressed = player.is_sprinting
+		$States/is_strafing.button_pressed = player.is_strafing
 
 		# Visually update the touch buttons to reflect the controller/keyboard input
 		for button in touch_buttons:
