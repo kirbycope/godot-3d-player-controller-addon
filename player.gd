@@ -44,7 +44,8 @@ var playback_stance: AnimationNodeStateMachinePlayback: # LocomotionStateMachine
 		return animation_tree.get(locomotion_stance_playback_path) as AnimationNodeStateMachinePlayback
 
 @onready var camera_sprint_arm: SpringArm3D = $CameraSpringArm
-@onready var pivot: Node3D = $Pivot ## Rotates the character 180°, without affecting its parent [Player] node or being overwritten by its child [RootMotion] node
+@onready var raycast_below: RayCast3D = $Pivot/Below
+@onready var pivot: Node3D = $Pivot ## Used to rotate the character 180°, without affecting its parent [Player] node or being overwritten by its child [RootMotion] node
 @onready var physical_bone_simulator: PhysicalBoneSimulator3D = $Pivot/RootMotion/PlayerModel/GeneralSkeleton/PhysicalBoneSimulator3D
 
 
@@ -60,7 +61,7 @@ func _input(event: InputEvent) -> void:
 	if not is_multiplayer_authority(): return
 
 	# Toggle mouse capture
-	if event.is_action_pressed("start"):
+	if event.is_action_pressed("start") or event.is_action_pressed("ui_cancel"):
 		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		else:
@@ -87,33 +88,8 @@ func _physics_process(delta: float) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
 
-	# Check if the player is not on a floor
-	if not is_on_floor():
-		# Apply gravity, opposite to the player's up direction
-		velocity -= up_direction * gravity * delta
-	# The player must be on a floor
-	else:
-		# [Re]set the "is_falling" flag
-		is_falling = false
-		# Check if the action "jump" was just pressed
-		if Input.is_action_just_pressed("jump"):
-			# Check if the player has some velocity
-			if velocity.length() > 0.1:
-				# Transition to the "running jump" state in the animation tree
-				begin_running_jump()
-			# The player must be standing still
-			else:
-				# Transition to the "standing jump" state in the animation tree
-				begin_standing_jump()
-
-	# Cache the player input vector
-	input_vector = Input.get_vector("move_left", "move_right", "move_up", "move_down", 0.2)
-
 	# Cache if the player is "crouching"
-	is_crouching = Input.is_action_pressed("crouch") and not is_sprinting
-
-	# Cache if the player is "falling"
-	is_falling = playback_locomotion_state == state_name_falling
+	is_crouching = playback_locomotion_state in [state_name_standing_to_crouching, state_name_crouching, state_name_crouching_to_standing]
 
 	# Cache if the player is "jumping"
 	is_jumping = playback_locomotion_state in [state_name_running_jump, state_name_standing_jump]
@@ -121,8 +97,49 @@ func _physics_process(delta: float) -> void:
 	# Cache if the player is "sliding"
 	is_sliding = playback_locomotion_state == state_name_running_slide
 
-	# Cache if the player is "sprinting"
-	is_sprinting = Input.is_action_pressed("sprint") and is_on_floor() and not is_crouching
+	if Input.is_action_pressed("sprint")\
+	and is_on_floor() \
+	and (abs(velocity.x) > 0.2 or abs(velocity.z) > 0.2)\
+	and not is_crouching \
+	and not is_sliding:
+		is_sprinting = true
+	else:
+		is_sprinting = false
+
+	# Check if the player is on a floor
+	if is_on_floor():
+		# [Re]set the "is_falling" flag
+		is_falling = false
+		# Check if the action "crouch" was just pressed
+		if Input.is_action_just_pressed("crouch") \
+		and is_sprinting:
+			# Check if the player has some velocity
+			if abs(velocity.x) > 0.2 or abs(velocity.z) > 0.2:
+				# Transition to the "sliding" state in the animation tree
+				begin_running_slide()
+			# The player must be standing still
+			else:
+				# Transition to the "crouching" state in the animation tree
+				begin_crouching()
+		# Check if the action "jump" was just pressed
+		if Input.is_action_just_pressed("jump"):
+			# Check if the player has some velocity
+			if abs(velocity.x) > 0.2 or abs(velocity.z) > 0.2:
+				# Transition to the "running jump" state in the animation tree
+				begin_running_jump()
+			# The player must be standing still
+			else:
+				# Transition to the "standing jump" state in the animation tree
+				begin_standing_jump()
+	# The player must not be on a floor
+	else:
+		# Check if the "below" raycast is not colliding and the player is not already flagged as "falling"
+		if not raycast_below.is_colliding() and not is_falling:
+			# Travel to the "falling" state in the animation tree
+			playback_locomotion.travel(state_name_falling)
+
+	# Cache the player input vector
+	input_vector = Input.get_vector("move_left", "move_right", "move_up", "move_down", 0.2)
 
 	# Determine the movement direction in 3D space by multiplying the input vector with the [Camera3D]'s [SpringArm3D] global transform basis, while ignoring the y component and normalizing the result
 	var direction := camera_sprint_arm.global_transform.basis * Vector3(input_vector.x, 0, input_vector.y)
@@ -133,25 +150,25 @@ func _physics_process(delta: float) -> void:
 	# Check if there is movement input
 	if direction.length() > 0.01:
 		# Rotate the player to face the movement direction
-		pivot.rotation.y = lerp_angle(pivot.rotation.y, atan2(direction.x, direction.z), TURN_SPEED * delta)
+		#pivot.rotation.y = lerp_angle(pivot.rotation.y, atan2(direction.x, direction.z), TURN_SPEED * delta)
+		pivot.rotation.y = atan2(direction.x, direction.z)
 
-	# Drive horizontal movement from animation root motion to avoid double-driving X/Z.
-	if animation_tree != null:
-		var root_motion_delta := animation_tree.get_root_motion_position()
-		var root_motion_world := pivot.global_transform.basis * root_motion_delta
-		var safe_delta := max(delta, 0.00001)
-		velocity.x = root_motion_world.x / safe_delta
-		velocity.z = root_motion_world.z / safe_delta
-	else:
-		velocity.x = 0.0
-		velocity.z = 0.0
+	var current_rotation = pivot.transform.basis.get_rotation_quaternion()
+	var root_motion_velocity = current_rotation * animation_tree.get_root_motion_position() / delta;
+
+	velocity = Vector3(root_motion_velocity.x, velocity.y, root_motion_velocity.z);
+
+	# Check if the player is not on a floor
+	if not is_on_floor():
+		# Apply gravity, opposite to the player's up direction
+		velocity -= up_direction * gravity * delta
 
 	# Move the body based on velocity
 	move_and_slide()
 
 
 ## Called when the "crouch" (while standing) action is first executed. Transitions to the [standing_to_crouched_state_name] state in the animation tree.
-func begin_crouch() -> void:
+func begin_crouching() -> void:
 	# Transition to the "standing to crouching" state in the animation tree
 	playback_stance.travel(state_name_standing_to_crouching)
 
@@ -166,6 +183,12 @@ func begin_standing_jump():
 func begin_running_jump():
 	# Transition to the "running jump" state in the animation tree
 	playback_locomotion.travel(state_name_running_jump)
+
+
+## Called when the "slide" (while running) action is first executed. Transitions to the [running_slide_state_name] state in the animation tree.
+func begin_running_slide():
+	# Transition to the "running slide" state in the animation tree
+	playback_locomotion.travel(state_name_running_slide)
 
 
 ## Called by the "jump start/mixamo_com" animation to execute the jump velocity at the correct time (0.5s) in the animation.
