@@ -17,6 +17,8 @@ const SPEED = 5.0
 @export_group("Animation State Names")
 @export var state_name_falling: String = "Falling"
 @export var state_name_locomotion: String = "Locomotion"
+@export var state_name_backflip: String = "Backflip"
+@export var state_name_paragliding: String = "Paragliding"
 @export var state_name_standing_jump: String = "Jumping"
 @export var state_name_running_jump: String = "RunningJump"
 @export var state_name_running_slide: String = "RunningSlide"
@@ -30,6 +32,7 @@ var input_vector: Vector2 = Vector2.ZERO ## The player's input vector (move_up, 
 var is_crouching: bool = false ## Is the player "crouching"?
 var is_falling: bool = false ## Is the player "falling"?
 var is_jumping: bool = false ## Is the player "jumping"?
+var is_paragliding: bool = false ## Is the player "paragliding"?
 var is_sliding: bool = false ## Is the player "sliding"?
 var is_sprinting: bool = false ## Is the player "sprinting"?
 var is_strafing: bool = false ## Is the player "strafing"?
@@ -69,6 +72,12 @@ func _input(event: InputEvent) -> void:
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		else:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	
+	# Check if the "focus" action was just pressed or released to toggle the "strafing" flag
+	if event.is_action_pressed("focus"):
+		is_strafing = true
+	elif event.is_action_released("focus"):
+		is_strafing = false
 
 
 ## Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -81,11 +90,26 @@ func _process(delta: float) -> void:
 
 	# Route input to "locomotion > crouch" blend while crouching so stance locomotion can move
 	if is_crouching:
+		animation_tree.set(locomotion_mode_path, 0.0)
 		animation_tree.set(locomotion_crouch_blend_path, forward_vector)
 		animation_tree.set(locomotion_forward_blend_path, Vector2.ZERO)
 		return
 
+	# Route input to "locomotion > strafe" blend while strafing so locomotion can move
+	if is_strafing:
+		animation_tree.set(locomotion_mode_path, 1.0)
+		animation_tree.set(
+			locomotion_strafe_blend_path, 
+			Vector2(
+				clamp(input_vector.x, -1, 1),
+				-clamp(input_vector.y, -1, 1),
+			)
+		)
+		animation_tree.set(locomotion_forward_blend_path, Vector2.ZERO)
+		return
+
 	# Route input to "locomotion > forward" blend so locomotion can move
+	animation_tree.set(locomotion_mode_path, 0.0)
 	if is_sprinting:
 		animation_tree.set(locomotion_forward_blend_path, forward_vector * Vector2(1, 1.5))
 	else:
@@ -110,7 +134,8 @@ func _physics_process(delta: float) -> void:
 	and is_on_floor() \
 	and (abs(velocity.x) > 0.2 or abs(velocity.z) > 0.2)\
 	and not is_crouching \
-	and not is_sliding:
+	and not is_sliding \
+	and not is_strafing:
 		is_sprinting = true
 	else:
 		is_sprinting = false
@@ -140,8 +165,11 @@ func _physics_process(delta: float) -> void:
 				begin_crouching()
 		# Check if the action "jump" was just pressed
 		if Input.is_action_just_pressed("jump"):
+			# Backflip when strafing and backpedaling.
+			if is_strafing and input_vector.y > 0.2:
+				begin_backflip()
 			# Check if the player has some velocity
-			if (abs(velocity.x) > 0.2 or abs(velocity.z) > 0.2):
+			elif (abs(velocity.x) > 0.2 or abs(velocity.z) > 0.2):
 				# Transition to the "running jump" state in the animation tree
 				begin_running_jump()
 			# The player must be standing still
@@ -151,9 +179,16 @@ func _physics_process(delta: float) -> void:
 	# The player must not be on a floor
 	else:
 		# Check if the "below" raycast is not colliding and the player is not already flagged as "falling"
-		if not raycast_below.is_colliding() and not is_falling:
+		if not raycast_below.is_colliding() \
+		and not is_falling \
+		and not is_jumping \
+		and not is_paragliding:
 			# Travel to the "falling" state in the animation tree
 			playback_locomotion.travel(state_name_falling)
+		# Check if "jump" if pressed while in the air
+		if Input.is_action_just_pressed("jump"):
+			# Transition to the "paragliding" state in the animation tree
+			begin_paragliding()
 
 	# Cache the player input vector
 	input_vector = Input.get_vector("move_left", "move_right", "move_up", "move_down", 0.2)
@@ -165,7 +200,7 @@ func _physics_process(delta: float) -> void:
 	# Normalize the direction vector to maintain consistent movement speed in all directions, including diagonally, and check if the resulting vector is not zero to prevent errors when applying movement
 	direction = direction.normalized()
 	# Check if there is movement input
-	if direction.length() > 0.01:
+	if direction.length() > 0.01 and not is_strafing:
 		# Rotate the player to face the movement direction
 		#pivot.rotation.y = lerp_angle(pivot.rotation.y, atan2(direction.x, direction.z), TURN_SPEED * delta)
 		pivot.rotation.y = atan2(direction.x, direction.z)
@@ -184,16 +219,26 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 
 
+## Called when the "jump" (while strafing and backpedaling) action is first executed. Transitions to the [backflip_state_name] state in the animation tree.
+func begin_backflip():
+	# Transition to the "backflip" state in the animation tree
+	playback_locomotion.travel(state_name_backflip)
+
+
 ## Called when the "crouch" (while standing) action is first executed. Transitions to the [standing_to_crouched_state_name] state in the animation tree.
 func begin_crouching() -> void:
 	# Transition to the "standing to crouching" state in the animation tree
 	playback_stance.travel(state_name_standing_to_crouching)
 
 
-## Called when the "jump" (while standing) action is first executed. Transitions to the [jumping_state_name] state in the animation tree.
-func begin_standing_jump():
-	# Transition to the "standing jump" state in the animation tree
-	playback_locomotion.travel(state_name_standing_jump)
+## Called when the "paraglide" (while in the air) action is first executed. Transitions to the [paragliding_state_name] state in the animation tree.
+func begin_paragliding() -> void:
+	# Transition to the "paragliding" state in the animation tree
+	playback_locomotion.travel(state_name_paragliding)
+	# Flag the player as "paragliding"
+	is_paragliding = true
+	# Reduce gravity while paragliding for better control and longer airtime
+	gravity = ProjectSettings.get_setting("physics/3d/default_gravity") / 4
 
 
 ## Called when the "jump" (while running) action is first executed. Transitions to the [running_jump_state_name] state in the animation tree.
@@ -206,6 +251,12 @@ func begin_running_jump():
 func begin_running_slide():
 	# Transition to the "running slide" state in the animation tree
 	playback_locomotion.travel(state_name_running_slide)
+
+
+## Called when the "jump" (while standing) action is first executed. Transitions to the [jumping_state_name] state in the animation tree.
+func begin_standing_jump():
+	# Transition to the "standing jump" state in the animation tree
+	playback_locomotion.travel(state_name_standing_jump)
 
 
 ## Called by the "jump start/mixamo_com" animation to execute the jump velocity at the correct time (0.5s) in the animation.
