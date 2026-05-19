@@ -4,6 +4,8 @@ extends CharacterBody3D
 const JUMP_VELOCITY = 4.5
 const TURN_SPEED = 8.0
 const SPEED = 5.0
+const FALL_AIR_CONTROL_MULTIPLIER = 0.5
+const LANDING_SKIP_LATERAL_SPEED = 0.75
 
 @export_group("Animation Tree")
 @export var animation_tree: AnimationTree
@@ -22,7 +24,7 @@ const SPEED = 5.0
 @export var state_name_standing_jump: String = "Jumping"
 @export var state_name_running_jump: String = "RunningJump"
 @export var state_name_running_slide: String = "RunningSlide"
-@export var state_name_standing: String = "Standing"
+#@export var state_name_standing: String = "Standing"
 @export var state_name_standing_to_crouching: String = "StandingToCrouching"
 @export var state_name_crouching: String = "Crouching"
 @export var state_name_crouching_to_standing: String = "CrouchingToStanding"
@@ -33,6 +35,7 @@ var is_crouching: bool = false ## Is the player "crouching"?
 var is_falling: bool = false ## Is the player "falling"?
 var is_jumping: bool = false ## Is the player "jumping"?
 var is_paragliding: bool = false ## Is the player "paragliding"?
+var is_running: bool = false ## Is the player "running"?
 var is_sliding: bool = false ## Is the player "sliding"?
 var is_sprinting: bool = false ## Is the player "sprinting"?
 var is_strafing: bool = false ## Is the player "strafing"?
@@ -50,9 +53,11 @@ var playback_stance_state: String:
 		return animation_tree.get(locomotion_stance_playback_path).get_current_node() as String
 
 @onready var camera_sprint_arm: SpringArm3D = $CameraSpringArm
-@onready var raycast_below: RayCast3D = $Pivot/Below
+@onready var raycast_below_paraglide: RayCast3D = $Pivot/BelowParaglide ## Used to detect if the player is high enough off the groud to paraglide
+@onready var raycast_below_step: RayCast3D = $Pivot/BelowStep ## Used to detect if the player is close enough to the floor to step down and not fall.
 @onready var pivot: Node3D = $Pivot ## Used to rotate the character 180°, without affecting its parent [Player] node or being overwritten by its child [RootMotion] node
 @onready var physical_bone_simulator: PhysicalBoneSimulator3D = $Pivot/RootMotion/PlayerModel/GeneralSkeleton/PhysicalBoneSimulator3D
+@onready var voice_male_effort_grunt: AudioStreamPlayer3D = $Audio/VoiceMaleEffortGrunt
 
 
 ## Called when the node enters the scene tree for the first time.
@@ -127,6 +132,12 @@ func _physics_process(delta: float) -> void:
 	# Cache if the player is "jumping"
 	is_jumping = playback_locomotion_state in [state_name_running_jump, state_name_standing_jump]
 
+	# Cache if the player is "paragliding"
+	#is_paragliding = playback_locomotion_state == state_name_paragliding
+
+	# Cache if the player is "running"
+	is_running = playback_locomotion_state == state_name_locomotion and input_vector.length() >= 0.99
+
 	# Cache if the player is "sliding"
 	is_sliding = playback_locomotion_state == state_name_running_slide
 
@@ -148,8 +159,16 @@ func _physics_process(delta: float) -> void:
 
 	# Check if the player is on a floor
 	if is_on_floor():
+		# Ignore landing animation when touching down from falling with enough lateral momentum.
+		var lateral_velocity := velocity - up_direction * velocity.dot(up_direction)
+		if playback_locomotion_state == state_name_falling and lateral_velocity.length() > LANDING_SKIP_LATERAL_SPEED:
+			playback_locomotion.travel(state_name_locomotion)
 		# [Re]set the "is_falling" flag
 		is_falling = false
+		if is_paragliding:
+			end_paragliding()
+			# Unflag the player as "paragliding"
+			is_paragliding = false
 		# Check if the action "crouch" was just pressed
 		if Input.is_action_pressed("crouch") \
 		and not is_crouching \
@@ -179,16 +198,21 @@ func _physics_process(delta: float) -> void:
 	# The player must not be on a floor
 	else:
 		# Check if the "below" raycast is not colliding and the player is not already flagged as "falling"
-		if not raycast_below.is_colliding() \
+		if not raycast_below_step.is_colliding() \
 		and not is_falling \
 		and not is_jumping \
 		and not is_paragliding:
 			# Travel to the "falling" state in the animation tree
 			playback_locomotion.travel(state_name_falling)
+			is_falling = true
 		# Check if "jump" if pressed while in the air
-		if Input.is_action_just_pressed("jump"):
+		if Input.is_action_just_pressed("jump") \
+		and not raycast_below_paraglide.is_colliding() \
+		and not is_paragliding:
 			# Transition to the "paragliding" state in the animation tree
 			begin_paragliding()
+			# Flag the player as "paragliding"
+			is_paragliding = true
 
 	# Cache the player input vector
 	input_vector = Input.get_vector("move_left", "move_right", "move_up", "move_down", 0.2)
@@ -205,10 +229,20 @@ func _physics_process(delta: float) -> void:
 		#pivot.rotation.y = lerp_angle(pivot.rotation.y, atan2(direction.x, direction.z), TURN_SPEED * delta)
 		pivot.rotation.y = atan2(direction.x, direction.z)
 
-	var current_rotation = pivot.transform.basis.get_rotation_quaternion()
-	var root_motion_velocity = current_rotation * animation_tree.get_root_motion_position() / delta;
-
-	velocity = Vector3(root_motion_velocity.x, velocity.y, root_motion_velocity.z);
+	# If airborne in fall/paraglide, use raw input direction for movement instead of root motion from the animation tree.
+	if is_paragliding or is_falling:
+		# Use raw input direction while airborne instead of animation root motion.
+		var paraglide_velocity := camera_sprint_arm.global_transform.basis * Vector3(input_vector.x, 0, input_vector.y)
+		paraglide_velocity.y = 0
+		if paraglide_velocity.length() > 0.01:
+			var air_control_speed := SPEED if is_paragliding else SPEED * FALL_AIR_CONTROL_MULTIPLIER
+			paraglide_velocity = paraglide_velocity.normalized() * air_control_speed
+		velocity = Vector3(paraglide_velocity.x, velocity.y, paraglide_velocity.z)
+	# Use root motion from the animation tree while grounded or jumping.
+	else:
+		var current_rotation = pivot.transform.basis.get_rotation_quaternion()
+		var root_motion_velocity = current_rotation * animation_tree.get_root_motion_position() / delta;
+		velocity = Vector3(root_motion_velocity.x, velocity.y, root_motion_velocity.z);
 
 	# Check if the player is not on a floor
 	if not is_on_floor():
@@ -235,11 +269,15 @@ func begin_crouching() -> void:
 func begin_paragliding() -> void:
 	# Transition to the "paragliding" state in the animation tree
 	playback_locomotion.travel(state_name_paragliding)
-	# Flag the player as "paragliding"
-	is_paragliding = true
 	# Reduce gravity while paragliding for better control and longer airtime
 	gravity = ProjectSettings.get_setting("physics/3d/default_gravity") / 4
 
+
+func end_paragliding() -> void:
+	# Transition to the "locomotion" state in the animation tree
+	playback_locomotion.travel(state_name_locomotion)
+	# Reset gravity to the default value
+	gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 ## Called when the "jump" (while running) action is first executed. Transitions to the [running_jump_state_name] state in the animation tree.
 func begin_running_jump():
@@ -263,3 +301,5 @@ func begin_standing_jump():
 func execute_jump_velocity():
 	# Apply jump velocity, opposite to the player's up direction
 	velocity += up_direction * JUMP_VELOCITY
+	# Play a random [short] effort grunt
+	voice_male_effort_grunt.play()
