@@ -42,6 +42,9 @@ var playback_locomotion_state: String:
 var playback_stance: AnimationNodeStateMachinePlayback: # LocomotionStateMachine > StanceStateMachine > playback
 	get:
 		return animation_tree.get(locomotion_stance_playback_path) as AnimationNodeStateMachinePlayback
+var playback_stance_state: String:
+	get :
+		return animation_tree.get(locomotion_stance_playback_path).get_current_node() as String
 
 @onready var camera_sprint_arm: SpringArm3D = $CameraSpringArm
 @onready var raycast_below: RayCast3D = $Pivot/Below
@@ -89,7 +92,7 @@ func _physics_process(delta: float) -> void:
 	if not is_multiplayer_authority(): return
 
 	# Cache if the player is "crouching"
-	is_crouching = playback_locomotion_state in [state_name_standing_to_crouching, state_name_crouching, state_name_crouching_to_standing]
+	is_crouching = playback_stance_state in [state_name_standing_to_crouching, state_name_crouching, state_name_crouching_to_standing]
 
 	# Cache if the player is "jumping"
 	is_jumping = playback_locomotion_state in [state_name_running_jump, state_name_standing_jump]
@@ -106,15 +109,23 @@ func _physics_process(delta: float) -> void:
 	else:
 		is_sprinting = false
 
+	# Check if the player released the "crouch" action and is still flagged as "crouching"
+	if not Input.is_action_pressed("crouch") \
+	and is_crouching:
+		# Transition to the "crouching to standing" state in the animation tree
+		playback_stance.travel(state_name_crouching_to_standing)
+
 	# Check if the player is on a floor
 	if is_on_floor():
 		# [Re]set the "is_falling" flag
 		is_falling = false
 		# Check if the action "crouch" was just pressed
-		if Input.is_action_just_pressed("crouch") \
-		and is_sprinting:
+		if Input.is_action_pressed("crouch") \
+		and not is_crouching \
+		and not is_sliding:
 			# Check if the player has some velocity
-			if abs(velocity.x) > 0.2 or abs(velocity.z) > 0.2:
+			if (abs(velocity.x) > 0.2 or abs(velocity.z) > 0.2) \
+			and is_sprinting:
 				# Transition to the "sliding" state in the animation tree
 				begin_running_slide()
 			# The player must be standing still
@@ -124,7 +135,7 @@ func _physics_process(delta: float) -> void:
 		# Check if the action "jump" was just pressed
 		if Input.is_action_just_pressed("jump"):
 			# Check if the player has some velocity
-			if abs(velocity.x) > 0.2 or abs(velocity.z) > 0.2:
+			if (abs(velocity.x) > 0.2 or abs(velocity.z) > 0.2):
 				# Transition to the "running jump" state in the animation tree
 				begin_running_jump()
 			# The player must be standing still
