@@ -79,13 +79,13 @@ func _process(delta: float) -> void:
 	# Play forward animation with lateral movement for leaning
 	var forward_vector := Vector2(0, input_vector.length())
 
-	# Route input to crouch blend while crouching so crouch locomotion can move laterally
+	# Route input to "locomotion > crouch" blend while crouching so stance locomotion can move
 	if is_crouching:
 		animation_tree.set(locomotion_crouch_blend_path, forward_vector)
 		animation_tree.set(locomotion_forward_blend_path, Vector2.ZERO)
 		return
 
-	# Set the locomotion blend values in the [AnimationTree] using the player input vector
+	# Route input to "locomotion > forward" blend so locomotion can move
 	if is_sprinting:
 		animation_tree.set(locomotion_forward_blend_path, forward_vector * Vector2(1, 1.5))
 	else:
