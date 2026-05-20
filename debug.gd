@@ -34,6 +34,7 @@ func _process(delta: float) -> void:
 		$List/State/Value.text = str(player.playback_locomotion.get_current_node())
 
 		$States/is_crouching.button_pressed = player.is_crouching
+		$States/is_exhausted.button_pressed = player.is_exhausted
 		$States/is_falling.button_pressed = player.is_falling
 		$States/is_jumping.button_pressed = player.is_jumping
 		$States/is_paragliding.button_pressed = player.is_paragliding

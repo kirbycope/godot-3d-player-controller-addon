@@ -16,6 +16,8 @@ dest_files=["res://.godot/imported/right strafe.fbx-1b7bae8ef1e23d5edcb151fdb038
 nodes/root_type=""
 nodes/root_name=""
 nodes/root_script=null
+mesh_library/use_node_names_as_mesh_names=false
+array_mesh/deduplicate_surfaces=true
 nodes/apply_root_scale=true
 nodes/root_scale=1.0
 nodes/import_as_skeleton_bones=false
@@ -2098,7 +2100,7 @@ _subresources={
 },
 "nodes": {
 "PATH:Skeleton3D": {
-"retarget/bone_map": Resource("uid://3m0gkows3yan", "res://addons/3d_player_controller/assets/mixamo/mixamo_bone_map.tres")
+"retarget/bone_map": Resource("uid://3m0gkows3yan", "res://addons/3d_player_controller/assets/mixamo/characters/mixamo_bone_map.tres")
 }
 }
 }

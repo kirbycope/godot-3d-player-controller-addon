@@ -24,7 +24,8 @@ const LANDING_SKIP_LATERAL_SPEED = 0.75
 @export var state_name_standing_jump: String = "Jumping"
 @export var state_name_running_jump: String = "RunningJump"
 @export var state_name_running_slide: String = "RunningSlide"
-#@export var state_name_standing: String = "Standing"
+@export var state_name_standing: String = "Standing"
+@export var state_name_standing_panting: String = "StandingPanting"
 @export var state_name_standing_to_crouching: String = "StandingToCrouching"
 @export var state_name_crouching: String = "Crouching"
 @export var state_name_crouching_to_standing: String = "CrouchingToStanding"
@@ -32,6 +33,7 @@ const LANDING_SKIP_LATERAL_SPEED = 0.75
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 var input_vector: Vector2 = Vector2.ZERO ## The player's input vector (move_up, move_down, move_left, move_right)
 var is_crouching: bool = false ## Is the player "crouching"?
+var is_exhausted: bool = false ## Is the player "exhausted"?
 var is_falling: bool = false ## Is the player "falling"?
 var is_jumping: bool = false ## Is the player "jumping"?
 var is_paragliding: bool = false ## Is the player "paragliding"?
@@ -52,16 +54,19 @@ var playback_stance_state: String:
 	get :
 		return animation_tree.get(locomotion_stance_playback_path).get_current_node() as String
 
-@onready var camera_sprint_arm: SpringArm3D = $CameraSpringArm
+@onready var camera_spring_arm: SpringArm3D = $CameraSpringArm
 @onready var raycast_below_paraglide: RayCast3D = $Pivot/BelowParaglide ## Used to detect if the player is high enough off the groud to paraglide
 @onready var raycast_below_step: RayCast3D = $Pivot/BelowStep ## Used to detect if the player is close enough to the floor to step down and not fall.
 @onready var pivot: Node3D = $Pivot ## Used to rotate the character 180°, without affecting its parent [Player] node or being overwritten by its child [RootMotion] node
 @onready var physical_bone_simulator: PhysicalBoneSimulator3D = $Pivot/RootMotion/PlayerModel/GeneralSkeleton/PhysicalBoneSimulator3D
+@onready var progress_bar_stamina: TextureProgressBar = $ProgressBarStamina
 @onready var voice_male_effort_grunt: AudioStreamPlayer3D = $Audio/VoiceMaleEffortGrunt
 
 
 ## Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+	# Ensure the [CameraSpringArm] doesn't collide with the player
+	camera_spring_arm.add_excluded_object(self.get_rid())
 	# Ensure the player's [PhysicalBone3D]s do not collide with the [CollisionShape3D] required by the [CharacterBody3D]
 	physical_bone_simulator.physical_bones_add_collision_exception(get_rid())
 
@@ -145,11 +150,20 @@ func _physics_process(delta: float) -> void:
 	and is_on_floor() \
 	and (abs(velocity.x) > 0.2 or abs(velocity.z) > 0.2)\
 	and not is_crouching \
+	and not is_exhausted \
 	and not is_sliding \
 	and not is_strafing:
-		is_sprinting = true
+		if progress_bar_stamina.value <= 0.0:
+			is_exhausted = true
+		else:
+			is_sprinting = true
 	else:
 		is_sprinting = false
+
+	if is_exhausted and velocity.length() < 0.2 and not is_crouching:
+		playback_stance.travel(state_name_standing_panting)
+	elif not is_exhausted and playback_stance_state == state_name_standing_panting:
+		playback_stance.travel(state_name_standing)
 
 	# Check if the player released the "crouch" action and is still flagged as "crouching"
 	if not Input.is_action_pressed("crouch") \
@@ -218,7 +232,7 @@ func _physics_process(delta: float) -> void:
 	input_vector = Input.get_vector("move_left", "move_right", "move_up", "move_down", 0.2)
 
 	# Determine the movement direction in 3D space by multiplying the input vector with the [Camera3D]'s [SpringArm3D] global transform basis, while ignoring the y component and normalizing the result
-	var direction := camera_sprint_arm.global_transform.basis * Vector3(input_vector.x, 0, input_vector.y)
+	var direction := camera_spring_arm.global_transform.basis * Vector3(input_vector.x, 0, input_vector.y)
 	# Zero out the y component of the direction to prevent vertical movement, and normalize the result to maintain consistent movement speed in all directions, including diagonally
 	direction.y = 0
 	# Normalize the direction vector to maintain consistent movement speed in all directions, including diagonally, and check if the resulting vector is not zero to prevent errors when applying movement
@@ -232,7 +246,7 @@ func _physics_process(delta: float) -> void:
 	# If airborne in fall/paraglide, use raw input direction for movement instead of root motion from the animation tree.
 	if is_paragliding or is_falling:
 		# Use raw input direction while airborne instead of animation root motion.
-		var paraglide_velocity := camera_sprint_arm.global_transform.basis * Vector3(input_vector.x, 0, input_vector.y)
+		var paraglide_velocity := camera_spring_arm.global_transform.basis * Vector3(input_vector.x, 0, input_vector.y)
 		paraglide_velocity.y = 0
 		if paraglide_velocity.length() > 0.01:
 			var air_control_speed := SPEED if is_paragliding else SPEED * FALL_AIR_CONTROL_MULTIPLIER

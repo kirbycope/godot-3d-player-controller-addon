@@ -3,13 +3,13 @@
 importer="animation_library"
 importer_version=1
 type="AnimationLibrary"
-uid="uid://cavaf8ou8x2ke"
-path="res://.godot/imported/crouched sneaking right.fbx-82fd9002e543434e54d97e56a0fc8f50.res"
+uid="uid://dbspqvswn0uhq"
+path="res://.godot/imported/orc idle.fbx-f6a3207552a8fca8f3e685a0b5c4d28d.res"
 
 [deps]
 
-source_file="res://addons/3d_player_controller/assets/mixamo/animations/locomotion_pack/crouched sneaking right.fbx"
-dest_files=["res://.godot/imported/crouched sneaking right.fbx-82fd9002e543434e54d97e56a0fc8f50.res"]
+source_file="res://addons/3d_player_controller/assets/mixamo/animations/locomotion_pack/orc idle.fbx"
+dest_files=["res://.godot/imported/orc idle.fbx-f6a3207552a8fca8f3e685a0b5c4d28d.res"]
 
 [params]
 
