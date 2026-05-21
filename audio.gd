@@ -55,7 +55,7 @@ func _process(delta: float) -> void:
 		check_under_player()
 
 
-func check_under_player():
+func check_under_player(): # TODO: Call in Locomotion animations?!
 	if player.raycast_below_step.is_colliding():
 		var stepping_on = player.raycast_below_step.get_collider()
 		if stepping_on.has_meta("step_sound"):
@@ -71,7 +71,7 @@ func check_under_player():
 func play_sound_limited(player: AudioStreamPlayer3D) -> void:
 	stop_all_footstep_sounds()
 	player.play()
-	await get_tree().create_timer(0.4).timeout
+	await get_tree().create_timer(randf_range(0.4, 0.8)).timeout
 	player.stop()
 
 
