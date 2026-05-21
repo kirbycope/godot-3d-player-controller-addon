@@ -2,7 +2,13 @@ extends Node3D
 
 @export var player: Player
 
-@onready var footsteps: AudioStreamPlayer3D = $Footsteps
+@onready var footstep_grass: AudioStreamPlayer3D = $FootstepGrass
+@onready var footstep_metal: AudioStreamPlayer3D = $FootstepMetal
+@onready var footstep_mud: AudioStreamPlayer3D = $FootstepMud
+@onready var footstep_sand: AudioStreamPlayer3D = $FootstepSand
+@onready var footstep_stone: AudioStreamPlayer3D = $FootstepStone
+@onready var footstep_water: AudioStreamPlayer3D = $FootstepWater
+@onready var footstep_wood: AudioStreamPlayer3D = $FootstepWood
 @onready var voice_male_effort_grunt: AudioStreamPlayer3D = $VoiceMaleEffortGrunt
 @onready var voice_male_breathing_jog: AudioStreamPlayer3D = $VoiceMaleBreathingJog
 @onready var voice_male_breathing_run: AudioStreamPlayer3D = $VoiceMaleBreathingRun
@@ -44,3 +50,36 @@ func _process(delta: float) -> void:
 
 	was_on_the_floor = player.is_on_floor()
 	cached_velocity = player.velocity
+
+	if was_on_the_floor and abs(cached_velocity).length() > 0.2:
+		check_under_player()
+
+
+func check_under_player():
+	if player.raycast_below_step.is_colliding():
+		var stepping_on = player.raycast_below_step.get_collider()
+		if stepping_on.has_meta("step_sound"):
+			var step_sound = stepping_on.get_meta("step_sound")
+			if step_sound:
+				if step_sound.to_lower() == "grass":
+					if not footstep_grass.playing:
+						play_sound_limited(footstep_grass)
+		else:
+			stop_all_footstep_sounds()
+
+
+func play_sound_limited(player: AudioStreamPlayer3D) -> void:
+	stop_all_footstep_sounds()
+	player.play()
+	await get_tree().create_timer(0.4).timeout
+	player.stop()
+
+
+func stop_all_footstep_sounds():
+	footstep_grass.stop()
+	footstep_metal.stop()
+	footstep_mud.stop()
+	footstep_sand.stop()
+	footstep_stone.stop()
+	footstep_water.stop()
+	footstep_wood.stop()
