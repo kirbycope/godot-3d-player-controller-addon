@@ -54,6 +54,7 @@ var playback_stance_state: String:
 	get :
 		return animation_tree.get(locomotion_stance_playback_path).get_current_node() as String
 
+@onready var audio: Node3D = $Audio ## The audio controller
 @onready var camera_spring_arm: SpringArm3D = $CameraSpringArm
 @onready var raycast_below_paraglide: RayCast3D = $Pivot/BelowParaglide ## Used to detect if the player is high enough off the groud to paraglide
 @onready var raycast_below_step: RayCast3D = $Pivot/BelowStep ## Used to detect if the player is close enough to the floor to step down and not fall.
@@ -177,6 +178,8 @@ func _physics_process(delta: float) -> void:
 		var lateral_velocity := velocity - up_direction * velocity.dot(up_direction)
 		if playback_locomotion_state == state_name_falling and lateral_velocity.length() > LANDING_SKIP_LATERAL_SPEED:
 			playback_locomotion.travel(state_name_locomotion)
+			# Play "landing" sound
+			play_footstep_sound()
 		# [Re]set the "is_falling" flag
 		is_falling = false
 		if is_paragliding:
@@ -317,3 +320,8 @@ func execute_jump_velocity():
 	velocity += up_direction * JUMP_VELOCITY
 	# Play a random [short] effort grunt
 	voice_male_effort_grunt.play()
+
+
+## Called by an animation to play footstep sounds based on the meta-data of the object the player is stepping on.
+func play_footstep_sound():
+	$Audio.check_under_player()

@@ -51,28 +51,24 @@ func _process(delta: float) -> void:
 	was_on_the_floor = player.is_on_floor()
 	cached_velocity = player.velocity
 
-	if was_on_the_floor and abs(cached_velocity).length() > 0.2:
-		check_under_player()
 
-
-func check_under_player(): # TODO: Call in Locomotion animations?!
-	if player.raycast_below_step.is_colliding():
-		var stepping_on = player.raycast_below_step.get_collider()
-		if stepping_on.has_meta("step_sound"):
-			var step_sound = stepping_on.get_meta("step_sound")
-			if step_sound:
-				if step_sound.to_lower() == "grass":
-					if not footstep_grass.playing:
-						play_sound_limited(footstep_grass)
-		else:
-			stop_all_footstep_sounds()
-
-
-func play_sound_limited(player: AudioStreamPlayer3D) -> void:
-	stop_all_footstep_sounds()
-	player.play()
-	await get_tree().create_timer(randf_range(0.4, 0.8)).timeout
-	player.stop()
+func check_under_player():
+	if was_on_the_floor and cached_velocity.length() > 0.2:
+		if player.raycast_below_step.is_colliding():
+			var stepping_on = player.raycast_below_step.get_collider()
+			if stepping_on.has_meta("step_sound"):
+				var step_sound = stepping_on.get_meta("step_sound")
+				if step_sound:
+					if step_sound.to_lower() == "grass":
+						if not footstep_grass.playing:
+							stop_all_footstep_sounds()
+							footstep_grass.play()
+					elif step_sound.to_lower() == "stone":
+						if not footstep_stone.playing:
+							stop_all_footstep_sounds()
+							footstep_stone.play()
+			else:
+				stop_all_footstep_sounds()
 
 
 func stop_all_footstep_sounds():
