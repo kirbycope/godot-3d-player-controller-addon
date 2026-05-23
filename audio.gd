@@ -9,6 +9,7 @@ extends Node3D
 @onready var footstep_stone: AudioStreamPlayer3D = $FootstepStone
 @onready var footstep_water: AudioStreamPlayer3D = $FootstepWater
 @onready var footstep_wood: AudioStreamPlayer3D = $FootstepWood
+@onready var sneak_step: AudioStreamPlayer3D = $SneakStep
 @onready var voice_male_effort_grunt: AudioStreamPlayer3D = $VoiceMaleEffortGrunt
 @onready var voice_male_breathing_jog: AudioStreamPlayer3D = $VoiceMaleBreathingJog
 @onready var voice_male_breathing_run: AudioStreamPlayer3D = $VoiceMaleBreathingRun
@@ -55,20 +56,22 @@ func _process(delta: float) -> void:
 func check_under_player():
 	if was_on_the_floor and cached_velocity.length() > 0.2:
 		if player.raycast_below_step.is_colliding():
-			var stepping_on = player.raycast_below_step.get_collider()
-			if stepping_on.has_meta("step_sound"):
-				var step_sound = stepping_on.get_meta("step_sound")
-				if step_sound:
-					if step_sound.to_lower() == "grass":
-						if not footstep_grass.playing:
-							stop_all_footstep_sounds()
-							footstep_grass.play()
-					elif step_sound.to_lower() == "stone":
-						if not footstep_stone.playing:
-							stop_all_footstep_sounds()
-							footstep_stone.play()
-			else:
+			if player.is_crouching:
 				stop_all_footstep_sounds()
+				sneak_step.play()
+			else:
+				var stepping_on = player.raycast_below_step.get_collider()
+				if stepping_on.has_meta("step_sound"):
+					var step_sound = stepping_on.get_meta("step_sound")
+					if step_sound:
+						stop_all_footstep_sounds()
+						if step_sound.to_lower() == "grass":
+							footstep_grass.play()
+						elif step_sound.to_lower() == "stone":
+							footstep_stone.play()
+				else:
+					# Stop all footstep sounds if none is defined for the surface
+					stop_all_footstep_sounds()
 
 
 func stop_all_footstep_sounds():
@@ -79,3 +82,4 @@ func stop_all_footstep_sounds():
 	footstep_stone.stop()
 	footstep_water.stop()
 	footstep_wood.stop()
+	sneak_step.stop()

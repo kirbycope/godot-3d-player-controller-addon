@@ -37,6 +37,7 @@ var is_exhausted: bool = false ## Is the player "exhausted"?
 var is_falling: bool = false ## Is the player "falling"?
 var is_jumping: bool = false ## Is the player "jumping"?
 var is_paragliding: bool = false ## Is the player "paragliding"?
+var is_ragdolling: bool = false ## Is the player "ragdolling"?
 var is_running: bool = false ## Is the player "running"?
 var is_sliding: bool = false ## Is the player "sliding"?
 var is_sprinting: bool = false ## Is the player "sprinting"?
@@ -58,6 +59,7 @@ var playback_stance_state: String:
 @onready var camera_spring_arm: SpringArm3D = $CameraSpringArm
 @onready var raycast_below_paraglide: RayCast3D = $Pivot/BelowParaglide ## Used to detect if the player is high enough off the groud to paraglide
 @onready var raycast_below_step: RayCast3D = $Pivot/BelowStep ## Used to detect if the player is close enough to the floor to step down and not fall.
+@onready var skeleton: Skeleton3D = $Pivot/RootMotion/PlayerModel/GeneralSkeleton
 @onready var pivot: Node3D = $Pivot ## Used to rotate the character 180°, without affecting its parent [Player] node or being overwritten by its child [RootMotion] node
 @onready var physical_bone_simulator: PhysicalBoneSimulator3D = $Pivot/RootMotion/PlayerModel/GeneralSkeleton/PhysicalBoneSimulator3D
 @onready var progress_bar_stamina: TextureProgressBar = $ProgressBarStamina
@@ -89,6 +91,29 @@ func _input(event: InputEvent) -> void:
 		is_strafing = true
 	elif event.is_action_released("focus"):
 		is_strafing = false
+
+	if event is InputEventKey \
+	and event.is_pressed() \
+	and event.keycode == Key.KEY_R:
+		if is_ragdolling:
+			print("Unragdolling player")
+			# Disable the ragdoll simulation to return control to the player
+			skeleton.get_node("PhysicalBoneSimulator3D").physical_bones_stop_simulation()
+			# Set collision layer to 0
+			skeleton.find_children("Physical Bone *","PhysicalBone3D", false)
+			for physical_bone in skeleton.find_children("Physical Bone *","PhysicalBone3D", false):
+				physical_bone.collision_layer[0] = true
+				physical_bone.collision_layer[1] = false
+			is_ragdolling = false
+		else:
+			print("Ragdolling player")
+			# Set collision layer to 1
+			skeleton.find_children("Physical Bone *","PhysicalBone3D", false)
+			for physical_bone in skeleton.find_children("Physical Bone *","PhysicalBone3D", false):
+				physical_bone.collision_layer[0] = false
+				physical_bone.collision_layer[1] = true
+			skeleton.get_node("PhysicalBoneSimulator3D").physical_bones_start_simulation()
+			is_ragdolling = true
 
 
 ## Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -132,21 +157,22 @@ func _physics_process(delta: float) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
 
-	# Cache if the player is "crouching"
+	# Cache if the player is "crouching" 🧎
 	is_crouching = playback_stance_state in [state_name_standing_to_crouching, state_name_crouching, state_name_crouching_to_standing]
 
-	# Cache if the player is "jumping"
+	# Cache if the player is "jumping" 🤾
 	is_jumping = playback_locomotion_state in [state_name_running_jump, state_name_standing_jump]
 
-	# Cache if the player is "paragliding"
+	# Cache if the player is "paragliding" 🪂
 	#is_paragliding = playback_locomotion_state == state_name_paragliding
 
-	# Cache if the player is "running"
+	# Cache if the player is "running" 🏃🏻‍♀️‍➡️
 	is_running = playback_locomotion_state == state_name_locomotion and input_vector.length() >= 0.99
 
-	# Cache if the player is "sliding"
+	# Cache if the player is "sliding" 🛝
 	is_sliding = playback_locomotion_state == state_name_running_slide
 
+	# ᯓ🏃🏻‍♀️‍➡️ [sprint]
 	if Input.is_action_pressed("sprint")\
 	and is_on_floor() \
 	and (abs(velocity.x) > 0.2 or abs(velocity.z) > 0.2)\
@@ -161,12 +187,13 @@ func _physics_process(delta: float) -> void:
 	else:
 		is_sprinting = false
 
+	# 😮‍💨 [exhausted]
 	if is_exhausted and velocity.length() < 0.2 and not is_crouching:
 		playback_stance.travel(state_name_standing_panting)
 	elif not is_exhausted and playback_stance_state == state_name_standing_panting:
 		playback_stance.travel(state_name_standing)
 
-	# Check if the player released the "crouch" action and is still flagged as "crouching"
+	# 🧎 [crouch]
 	if not Input.is_action_pressed("crouch") \
 	and is_crouching:
 		# Transition to the "crouching to standing" state in the animation tree
@@ -186,7 +213,8 @@ func _physics_process(delta: float) -> void:
 			end_paragliding()
 			# Unflag the player as "paragliding"
 			is_paragliding = false
-		# Check if the action "crouch" was just pressed
+
+		# 🧎 [crouch] was just pressed
 		if Input.is_action_pressed("crouch") \
 		and not is_crouching \
 		and not is_sliding:
@@ -199,8 +227,9 @@ func _physics_process(delta: float) -> void:
 			else:
 				# Transition to the "crouching" state in the animation tree
 				begin_crouching()
-		# Check if the action "jump" was just pressed
-		if Input.is_action_just_pressed("jump"):
+
+		# 🤾 [jump] was just pressed
+		if Input.is_action_just_pressed("jump") and not is_ragdolling:
 			# Backflip when strafing and backpedaling.
 			if is_strafing and input_vector.y > 0.2:
 				begin_backflip()
@@ -212,6 +241,7 @@ func _physics_process(delta: float) -> void:
 			else:
 				# Transition to the "standing jump" state in the animation tree
 				begin_standing_jump()
+
 	# The player must not be on a floor
 	else:
 		# Check if the "below" raycast is not colliding and the player is not already flagged as "falling"
@@ -247,7 +277,9 @@ func _physics_process(delta: float) -> void:
 		pivot.rotation.y = atan2(direction.x, direction.z)
 
 	# If airborne in fall/paraglide, use raw input direction for movement instead of root motion from the animation tree.
-	if is_paragliding or is_falling:
+	if is_ragdolling:
+		velocity = up_direction * velocity.dot(up_direction)
+	elif is_paragliding or is_falling:
 		# Use raw input direction while airborne instead of animation root motion.
 		var paraglide_velocity := camera_spring_arm.global_transform.basis * Vector3(input_vector.x, 0, input_vector.y)
 		paraglide_velocity.y = 0
