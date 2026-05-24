@@ -15,11 +15,15 @@ const LANDING_SKIP_LATERAL_SPEED = 0.75
 @export var locomotion_mode_path: String = "parameters/LocomotionStateMachine/Locomotion/StanceStateMachine/Standing/LocomotionSwitch/blend_amount"
 @export var locomotion_stance_playback_path: String = "parameters/LocomotionStateMachine/Locomotion/StanceStateMachine/playback"
 @export var locomotion_state_playback_path: String = "parameters/LocomotionStateMachine/playback"
+@export var hanging_free_move_blend_path: String = "parameters/LocomotionStateMachine/Hanging/FreeMove/blend_position"
+@export var hanging_braced_move_blend_path: String = "parameters/LocomotionStateMachine/Hanging/BracedMove/blend_position"
+@export var hanging_blend_path: String = "parameters/LocomotionStateMachine/Hanging/HangingSwitch/blend_amount"
 
 @export_group("Animation State Names")
 @export var state_name_falling: String = "Falling"
 @export var state_name_locomotion: String = "Locomotion"
 @export var state_name_backflip: String = "Backflip"
+@export var state_name_hanging: String = "Hanging"
 @export var state_name_paragliding: String = "Paragliding"
 @export var state_name_standing_jump: String = "Jumping"
 @export var state_name_running_jump: String = "RunningJump"
@@ -35,6 +39,7 @@ var input_vector: Vector2 = Vector2.ZERO ## The player's input vector (move_up, 
 var is_crouching: bool = false ## Is the player "crouching"?
 var is_exhausted: bool = false ## Is the player "exhausted"?
 var is_falling: bool = false ## Is the player "falling"?
+var is_hanging: bool = false ## Is the player "hanging"?
 var is_jumping: bool = false ## Is the player "jumping"?
 var is_paragliding: bool = false ## Is the player "paragliding"?
 var is_ragdolling: bool = false ## Is the player "ragdolling"?
@@ -57,6 +62,9 @@ var playback_stance_state: String:
 
 @onready var audio: Node3D = $Audio ## The audio controller
 @onready var camera_spring_arm: SpringArm3D = $CameraSpringArm
+@onready var raycast_top: RayCast3D = $Pivot/Top
+@onready var raycast_head: RayCast3D = $Pivot/Head
+@onready var raycast_chest: RayCast3D = $Pivot/Chest
 @onready var raycast_below_paraglide: RayCast3D = $Pivot/BelowParaglide ## Used to detect if the player is high enough off the groud to paraglide
 @onready var raycast_below_step: RayCast3D = $Pivot/BelowStep ## Used to detect if the player is close enough to the floor to step down and not fall.
 @onready var skeleton: Skeleton3D = $Pivot/RootMotion/PlayerModel/GeneralSkeleton
@@ -151,6 +159,12 @@ func _process(delta: float) -> void:
 	else:
 		animation_tree.set(locomotion_forward_blend_path, forward_vector)
 
+	# Blend between hanging free (0.0) and hanging braced (1.0).
+	animation_tree.set(hanging_blend_path, 1.0 if raycast_chest.is_colliding() else 0.0)
+	var hanging_lateral_blend := clamp(input_vector.x, -1.0, 1.0) if is_hanging else 0.0
+	animation_tree.set(hanging_free_move_blend_path, hanging_lateral_blend)
+	animation_tree.set(hanging_braced_move_blend_path, hanging_lateral_blend)
+
 
 ## Called once on each physics tick, and allows Nodes to synchronize their logic with physics ticks.
 func _physics_process(delta: float) -> void:
@@ -162,6 +176,9 @@ func _physics_process(delta: float) -> void:
 
 	# Cache if the player is "jumping" 🤾
 	is_jumping = playback_locomotion_state in [state_name_running_jump, state_name_standing_jump]
+
+	# Cache if the player is "hanging"
+	is_hanging = playback_locomotion_state == state_name_hanging
 
 	# Cache if the player is "paragliding" 🪂
 	#is_paragliding = playback_locomotion_state == state_name_paragliding
@@ -209,6 +226,10 @@ func _physics_process(delta: float) -> void:
 			play_footstep_sound()
 		# [Re]set the "is_falling" flag
 		is_falling = false
+		# Stop hanging if the player has landed while hanging
+		if is_hanging:
+			end_hanging()
+		# Stop paragliding if the player has landed while paragliding
 		if is_paragliding:
 			end_paragliding()
 			# Unflag the player as "paragliding"
@@ -244,10 +265,25 @@ func _physics_process(delta: float) -> void:
 
 	# The player must not be on a floor
 	else:
+		# 🤾 [jump] was just pressed
+		if Input.is_action_just_pressed("jump") and not is_ragdolling:
+			print("Jump pressed while airborne")
+			if not is_hanging \
+			and raycast_top.is_colliding() \
+			and raycast_head.is_colliding():
+				print("Start hanging")
+				begin_hanging()
+				is_hanging = true
+				is_falling = false
+			#elif is_hanging and not can_hang():
+			#	end_hanging_to_falling()
+			#	is_falling = true
+
 		# Check if the "below" raycast is not colliding and the player is not already flagged as "falling"
 		if not raycast_below_step.is_colliding() \
 		and not is_falling \
 		and not is_jumping \
+		and not is_hanging \
 		and not is_paragliding:
 			# Travel to the "falling" state in the animation tree
 			playback_locomotion.travel(state_name_falling)
@@ -255,6 +291,7 @@ func _physics_process(delta: float) -> void:
 		# Check if "jump" if pressed while in the air
 		if Input.is_action_just_pressed("jump") \
 		and not raycast_below_paraglide.is_colliding() \
+		and not is_hanging \
 		and not is_paragliding:
 			# Transition to the "paragliding" state in the animation tree
 			begin_paragliding()
@@ -271,7 +308,9 @@ func _physics_process(delta: float) -> void:
 	# Normalize the direction vector to maintain consistent movement speed in all directions, including diagonally, and check if the resulting vector is not zero to prevent errors when applying movement
 	direction = direction.normalized()
 	# Check if there is movement input
-	if direction.length() > 0.01 and not is_strafing:
+	if direction.length() > 0.01 \
+	and not is_strafing \
+	and not is_hanging:
 		# Rotate the player to face the movement direction
 		#pivot.rotation.y = lerp_angle(pivot.rotation.y, atan2(direction.x, direction.z), TURN_SPEED * delta)
 		pivot.rotation.y = atan2(direction.x, direction.z)
@@ -279,6 +318,8 @@ func _physics_process(delta: float) -> void:
 	# If airborne in fall/paraglide, use raw input direction for movement instead of root motion from the animation tree.
 	if is_ragdolling:
 		velocity = up_direction * velocity.dot(up_direction)
+	elif is_hanging:
+		velocity = Vector3.ZERO
 	elif is_paragliding or is_falling:
 		# Use raw input direction while airborne instead of animation root motion.
 		var paraglide_velocity := camera_spring_arm.global_transform.basis * Vector3(input_vector.x, 0, input_vector.y)
@@ -294,7 +335,7 @@ func _physics_process(delta: float) -> void:
 		velocity = Vector3(root_motion_velocity.x, velocity.y, root_motion_velocity.z);
 
 	# Check if the player is not on a floor
-	if not is_on_floor():
+	if not is_on_floor() and not is_hanging:
 		# Apply gravity, opposite to the player's up direction
 		velocity -= up_direction * gravity * delta
 
@@ -322,11 +363,45 @@ func begin_paragliding() -> void:
 	gravity = ProjectSettings.get_setting("physics/3d/default_gravity") / 4
 
 
+func begin_hanging() -> void:
+	# Stop paragliding if currently paragliding
+	if is_paragliding:
+		# Reset gravity to the default value
+		gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
+		is_paragliding = false
+	# Determine if the player should enter the "hanging braced" state based on if there is a wall to the player's front to brace against, by checking if the "head" or "chest" raycasts are colliding with a wall while the "top" raycast is colliding with a ceiling.
+	var hanging_braced := raycast_chest.is_colliding()
+	# Set the "hanging" blend parameter to 1.0 to transition to the hanging state in the animation tree, and set the "hanging braced move" blend parameter to 1.0 if the player should be hanging
+	playback_locomotion.set("parameters/hanging_blend", 1.0)
+	if hanging_braced:
+		playback_locomotion.set("parameters/hanging_braced_move", 1.0)
+	else:
+		playback_locomotion.set("parameters/hanging_braced_move", 0.0)
+	# Transition to the "hanging" state in the animation tree.
+	playback_locomotion.travel(state_name_hanging)
+	# Disable gravity while hanging
+	gravity = 0
+	velocity = Vector3.ZERO
+
+
+func end_hanging() -> void:
+	# Return to locomotion when grounded.
+	playback_locomotion.travel(state_name_locomotion)
+	# Reset gravity to the default value
+	gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
+
+
+func end_hanging_to_falling() -> void:
+	# Return to falling when ledge contact is lost.
+	playback_locomotion.travel(state_name_falling)
+
+
 func end_paragliding() -> void:
 	# Transition to the "locomotion" state in the animation tree
 	playback_locomotion.travel(state_name_locomotion)
 	# Reset gravity to the default value
 	gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
+
 
 ## Called when the "jump" (while running) action is first executed. Transitions to the [running_jump_state_name] state in the animation tree.
 func begin_running_jump():
