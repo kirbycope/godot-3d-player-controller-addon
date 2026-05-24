@@ -38,6 +38,7 @@ const LANDING_SKIP_LATERAL_SPEED = 0.75
 
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 var input_vector: Vector2 = Vector2.ZERO ## The player's input vector (move_up, move_down, move_left, move_right)
+var climbing_surface_normal: Vector3 = Vector3.ZERO
 var is_climbing: bool = false ## Is the player "climbing"?
 var is_crouching: bool = false ## Is the player "crouching"?
 var is_exhausted: bool = false ## Is the player "exhausted"?
@@ -351,6 +352,21 @@ func _physics_process(delta: float) -> void:
 		# Rotate the player to face the movement direction
 		#pivot.rotation.y = lerp_angle(pivot.rotation.y, atan2(direction.x, direction.z), TURN_SPEED * delta)
 		pivot.rotation.y = atan2(direction.x, direction.z)
+	elif is_climbing and raycast_chest.is_colliding():
+		# While climbing, keep facing the wall surface from the chest raycast.
+		var wall_normal := raycast_chest.get_collision_normal()
+		wall_normal.y = 0
+		if wall_normal.length() > 0.001:
+			wall_normal = wall_normal.normalized()
+			if climbing_surface_normal == Vector3.ZERO:
+				climbing_surface_normal = wall_normal
+			else:
+				# Smooth corner normal changes to avoid back-and-forth snapping.
+				climbing_surface_normal = climbing_surface_normal.lerp(wall_normal, clamp(delta * 12.0, 0.0, 1.0)).normalized()
+			var target_yaw := atan2(-climbing_surface_normal.x, -climbing_surface_normal.z)
+			pivot.rotation.y = lerp_angle(pivot.rotation.y, target_yaw, clamp(delta * 12.0, 0.0, 1.0))
+	else:
+		climbing_surface_normal = Vector3.ZERO
 
 	# If airborne in fall/paraglide, use raw input direction for movement instead of root motion from the animation tree.
 	if is_ragdolling:
