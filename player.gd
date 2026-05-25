@@ -194,10 +194,13 @@ func _physics_process(delta: float) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
 
-	# Cache if the player is "running" 🏃🏻‍♀️‍➡️
+	# Cache if the player is "crouching" 
+	is_crouching = playback_stance_state in [state_name_standing_to_crouching, state_name_crouching, state_name_crouching_to_standing]
+
+	# Cache if the player is "running"
 	is_running = playback_locomotion_state == state_name_locomotion and input_vector.length() >= 0.99
 
-	# Cache if the player is "sliding" 🛝
+	# Cache if the player is "sliding"
 	is_sliding = playback_locomotion_state == state_name_running_slide
 
 	# ᯓ🏃🏻‍♀️‍➡️ [sprint]
