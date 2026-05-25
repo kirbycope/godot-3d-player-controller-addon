@@ -16,6 +16,7 @@ const LANDING_SKIP_LATERAL_SPEED = 0.75
 @export var locomotion_stance_playback_path: String = "parameters/LocomotionStateMachine/Locomotion/StanceStateMachine/playback"
 @export var locomotion_state_playback_path: String = "parameters/LocomotionStateMachine/playback"
 @export var climbing_move_blend_path: String = "parameters/LocomotionStateMachine/Climbing/blend_position"
+@export var climbing_time_scale_path: String = "parameters/LocomotionStateMachine/Climbing/TimeScale/scale"
 @export var hanging_free_move_blend_path: String = "parameters/LocomotionStateMachine/Hanging/FreeMove/blend_position"
 @export var hanging_braced_move_blend_path: String = "parameters/LocomotionStateMachine/Hanging/BracedMove/blend_position"
 @export var hanging_blend_path: String = "parameters/LocomotionStateMachine/Hanging/HangingSwitch/blend_amount"
@@ -184,8 +185,10 @@ func _process(delta: float) -> void:
 
 	# Blend between hanging free (0.0) and hanging braced (1.0)
 	animation_tree.set(hanging_blend_path, 1.0 if raycast_chest.is_colliding() else 0.0)
+	var climbing_sprint := Input.is_action_pressed("sprint") and is_climbing and not is_exhausted
 	var climbing_blend := Vector2(clamp(input_vector.x, -1.0, 1.0), -clamp(input_vector.y, -1.0, 1.0)) if is_climbing else Vector2.ZERO
 	animation_tree.set(climbing_move_blend_path, climbing_blend)
+	animation_tree.set(climbing_time_scale_path, 2.0 if climbing_sprint else 1.0)
 	var hanging_lateral_blend := clamp(input_vector.x, -1.0, 1.0) if is_hanging else 0.0
 	animation_tree.set(hanging_free_move_blend_path, hanging_lateral_blend)
 	animation_tree.set(hanging_braced_move_blend_path, hanging_lateral_blend)
@@ -391,7 +394,8 @@ func _physics_process(delta: float) -> void:
 		velocity = up_direction * velocity.dot(up_direction)
 	elif is_climbing:
 		var current_rotation = pivot.transform.basis.get_rotation_quaternion()
-		velocity = current_rotation * animation_tree.get_root_motion_position() / delta
+		var sprint_multiplier := 2.0 if Input.is_action_pressed("sprint") and not is_exhausted else 1.0
+		velocity = current_rotation * animation_tree.get_root_motion_position() / delta * sprint_multiplier
 	elif is_hanging:
 		var current_rotation = pivot.transform.basis.get_rotation_quaternion()
 		var root_motion_velocity = current_rotation * animation_tree.get_root_motion_position() / delta
