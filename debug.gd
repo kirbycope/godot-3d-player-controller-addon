@@ -33,6 +33,7 @@ func _process(delta: float) -> void:
 		$List/Velocity/Z.text = "Z: %.2f" % player.velocity.z
 		$List/State/Value.text = str(player.playback_locomotion.get_current_node())
 
+		$States/is_climbing.button_pressed = player.is_climbing
 		$States/is_crouching.button_pressed = player.is_crouching
 		$States/is_exhausted.button_pressed = player.is_exhausted
 		$States/is_falling.button_pressed = player.is_falling

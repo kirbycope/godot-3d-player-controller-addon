@@ -194,21 +194,6 @@ func _physics_process(delta: float) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
 
-	# Cache if the player is "crouching" 🧎
-	is_crouching = playback_stance_state in [state_name_standing_to_crouching, state_name_crouching, state_name_crouching_to_standing]
-
-	# Cache if the player is "jumping" 🤾
-	is_jumping = playback_locomotion_state in [state_name_running_jump, state_name_standing_jump]
-
-	# Cache if the player is "climbing"
-	is_climbing = playback_locomotion_state == state_name_climbing
-
-	# Cache if the player is "hanging"
-	is_hanging = playback_locomotion_state == state_name_hanging
-
-	# Cache if the player is "paragliding" 🪂
-	#is_paragliding = playback_locomotion_state == state_name_paragliding
-
 	# Cache if the player is "running" 🏃🏻‍♀️‍➡️
 	is_running = playback_locomotion_state == state_name_locomotion and input_vector.length() >= 0.99
 
@@ -234,6 +219,7 @@ func _physics_process(delta: float) -> void:
 	if is_exhausted and velocity.length() < 0.2 and not is_crouching:
 		playback_stance.travel(state_name_standing_panting)
 	elif not is_exhausted and playback_stance_state == state_name_standing_panting:
+		is_exhausted = false
 		playback_stance.travel(state_name_standing)
 
 	# 🧎 [crouch]
@@ -250,19 +236,19 @@ func _physics_process(delta: float) -> void:
 			playback_locomotion.travel(state_name_locomotion)
 			# Play "landing" sound
 			play_footstep_sound()
-		# [Re]set the "is_falling" flag
+		# Flag the player as not "falling"
 		is_falling = false
+		# Flag the player as not "jumping"
+		is_jumping = false
 		# Stop climbing if the player has landed while climbing
 		if is_climbing:
-			end_climbing()
+			climbing_stop()
 		# Stop hanging if the player has landed while hanging
 		if is_hanging:
-			end_hanging()
+			hanging_stop()
 		# Stop paragliding if the player has landed while paragliding
 		if is_paragliding:
-			end_paragliding()
-			# Unflag the player as "paragliding"
-			is_paragliding = false
+			paragliding_stop()
 
 		# 🧎 [crouch] was just pressed
 		if Input.is_action_pressed("crouch") \
@@ -276,7 +262,7 @@ func _physics_process(delta: float) -> void:
 			# The player must be standing still
 			else:
 				# Transition to the "crouching" state in the animation tree
-				begin_crouching()
+				crouching_start()
 
 		# 🤾 [jump] was just pressed
 		if Input.is_action_just_pressed("jump") and not is_ragdolling:
@@ -299,9 +285,10 @@ func _physics_process(delta: float) -> void:
 		and raycast_head.is_colliding() \
 		and not Input.is_action_pressed("crouch") \
 		and not is_hanging:
-			print_debug("Beginning << " + state_name_hanging + ">> ...")
+			# Flag the player as not "climbing"
+			is_climbing = false
 			# Transition to the "hanging" state in the animation tree
-			begin_hanging()
+			hanging_start()
 			# Flag the player as "hanging"
 			is_hanging = true
 
@@ -313,21 +300,26 @@ func _physics_process(delta: float) -> void:
 			# Travel to "climbing" state?
 			if raycast_head.is_colliding() \
 			and raycast_chest.is_colliding() \
-			and not is_climbing:
-				print_debug("Beginning << " + state_name_climbing + ">> ...")
+			and not is_climbing \
+			and not is_paragliding:
+				# Flag the player as not "falling"
+				is_falling = false
+				# Flag the player as not "jumping"
+				is_jumping = false
 				# Transition to the "climbing" state in the animation tree
-				begin_climbing()
-				# Flag the player as "climbing"
-				is_climbing = true
+				climbing_start()
 
 			# Travel to "paragliding" state?
 			elif not raycast_below_paraglide.is_colliding() \
+			and not is_climbing \
+			and not is_hanging \
 			and not is_paragliding:
-				print_debug("Beginning << " + state_name_paragliding + ">> ...")
+				# Flag the player as not "falling"
+				is_falling = false
+				# Flag the player as not "jumping"
+				is_jumping = false
 				# Transition to the "paragliding" state in the animation tree
-				begin_paragliding()
-				# Flag the player as "paragliding"
-				is_paragliding = true
+				paragliding_start()
 
 		# Check if the "below" raycast is not colliding and the player is not already flagged as "falling"
 		if not raycast_below_step.is_colliding() \
@@ -378,7 +370,7 @@ func _physics_process(delta: float) -> void:
 		velocity = up_direction * velocity.dot(up_direction)
 	elif is_climbing:
 		var right_dir = pivot.global_transform.basis.x
-		velocity = (right_dir * -input_vector.x + up_direction * -input_vector.y) * (SPEED * 0.25)
+		velocity = (right_dir * -input_vector.x + up_direction * -input_vector.y) * (SPEED * 0.25 * (2.0 if Input.is_action_pressed("sprint") else 1.0))
 	elif is_hanging:
 		var right_dir = pivot.global_transform.basis.x
 		velocity = right_dir * -input_vector.x * (SPEED * 0.25)
@@ -411,37 +403,60 @@ func begin_backflip():
 	playback_locomotion.travel(state_name_backflip)
 
 
-## Called when the "climb" action is first executed. Transitions to the [climbing_state_name] state in the animation tree.
-func begin_climbing() -> void:
-	if is_paragliding:
-		gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
-		is_paragliding = false
+func climbing_start() -> void:
 	# Transition to the "climbing" state in the animation tree.
 	playback_locomotion.travel(state_name_climbing)
-	gravity = 0
+	# Disable gravity while climbing
+	gravity = 0.0
+	# Zero out the player's velocity
 	velocity = Vector3.ZERO
+	# Flag the player as "climbing"
+	is_climbing = true
 
 
-## Called when the "crouch" (while standing) action is first executed. Transitions to the [standing_to_crouched_state_name] state in the animation tree.
-func begin_crouching() -> void:
+func climbing_stop() -> void:
+	# Transition to the "locomotion" state in the animation tree.
+	playback_locomotion.travel(state_name_locomotion)
+	# Reset gravity to the default value
+	gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
+	# Flag the player as not "climbing"
+	is_climbing = false
+
+
+func crouching_start() -> void:
 	# Transition to the "standing to crouching" state in the animation tree
 	playback_stance.travel(state_name_standing_to_crouching)
+	# Flag the player as "crouching"
+	is_crouching = true
 
 
-## Called when the "paraglide" (while in the air) action is first executed. Transitions to the [paragliding_state_name] state in the animation tree.
-func begin_paragliding() -> void:
+func crouching_stop() -> void:
+	# Transition to the "crouching to standing" state in the animation tree
+	playback_stance.travel(state_name_crouching_to_standing)
+	# Flag the player as not "crouching"
+	is_crouching = false
+
+
+func paragliding_start() -> void:
 	# Transition to the "paragliding" state in the animation tree
 	playback_locomotion.travel(state_name_paragliding)
 	# Reduce gravity while paragliding for better control and longer airtime
 	gravity = ProjectSettings.get_setting("physics/3d/default_gravity") / 4
+	# Flag the player as "paragliding"
+	is_paragliding = true
 
 
-func begin_hanging() -> void:
-	# Stop paragliding if currently paragliding
-	if is_paragliding:
-		# Reset gravity to the default value
-		gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
-		is_paragliding = false
+func paragliding_stop() -> void:
+	# Transition to the "locomotion" state in the animation tree
+	playback_locomotion.travel(state_name_locomotion)
+	# Reset gravity to the default value
+	gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
+	# Flag the player as not "paragliding"
+	is_paragliding = false
+
+
+## {current_state} -> Hanging (free or braced).
+func hanging_start() -> void:
 	# Determine if the player should enter the "hanging braced" state based on if there is a wall to the player's front to brace against, by checking if the "head" or "chest" raycasts are colliding with a wall while the "top" raycast is colliding with a ceiling.
 	var hanging_braced := raycast_chest.is_colliding()
 	# Set the "hanging" blend parameter to 1.0 to transition to the hanging state in the animation tree, and set the "hanging braced move" blend parameter to 1.0 if the player should be hanging
@@ -453,11 +468,12 @@ func begin_hanging() -> void:
 	# Transition to the "hanging" state in the animation tree.
 	playback_locomotion.travel(state_name_hanging)
 	# Disable gravity while hanging
-	gravity = 0
+	gravity = 0.0
 	velocity = Vector3.ZERO
 
 
-func end_hanging() -> void:
+## [Hanging] -> Locomotion.
+func hanging_stop() -> void:
 	# Return to locomotion when grounded.
 	playback_locomotion.travel(state_name_locomotion)
 	# Reset gravity to the default value
@@ -468,29 +484,23 @@ func end_hanging_to_falling() -> void:
 	# Return to falling when ledge contact is lost.
 	playback_locomotion.travel(state_name_falling)
 	gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
-
-
-func end_climbing() -> void:
-	playback_locomotion.travel(state_name_locomotion)
-	gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
+	# Flag the player as not "hanging"
+	is_hanging = false
 
 
 func end_climbing_to_hanging() -> void:
 	playback_locomotion.travel(state_name_hanging)
-	gravity = 0
+	gravity = 0.0
 	velocity = Vector3.ZERO
+	# Flag the player as not "climbing"
+	is_climbing = false
 
 
 func end_climbing_to_falling() -> void:
 	playback_locomotion.travel(state_name_falling)
 	gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
-
-
-func end_paragliding() -> void:
-	# Transition to the "locomotion" state in the animation tree
-	playback_locomotion.travel(state_name_locomotion)
-	# Reset gravity to the default value
-	gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
+	# Flag the player as not "climbing"
+	is_climbing = false
 
 
 ## Called when the "jump" (while running) action is first executed. Transitions to the [running_jump_state_name] state in the animation tree.
@@ -513,10 +523,11 @@ func begin_standing_jump():
 
 ## Called by the "jump start/mixamo_com" animation to execute the jump velocity at the correct time (0.5s) in the animation.
 func execute_jump_velocity():
-	# Apply jump velocity, opposite to the player's up direction
-	velocity += up_direction * JUMP_VELOCITY
-	# Play a random [short] effort grunt
-	voice_male_effort_grunt.play()
+	if is_on_floor():
+		# Apply jump velocity, opposite to the player's up direction
+		velocity += up_direction * JUMP_VELOCITY
+		# Play a random [short] effort grunt
+		voice_male_effort_grunt.play()
 
 
 ## Called by an animation to play footstep sounds based on the meta-data of the object the player is stepping on.
