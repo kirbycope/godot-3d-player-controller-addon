@@ -184,14 +184,15 @@ func _process(delta: float) -> void:
 		animation_tree.set(locomotion_forward_blend_path, forward_vector)
 
 	# Blend between hanging free (0.0) and hanging braced (1.0)
-	animation_tree.set(hanging_blend_path, 1.0 if raycast_chest.is_colliding() else 0.0)
-	var climbing_sprint := Input.is_action_pressed("sprint") and is_climbing and not is_exhausted
-	var climbing_blend := Vector2(clamp(input_vector.x, -1.0, 1.0), -clamp(input_vector.y, -1.0, 1.0)) if is_climbing else Vector2.ZERO
-	animation_tree.set(climbing_move_blend_path, climbing_blend)
-	animation_tree.set(climbing_time_scale_path, 2.0 if climbing_sprint else 1.0)
-	var hanging_lateral_blend := clamp(input_vector.x, -1.0, 1.0) if is_hanging else 0.0
-	animation_tree.set(hanging_free_move_blend_path, hanging_lateral_blend)
-	animation_tree.set(hanging_braced_move_blend_path, hanging_lateral_blend)
+	if is_hanging:
+		animation_tree.set(hanging_blend_path, 1.0 if raycast_chest.is_colliding() else 0.0)
+		var hanging_lateral_blend := clamp(input_vector.x, -1.0, 1.0)
+		animation_tree.set(hanging_free_move_blend_path, hanging_lateral_blend)
+		animation_tree.set(hanging_braced_move_blend_path, hanging_lateral_blend)
+	if is_climbing:
+		var climbing_sprint := Input.is_action_pressed("sprint") and not is_exhausted
+		animation_tree.set(climbing_move_blend_path, Vector2(clamp(input_vector.x, -1.0, 1.0), -clamp(input_vector.y, -1.0, 1.0)))
+		animation_tree.set(climbing_time_scale_path, 2.0 if climbing_sprint else 1.0)
 
 
 ## Called once on each physics tick, and allows Nodes to synchronize their logic with physics ticks.
@@ -355,6 +356,11 @@ func _physics_process(delta: float) -> void:
 			playback_locomotion.travel(state_name_falling)
 			is_falling = true
 
+		# Jump animation finished mid-air (transitioned to falling) — restore air control
+		if is_jumping and playback_locomotion_state == state_name_falling:
+			is_jumping = false
+			is_falling = true
+
 	# Cache the player input vector
 	input_vector = Input.get_vector("move_left", "move_right", "move_up", "move_down", 0.2)
 
@@ -491,12 +497,10 @@ func paragliding_stop() -> void:
 func hanging_start() -> void:
 	# Determine if the player should enter the "hanging braced" state based on if there is a wall to the player's front to brace against, by checking if the "head" or "chest" raycasts are colliding with a wall while the "top" raycast is colliding with a ceiling.
 	var hanging_braced := raycast_chest.is_colliding()
-	# Set the "hanging" blend parameter to 1.0 to transition to the hanging state in the animation tree, and set the "hanging braced move" blend parameter to 1.0 if the player should be hanging
-	playback_locomotion.set("parameters/hanging_blend", 1.0)
-	if hanging_braced:
-		playback_locomotion.set("parameters/hanging_braced_move", 1.0)
-	else:
-		playback_locomotion.set("parameters/hanging_braced_move", 0.0)
+	# Pre-initialize blend space values before travel() so the engine doesn't evaluate uninitialized BlendSpace1D during the cross-fade.
+	animation_tree.set(hanging_blend_path, 1.0 if hanging_braced else 0.0)
+	animation_tree.set(hanging_free_move_blend_path, 0.0)
+	animation_tree.set(hanging_braced_move_blend_path, 0.0)
 	# Transition to the "hanging" state in the animation tree.
 	playback_locomotion.travel(state_name_hanging)
 	# Disable gravity while hanging
