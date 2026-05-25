@@ -390,11 +390,12 @@ func _physics_process(delta: float) -> void:
 	if is_ragdolling:
 		velocity = up_direction * velocity.dot(up_direction)
 	elif is_climbing:
-		var right_dir = pivot.global_transform.basis.x
-		velocity = (right_dir * -input_vector.x + up_direction * -input_vector.y) * (SPEED * 0.25 * (2.0 if Input.is_action_pressed("sprint") else 1.0))
+		var current_rotation = pivot.transform.basis.get_rotation_quaternion()
+		velocity = current_rotation * animation_tree.get_root_motion_position() / delta
 	elif is_hanging:
-		var right_dir = pivot.global_transform.basis.x
-		velocity = right_dir * -input_vector.x * (SPEED * 0.25)
+		var current_rotation = pivot.transform.basis.get_rotation_quaternion()
+		var root_motion_velocity = current_rotation * animation_tree.get_root_motion_position() / delta
+		velocity = root_motion_velocity - up_direction * root_motion_velocity.dot(up_direction)
 	elif is_paragliding or is_falling:
 		# Use raw input direction while airborne instead of animation root motion.
 		var paraglide_velocity := camera_spring_arm.global_transform.basis * Vector3(input_vector.x, 0, input_vector.y)
