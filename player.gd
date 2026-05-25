@@ -66,6 +66,8 @@ var playback_stance_state: String:
 
 @onready var audio: Node3D = $Audio ## The audio controller
 @onready var camera_spring_arm: SpringArm3D = $CameraSpringArm
+@onready var raycast_ledge: RayCast3D = $Pivot/Ledge
+@onready var raycast_mantle_target: RayCast3D = $Pivot/MantleTarget
 @onready var raycast_top: RayCast3D = $Pivot/Top
 @onready var raycast_head: RayCast3D = $Pivot/Head
 @onready var raycast_chest: RayCast3D = $Pivot/Chest
@@ -241,8 +243,8 @@ func _physics_process(delta: float) -> void:
 			play_footstep_sound()
 		# Flag the player as not "falling"
 		is_falling = false
-		# Flag the player as not "jumping"
-		is_jumping = false
+		# Flag the player as not "jumping" (if applicable)
+		is_jumping = playback_locomotion_state in [state_name_running_jump, state_name_standing_jump]
 		# Stop climbing if the player has landed while climbing
 		if is_climbing:
 			climbing_stop()
@@ -284,12 +286,14 @@ func _physics_process(delta: float) -> void:
 	# The player must not be on a floor
 	else:
 		# Travel to "hanging" state?
-		if not raycast_top.is_colliding() \
-		and raycast_head.is_colliding() \
+		if not raycast_ledge.is_colliding() \
+		and raycast_top.is_colliding() \
 		and not Input.is_action_pressed("crouch") \
 		and not is_hanging:
 			# Flag the player as not "climbing"
 			is_climbing = false
+			# Flag the player as not "falling"
+			is_falling = false
 			# Transition to the "hanging" state in the animation tree
 			hanging_start()
 			# Flag the player as "hanging"
@@ -297,13 +301,26 @@ func _physics_process(delta: float) -> void:
 
 		# 🤾 [jump] was just pressed
 		if Input.is_action_just_pressed("jump") \
-		and not is_hanging \
 		and not is_ragdolling:
+			
+			if raycast_mantle_target.is_colliding():
+				if is_climbing:
+					climbing_stop()
+				if is_hanging:
+					hanging_stop()
+				# Move the player to the mantle target position and rotation for a seamless mantle transition.
+				var mantle_target_transform := raycast_mantle_target.get_global_transform()
+				global_transform.origin = mantle_target_transform.origin
+				var target_rotation := mantle_target_transform.basis.get_rotation_quaternion()
+				var current_rotation := pivot.global_transform.basis.get_rotation_quaternion()
+				var new_rotation := current_rotation.slerp(target_rotation, 1.0)
+				pivot.global_transform.basis = Basis(new_rotation)
 
 			# Travel to "climbing" state?
-			if raycast_head.is_colliding() \
+			elif raycast_head.is_colliding() \
 			and raycast_chest.is_colliding() \
 			and not is_climbing \
+			and not is_hanging \
 			and not is_paragliding:
 				# Flag the player as not "falling"
 				is_falling = false
@@ -352,8 +369,9 @@ func _physics_process(delta: float) -> void:
 		# Rotate the player to face the movement direction
 		#pivot.rotation.y = lerp_angle(pivot.rotation.y, atan2(direction.x, direction.z), TURN_SPEED * delta)
 		pivot.rotation.y = atan2(direction.x, direction.z)
-	elif is_climbing and raycast_chest.is_colliding():
-		# While climbing, keep facing the wall surface from the chest raycast.
+	# While climbing or hanging, keep facing the wall surface from the chest raycast
+	elif (is_climbing and raycast_chest.is_colliding()) \
+	or (is_hanging and raycast_top.is_colliding()):
 		var wall_normal := raycast_chest.get_collision_normal()
 		wall_normal.y = 0
 		if wall_normal.length() > 0.001:
@@ -404,6 +422,8 @@ func _physics_process(delta: float) -> void:
 func begin_backflip():
 	# Transition to the "backflip" state in the animation tree
 	playback_locomotion.travel(state_name_backflip)
+	# Flag the player as "jumping"
+	is_jumping = true
 
 
 func climbing_start() -> void:
@@ -413,6 +433,10 @@ func climbing_start() -> void:
 	gravity = 0.0
 	# Zero out the player's velocity
 	velocity = Vector3.ZERO
+	# Snap towards the wall surface (0.4 units back for player collider)
+	if raycast_chest.is_colliding():
+		var snap := raycast_chest.get_collision_point() + raycast_chest.get_collision_normal() * 0.4
+		global_position = snap - up_direction * snap.dot(up_direction) + up_direction * global_position.dot(up_direction)
 	# Flag the player as "climbing"
 	is_climbing = true
 
@@ -473,6 +497,12 @@ func hanging_start() -> void:
 	# Disable gravity while hanging
 	gravity = 0.0
 	velocity = Vector3.ZERO
+	# Snap towards the wall surface horizontally (0.4 units back for player collider), vertical unchanged
+	if raycast_top.is_colliding():
+		var snap := raycast_top.get_collision_point() + raycast_top.get_collision_normal() * 0.4
+		global_position = snap - up_direction * snap.dot(up_direction) + up_direction * global_position.dot(up_direction)
+	# Flag the player as "hanging"
+	is_hanging = true
 
 
 ## [Hanging] -> Locomotion.
@@ -481,6 +511,8 @@ func hanging_stop() -> void:
 	playback_locomotion.travel(state_name_locomotion)
 	# Reset gravity to the default value
 	gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
+	# Flag the player as not "hanging"
+	is_hanging = false
 
 
 func end_hanging_to_falling() -> void:
@@ -531,6 +563,8 @@ func execute_jump_velocity():
 		velocity += up_direction * JUMP_VELOCITY
 		# Play a random [short] effort grunt
 		voice_male_effort_grunt.play()
+		# Flag the player as "jumping"
+		is_jumping = true
 
 
 ## Called by an animation to play footstep sounds based on the meta-data of the object the player is stepping on.
