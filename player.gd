@@ -92,23 +92,40 @@ func _input(event: InputEvent) -> void:
 	if not is_multiplayer_authority(): return
 
 	# Toggle mouse capture
-	if event.is_action_pressed("start") or event.is_action_pressed("ui_cancel"):
+	if event.is_action_pressed("ui_cancel"):
+		# Check if the mouse is currently captured
 		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+			# Set the mouse mode to visible to show the mouse cursor
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		# The mouse must not be currently captured
 		else:
+			# Set the mouse mode to captured to hide the mouse cursor
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	
-	# Check if the "focus" action was just pressed or released to toggle the "strafing" flag
+
+	# Check if the "crouch" action was just pressed (while clmibing or hanging) to drop down to the floor
+	if event.is_action_pressed("crouch") \
+	and (is_climbing or is_hanging):
+		# If hanging, end hanging to falling, otherwise end climbing to falling
+		if is_hanging:
+			end_hanging_to_falling()
+		else:
+			end_climbing_to_falling()
+
+	# Check if the "focus" action was just pressed
 	if event.is_action_pressed("focus"):
+		# Flag the player as "strafing"
 		is_strafing = true
+	# Check if the "focus" action was just released
 	elif event.is_action_released("focus"):
+		# Flag the player as not "strafing"
 		is_strafing = false
 
+	# Check if the key [R] was just pressed
 	if event is InputEventKey \
 	and event.is_pressed() \
 	and event.keycode == Key.KEY_R:
+		# Check if the player is ragdolling
 		if is_ragdolling:
-			print("Unragdolling player")
 			# Disable the ragdoll simulation to return control to the player
 			skeleton.get_node("PhysicalBoneSimulator3D").physical_bones_stop_simulation()
 			# Set collision layer to 0
@@ -117,8 +134,8 @@ func _input(event: InputEvent) -> void:
 				physical_bone.collision_layer[0] = true
 				physical_bone.collision_layer[1] = false
 			is_ragdolling = false
+		# The player must not be ragdolling
 		else:
-			print("Ragdolling player")
 			# Set collision layer to 1
 			skeleton.find_children("Physical Bone *","PhysicalBone3D", false)
 			for physical_bone in skeleton.find_children("Physical Bone *","PhysicalBone3D", false):
@@ -199,9 +216,9 @@ func _physics_process(delta: float) -> void:
 	is_sliding = playback_locomotion_state == state_name_running_slide
 
 	# ᯓ🏃🏻‍♀️‍➡️ [sprint]
-	if Input.is_action_pressed("sprint")\
+	if Input.is_action_pressed("sprint") \
 	and is_on_floor() \
-	and (abs(velocity.x) > 0.2 or abs(velocity.z) > 0.2)\
+	and (abs(velocity.x) > 0.2 or abs(velocity.z) > 0.2) \
 	and not is_crouching \
 	and not is_exhausted \
 	and not is_sliding \
@@ -277,42 +294,40 @@ func _physics_process(delta: float) -> void:
 
 	# The player must not be on a floor
 	else:
-		var can_climb := raycast_top.is_colliding() and raycast_chest.is_colliding()
-		var can_hang := raycast_top.is_colliding() and raycast_head.is_colliding()
+		# Travel to "hanging" state?
+		if not raycast_top.is_colliding() \
+		and raycast_head.is_colliding() \
+		and not Input.is_action_pressed("crouch") \
+		and not is_hanging:
+			print_debug("Beginning << " + state_name_hanging + ">> ...")
+			# Transition to the "hanging" state in the animation tree
+			begin_hanging()
+			# Flag the player as "hanging"
+			is_hanging = true
 
 		# 🤾 [jump] was just pressed
-		if Input.is_action_just_pressed("jump") and not is_ragdolling:
-			if not is_hanging \
-			and not is_climbing \
-			and can_hang:
-				if can_climb:
-					begin_climbing()
-					is_climbing = true
-				else:
-					begin_hanging()
-					is_hanging = true
-				is_falling = false
+		if Input.is_action_just_pressed("jump") \
+		and not is_hanging \
+		and not is_ragdolling:
 
-		if can_climb and is_hanging:
-			begin_climbing()
-			is_hanging = false
-			is_climbing = true
-			is_falling = false
-		elif is_climbing and can_hang and not can_climb:
-			end_climbing_to_hanging()
-			is_climbing = false
-			is_hanging = true
-			is_falling = false
-		elif is_climbing and not can_hang:
-			end_climbing_to_falling()
-			is_climbing = false
-			is_falling = true
+			# Travel to "climbing" state?
+			if raycast_head.is_colliding() \
+			and raycast_chest.is_colliding() \
+			and not is_climbing:
+				print_debug("Beginning << " + state_name_climbing + ">> ...")
+				# Transition to the "climbing" state in the animation tree
+				begin_climbing()
+				# Flag the player as "climbing"
+				is_climbing = true
 
-		# Check if the player should stop hanging and start falling due to losing contact
-		if is_hanging and not can_hang:
-			end_hanging_to_falling()
-			is_falling = true
-			is_hanging = false
+			# Travel to "paragliding" state?
+			elif not raycast_below_paraglide.is_colliding() \
+			and not is_paragliding:
+				print_debug("Beginning << " + state_name_paragliding + ">> ...")
+				# Transition to the "paragliding" state in the animation tree
+				begin_paragliding()
+				# Flag the player as "paragliding"
+				is_paragliding = true
 
 		# Check if the "below" raycast is not colliding and the player is not already flagged as "falling"
 		if not raycast_below_step.is_colliding() \
@@ -324,16 +339,6 @@ func _physics_process(delta: float) -> void:
 			# Travel to the "falling" state in the animation tree
 			playback_locomotion.travel(state_name_falling)
 			is_falling = true
-		# Check if "jump" if pressed while in the air
-		if Input.is_action_just_pressed("jump") \
-		and not raycast_below_paraglide.is_colliding() \
-		and not is_climbing \
-		and not is_hanging \
-		and not is_paragliding:
-			# Transition to the "paragliding" state in the animation tree
-			begin_paragliding()
-			# Flag the player as "paragliding"
-			is_paragliding = true
 
 	# Cache the player input vector
 	input_vector = Input.get_vector("move_left", "move_right", "move_up", "move_down", 0.2)
