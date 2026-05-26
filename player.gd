@@ -40,6 +40,9 @@ const LANDING_SKIP_LATERAL_SPEED = 0.75
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 var input_vector: Vector2 = Vector2.ZERO ## The player's input vector (move_up, move_down, move_left, move_right)
 var climbing_surface_normal: Vector3 = Vector3.ZERO
+var initial_collision_shape: CollisionShape3D
+var initial_collision_shape_height: float = 0.0
+var initial_collision_shape_position_y: float = 0.0
 var is_climbing: bool = false ## Is the player "climbing"?
 var is_crouching: bool = false ## Is the player "crouching"?
 var is_exhausted: bool = false ## Is the player "exhausted"?
@@ -87,6 +90,10 @@ func _ready() -> void:
 	camera_spring_arm.add_excluded_object(self.get_rid())
 	# Ensure the player's [PhysicalBone3D]s do not collide with the [CollisionShape3D] required by the [CharacterBody3D]
 	physical_bone_simulator.physical_bones_add_collision_exception(get_rid())
+	# Store the collision shape data
+	initial_collision_shape = $CollisionShape3D
+	initial_collision_shape_height = initial_collision_shape.shape.height
+	initial_collision_shape_position_y = initial_collision_shape.position.y
 
 
 ## Called when there is an input event.
@@ -207,7 +214,11 @@ func _physics_process(delta: float) -> void:
 	is_running = playback_locomotion_state == state_name_locomotion and input_vector.length() >= 0.99
 
 	# Cache if the player is "sliding"
+	var was_sliding := is_sliding
 	is_sliding = playback_locomotion_state == state_name_running_slide
+	if was_sliding and not is_sliding:
+		$CollisionShape3D.shape.height = initial_collision_shape_height
+		$CollisionShape3D.position.y = initial_collision_shape_position_y
 
 	# ᯓ🏃🏻‍♀️‍➡️ [sprint]
 	if Input.is_action_pressed("sprint") \
@@ -584,6 +595,9 @@ func begin_running_jump():
 func begin_running_slide():
 	# Transition to the "running slide" state in the animation tree
 	playback_locomotion.travel(state_name_running_slide)
+	# Reduce the player's collision shape height and adjust its position
+	$CollisionShape3D.shape.height = initial_collision_shape_height * 0.333
+	$CollisionShape3D.position.y = 0.3
 
 
 ## Called when the "jump" (while standing) action is first executed. Transitions to the [jumping_state_name] state in the animation tree.

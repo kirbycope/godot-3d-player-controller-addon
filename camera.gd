@@ -4,6 +4,7 @@ extends Camera3D
 @export var mouse_sensitivity: float = 0.1
 
 @onready var camera_spring_arm: SpringArm3D = get_parent()
+@onready var player: Player = camera_spring_arm.get_parent() as Player
 
 
 ## Called when the node enters the scene tree for the first time.
@@ -18,7 +19,8 @@ func _input(event: InputEvent) -> void:
 
 	# Rotate the [Camera3D]'s [SpringArm3D] using the mouse motion input event
 	if event is InputEventMouseMotion \
-	and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+	and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED \
+	and not player.is_strafing:
 		rotate_camera_using_mouse_motion(event)
 
 
@@ -30,6 +32,10 @@ func _process(delta: float) -> void:
 	# Rotate the [Camera3D]'s [SpringArm3D] using the joypad motion input event
 	if Input.get_vector("look_left", "look_right", "look_up", "look_down") != Vector2.ZERO:
 		rotate_camera_using_joypad_motion(delta)
+
+	# Slerp camera to face the player's direction when strafing
+	if player.is_strafing:
+		camera_spring_arm.rotation.y = lerp_angle(camera_spring_arm.rotation.y, player.pivot.rotation.y + PI, delta * 8.0)
 
 
 ## Rotates the [Camera3D]'s [SpringArm3D] using the input from a joypad motion event, while clamping the vertical rotation to prevent flipping.
