@@ -300,6 +300,16 @@ func _physics_process(delta: float) -> void:
 		if is_climbing and not raycast_chest.is_colliding() and not raycast_head.is_colliding():
 			end_climbing_to_falling()
 
+		# Drop to falling if exhausted while climbing
+		if is_climbing and is_exhausted:
+			end_climbing_to_falling()
+
+		# Drop to falling if exhausted while paragliding
+		if is_paragliding and is_exhausted:
+			paragliding_stop()
+			playback_locomotion.travel(state_name_falling)
+			is_falling = true
+
 		# Travel to "hanging" state?
 		if not raycast_ledge.is_colliding() \
 		and raycast_top.is_colliding() \
