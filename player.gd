@@ -248,7 +248,7 @@ func _physics_process(delta: float) -> void:
 		# Flag the player as not "falling"
 		is_falling = false
 		# Flag the player as not "jumping" (if applicable)
-		is_jumping = playback_locomotion_state in [state_name_running_jump, state_name_standing_jump]
+		is_jumping = playback_locomotion_state in [state_name_running_jump, state_name_standing_jump, state_name_backflip]
 		# Stop climbing if the player has landed while climbing
 		if is_climbing:
 			climbing_stop()
@@ -278,7 +278,10 @@ func _physics_process(delta: float) -> void:
 			# Backflip when strafing and backpedaling.
 			if is_strafing and input_vector.y > 0.2:
 				begin_backflip()
-			# Check if the player has some velocity
+			# Standing jump when strafing laterally/backward or moving backwards — velocity carries momentum.
+			elif (is_strafing and input_vector.y > -0.2) or input_vector.y > 0.2:
+				begin_standing_jump()
+			# Running jump when moving forward with velocity
 			elif (abs(velocity.x) > 0.2 or abs(velocity.z) > 0.2):
 				# Transition to the "running jump" state in the animation tree
 				begin_running_jump()
@@ -289,6 +292,14 @@ func _physics_process(delta: float) -> void:
 
 	# The player must not be on a floor
 	else:
+		# Drop to falling if the ledge is lost while hanging
+		if is_hanging and not raycast_top.is_colliding():
+			end_hanging_to_falling()
+
+		# Drop to falling if the wall is lost while climbing
+		if is_climbing and not raycast_chest.is_colliding() and not raycast_head.is_colliding():
+			end_climbing_to_falling()
+
 		# Travel to "hanging" state?
 		if not raycast_ledge.is_colliding() \
 		and raycast_top.is_colliding() \
@@ -298,6 +309,10 @@ func _physics_process(delta: float) -> void:
 			is_climbing = false
 			# Flag the player as not "falling"
 			is_falling = false
+			# Flag the player as not "jumping"
+			is_jumping = false
+			# Flag the player as not "paragliding"
+			is_paragliding = false
 			# Transition to the "hanging" state in the animation tree
 			hanging_start()
 			# Flag the player as "hanging"
@@ -406,7 +421,7 @@ func _physics_process(delta: float) -> void:
 		var current_rotation = pivot.transform.basis.get_rotation_quaternion()
 		var root_motion_velocity = current_rotation * animation_tree.get_root_motion_position() / delta
 		velocity = root_motion_velocity - up_direction * root_motion_velocity.dot(up_direction)
-	elif is_paragliding or is_falling:
+	elif is_paragliding or is_falling or (playback_locomotion_state == state_name_backflip and not is_on_floor()):
 		# Use raw input direction while airborne instead of animation root motion.
 		var paraglide_velocity := camera_spring_arm.global_transform.basis * Vector3(input_vector.x, 0, input_vector.y)
 		paraglide_velocity.y = 0
@@ -497,10 +512,12 @@ func paragliding_stop() -> void:
 func hanging_start() -> void:
 	# Determine if the player should enter the "hanging braced" state based on if there is a wall to the player's front to brace against, by checking if the "head" or "chest" raycasts are colliding with a wall while the "top" raycast is colliding with a ceiling.
 	var hanging_braced := raycast_chest.is_colliding()
-	# Pre-initialize blend space values before travel() so the engine doesn't evaluate uninitialized BlendSpace1D during the cross-fade.
-	animation_tree.set(hanging_blend_path, 1.0 if hanging_braced else 0.0)
-	animation_tree.set(hanging_free_move_blend_path, 0.0)
-	animation_tree.set(hanging_braced_move_blend_path, 0.0)
+	# Set the "hanging" blend parameter to 1.0 to transition to the hanging state in the animation tree, and set the "hanging braced move" blend parameter to 1.0 if the player should be hanging
+	playback_locomotion.set("parameters/hanging_blend", 1.0)
+	if hanging_braced:
+		playback_locomotion.set("parameters/hanging_braced_move", 1.0)
+	else:
+		playback_locomotion.set("parameters/hanging_braced_move", 0.0)
 	# Transition to the "hanging" state in the animation tree.
 	playback_locomotion.travel(state_name_hanging)
 	# Disable gravity while hanging
