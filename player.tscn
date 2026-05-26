@@ -868,17 +868,17 @@ metadata/_custom_type_script = "uid://dn4se40svqtym"
 [node name="PlayerModel" parent="Pivot/RootMotion" unique_id=1513730412 instance=ExtResource("3_45pxl")]
 
 [node name="GeneralSkeleton" parent="Pivot/RootMotion/PlayerModel" index="0" unique_id=1428933500]
-bones/0/position = Vector3(-0.004543923, 0.989772, 0.0058675427)
-bones/0/rotation = Quaternion(-0.03714044, -0.042111307, -0.023806013, 0.99813855)
-bones/1/rotation = Quaternion(0.029233688, 0.01537427, 0.02443293, 0.99915576)
-bones/2/rotation = Quaternion(0.009888009, 0.0040076543, 0.0143944565, 0.99983954)
-bones/3/rotation = Quaternion(0.009754252, 0.0041230503, 0.014460495, 0.99983937)
-bones/4/rotation = Quaternion(0.049142595, -0.0022914947, 0.0052796514, 0.9987752)
-bones/5/rotation = Quaternion(-0.06871853, 0.008250765, -0.0008301672, 0.9976016)
-bones/7/rotation = Quaternion(0.45769134, 0.50059813, 0.62889045, -0.3800223)
-bones/8/rotation = Quaternion(0.12544632, 0.79932374, -0.5743504, -0.12436417)
-bones/9/rotation = Quaternion(0.00986116, -0.7070381, 0.009861305, 0.707038)
-bones/10/rotation = Quaternion(0.054603267, 0.4774199, -0.016776463, 0.8768166)
+bones/0/position = Vector3(0.0036166967, 0.99011505, -0.0028237086)
+bones/0/rotation = Quaternion(-0.033605926, -0.047495797, -0.027812444, 0.9979185)
+bones/1/rotation = Quaternion(0.029976178, 0.013169826, 0.022675706, 0.99920666)
+bones/2/rotation = Quaternion(0.010362303, 0.0029871692, 0.01382927, 0.9998462)
+bones/3/rotation = Quaternion(0.010138803, 0.00318407, 0.013855999, 0.99984753)
+bones/4/rotation = Quaternion(0.04903715, -0.0011874569, 0.0043988405, 0.9987866)
+bones/5/rotation = Quaternion(-0.06671965, 0.011465884, -0.0013491318, 0.997705)
+bones/7/rotation = Quaternion(0.45697075, 0.50052744, 0.6317553, -0.37621182)
+bones/8/rotation = Quaternion(0.12377384, 0.8028248, -0.5694623, -0.12595685)
+bones/9/rotation = Quaternion(0.0091985725, -0.707047, 0.009198615, 0.707047)
+bones/10/rotation = Quaternion(0.053973142, 0.47520447, -0.015550043, 0.87808084)
 bones/11/rotation = Quaternion(-0.23049821, 0.682892, 0.17169991, 0.67160124)
 bones/12/rotation = Quaternion(0.2014946, 0.20389192, -0.059591476, 0.9561783)
 bones/13/rotation = Quaternion(0.04001291, -0.0528761, -0.1285876, 0.9894788)
@@ -895,10 +895,10 @@ bones/25/rotation = Quaternion(0.15521277, -1.4901161e-07, -0.01590553, 0.987753
 bones/27/rotation = Quaternion(0.23386712, -0.0035056775, -0.049008526, 0.97102636)
 bones/28/rotation = Quaternion(0.15125789, -1.1920929e-07, -0.015500367, 0.98837286)
 bones/29/rotation = Quaternion(0.14349762, -8.940698e-08, -0.014705034, 0.9895415)
-bones/31/rotation = Quaternion(0.47559765, -0.47923186, -0.63625515, -0.3732601)
-bones/32/rotation = Quaternion(-0.14883804, 0.82835674, -0.49584082, 0.21404278)
-bones/33/rotation = Quaternion(0.040526528, 0.70594436, -0.04052661, 0.7059446)
-bones/34/rotation = Quaternion(0.041719038, -0.5712449, 0.03498563, 0.81897175)
+bones/31/rotation = Quaternion(0.47533447, -0.47995237, -0.6348246, -0.37510094)
+bones/32/rotation = Quaternion(-0.15180728, 0.82723093, -0.49747762, 0.21250817)
+bones/33/rotation = Quaternion(0.041257583, 0.7059021, -0.04125776, 0.7059021)
+bones/34/rotation = Quaternion(0.043532126, -0.57127947, 0.036167566, 0.81880194)
 bones/35/rotation = Quaternion(-0.24051939, -0.6719299, -0.18474646, 0.6756696)
 bones/36/rotation = Quaternion(0.23822677, -0.20985533, 0.051183645, 0.94688386)
 bones/37/rotation = Quaternion(0.045545384, 0.046079352, 0.16169313, 0.984712)
@@ -915,14 +915,14 @@ bones/49/rotation = Quaternion(0.15551054, 5.9604645e-08, 0.012668192, 0.9877530
 bones/51/rotation = Quaternion(0.22849345, 0.003403008, 0.04298061, 0.9725903)
 bones/52/rotation = Quaternion(0.15154804, 8.940697e-08, 0.012345463, 0.98837286)
 bones/53/rotation = Quaternion(0.14377284, 1.7881393e-07, 0.011711955, 0.9895414)
-bones/55/rotation = Quaternion(0.13650681, 0.07186434, 0.9852313, -0.07430211)
-bones/56/rotation = Quaternion(-0.03858965, 0.9934524, -0.10723512, 0.007994052)
-bones/57/rotation = Quaternion(-0.04252268, 0.7119656, -0.69912404, 0.050225366)
+bones/55/rotation = Quaternion(0.13461973, 0.08103047, 0.9847827, -0.07426176)
+bones/56/rotation = Quaternion(-0.038716566, 0.9929646, -0.1108301, 0.015461052)
+bones/57/rotation = Quaternion(-0.040959146, 0.71213704, -0.6991784, 0.04829795)
 bones/58/rotation = Quaternion(-1.04873216e-07, 0.9990753, 0.042996258, -1.8274612e-08)
-bones/60/rotation = Quaternion(-0.0933913, -0.015903024, 0.99515545, -0.02628488)
-bones/61/rotation = Quaternion(0.03434308, 0.9937806, -0.06548093, -0.08326416)
-bones/62/rotation = Quaternion(0.007984035, 0.6768742, -0.735439, -0.03011948)
-bones/63/rotation = Quaternion(2.0098904e-08, 0.99814075, 0.06095114, 3.3215148e-09)
+bones/60/rotation = Quaternion(-0.091300204, -0.0097032655, 0.9953996, -0.027384197)
+bones/61/rotation = Quaternion(0.03329305, 0.99425197, -0.058577552, -0.08320633)
+bones/62/rotation = Quaternion(0.011165051, 0.6852267, -0.727713, -0.027811594)
+bones/63/rotation = Quaternion(-9.57752e-08, 0.9980171, 0.062945195, -1.0033797e-08)
 
 [node name="Alpha_Surface" parent="Pivot/RootMotion/PlayerModel/GeneralSkeleton" index="0" unique_id=820442918]
 surface_material_override/0 = SubResource("StandardMaterial3D_fminn")
@@ -933,7 +933,7 @@ surface_material_override/0 = SubResource("StandardMaterial3D_qu57g")
 [node name="PhysicalBoneSimulator3D" parent="Pivot/RootMotion/PlayerModel/GeneralSkeleton" index="2" unique_id=1972762954 instance=ExtResource("4_fminn")]
 
 [node name="BoneAttachementRightHand" type="BoneAttachment3D" parent="Pivot/RootMotion/PlayerModel/GeneralSkeleton" index="3" unique_id=627030226]
-transform = Transform3D(0.41392368, 0.028927283, 0.9098519, 0.08071761, -0.9967243, -0.0050319377, 0.906726, 0.075523965, -0.41490266, -0.2482628, 0.83758575, 0.010765001)
+transform = Transform3D(0.3964036, 0.02234979, 0.9178042, 0.07228457, -0.99736005, -0.0069329897, 0.9152264, 0.06909133, -0.39697266, -0.2419007, 0.8415592, -0.0028952323)
 bone_name = "RightHand"
 bone_idx = 34
 
@@ -1685,9 +1685,9 @@ anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
 offset_left = 8.0
-offset_top = -81.5
-offset_right = 132.0
-offset_bottom = 81.5
+offset_top = -266.5
+offset_right = 142.0
+offset_bottom = 106.5
 grow_vertical = 2
 
 [node name="PanelContainer" type="PanelContainer" parent="Debug/States" unique_id=1167004595]
