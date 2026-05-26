@@ -36,6 +36,7 @@ const LANDING_SKIP_LATERAL_SPEED = 0.75
 @export var state_name_standing_to_crouching: String = "StandingToCrouching"
 @export var state_name_crouching: String = "Crouching"
 @export var state_name_crouching_to_standing: String = "CrouchingToStanding"
+@export var state_name_pushing: String = "Pushing"
 
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 var input_vector: Vector2 = Vector2.ZERO ## The player's input vector (move_up, move_down, move_left, move_right)
@@ -50,6 +51,7 @@ var is_falling: bool = false ## Is the player "falling"?
 var is_hanging: bool = false ## Is the player "hanging"?
 var is_jumping: bool = false ## Is the player "jumping"?
 var is_paragliding: bool = false ## Is the player "paragliding"?
+var is_pushing: bool = false ## Is the player "pushing" against a wall?
 var is_ragdolling: bool = false ## Is the player "ragdolling"?
 var is_running: bool = false ## Is the player "running"?
 var is_sliding: bool = false ## Is the player "sliding"?
@@ -207,11 +209,39 @@ func _physics_process(delta: float) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
 
+	# Cache the player input vector (read first so all checks this frame use fresh input)
+	input_vector = Input.get_vector("move_left", "move_right", "move_up", "move_down", 0.2)
+
 	# Cache if the player is "crouching" 
 	is_crouching = playback_stance_state in [state_name_standing_to_crouching, state_name_crouching, state_name_crouching_to_standing]
 
 	# Cache if the player is "running"
 	is_running = playback_locomotion_state == state_name_locomotion and input_vector.length() >= 0.99
+
+	# 🫸 Cache if the player is "pushing"
+	var was_pushing := is_pushing
+	is_pushing = (is_pushing and raycast_chest.is_colliding() and input_vector.y < 0) \
+		and not is_climbing \
+		and not is_crouching \
+		and not is_falling \
+		and not is_hanging \
+		and not is_jumping \
+		and not is_exhausted \
+		and not is_strafing
+	if was_pushing and not is_pushing:
+		playback_locomotion.travel(state_name_locomotion)
+
+	# Start "pushing"
+	if not is_pushing \
+	and playback_locomotion_state != state_name_pushing \
+	and input_vector.y < 0 \
+	and raycast_chest.is_colliding() \
+	and is_on_floor() \
+	and not is_crouching \
+	and not is_jumping \
+	and not is_strafing:
+		playback_locomotion.travel(state_name_pushing)
+		is_pushing = true
 
 	# Cache if the player is "sliding"
 	var was_sliding := is_sliding
@@ -236,7 +266,13 @@ func _physics_process(delta: float) -> void:
 		is_sprinting = false
 
 	# 😮‍💨 [exhausted]
-	if is_exhausted and velocity.length() < 0.2 and not is_crouching:
+	if is_exhausted and velocity.length() < 0.2 \
+	and not is_climbing \
+	and not is_crouching \
+	and not is_falling \
+	and not is_hanging \
+	and not is_paragliding \
+	and playback_stance_state != state_name_standing_panting:
 		playback_stance.travel(state_name_standing_panting)
 	elif not is_exhausted and playback_stance_state == state_name_standing_panting:
 		is_exhausted = false
@@ -273,6 +309,9 @@ func _physics_process(delta: float) -> void:
 		# 🧎 [crouch] was just pressed
 		if Input.is_action_pressed("crouch") \
 		and not is_crouching \
+		and not is_exhausted \
+		and not is_pushing \
+		and not is_strafing \
 		and not is_sliding:
 			# Check if the player has some velocity
 			if (abs(velocity.x) > 0.2 or abs(velocity.z) > 0.2) \
@@ -397,9 +436,6 @@ func _physics_process(delta: float) -> void:
 			is_jumping = false
 			is_falling = true
 
-	# Cache the player input vector
-	input_vector = Input.get_vector("move_left", "move_right", "move_up", "move_down", 0.2)
-
 	# Determine the movement direction in 3D space by multiplying the input vector with the [Camera3D]'s [SpringArm3D] global transform basis, while ignoring the y component and normalizing the result
 	var direction := camera_spring_arm.global_transform.basis * Vector3(input_vector.x, 0, input_vector.y)
 	# Zero out the y component of the direction to prevent vertical movement, and normalize the result to maintain consistent movement speed in all directions, including diagonally
@@ -486,6 +522,10 @@ func climbing_start() -> void:
 		global_position = snap - up_direction * snap.dot(up_direction) + up_direction * global_position.dot(up_direction)
 	# Flag the player as "climbing"
 	is_climbing = true
+	# Flag the player as not crouching
+	is_crouching = false
+	# Flag the player as not pushing
+	is_pushing = false
 
 
 func climbing_stop() -> void:

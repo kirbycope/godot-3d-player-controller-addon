@@ -40,6 +40,7 @@ func _process(delta: float) -> void:
 		$States/is_hanging.button_pressed = player.is_hanging
 		$States/is_jumping.button_pressed = player.is_jumping
 		$States/is_paragliding.button_pressed = player.is_paragliding
+		$States/is_pushing.button_pressed = player.is_pushing
 		$States/is_sliding.button_pressed = player.is_sliding
 		$States/is_sprinting.button_pressed = player.is_sprinting
 		$States/is_strafing.button_pressed = player.is_strafing

@@ -62,7 +62,7 @@ func _process(delta: float) -> void:
 		timer.start()
 	
 	# Check if the player is flagged as exhausted but has regained some stamina — remove exhaustion
-	elif player.is_exhausted and value > (max_value * 0.05):
+	elif player.is_exhausted and value > (max_value * 0.25):
 		player.is_exhausted = false
 
 
