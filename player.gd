@@ -72,6 +72,7 @@ var playback_stance_state: String:
 
 @onready var audio: Node3D = $Audio ## The audio controller
 @onready var camera_spring_arm: SpringArm3D = $CameraSpringArm
+@onready var look_at_modifier: LookAtModifier3D = $Pivot/RootMotion/PlayerModel/GeneralSkeleton/LookAtModifier3D
 @onready var raycast_ledge: RayCast3D = $Pivot/Ledge
 @onready var raycast_mantle_target: RayCast3D = $Pivot/MantleTarget
 @onready var raycast_top: RayCast3D = $Pivot/Top
