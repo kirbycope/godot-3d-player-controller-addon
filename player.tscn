@@ -154,6 +154,64 @@
 [ext_resource type="Texture2D" uid="uid://ckmfjtaa1iw2p" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/PlayStation Series/Vector/playstation_button_circle_filled.svg" id="107_4pi5w"]
 [ext_resource type="Script" uid="uid://ck08322tms20v" path="res://addons/3d_player_controller/stamina.gd" id="108_sbq7t"]
 [ext_resource type="Script" uid="uid://rhna5f3an62d" path="res://addons/3d_player_controller/controls.gd" id="120_jlii4"]
+[ext_resource type="Texture2D" uid="uid://5ralud042mx3" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_e_outline.svg" id="121_0742e"]
+[ext_resource type="Texture2D" uid="uid://b7at6gh0lpnmt" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Nintendo Switch/Vector/switch_button_a_outline.svg" id="121_osk5u"]
+[ext_resource type="Texture2D" uid="uid://ctrxk7dwk2t6h" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Nintendo Switch/Vector/switch_button_a.svg" id="122_3avsa"]
+[ext_resource type="Texture2D" uid="uid://cmkoi6h1swd7x" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_e.svg" id="122_r2tgl"]
+[ext_resource type="Texture2D" uid="uid://4rb1ivk0g56d" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_shift_icon_outline.svg" id="123_q83rh"]
+[ext_resource type="Texture2D" uid="uid://enjtpg74fpxr" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Nintendo Switch/Vector/switch_button_b_outline.svg" id="123_rb0fi"]
+[ext_resource type="Texture2D" uid="uid://cf1ovwiublnx0" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_shift_icon.svg" id="124_02pgl"]
+[ext_resource type="Texture2D" uid="uid://cx3wlc5yckas3" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Nintendo Switch/Vector/switch_button_b.svg" id="124_75oso"]
+[ext_resource type="Texture2D" uid="uid://blxkplufvt6vo" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_space_icon_outline.svg" id="125_2bgnt"]
+[ext_resource type="Texture2D" uid="uid://beh4nf43w0ewl" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Nintendo Switch/Vector/switch_button_x_outline.svg" id="125_jtt00"]
+[ext_resource type="Texture2D" uid="uid://bw7bucw0eulhu" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_alt_outline.svg" id="125_q83rh"]
+[ext_resource type="Texture2D" uid="uid://cxv42jgc0t3u0" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_alt.svg" id="126_02pgl"]
+[ext_resource type="Texture2D" uid="uid://dw2v73lwlv3m6" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Nintendo Switch/Vector/switch_button_x.svg" id="126_36tao"]
+[ext_resource type="Texture2D" uid="uid://coyvdy1y0wvhn" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_space_icon.svg" id="126_j4eng"]
+[ext_resource type="Texture2D" uid="uid://bex6lntmskfh6" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Nintendo Switch/Vector/switch_button_y_outline.svg" id="127_1t4v8"]
+[ext_resource type="Texture2D" uid="uid://putoeobvbrq3" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Nintendo Switch/Vector/switch_button_y.svg" id="128_3acf8"]
+[ext_resource type="Texture2D" uid="uid://d18obxwu6hcwv" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_f5_outline.svg" id="129_f3q3i"]
+[ext_resource type="Texture2D" uid="uid://bj0g5wc4k4bi3" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_f5.svg" id="130_gfa47"]
+[ext_resource type="Texture2D" uid="uid://h8povam8ps2q" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_printscreen_outline.svg" id="131_3eyle"]
+[ext_resource type="Texture2D" uid="uid://b6xn6sx0inydf" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_printscreen.svg" id="132_sp0uh"]
+[ext_resource type="Texture2D" uid="uid://dmnahw7a1gyqe" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_escape_outline.svg" id="133_c5lmm"]
+[ext_resource type="Texture2D" uid="uid://wd8o5fd6vwfk" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_escape.svg" id="134_errws"]
+[ext_resource type="Texture2D" uid="uid://d11ec4t5u13nu" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_ctrl_outline.svg" id="135_c5lmm"]
+[ext_resource type="Texture2D" uid="uid://chosycig7ai0h" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_ctrl.svg" id="136_errws"]
+[ext_resource type="Texture2D" uid="uid://cdew4cemfiitk" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/PlayStation Series/Vector/playstation_button_cross_outline.svg" id="137_lq5p6"]
+[ext_resource type="Texture2D" uid="uid://cemlknot0oswn" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/mouse_scroll_outline.svg" id="137_xwibx"]
+[ext_resource type="Texture2D" uid="uid://brtbvg31xrvcr" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/mouse_scroll.svg" id="138_0fqn4"]
+[ext_resource type="Texture2D" uid="uid://bxjf63yifb35a" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/PlayStation Series/Vector/playstation_button_cross.svg" id="138_vtuwp"]
+[ext_resource type="Texture2D" uid="uid://c8717e3s1ilmj" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_q_outline.svg" id="139_gqdy8"]
+[ext_resource type="Texture2D" uid="uid://qtrlr1x0yxl6" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/PlayStation Series/Vector/playstation_button_circle_outline.svg" id="139_jatfe"]
+[ext_resource type="Texture2D" uid="uid://c80ulvgmdmve5" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/mouse_right_outline.svg" id="139_sy08r"]
+[ext_resource type="Texture2D" uid="uid://3l0e3lfukyxm" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/mouse_right.svg" id="140_ah825"]
+[ext_resource type="Texture2D" uid="uid://6asicwevomg6" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_q.svg" id="140_xdbkn"]
+[ext_resource type="Texture2D" uid="uid://dlyw5843hlpwi" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/PlayStation Series/Vector/playstation_button_circle.svg" id="140_y3ps5"]
+[ext_resource type="Texture2D" uid="uid://k5tx57ld55c5" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/PlayStation Series/Vector/playstation_button_square_outline.svg" id="141_80vgy"]
+[ext_resource type="Texture2D" uid="uid://b3u1jfc0gxujh" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_t_outline.svg" id="141_sjfj8"]
+[ext_resource type="Texture2D" uid="uid://ccvwan7v6rxd8" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/mouse_left_outline.svg" id="141_ym3ug"]
+[ext_resource type="Texture2D" uid="uid://dtd6ia7m8pph0" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/mouse_left.svg" id="142_8fd3h"]
+[ext_resource type="Texture2D" uid="uid://brb0h5rofs6gn" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_t.svg" id="142_k50we"]
+[ext_resource type="Texture2D" uid="uid://duuk8t5f522sd" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/PlayStation Series/Vector/playstation_button_square.svg" id="142_miiyk"]
+[ext_resource type="Texture2D" uid="uid://b16rh4gfnvnuo" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/PlayStation Series/Vector/playstation_button_triangle_outline.svg" id="143_0742e"]
+[ext_resource type="Texture2D" uid="uid://sa7dbyh4pm56" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/PlayStation Series/Vector/playstation_button_triangle.svg" id="144_r2tgl"]
+[ext_resource type="Texture2D" uid="uid://bf6msts20ycda" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_w_outline.svg" id="179_pwju5"]
+[ext_resource type="Texture2D" uid="uid://bhlaskkn7nbxj" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_w.svg" id="180_dylvg"]
+[ext_resource type="Texture2D" uid="uid://cpuk50ll20wea" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_a_outline.svg" id="181_cjm4b"]
+[ext_resource type="Texture2D" uid="uid://cyrh70egpfuu7" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_a.svg" id="182_gl6xl"]
+[ext_resource type="Texture2D" uid="uid://dtyh7b8xpfsb2" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_s_outline.svg" id="183_7deqm"]
+[ext_resource type="Texture2D" uid="uid://d1rcbxhxjqbcg" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_s.svg" id="184_qci5a"]
+[ext_resource type="Texture2D" uid="uid://6jbcphd81nwf" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_d_outline.svg" id="185_cg007"]
+[ext_resource type="Texture2D" uid="uid://dfsvarl32qaoc" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_d.svg" id="186_05hnt"]
+[ext_resource type="Texture2D" uid="uid://bp3a4v6n6l8v5" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_arrow_up_outline.svg" id="194_sp4yc"]
+[ext_resource type="Texture2D" uid="uid://qcwykgwm0x87" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_arrow_up.svg" id="195_s52c0"]
+[ext_resource type="Texture2D" uid="uid://ckw23yo7tylxp" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_arrow_left_outline.svg" id="196_rhxkt"]
+[ext_resource type="Texture2D" uid="uid://cciy74dnv8y13" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_arrow_left.svg" id="197_v6de3"]
+[ext_resource type="Texture2D" uid="uid://c1fvqwoyccvu1" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_arrow_down_outline.svg" id="198_t3so4"]
+[ext_resource type="Texture2D" uid="uid://bsgmyqaqebo73" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_arrow_down.svg" id="199_fl5qr"]
+[ext_resource type="Texture2D" uid="uid://dmgwqxju2cyfe" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_arrow_right_outline.svg" id="200_xw6m8"]
+[ext_resource type="Texture2D" uid="uid://b3cvd04a167xq" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_arrow_right.svg" id="201_07say"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_fminn"]
 resource_name = "Alpha_Body_MAT"
@@ -849,6 +907,9 @@ corner_radius_bottom_right = 10000
 corner_radius_bottom_left = 10000
 corner_detail = 20
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_sp4yc"]
+size = Vector2(40, 40)
+
 [sub_resource type="CircleShape2D" id="CircleShape2D_wwnia"]
 radius = 24.0
 
@@ -878,18 +939,18 @@ metadata/_custom_type_script = "uid://dn4se40svqtym"
 
 [node name="PlayerModel" parent="Pivot/RootMotion" unique_id=1513730412 instance=ExtResource("3_45pxl")]
 
-[node name="GeneralSkeleton" parent="Pivot/RootMotion/PlayerModel" index="0" unique_id=1428933500]
-bones/0/position = Vector3(-0.003614116, 0.9897815, 0.007905052)
-bones/0/rotation = Quaternion(-0.034389272, -0.0473047, -0.025597502, 0.9979602)
-bones/1/rotation = Quaternion(0.03297041, 0.01699202, 0.024314027, 0.9990161)
-bones/2/rotation = Quaternion(0.010911633, 0.004420649, 0.0143391825, 0.9998279)
-bones/3/rotation = Quaternion(0.010743476, 0.004656828, 0.014357579, 0.99982846)
-bones/4/rotation = Quaternion(0.05169928, -0.0018304399, 0.003150052, 0.9986561)
-bones/5/rotation = Quaternion(-0.07420286, 0.008771677, -0.0008025351, 0.9972043)
-bones/7/rotation = Quaternion(0.45797575, 0.49901783, 0.6334007, -0.3742232)
-bones/8/rotation = Quaternion(0.1285085, 0.8044024, -0.5671716, -0.1214035)
-bones/9/rotation = Quaternion(0.010422841, -0.7070301, 0.010423057, 0.7070299)
-bones/10/rotation = Quaternion(0.05186597, 0.47478622, -0.0090874005, 0.8785246)
+[node name="GeneralSkeleton" parent="Pivot/RootMotion/PlayerModel" index="0" unique_id=441386585]
+bones/0/position = Vector3(0.0025860933, 0.98999864, -0.000947819)
+bones/0/rotation = Quaternion(-0.030963566, -0.047233272, -0.029087443, 0.99798006)
+bones/1/rotation = Quaternion(0.028702732, 0.012176774, 0.02177455, 0.99927664)
+bones/2/rotation = Quaternion(0.010121365, 0.0029389034, 0.013592852, 0.9998521)
+bones/3/rotation = Quaternion(0.009895364, 0.00312911, 0.013616944, 0.9998535)
+bones/4/rotation = Quaternion(0.048815366, -0.00090892974, 0.004073455, 0.9987992)
+bones/5/rotation = Quaternion(-0.06599115, 0.01161907, -0.0014213107, 0.99775153)
+bones/7/rotation = Quaternion(0.45688158, 0.5004639, 0.63231987, -0.37545556)
+bones/8/rotation = Quaternion(0.12296343, 0.8034842, -0.5682001, -0.12822549)
+bones/9/rotation = Quaternion(0.009039381, -0.707049, 0.009039427, 0.707049)
+bones/10/rotation = Quaternion(0.052845877, 0.47548258, -0.015900444, 0.8779925)
 bones/11/rotation = Quaternion(-0.23049821, 0.682892, 0.17169991, 0.67160124)
 bones/12/rotation = Quaternion(0.2014946, 0.20389192, -0.059591476, 0.9561783)
 bones/13/rotation = Quaternion(0.04001291, -0.0528761, -0.1285876, 0.9894788)
@@ -906,10 +967,10 @@ bones/25/rotation = Quaternion(0.15521277, -1.4901161e-07, -0.01590553, 0.987753
 bones/27/rotation = Quaternion(0.23386712, -0.0035056775, -0.049008526, 0.97102636)
 bones/28/rotation = Quaternion(0.15125789, -1.1920929e-07, -0.015500367, 0.98837286)
 bones/29/rotation = Quaternion(0.14349762, -8.940698e-08, -0.014705034, 0.9895415)
-bones/31/rotation = Quaternion(0.47625482, -0.47781312, -0.63858795, -0.370245)
-bones/32/rotation = Quaternion(-0.14600563, 0.82835114, -0.49707106, 0.21315967)
-bones/33/rotation = Quaternion(0.041256856, 0.7059021, -0.041256953, 0.7059022)
-bones/34/rotation = Quaternion(0.040968582, -0.5698648, 0.033978563, 0.820013)
+bones/31/rotation = Quaternion(0.47563225, -0.47978058, -0.6343084, -0.3758156)
+bones/32/rotation = Quaternion(-0.15160884, 0.827443, -0.49676508, 0.21348833)
+bones/33/rotation = Quaternion(0.041249447, 0.7059026, -0.041249283, 0.7059026)
+bones/34/rotation = Quaternion(0.046107907, -0.57175106, 0.037723105, 0.81826144)
 bones/35/rotation = Quaternion(-0.24051939, -0.6719299, -0.18474646, 0.6756696)
 bones/36/rotation = Quaternion(0.23822677, -0.20985533, 0.051183645, 0.94688386)
 bones/37/rotation = Quaternion(0.045545384, 0.046079352, 0.16169313, 0.984712)
@@ -926,25 +987,25 @@ bones/49/rotation = Quaternion(0.15551054, 5.9604645e-08, 0.012668192, 0.9877530
 bones/51/rotation = Quaternion(0.22849345, 0.003403008, 0.04298061, 0.9725903)
 bones/52/rotation = Quaternion(0.15154804, 8.940697e-08, 0.012345463, 0.98837286)
 bones/53/rotation = Quaternion(0.14377284, 1.7881393e-07, 0.011711955, 0.9895414)
-bones/55/rotation = Quaternion(0.13886663, 0.0751845, 0.9844972, -0.076345354)
-bones/56/rotation = Quaternion(-0.03858983, 0.99288213, -0.11219946, 0.010364237)
-bones/57/rotation = Quaternion(-0.042446252, 0.7090698, -0.70205563, 0.050362896)
+bones/55/rotation = Quaternion(0.13540576, 0.085097395, 0.9841585, -0.076523334)
+bones/56/rotation = Quaternion(-0.03853051, 0.99260557, -0.11421792, 0.014279228)
+bones/57/rotation = Quaternion(-0.041169792, 0.7104143, -0.7008928, 0.04864134)
 bones/58/rotation = Quaternion(-1.04873216e-07, 0.9990753, 0.042996258, -1.8274612e-08)
-bones/60/rotation = Quaternion(-0.092372306, -0.01648367, 0.99520737, -0.027531825)
-bones/61/rotation = Quaternion(0.034143034, 0.9940465, -0.061268527, -0.08337862)
-bones/62/rotation = Quaternion(0.011827725, 0.67855, -0.73397183, -0.026746666)
-bones/63/rotation = Quaternion(-6.596424e-08, 0.99811584, 0.061358016, -2.0956825e-09)
+bones/60/rotation = Quaternion(-0.09043458, -0.010593169, 0.9954134, -0.029354218)
+bones/61/rotation = Quaternion(0.032873314, 0.9944899, -0.054481577, -0.08331291)
+bones/62/rotation = Quaternion(0.010025798, 0.6858003, -0.72717714, -0.028121756)
+bones/63/rotation = Quaternion(4.125582e-09, 0.9979954, 0.06328836, 1.1748996e-08)
 
-[node name="Alpha_Surface" parent="Pivot/RootMotion/PlayerModel/GeneralSkeleton" index="0" unique_id=820442918]
+[node name="Alpha_Surface" parent="Pivot/RootMotion/PlayerModel/GeneralSkeleton" index="0" unique_id=1058981122]
 surface_material_override/0 = SubResource("StandardMaterial3D_fminn")
 
-[node name="Alpha_Joints" parent="Pivot/RootMotion/PlayerModel/GeneralSkeleton" index="1" unique_id=1291233321]
+[node name="Alpha_Joints" parent="Pivot/RootMotion/PlayerModel/GeneralSkeleton" index="1" unique_id=884953764]
 surface_material_override/0 = SubResource("StandardMaterial3D_qu57g")
 
 [node name="PhysicalBoneSimulator3D" parent="Pivot/RootMotion/PlayerModel/GeneralSkeleton" index="2" unique_id=1972762954 instance=ExtResource("4_fminn")]
 
 [node name="BoneAttachementRightHand" type="BoneAttachment3D" parent="Pivot/RootMotion/PlayerModel/GeneralSkeleton" index="3" unique_id=627030226]
-transform = Transform3D(0.40347418, 0.032914087, 0.9143987, 0.066634476, -0.9977562, 0.006512191, 0.9125616, 0.058302842, -0.4047622, -0.24280576, 0.836443, 0.005552415)
+transform = Transform3D(0.3963066, 0.019779786, 0.9179052, 0.06650235, -0.99776024, -0.0072118742, 0.9157065, 0.063900925, -0.39673433, -0.24580383, 0.84309685, -0.0021321848)
 bone_name = "RightHand"
 bone_idx = 34
 
@@ -982,7 +1043,7 @@ primary_damp_threshold = 1.0
 secondary_limit_angle = 1.3962634
 secondary_damp_threshold = 1.0
 
-[node name="AnimationPlayer" parent="Pivot/RootMotion/PlayerModel" index="1" unique_id=1299284529]
+[node name="AnimationPlayer" parent="Pivot/RootMotion/PlayerModel" index="1" unique_id=1207174256]
 deterministic = true
 libraries/backflip = ExtResource("4_q6nkd")
 "libraries/braced hang hop left" = ExtResource("11_nuaah")
@@ -1167,6 +1228,56 @@ parameters/UpperBodyBlend/blend_amount = 0.0
 
 [node name="Controls" type="CanvasLayer" parent="." unique_id=1527628397]
 script = ExtResource("120_jlii4")
+keyboard_mouse_button_0_normal = ExtResource("121_0742e")
+keyboard_mouse_button_0_pressed = ExtResource("122_r2tgl")
+keyboard_mouse_button_1_normal = ExtResource("123_q83rh")
+keyboard_mouse_button_1_pressed = ExtResource("124_02pgl")
+keyboard_mouse_button_2_normal = ExtResource("125_q83rh")
+keyboard_mouse_button_2_pressed = ExtResource("126_02pgl")
+keyboard_mouse_button_3_normal = ExtResource("125_2bgnt")
+keyboard_mouse_button_3_pressed = ExtResource("126_j4eng")
+keyboard_mouse_button_4_normal = ExtResource("129_f3q3i")
+keyboard_mouse_button_4_pressed = ExtResource("130_gfa47")
+keyboard_mouse_button_15_normal = ExtResource("131_3eyle")
+keyboard_mouse_button_15_pressed = ExtResource("132_sp0uh")
+keyboard_mouse_button_6_normal = ExtResource("133_c5lmm")
+keyboard_mouse_button_6_pressed = ExtResource("134_errws")
+keyboard_mouse_button_7_normal = ExtResource("135_c5lmm")
+keyboard_mouse_button_7_pressed = ExtResource("136_errws")
+keyboard_mouse_button_8_normal = ExtResource("137_xwibx")
+keyboard_mouse_button_8_pressed = ExtResource("138_0fqn4")
+keyboard_mouse_button_9_normal = ExtResource("139_gqdy8")
+keyboard_mouse_button_9_pressed = ExtResource("140_xdbkn")
+keyboard_mouse_button_10_normal = ExtResource("141_sjfj8")
+keyboard_mouse_button_10_pressed = ExtResource("142_k50we")
+keyboard_mouse_axis_4_plus_normal = ExtResource("139_sy08r")
+keyboard_mouse_axis_4_plus_pressed = ExtResource("140_ah825")
+keyboard_mouse_axis_5_plus_normal = ExtResource("141_ym3ug")
+keyboard_mouse_axis_5_plus_pressed = ExtResource("142_8fd3h")
+microsoft_button_0_normal = ExtResource("43_oaa2s")
+microsoft_button_0_pressed = ExtResource("44_tkxeg")
+microsoft_button_1_normal = ExtResource("45_1hnrs")
+microsoft_button_1_pressed = ExtResource("46_ahqpo")
+microsoft_button_2_normal = ExtResource("47_sd0ff")
+microsoft_button_2_pressed = ExtResource("48_1520m")
+microsoft_button_3_normal = ExtResource("49_xrkl1")
+microsoft_button_3_pressed = ExtResource("50_7pm0t")
+nintendo_button_0_normal = ExtResource("121_osk5u")
+nintendo_button_0_pressed = ExtResource("122_3avsa")
+nintendo_button_1_normal = ExtResource("123_rb0fi")
+nintendo_button_1_pressed = ExtResource("124_75oso")
+nintendo_button_2_normal = ExtResource("125_jtt00")
+nintendo_button_2_pressed = ExtResource("126_36tao")
+nintendo_button_3_normal = ExtResource("127_1t4v8")
+nintendo_button_3_pressed = ExtResource("128_3acf8")
+sony_button_0_normal = ExtResource("137_lq5p6")
+sony_button_0_pressed = ExtResource("138_vtuwp")
+sony_button_1_normal = ExtResource("139_jatfe")
+sony_button_1_pressed = ExtResource("140_y3ps5")
+sony_button_2_normal = ExtResource("141_80vgy")
+sony_button_2_pressed = ExtResource("142_miiyk")
+sony_button_3_normal = ExtResource("143_0742e")
+sony_button_3_pressed = ExtResource("144_r2tgl")
 
 [node name="BottomLeft" type="Control" parent="Controls" unique_id=935023433]
 layout_mode = 3
@@ -1274,14 +1385,14 @@ label_settings = SubResource("LabelSettings_xf6l6")
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Button10" type="TouchScreenButton" parent="Controls/BottomLeft" unique_id=1340888250]
+[node name="JoypadButton7" type="TouchScreenButton" parent="Controls/BottomLeft" unique_id=1340888250]
 position = Vector2(0, 256)
 texture_normal = ExtResource("59_eljlq")
 texture_pressed = ExtResource("60_qcvw7")
 shape = SubResource("CircleShape2D_rs4nb")
 action = "crouch"
 
-[node name="Label" type="Label" parent="Controls/BottomLeft/Button10" unique_id=1676386203]
+[node name="Label" type="Label" parent="Controls/BottomLeft/JoypadButton7" unique_id=1676386203]
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
@@ -1333,6 +1444,52 @@ offset_bottom = 56.0
 grow_horizontal = 2
 grow_vertical = 0
 text = "Move"
+
+[node name="KeyW" type="TouchScreenButton" parent="Controls/BottomLeft" unique_id=834235516]
+visible = false
+position = Vector2(80, 40)
+texture_normal = ExtResource("179_pwju5")
+texture_pressed = ExtResource("180_dylvg")
+shape = SubResource("RectangleShape2D_sp4yc")
+action = "move_up"
+
+[node name="Label" type="Label" parent="Controls/BottomLeft/KeyW" unique_id=1406456385]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -21.5
+offset_top = 46.0
+offset_right = 21.5
+offset_bottom = 69.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "Move"
+
+[node name="KeyA" type="TouchScreenButton" parent="Controls/BottomLeft" unique_id=2036398621]
+visible = false
+position = Vector2(32, 88)
+texture_normal = ExtResource("181_cjm4b")
+texture_pressed = ExtResource("182_gl6xl")
+shape = SubResource("RectangleShape2D_sp4yc")
+action = "move_left"
+
+[node name="KeyS" type="TouchScreenButton" parent="Controls/BottomLeft" unique_id=414637746]
+visible = false
+position = Vector2(80, 88)
+texture_normal = ExtResource("183_7deqm")
+texture_pressed = ExtResource("184_qci5a")
+shape = SubResource("RectangleShape2D_sp4yc")
+action = "move_down"
+
+[node name="KeyD" type="TouchScreenButton" parent="Controls/BottomLeft" unique_id=1887083199]
+visible = false
+position = Vector2(128, 88)
+texture_normal = ExtResource("185_cg007")
+texture_pressed = ExtResource("186_05hnt")
+shape = SubResource("RectangleShape2D_sp4yc")
+action = "move_right"
 
 [node name="BottomRight" type="Control" parent="Controls" unique_id=811976476]
 layout_mode = 3
@@ -1477,6 +1634,52 @@ offset_bottom = 56.0
 grow_horizontal = 2
 grow_vertical = 0
 text = "Camera"
+
+[node name="KeyUp" type="TouchScreenButton" parent="Controls/BottomRight" unique_id=237264198]
+visible = false
+position = Vector2(64, 168)
+texture_normal = ExtResource("194_sp4yc")
+texture_pressed = ExtResource("195_s52c0")
+shape = SubResource("RectangleShape2D_sp4yc")
+action = "look_up"
+
+[node name="Label" type="Label" parent="Controls/BottomRight/KeyUp" unique_id=178018545]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -30.5
+offset_top = 44.0
+offset_right = 30.5
+offset_bottom = 67.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "Camera"
+
+[node name="KeyLeft" type="TouchScreenButton" parent="Controls/BottomRight" unique_id=65718475]
+visible = false
+position = Vector2(16, 216)
+texture_normal = ExtResource("196_rhxkt")
+texture_pressed = ExtResource("197_v6de3")
+shape = SubResource("RectangleShape2D_sp4yc")
+action = "look_left"
+
+[node name="KeyDown" type="TouchScreenButton" parent="Controls/BottomRight" unique_id=577545632]
+visible = false
+position = Vector2(64, 216)
+texture_normal = ExtResource("198_t3so4")
+texture_pressed = ExtResource("199_fl5qr")
+shape = SubResource("RectangleShape2D_sp4yc")
+action = "look_down"
+
+[node name="KeyRight" type="TouchScreenButton" parent="Controls/BottomRight" unique_id=190002209]
+visible = false
+position = Vector2(112, 216)
+texture_normal = ExtResource("200_xw6m8")
+texture_pressed = ExtResource("201_07say")
+shape = SubResource("RectangleShape2D_sp4yc")
+action = "look_right"
 
 [node name="TopLeft" type="Control" parent="Controls" unique_id=1897273005]
 layout_mode = 3
