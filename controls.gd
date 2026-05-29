@@ -79,10 +79,18 @@ signal input_type_changed(input_type: InputType)
 @onready var joypad_button_10: TouchScreenButton = $TopRight/JoypadButton10
 @onready var joypad_axis_4_plus: TouchScreenButton = $TopLeft/JoypadAxis4Plus
 @onready var joypad_axis_5_plus: TouchScreenButton = $TopRight/JoypadAxis5Plus
+@onready var joypad_button_11: TouchScreenButton = $BottomLeft/JoypadButton11
+@onready var joypad_button_12: TouchScreenButton = $BottomLeft/JoypadButton12
+@onready var joypad_button_13: TouchScreenButton = $BottomLeft/JoypadButton13
+@onready var joypad_button_14: TouchScreenButton = $BottomLeft/JoypadButton14
 @onready var key_w: TouchScreenButton = $BottomLeft/KeyW
 @onready var key_a: TouchScreenButton = $BottomLeft/KeyA
 @onready var key_s: TouchScreenButton = $BottomLeft/KeyS
 @onready var key_d: TouchScreenButton = $BottomLeft/KeyD
+@onready var key_i: TouchScreenButton = $BottomLeft/KeyI
+@onready var key_j: TouchScreenButton = $BottomLeft/KeyJ
+@onready var key_k: TouchScreenButton = $BottomLeft/KeyK
+@onready var key_l: TouchScreenButton = $BottomLeft/KeyL
 @onready var left_joystick: VirtualJoystick = $BottomLeft/LeftJoystick
 @onready var right_joystick: VirtualJoystick = $BottomRight/RightJoystick
 @onready var key_up: TouchScreenButton = $BottomRight/KeyUp
@@ -165,10 +173,18 @@ func update_input_ui(input_type: InputType) -> void:
 		joypad_axis_4_plus.texture_pressed = keyboard_mouse_axis_4_plus_pressed
 		joypad_axis_5_plus.texture_normal = keyboard_mouse_axis_5_plus_normal
 		joypad_axis_5_plus.texture_pressed = keyboard_mouse_axis_5_plus_pressed
+		joypad_button_11.hide()
+		joypad_button_12.hide()
+		joypad_button_13.hide()
+		joypad_button_14.hide()
 		key_w.show()
 		key_a.show()
 		key_s.show()
 		key_d.show()
+		key_i.show()
+		key_j.show()
+		key_k.show()
+		key_l.show()
 		key_up.show()
 		key_down.show()
 		key_left.show()
@@ -205,10 +221,18 @@ func update_input_ui(input_type: InputType) -> void:
 		joypad_button_3.texture_pressed = sony_button_3_pressed
 
 	if input_type != InputType.KEYBOARD_MOUSE:
+		joypad_button_11.show()
+		joypad_button_12.show()
+		joypad_button_13.show()
+		joypad_button_14.show()
 		key_w.hide()
 		key_a.hide()
 		key_s.hide()
 		key_d.hide()
+		key_i.hide()
+		key_j.hide()
+		key_k.hide()
+		key_l.hide()
 		key_up.hide()
 		key_down.hide()
 		key_left.hide()

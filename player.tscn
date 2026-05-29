@@ -204,6 +204,14 @@
 [ext_resource type="Texture2D" uid="uid://d1rcbxhxjqbcg" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_s.svg" id="184_qci5a"]
 [ext_resource type="Texture2D" uid="uid://6jbcphd81nwf" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_d_outline.svg" id="185_cg007"]
 [ext_resource type="Texture2D" uid="uid://dfsvarl32qaoc" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_d.svg" id="186_05hnt"]
+[ext_resource type="Texture2D" uid="uid://p35mxwd8guqj" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_i_outline.svg" id="187_v6de3"]
+[ext_resource type="Texture2D" uid="uid://cq8yrlc2gpvjh" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_i.svg" id="188_t3so4"]
+[ext_resource type="Texture2D" uid="uid://byl8adwl5vl8q" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_j_outline.svg" id="189_fl5qr"]
+[ext_resource type="Texture2D" uid="uid://d0omkiac41aaq" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_j.svg" id="190_xw6m8"]
+[ext_resource type="Texture2D" uid="uid://bkdn81sit36oh" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_k_outline.svg" id="191_07say"]
+[ext_resource type="Texture2D" uid="uid://bnq54bhq4o7of" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_k.svg" id="192_0cxoa"]
+[ext_resource type="Texture2D" uid="uid://drajod7p6gfok" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_l_outline.svg" id="193_0bued"]
+[ext_resource type="Texture2D" uid="uid://b5aw7ciy0g4gr" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_l.svg" id="194_5h1fl"]
 [ext_resource type="Texture2D" uid="uid://bp3a4v6n6l8v5" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_arrow_up_outline.svg" id="194_sp4yc"]
 [ext_resource type="Texture2D" uid="uid://qcwykgwm0x87" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_arrow_up.svg" id="195_s52c0"]
 [ext_resource type="Texture2D" uid="uid://ckw23yo7tylxp" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_arrow_left_outline.svg" id="196_rhxkt"]
@@ -940,17 +948,17 @@ metadata/_custom_type_script = "uid://dn4se40svqtym"
 [node name="PlayerModel" parent="Pivot/RootMotion" unique_id=1513730412 instance=ExtResource("3_45pxl")]
 
 [node name="GeneralSkeleton" parent="Pivot/RootMotion/PlayerModel" index="0" unique_id=441386585]
-bones/0/position = Vector3(0.0025860933, 0.98999864, -0.000947819)
-bones/0/rotation = Quaternion(-0.030963566, -0.047233272, -0.029087443, 0.99798006)
-bones/1/rotation = Quaternion(0.028702732, 0.012176774, 0.02177455, 0.99927664)
-bones/2/rotation = Quaternion(0.010121365, 0.0029389034, 0.013592852, 0.9998521)
-bones/3/rotation = Quaternion(0.009895364, 0.00312911, 0.013616944, 0.9998535)
-bones/4/rotation = Quaternion(0.048815366, -0.00090892974, 0.004073455, 0.9987992)
-bones/5/rotation = Quaternion(-0.06599115, 0.01161907, -0.0014213107, 0.99775153)
-bones/7/rotation = Quaternion(0.45688158, 0.5004639, 0.63231987, -0.37545556)
-bones/8/rotation = Quaternion(0.12296343, 0.8034842, -0.5682001, -0.12822549)
-bones/9/rotation = Quaternion(0.009039381, -0.707049, 0.009039427, 0.707049)
-bones/10/rotation = Quaternion(0.052845877, 0.47548258, -0.015900444, 0.8779925)
+bones/0/position = Vector3(-0.0028385394, 0.99030143, 0.006445825)
+bones/0/rotation = Quaternion(-0.032997552, -0.046479523, -0.024905242, 0.9980634)
+bones/1/rotation = Quaternion(0.027791869, 0.013849437, 0.0228981, 0.9992555)
+bones/2/rotation = Quaternion(0.009826162, 0.0035177022, 0.014192677, 0.99984485)
+bones/3/rotation = Quaternion(0.009480789, 0.0035514578, 0.014135386, 0.99984884)
+bones/4/rotation = Quaternion(0.047654673, -0.0014509849, 0.0048928796, 0.99885094)
+bones/5/rotation = Quaternion(-0.0680017, 0.010928578, -0.0012363254, 0.9976246)
+bones/7/rotation = Quaternion(0.45877135, 0.4995416, 0.62869674, -0.38043085)
+bones/8/rotation = Quaternion(0.12537785, 0.80087316, -0.57218957, -0.124425545)
+bones/9/rotation = Quaternion(0.01021311, -0.70703316, 0.010213296, 0.7070329)
+bones/10/rotation = Quaternion(0.05221996, 0.4800426, -0.015176747, 0.87555814)
 bones/11/rotation = Quaternion(-0.23049821, 0.682892, 0.17169991, 0.67160124)
 bones/12/rotation = Quaternion(0.2014946, 0.20389192, -0.059591476, 0.9561783)
 bones/13/rotation = Quaternion(0.04001291, -0.0528761, -0.1285876, 0.9894788)
@@ -967,10 +975,10 @@ bones/25/rotation = Quaternion(0.15521277, -1.4901161e-07, -0.01590553, 0.987753
 bones/27/rotation = Quaternion(0.23386712, -0.0035056775, -0.049008526, 0.97102636)
 bones/28/rotation = Quaternion(0.15125789, -1.1920929e-07, -0.015500367, 0.98837286)
 bones/29/rotation = Quaternion(0.14349762, -8.940698e-08, -0.014705034, 0.9895415)
-bones/31/rotation = Quaternion(0.47563225, -0.47978058, -0.6343084, -0.3758156)
-bones/32/rotation = Quaternion(-0.15160884, 0.827443, -0.49676508, 0.21348833)
-bones/33/rotation = Quaternion(0.041249447, 0.7059026, -0.041249283, 0.7059026)
-bones/34/rotation = Quaternion(0.046107907, -0.57175106, 0.037723105, 0.81826144)
+bones/31/rotation = Quaternion(0.4773178, -0.477704, -0.6351836, -0.37484458)
+bones/32/rotation = Quaternion(-0.14933965, 0.8277132, -0.49586457, 0.2161181)
+bones/33/rotation = Quaternion(0.041103534, 0.7059111, -0.041103616, 0.7059111)
+bones/34/rotation = Quaternion(0.042343896, -0.5713396, 0.03602085, 0.81882894)
 bones/35/rotation = Quaternion(-0.24051939, -0.6719299, -0.18474646, 0.6756696)
 bones/36/rotation = Quaternion(0.23822677, -0.20985533, 0.051183645, 0.94688386)
 bones/37/rotation = Quaternion(0.045545384, 0.046079352, 0.16169313, 0.984712)
@@ -987,14 +995,14 @@ bones/49/rotation = Quaternion(0.15551054, 5.9604645e-08, 0.012668192, 0.9877530
 bones/51/rotation = Quaternion(0.22849345, 0.003403008, 0.04298061, 0.9725903)
 bones/52/rotation = Quaternion(0.15154804, 8.940697e-08, 0.012345463, 0.98837286)
 bones/53/rotation = Quaternion(0.14377284, 1.7881393e-07, 0.011711955, 0.9895414)
-bones/55/rotation = Quaternion(0.13540576, 0.085097395, 0.9841585, -0.076523334)
-bones/56/rotation = Quaternion(-0.03853051, 0.99260557, -0.11421792, 0.014279228)
-bones/57/rotation = Quaternion(-0.041169792, 0.7104143, -0.7008928, 0.04864134)
+bones/55/rotation = Quaternion(0.13532922, 0.07446681, 0.9852062, -0.07422653)
+bones/56/rotation = Quaternion(-0.039358806, 0.9934715, -0.10619623, 0.013701446)
+bones/57/rotation = Quaternion(-0.042688742, 0.71174544, -0.6993256, 0.0503969)
 bones/58/rotation = Quaternion(-1.04873216e-07, 0.9990753, 0.042996258, -1.8274612e-08)
-bones/60/rotation = Quaternion(-0.09043458, -0.010593169, 0.9954134, -0.029354218)
-bones/61/rotation = Quaternion(0.032873314, 0.9944899, -0.054481577, -0.08331291)
-bones/62/rotation = Quaternion(0.010025798, 0.6858003, -0.72717714, -0.028121756)
-bones/63/rotation = Quaternion(4.125582e-09, 0.9979954, 0.06328836, 1.1748996e-08)
+bones/60/rotation = Quaternion(-0.09248575, -0.016063906, 0.99521816, -0.027006336)
+bones/61/rotation = Quaternion(0.033544365, 0.9942949, -0.057354998, -0.08344424)
+bones/62/rotation = Quaternion(0.010626726, 0.68082947, -0.7318681, -0.026971342)
+bones/63/rotation = Quaternion(6.17539e-08, 0.998169, 0.060487434, 8.880094e-09)
 
 [node name="Alpha_Surface" parent="Pivot/RootMotion/PlayerModel/GeneralSkeleton" index="0" unique_id=1058981122]
 surface_material_override/0 = SubResource("StandardMaterial3D_fminn")
@@ -1005,7 +1013,7 @@ surface_material_override/0 = SubResource("StandardMaterial3D_qu57g")
 [node name="PhysicalBoneSimulator3D" parent="Pivot/RootMotion/PlayerModel/GeneralSkeleton" index="2" unique_id=1972762954 instance=ExtResource("4_fminn")]
 
 [node name="BoneAttachementRightHand" type="BoneAttachment3D" parent="Pivot/RootMotion/PlayerModel/GeneralSkeleton" index="3" unique_id=627030226]
-transform = Transform3D(0.3963066, 0.019779786, 0.9179052, 0.06650235, -0.99776024, -0.0072118742, 0.9157065, 0.063900925, -0.39673433, -0.24580383, 0.84309685, -0.0021321848)
+transform = Transform3D(0.40007424, 0.024892213, 0.9161446, 0.07126367, -0.9974496, -0.0040191663, 0.913708, 0.06689584, -0.40082774, -0.2479431, 0.83944255, 0.005039301)
 bone_name = "RightHand"
 bone_idx = 34
 
@@ -1289,6 +1297,7 @@ offset_right = 320.0
 grow_vertical = 0
 
 [node name="DPadBase" type="TextureRect" parent="Controls/BottomLeft" unique_id=1019781285]
+visible = false
 layout_mode = 0
 offset_left = 192.0
 offset_top = 184.0
@@ -1490,6 +1499,86 @@ texture_normal = ExtResource("185_cg007")
 texture_pressed = ExtResource("186_05hnt")
 shape = SubResource("RectangleShape2D_sp4yc")
 action = "move_right"
+
+[node name="KeyI" type="TouchScreenButton" parent="Controls/BottomLeft" unique_id=807712295]
+visible = false
+position = Vector2(224, 192)
+texture_normal = ExtResource("187_v6de3")
+texture_pressed = ExtResource("188_t3so4")
+shape = SubResource("RectangleShape2D_sp4yc")
+
+[node name="Label" type="Label" parent="Controls/BottomLeft/KeyI" unique_id=902194909]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -26.0
+offset_top = -18.5
+offset_right = 27.0
+offset_bottom = 4.5
+grow_horizontal = 2
+text = "Seeker"
+
+[node name="KeyJ" type="TouchScreenButton" parent="Controls/BottomLeft" unique_id=898655237]
+visible = false
+position = Vector2(176, 240)
+texture_normal = ExtResource("189_fl5qr")
+texture_pressed = ExtResource("190_xw6m8")
+shape = SubResource("RectangleShape2D_sp4yc")
+
+[node name="Label" type="Label" parent="Controls/BottomLeft/KeyJ" unique_id=1135069101]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = 19.5
+offset_top = 57.5
+offset_right = 77.5
+offset_bottom = 80.5
+grow_horizontal = 2
+text = "Whistle"
+
+[node name="KeyK" type="TouchScreenButton" parent="Controls/BottomLeft" unique_id=1773876411]
+visible = false
+position = Vector2(224, 240)
+texture_normal = ExtResource("191_07say")
+texture_pressed = ExtResource("192_0cxoa")
+shape = SubResource("RectangleShape2D_sp4yc")
+
+[node name="Label" type="Label" parent="Controls/BottomLeft/KeyK" unique_id=722781760]
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = -112.0
+offset_top = -24.0
+offset_right = -48.0
+offset_bottom = 25.0
+grow_vertical = 2
+text = "Last
+Weapon"
+label_settings = SubResource("LabelSettings_xf6l6")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="KeyL" type="TouchScreenButton" parent="Controls/BottomLeft" unique_id=687010465]
+visible = false
+position = Vector2(272, 240)
+texture_normal = ExtResource("193_0bued")
+texture_pressed = ExtResource("194_5h1fl")
+shape = SubResource("RectangleShape2D_sp4yc")
+
+[node name="Label" type="Label" parent="Controls/BottomLeft/KeyL" unique_id=653415252]
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 64.0
+offset_top = -24.0
+offset_right = 128.0
+offset_bottom = 25.0
+grow_vertical = 2
+text = "Next
+Weapon"
+label_settings = SubResource("LabelSettings_xf6l6")
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="BottomRight" type="Control" parent="Controls" unique_id=811976476]
 layout_mode = 3
