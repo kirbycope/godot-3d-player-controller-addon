@@ -20,6 +20,11 @@ const LANDING_SKIP_LATERAL_SPEED = 0.75
 @export var hanging_free_move_blend_path: String = "parameters/LocomotionStateMachine/Hanging/FreeMove/blend_position"
 @export var hanging_braced_move_blend_path: String = "parameters/LocomotionStateMachine/Hanging/BracedMove/blend_position"
 @export var hanging_blend_path: String = "parameters/LocomotionStateMachine/Hanging/HangingSwitch/blend_amount"
+@export var bow_blend_path: String = "parameters/BowBlend/blend_amount"
+@export var bow_locomotion_forward_blend_path: String = "parameters/BowLocomotionStateMachine/Locomotion/StanceStateMachine/Standing/ForwardBlend/blend_position"
+@export var bow_locomotion_strafe_blend_path: String = "parameters/BowLocomotionStateMachine/Locomotion/StanceStateMachine/Standing/StrafeBlend/blend_position"
+@export var bow_locomotion_crouch_blend_path: String = "parameters/BowLocomotionStateMachine/Locomotion/StanceStateMachine/Crouching/blend_position"
+@export var bow_locomotion_mode_path: String = "parameters/BowLocomotionStateMachine/Locomotion/StanceStateMachine/Standing/LocomotionSwitch/blend_amount"
 
 @export_group("Animation State Names")
 @export var state_name_climbing: String = "Climbing"
@@ -41,6 +46,7 @@ const LANDING_SKIP_LATERAL_SPEED = 0.75
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 var input_vector: Vector2 = Vector2.ZERO ## The player's input vector (move_up, move_down, move_left, move_right)
 var climbing_surface_normal: Vector3 = Vector3.ZERO
+var has_bow_equipped: bool = false ## Does the player have the bow equipped?
 var initial_collision_shape: CollisionShape3D
 var initial_collision_shape_height: float = 0.0
 var initial_collision_shape_position_y: float = 0.0
@@ -115,7 +121,7 @@ func _input(event: InputEvent) -> void:
 			# Set the mouse mode to captured to hide the mouse cursor
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
-	# Check if the "crouch" action was just pressed (while clmibing or hanging) to drop down to the floor
+	# Check if the "crouch" action was pressed (while climbing or hanging) to drop down to the floor
 	if event.is_action_pressed("crouch") \
 	and (is_climbing or is_hanging):
 		# If hanging, end hanging to falling, otherwise end climbing to falling
@@ -124,16 +130,27 @@ func _input(event: InputEvent) -> void:
 		else:
 			end_climbing_to_falling()
 
-	# Check if the "focus" action was just pressed
+	# Check if the "focus" action was pressed
 	if event.is_action_pressed("focus"):
 		# Flag the player as "strafing"
 		is_strafing = true
-	# Check if the "focus" action was just released
+	# Check if the "focus" action was released
 	elif event.is_action_released("focus"):
 		# Flag the player as not "strafing"
 		is_strafing = false
 
-	# Check if the key [R] was just pressed
+	# Check if the "shoot" action was  pressed (while holding a bow)
+	if event.is_action_pressed("shoot") \
+	and has_bow_equipped:
+		print("Shoot arrow!")
+		# For the TopHalf Blend only:
+		# 1. Play the "bow draw arrow/mixamo_com" animation (while the player continues to press the "shoot" action)
+		#    - While that happens, show the $Crosshair and shift the camera_spring arm to be higher up and right for more traditional third-person aiming
+		# 2. When the "bow draw" animation finishes, play the "bow aim idle" animation (as long as the player is still holding "shoot")
+		# 3. When the player releases the "shoot" action, play the "bow arrow recoil/mixamo_com" animation
+		#   - While that happens, hide the $Crosshair and reset the camera_spring_arm position
+
+	# Check if the key [R] was pressed
 	if event is InputEventKey \
 	and event.is_pressed() \
 	and event.keycode == Key.KEY_R:
@@ -163,6 +180,9 @@ func _process(delta: float) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
 
+	# Switch between LocomotionStateMachine (0.0) and BowLocomotionStateMachine (1.0)
+	animation_tree.set(bow_blend_path, 1.0 if has_bow_equipped else 0.0)
+
 	# Play forward animation with lateral movement for leaning
 	var forward_vector := Vector2(0, input_vector.length())
 
@@ -171,27 +191,28 @@ func _process(delta: float) -> void:
 		animation_tree.set(locomotion_mode_path, 0.0)
 		animation_tree.set(locomotion_crouch_blend_path, forward_vector)
 		animation_tree.set(locomotion_forward_blend_path, Vector2.ZERO)
+		animation_tree.set(bow_locomotion_mode_path, 0.0)
+		animation_tree.set(bow_locomotion_crouch_blend_path, forward_vector)
+		animation_tree.set(bow_locomotion_forward_blend_path, Vector2.ZERO)
 		return
 
 	# Route input to "locomotion > strafe" blend while strafing so locomotion can move
 	if is_strafing:
+		var strafe_vector := Vector2(clamp(input_vector.x, -1, 1), -clamp(input_vector.y, -1, 1))
 		animation_tree.set(locomotion_mode_path, 1.0)
-		animation_tree.set(
-			locomotion_strafe_blend_path, 
-			Vector2(
-				clamp(input_vector.x, -1, 1),
-				-clamp(input_vector.y, -1, 1),
-			)
-		)
+		animation_tree.set(locomotion_strafe_blend_path, strafe_vector)
 		animation_tree.set(locomotion_forward_blend_path, Vector2.ZERO)
+		animation_tree.set(bow_locomotion_mode_path, 1.0)
+		animation_tree.set(bow_locomotion_strafe_blend_path, strafe_vector)
+		animation_tree.set(bow_locomotion_forward_blend_path, Vector2.ZERO)
 		return
 
 	# Route input to "locomotion > forward" blend so locomotion can move
+	var sprint_forward_vector := forward_vector * Vector2(1, 1.5) if is_sprinting else forward_vector
 	animation_tree.set(locomotion_mode_path, 0.0)
-	if is_sprinting:
-		animation_tree.set(locomotion_forward_blend_path, forward_vector * Vector2(1, 1.5))
-	else:
-		animation_tree.set(locomotion_forward_blend_path, forward_vector)
+	animation_tree.set(locomotion_forward_blend_path, sprint_forward_vector)
+	animation_tree.set(bow_locomotion_mode_path, 0.0)
+	animation_tree.set(bow_locomotion_forward_blend_path, sprint_forward_vector)
 
 	# Blend between hanging free (0.0) and hanging braced (1.0)
 	if is_hanging:
