@@ -33,8 +33,8 @@ func _process(delta: float) -> void:
 	if Input.get_vector("look_left", "look_right", "look_up", "look_down") != Vector2.ZERO:
 		rotate_camera_using_joypad_motion(delta)
 
-	# Slerp camera to face the player's direction when strafing
-	if player.is_strafing:
+	# Slerp camera to face the player's direction when strafing (but not when bow is active)
+	if player.is_strafing and not (player.is_drawing_arrow or player.is_aiming_bow or player.is_shooting_bow):
 		camera_spring_arm.rotation.y = lerp_angle(camera_spring_arm.rotation.y, player.pivot.rotation.y + PI, delta * 8.0)
 
 

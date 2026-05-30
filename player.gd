@@ -259,8 +259,8 @@ func _process(delta: float) -> void:
 		animation_tree.set(bow_locomotion_forward_blend_path, Vector2.ZERO)
 		return
 
-	# Route input to "locomotion > strafe" blend while strafing so locomotion can move
-	if is_strafing:
+	# Route input to "locomotion > strafe" blend while strafing or using the bow
+	if is_strafing or is_drawing_arrow or is_aiming_bow or is_shooting_bow:
 		var strafe_vector := Vector2(clamp(input_vector.x, -1, 1), -clamp(input_vector.y, -1, 1))
 		animation_tree.set(locomotion_mode_path, 1.0)
 		animation_tree.set(locomotion_strafe_blend_path, strafe_vector)
@@ -530,6 +530,7 @@ func _physics_process(delta: float) -> void:
 	# Check if there is movement input
 	if direction.length() > 0.01 \
 	and not is_strafing \
+	and not (is_drawing_arrow or is_aiming_bow or is_shooting_bow) \
 	and not is_climbing \
 	and not is_hanging:
 		# Rotate the player to face the movement direction
@@ -549,6 +550,9 @@ func _physics_process(delta: float) -> void:
 				climbing_surface_normal = climbing_surface_normal.lerp(wall_normal, clamp(delta * 12.0, 0.0, 1.0)).normalized()
 			var target_yaw := atan2(-climbing_surface_normal.x, -climbing_surface_normal.z)
 			pivot.rotation.y = lerp_angle(pivot.rotation.y, target_yaw, clamp(delta * 12.0, 0.0, 1.0))
+	# While using the bow, face the camera direction
+	elif is_drawing_arrow or is_aiming_bow or is_shooting_bow:
+		pivot.rotation.y = lerp_angle(pivot.rotation.y, camera_spring_arm.rotation.y + PI, TURN_SPEED * delta)
 	else:
 		climbing_surface_normal = Vector3.ZERO
 
