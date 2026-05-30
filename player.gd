@@ -25,6 +25,8 @@ const LANDING_SKIP_LATERAL_SPEED = 0.75
 @export var bow_locomotion_strafe_blend_path: String = "parameters/BowLocomotionStateMachine/Locomotion/StanceStateMachine/Standing/StrafeBlend/blend_position"
 @export var bow_locomotion_crouch_blend_path: String = "parameters/BowLocomotionStateMachine/Locomotion/StanceStateMachine/Crouching/blend_position"
 @export var bow_locomotion_mode_path: String = "parameters/BowLocomotionStateMachine/Locomotion/StanceStateMachine/Standing/LocomotionSwitch/blend_amount"
+@export var upper_body_blend_path: String = "parameters/UpperBodyBlend/blend_amount"
+@export var upper_body_state_playback_path: String = "parameters/UpperBodyStateMachine/playback"
 
 @export_group("Animation State Names")
 @export var state_name_climbing: String = "Climbing"
@@ -41,7 +43,11 @@ const LANDING_SKIP_LATERAL_SPEED = 0.75
 @export var state_name_standing_to_crouching: String = "StandingToCrouching"
 @export var state_name_crouching: String = "Crouching"
 @export var state_name_crouching_to_standing: String = "CrouchingToStanding"
+@export var state_name_idle: String = "Idle"
 @export var state_name_pushing: String = "Pushing"
+@export var state_name_bow_aim: String = "AimArrow"
+@export var state_name_bow_draw: String = "DrawArrow"
+@export var state_name_bow_shoot: String = "RecoilArrow"
 
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 var input_vector: Vector2 = Vector2.ZERO ## The player's input vector (move_up, move_down, move_left, move_right)
@@ -50,8 +56,10 @@ var has_bow_equipped: bool = false ## Does the player have the bow equipped?
 var initial_collision_shape: CollisionShape3D
 var initial_collision_shape_height: float = 0.0
 var initial_collision_shape_position_y: float = 0.0
+var is_aiming_bow: bool = false ## Is the player currently aiming with the bow?
 var is_climbing: bool = false ## Is the player "climbing"?
 var is_crouching: bool = false ## Is the player "crouching"?
+var is_drawing_arrow: bool = false ## Is the player currently drawing an arrow with the bow?
 var is_exhausted: bool = false ## Is the player "exhausted"?
 var is_falling: bool = false ## Is the player "falling"?
 var is_hanging: bool = false ## Is the player "hanging"?
@@ -61,22 +69,42 @@ var is_pushing: bool = false ## Is the player "pushing" against a wall?
 var is_ragdolling: bool = false ## Is the player "ragdolling"?
 var is_running: bool = false ## Is the player "running"?
 var is_sliding: bool = false ## Is the player "sliding"?
+var is_shooting_bow: bool = false ## Is the player currently shooting with the bow?
 var is_sprinting: bool = false ## Is the player "sprinting"?
 var is_strafing: bool = false ## Is the player "strafing"?
-var playback_locomotion: AnimationNodeStateMachinePlayback: # LocomotionStateMachine > playback
+
+## Playback control for the [StateMachine], `LocomotionStateMachine`
+var playback_locomotion: AnimationNodeStateMachinePlayback:
 	get:
 		return animation_tree.get(locomotion_state_playback_path) as AnimationNodeStateMachinePlayback
+
+## Current animation state of the `LocomotionStateMachine` playback control.
 var playback_locomotion_state: String:
 	get :
 		return animation_tree.get(locomotion_state_playback_path).get_current_node() as String
-var playback_stance: AnimationNodeStateMachinePlayback: # LocomotionStateMachine > StanceStateMachine > playback
+
+## Playback control for the [StateMachine], `LocomotionStateMachine > Locomotion > StanceStateMachine`
+var playback_stance: AnimationNodeStateMachinePlayback:
 	get:
 		return animation_tree.get(locomotion_stance_playback_path) as AnimationNodeStateMachinePlayback
+
+## Current animation state of the `LocomotionStateMachine > Locomotion > StanceStateMachine` playback control.
 var playback_stance_state: String:
 	get :
 		return animation_tree.get(locomotion_stance_playback_path).get_current_node() as String
 
+## Playback control for the [StateMachine], `UpperBodyBlend > UpperBodyStateMachine`
+var playback_upper_body: AnimationNodeStateMachinePlayback: 
+	get:
+		return animation_tree.get(upper_body_state_playback_path) as AnimationNodeStateMachinePlayback
+
+## Current animation state of the `UpperBodyBlend > UpperBodyStateMachine` playback control.
+var playback_upper_body_state: String:
+	get :
+		return animation_tree.get(upper_body_state_playback_path).get_current_node() as String
+
 @onready var audio: Node3D = $Audio ## The audio controller
+@onready var crosshair: TextureRect = $Crosshair
 @onready var camera_spring_arm: SpringArm3D = $CameraSpringArm
 @onready var look_at_modifier: LookAtModifier3D = $Pivot/RootMotion/PlayerModel/GeneralSkeleton/LookAtModifier3D
 @onready var raycast_ledge: RayCast3D = $Pivot/Ledge
@@ -139,17 +167,6 @@ func _input(event: InputEvent) -> void:
 		# Flag the player as not "strafing"
 		is_strafing = false
 
-	# Check if the "shoot" action was  pressed (while holding a bow)
-	if event.is_action_pressed("shoot") \
-	and has_bow_equipped:
-		print("Shoot arrow!")
-		# For the TopHalf Blend only:
-		# 1. Play the "bow draw arrow/mixamo_com" animation (while the player continues to press the "shoot" action)
-		#    - While that happens, show the $Crosshair and shift the camera_spring arm to be higher up and right for more traditional third-person aiming
-		# 2. When the "bow draw" animation finishes, play the "bow aim idle" animation (as long as the player is still holding "shoot")
-		# 3. When the player releases the "shoot" action, play the "bow arrow recoil/mixamo_com" animation
-		#   - While that happens, hide the $Crosshair and reset the camera_spring_arm position
-
 	# Check if the key [R] was pressed
 	if event is InputEventKey \
 	and event.is_pressed() \
@@ -180,8 +197,54 @@ func _process(delta: float) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
 
+	# Check if the player has a bow equipped
+	if has_bow_equipped:
+		# Check if the "shoot" action is pressed
+		if Input.is_action_pressed("shoot"):
+			# Check if the player is not already flagged as "drawing an arrow" or "aiming with the bow"
+			if not is_drawing_arrow \
+			and not is_aiming_bow:
+				print("Drawing an arrow...")
+				# Double check that the Crosshair is displayed
+				if not crosshair.visible:
+					crosshair.show()
+				# Perform bow draw animation using animation tree
+				playback_upper_body.travel(state_name_bow_draw)
+				# Flag the player as "drawing an arrow"
+				is_drawing_arrow = true
+			# Check if the player is still flagged as "drawing an arrow" but the animation state has advanced to "AimArrow" state
+			elif is_drawing_arrow \
+			and playback_upper_body_state == state_name_bow_aim:
+				print("Arrow drawn and aiming bow; ready to shoot!")
+				# Flag the player as not "drawing an arrow"
+				is_drawing_arrow = false
+				# Flag the player as "aiming with the bow"
+				is_aiming_bow = true
+		# Check if the player is flagged as "aiming with the bow" but has released the "shoot" action
+		elif (is_drawing_arrow or is_aiming_bow) \
+		and Input.is_action_just_released("shoot"):
+			print("Shoot button released; shooting an arrow!")
+			# Hide the Crosshair
+			crosshair.hide()
+			# Play bow shoot animation using animation tree
+			playback_upper_body.travel(state_name_bow_shoot)
+			# Flag the player as not "drawing an arrow"
+			is_drawing_arrow = false
+			# Flag the player as not "aiming with the bow"
+			is_aiming_bow = false
+			# Flag the player as "shooting with the bow"
+			is_shooting_bow = true
+		# Check if the player is flagged as "shooting with the bow" but the animation state has advanced to "Idle" state (after recoil finishes)
+		elif is_shooting_bow \
+		and playback_upper_body_state == state_name_idle:
+			# Flag the player as not "shooting with the bow"
+			is_shooting_bow = false
+
 	# Switch between LocomotionStateMachine (0.0) and BowLocomotionStateMachine (1.0)
 	animation_tree.set(bow_blend_path, 1.0 if has_bow_equipped else 0.0)
+
+	# Blend in upper body when drawing or aiming with bow
+	animation_tree.set(upper_body_blend_path, 1.0 if (is_drawing_arrow or is_aiming_bow or is_shooting_bow) else 0.0)
 
 	# Play forward animation with lateral movement for leaning
 	var forward_vector := Vector2(0, input_vector.length())
