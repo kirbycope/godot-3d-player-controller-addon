@@ -1,0 +1,69 @@
+[gd_scene format=3 uid="uid://ct7n8imyllhbo"]
+
+[ext_resource type="Script" uid="uid://ds3u8j5rx3ita" path="res://addons/3d_player_controller/player_2.gd" id="1_ho2o7"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_dftub"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_ho2o7"]
+radius = 0.05
+height = 0.2
+
+[sub_resource type="Gradient" id="Gradient_dr4k1"]
+offsets = PackedFloat32Array(0.26020408, 0.31632653)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_6jffy"]
+gradient = SubResource("Gradient_dr4k1")
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(0.8, 0.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_su5cm"]
+albedo_texture = SubResource("GradientTexture2D_6jffy")
+
+[sub_resource type="SphereMesh" id="SphereMesh_re0wu"]
+material = SubResource("StandardMaterial3D_su5cm")
+radius = 0.05
+height = 0.1
+
+[sub_resource type="TorusMesh" id="TorusMesh_ercnt"]
+inner_radius = 0.05
+outer_radius = 0.1
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_oyyod"]
+albedo_color = Color(0, 0, 0, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_0j7as"]
+material = SubResource("StandardMaterial3D_oyyod")
+top_radius = 0.05
+bottom_radius = 0.05
+height = 0.01
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_topon"]
+
+[node name="Player" type="CharacterBody3D" unique_id=994458497]
+script = ExtResource("1_ho2o7")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=229451318]
+mesh = SubResource("CapsuleMesh_dftub")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="MeshInstance3D" unique_id=1980300088]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, -0.5)
+mesh = SubResource("CapsuleMesh_ho2o7")
+
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="MeshInstance3D" unique_id=1549487818]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1, 0.5, -0.5)
+mesh = SubResource("SphereMesh_re0wu")
+
+[node name="MeshInstance3D3" type="MeshInstance3D" parent="MeshInstance3D" unique_id=2093123593]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.09526598, 0.5, -0.5)
+mesh = SubResource("SphereMesh_re0wu")
+
+[node name="MeshInstance3D4" type="MeshInstance3D" parent="MeshInstance3D" unique_id=1408960791]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0.05, -0.5)
+mesh = SubResource("TorusMesh_ercnt")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="MeshInstance3D/MeshInstance3D4" unique_id=1591448052]
+mesh = SubResource("CylinderMesh_0j7as")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1135563222]
+shape = SubResource("CapsuleShape3D_topon")
