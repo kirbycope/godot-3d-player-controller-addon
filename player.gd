@@ -7,9 +7,9 @@ extends CharacterBody3D
 const MOTION_INTERPOLATE_SPEED: float = 10.0
 const ROTATION_INTERPOLATE_SPEED: float = 10.0
 
-@export var animation_tree: AnimationTree = get_node_or_null("AnimationTree") ## Reference to the AnimationTree node.
-@export var current_animation: int # = Animations.IDLE ## Current animation state, using an enum for better readability.
-@export var walking_blend_position_path: String = "parameters/LocomotionStateMachine/Walking/blend_position" ## Path to the blend position parameter in the AnimationTree.
+@export var animation_tree: AnimationTree = get_node_or_null("AnimationTree")
+@export var current_animation: int
+@export var locomotion_blend_position_path: String = "parameters/LocomotionStateMachine/Locomotion/blend_position"
 
 var motion := Vector2()
 var orientation := Transform3D()
@@ -53,9 +53,9 @@ func _ready() -> void:
 
 	#move_and_slide()
 
-	# If walking, send the input direction to "LocomotionStateMachine > Walking" blend position.
+	# If walking, send the input direction to "LocomotionStateMachine > Locomotion" blend position.
 	#if animation_tree:
-	#	animation_tree.set(walking_blend_position_path, input_dir)
+	#	animation_tree.set(locomotion_blend_position_path, input_dir)
 	#else:
 	#	push_warning("AnimationTree node not found. Please assign it to the 'animation_tree' variable using the Editor.")
 
@@ -77,7 +77,7 @@ func animate(anim: int, _delta: float) -> void:
 func apply_input(delta: float) -> void:
 	motion = motion.lerp(player_input.motion, MOTION_INTERPOLATE_SPEED * delta)
 	if animation_tree:
-		animation_tree.set(walking_blend_position_path, motion)
+		animation_tree.set(locomotion_blend_position_path, motion)
 
 	root_motion = Transform3D(animation_tree.get_root_motion_rotation(), animation_tree.get_root_motion_position())
 
