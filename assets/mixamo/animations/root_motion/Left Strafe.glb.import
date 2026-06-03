@@ -3,13 +3,13 @@
 importer="animation_library"
 importer_version=1
 type="AnimationLibrary"
-uid="uid://68x16opce2ce"
-path="res://.godot/imported/Left Strafe Walk.glb-726c4f4cce9236a49d5860cd241c62e3.res"
+uid="uid://8018vrukctd3"
+path="res://.godot/imported/Left Strafe.glb-7574fc6cb088749951bfab6472c798f1.res"
 
 [deps]
 
-source_file="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Left Strafe Walk.glb"
-dest_files=["res://.godot/imported/Left Strafe Walk.glb-726c4f4cce9236a49d5860cd241c62e3.res"]
+source_file="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Left Strafe.glb"
+dest_files=["res://.godot/imported/Left Strafe.glb-7574fc6cb088749951bfab6472c798f1.res"]
 
 [params]
 
