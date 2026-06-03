@@ -24,6 +24,8 @@ func _ready() -> void:
 	# Pre-initialize orientation transform.
 	orientation = player_model.global_transform
 	orientation.origin = Vector3()
+	if animation_tree:
+		animation_tree.active = true
 
 
 # https://github.com/godotengine/godot/blob/master/modules/gdscript/editor/script_templates/CharacterBody3D/basic_movement.gd#L10
@@ -60,7 +62,7 @@ func _ready() -> void:
 
 # https://github.com/godotengine/tps-demo/blob/master/player/player.gd#L54
 func _physics_process(delta: float) -> void:
-	if multiplayer.is_server():
+	if is_multiplayer_authority():
 		apply_input(delta)
 	else:
 		animate(current_animation, delta)
@@ -74,6 +76,8 @@ func animate(anim: int, _delta: float) -> void:
 # https://github.com/godotengine/tps-demo/blob/master/player/player.gd#L86
 func apply_input(delta: float) -> void:
 	motion = motion.lerp(player_input.motion, MOTION_INTERPOLATE_SPEED * delta)
+	if animation_tree:
+		animation_tree.set(walking_blend_position_path, motion)
 
 	root_motion = Transform3D(animation_tree.get_root_motion_rotation(), animation_tree.get_root_motion_position())
 
