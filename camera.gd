@@ -34,8 +34,8 @@ func _process(delta: float) -> void:
 		rotate_camera_using_joypad_motion(delta)
 
 	# Slerp camera to face the player's direction when strafing (but not when bow is active)
-	if player.is_strafing and not (player.is_drawing_arrow or player.is_aiming_bow or player.is_shooting_bow):
-		camera_spring_arm.rotation.y = lerp_angle(camera_spring_arm.rotation.y, player.pivot.rotation.y + PI, delta * 8.0)
+	#if player.is_strafing and not (player.is_drawing_arrow or player.is_aiming_bow or player.is_shooting_bow):
+		#camera_spring_arm.rotation.y = lerp_angle(camera_spring_arm.rotation.y, player.pivot.rotation.y + PI, delta * 8.0)
 
 
 ## Rotates the [Camera3D]'s [SpringArm3D] using the input from a joypad motion event, while clamping the vertical rotation to prevent flipping.
