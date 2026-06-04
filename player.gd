@@ -7,7 +7,9 @@ const ROTATION_INTERPOLATE_SPEED: float = 10.0
 @export var animation_tree: AnimationTree = get_node_or_null("AnimationTree")
 @export var current_animation: int
 @export var locomotion_blend_position_path: String = "parameters/LocomotionStateMachine/Locomotion/blend_position"
-
+@export var locomotion_state_playback_path: String = "parameters/LocomotionStateMachine/playback"
+var is_falling: bool = false
+var is_jumping: bool = false
 var is_sprinting: bool = false
 
 var motion := Vector2()
@@ -45,9 +47,19 @@ func animate(anim: int, _delta: float) -> void:
 func apply_input(delta: float) -> void:
 	var target_motion: Vector2 = player_input.motion
 
-	# Sprint { Microsoft: Ⓑ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Shift]}.
+
+	# Jumping { Microsoft: Ⓐ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Space] }.
+	if is_on_floor() and Input.is_action_just_pressed("jump"):
+		velocity.y = 5.0 # TODO: move to animation via method call
+		animation_tree.get(locomotion_state_playback_path).travel("JumpingUp")
+		is_jumping = true
+	else:
+		is_jumping = false
+
+	# Sprint { Microsoft: Ⓑ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Shift] }.
 	if is_on_floor() and Input.is_action_pressed("sprint") and target_motion.y > 0.0:
-		target_motion.y *= 1.5
+		target_motion.y *= 1.5 # increase forward blend by 50% when sprinting
+		target_motion.x *= 0.5 # reduce strafe blend by 50% when sprinting
 		is_sprinting = true
 	else:
 		is_sprinting = false
