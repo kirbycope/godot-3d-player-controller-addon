@@ -111,6 +111,343 @@ func _ready() -> void:
 	# Connect the input_type_changed signal to the update_input_ui function
 	input_type_changed.connect(update_input_ui)
 
+	# "move_up" { Controller: (left-stick) forward, Keyboard: [W] }
+	if not InputMap.has_action("move_up"):
+		# Add the [move_up] action to the Input Map
+		InputMap.add_action("move_up")
+		# Keyboard 🅆
+		var key_event = InputEventKey.new()
+		key_event.physical_keycode = KEY_W
+		InputMap.action_add_event("move_up", key_event)
+		# Controller (left-stick) forward]
+		var joystick_event = InputEventJoypadMotion.new()
+		joystick_event.axis = JOY_AXIS_LEFT_Y
+		joystick_event.axis_value = -1.0
+		InputMap.action_add_event("move_up", joystick_event)
+
+	# "move_down" { Controller: (left-stick) backward, Keyboard: [S] }
+	if not InputMap.has_action("move_down"):
+		# Add the [move_down] action to the Input Map
+		InputMap.add_action("move_down")
+		# Keyboard 🅂
+		var key_event = InputEventKey.new()
+		key_event.physical_keycode = KEY_S
+		InputMap.action_add_event("move_down", key_event)
+		# Controller (left-stick) backward]
+		var joystick_event = InputEventJoypadMotion.new()
+		joystick_event.axis = JOY_AXIS_LEFT_Y
+		joystick_event.axis_value = 1.0
+		InputMap.action_add_event("move_down", joystick_event)
+
+	# "move_left" { Controller: (left-stick) left, Keyboard: [A] }
+	if not InputMap.has_action("move_left"):
+		# Add the [move_left] action to the Input Map
+		InputMap.add_action("move_left")
+		# Keyboard 🄰
+		var key_event = InputEventKey.new()
+		key_event.physical_keycode = KEY_A
+		InputMap.action_add_event("move_left", key_event)
+		# Controller (left-stick) left]
+		var joystick_event = InputEventJoypadMotion.new()
+		joystick_event.axis = JOY_AXIS_LEFT_X
+		joystick_event.axis_value = -1.0
+		InputMap.action_add_event("move_left", joystick_event)
+	
+	# "move_right" { Controller: (left-stick) right, Keyboard: [D] }
+	if not InputMap.has_action("move_right"):
+		# Add the [move_right] action to the Input Map
+		InputMap.add_action("move_right")
+		# Keyboard 🄳
+		var key_event = InputEventKey.new()
+		key_event.physical_keycode = KEY_D
+		InputMap.action_add_event("move_right", key_event)
+		# Controller (left-stick) right]
+		var joystick_event = InputEventJoypadMotion.new()
+		joystick_event.axis = JOY_AXIS_LEFT_X
+		joystick_event.axis_value = 1.0
+		InputMap.action_add_event("move_right", joystick_event)
+
+	# "look_up" { Controller: (right-stick) up, Keyboard: [Up] }
+	if not InputMap.has_action("look_up"):
+		# Add the [look_up] action to the Input Map
+		InputMap.add_action("look_up")
+		# Keyboard [Up]
+		var key_event = InputEventKey.new()
+		key_event.physical_keycode = KEY_UP
+		InputMap.action_add_event("look_up", key_event)
+		# Controller (right-stick) up]
+		var joystick_event = InputEventJoypadMotion.new()
+		joystick_event.axis = JOY_AXIS_RIGHT_Y
+		joystick_event.axis_value = -1.0
+		InputMap.action_add_event("look_up", joystick_event)
+
+	# "look_down" { Controller: (right-stick) down, Keyboard: [Down] }
+	if not InputMap.has_action("look_down"):
+		# Add the [look_down] action to the Input Map
+		InputMap.add_action("look_down")
+		# Keyboard [Down]
+		var key_event = InputEventKey.new()
+		key_event.physical_keycode = KEY_DOWN
+		InputMap.action_add_event("look_down", key_event)
+		# Controller (right-stick) down]
+		var joystick_event = InputEventJoypadMotion.new()
+		joystick_event.axis = JOY_AXIS_RIGHT_Y
+		joystick_event.axis_value = 1.0
+		InputMap.action_add_event("look_down", joystick_event)
+
+	# "look_left" { Controller: (right-stick) left, Keyboard: [Left] }
+	if not InputMap.has_action("look_left"):
+		# Add the [look_left] action to the Input Map
+		InputMap.add_action("look_left")
+		# Keyboard [Left]
+		var key_event = InputEventKey.new()
+		key_event.physical_keycode = KEY_LEFT
+		InputMap.action_add_event("look_left", key_event)
+		# Controller (right-stick) left]
+		var joystick_event = InputEventJoypadMotion.new()
+		joystick_event.axis = JOY_AXIS_RIGHT_X
+		joystick_event.axis_value = -1.0
+		InputMap.action_add_event("look_left", joystick_event)
+
+	# "look_right" { Controller: (right-stick) right, Keyboard: [Right] }
+	if not InputMap.has_action("look_right"):
+		# Add the [look_right] action to the Input Map
+		InputMap.add_action("look_right")
+		# Keyboard [Right]
+		var key_event = InputEventKey.new()
+		key_event.physical_keycode = KEY_RIGHT
+		InputMap.action_add_event("look_right", key_event)
+		# Controller (right-stick) right]
+		var joystick_event = InputEventJoypadMotion.new()
+		joystick_event.axis = JOY_AXIS_RIGHT_X
+		joystick_event.axis_value = 1.0
+		InputMap.action_add_event("look_right", joystick_event)
+
+	# "action" { Microsoft: Ⓐ, Nintendo: Ⓑ, Sony: Ⓧ, Keyboard: [E] }
+	if not InputMap.has_action("action"):
+		# Add the [action] action to the Input Map
+		InputMap.add_action("action")
+		# Microsoft Ⓐ, Nintendo Ⓑ, Sony Ⓧ
+		var joystick_event = InputEventJoypadButton.new()
+		joystick_event.button_index = JOY_BUTTON_A
+		InputMap.action_add_event("action", joystick_event)
+		# Keyboard [E]
+		var key_event = InputEventKey.new()
+		key_event.physical_keycode = KEY_E
+		InputMap.action_add_event("action", key_event)
+
+	# "sprint" { Microsoft: Ⓑ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Shift] }
+	if not InputMap.has_action("sprint"):
+		# Add the [sprint] action to the Input Map
+		InputMap.add_action("sprint")
+		# Microsoft Ⓑ, Nintendo Ⓐ, Sony Ⓞ
+		var joystick_event = InputEventJoypadButton.new()
+		joystick_event.button_index = JOY_BUTTON_B
+		InputMap.action_add_event("sprint", joystick_event)
+		# Keyboard [Shift]
+		var key_event = InputEventKey.new()
+		key_event.physical_keycode = KEY_SHIFT
+		InputMap.action_add_event("sprint", key_event)
+
+	# "attack" { Microsoft: Ⓧ, Nintendo: Ⓨ, Sony: 🟗, Keyboard: [Alt] }
+	if not InputMap.has_action("attack"):
+		# Add the [attack] action to the Input Map
+		InputMap.add_action("attack")
+		# Microsoft Ⓧ, Nintendo Ⓨ, Sony 🟗
+		var joystick_event = InputEventJoypadButton.new()
+		joystick_event.button_index = JOY_BUTTON_X
+		InputMap.action_add_event("attack", joystick_event)
+		# Keyboard [Alt]
+		var key_event = InputEventKey.new()
+		key_event.physical_keycode = KEY_ALT
+		InputMap.action_add_event("attack", key_event)
+
+	# "jump" { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
+	if not InputMap.has_action("jump"):
+		# Add the [jump] action to the Input Map
+		InputMap.add_action("jump")
+		# Microsoft Ⓨ, Nintendo Ⓧ, Sony 🟕
+		var joystick_event = InputEventJoypadButton.new()
+		joystick_event.button_index = JOY_BUTTON_Y
+		InputMap.action_add_event("jump", joystick_event)
+		# Keyboard [Space]
+		var key_event = InputEventKey.new()
+		key_event.physical_keycode = KEY_SPACE
+		InputMap.action_add_event("jump", key_event)
+
+	# "crouch" { Microsoft: Ⓛ, Nintendo: Ⓛ, Sony: Ⓛ, Keyboard: [Ctrl] }
+	if not InputMap.has_action("crouch"):
+		# Add the [crouch] action to the Input Map
+		InputMap.add_action("crouch")
+		# Microsoft Ⓛ, Nintendo Ⓛ, Sony Ⓛ
+		var joystick_event = InputEventJoypadButton.new()
+		joystick_event.button_index = JOY_BUTTON_LEFT_STICK
+		InputMap.action_add_event("crouch", joystick_event)
+		# Keyboard [Ctrl]
+		var key_event = InputEventKey.new()
+		key_event.physical_keycode = KEY_CTRL
+		InputMap.action_add_event("crouch", key_event)
+
+	# "scope" { Microsoft: 🄬, Nintendo: 🄬, Sony: 🄬, Mouse: [Middle-Mouse] }
+	if not InputMap.has_action("scope"):
+		# Add the [scope] action to the Input Map
+		InputMap.add_action("scope")
+		# Microsoft 🄬, Nintendo 🄬, Sony 🄬
+		var joystick_event = InputEventJoypadButton.new()
+		joystick_event.button_index = JOY_BUTTON_RIGHT_STICK
+		InputMap.action_add_event("scope", joystick_event)
+		# Mouse [Middle-Mouse]
+		var mouse_event = InputEventMouseButton.new()
+		mouse_event.button_index = MOUSE_BUTTON_MIDDLE
+		InputMap.action_add_event("scope", mouse_event)
+
+	# "focus" { Microsoft: 🄻T, Nintendo: Z🄻, Sony: 🄻2, Mouse: [Right-Click] }
+	if not InputMap.has_action("focus"):
+		# Add the [focus] action to the Input Map
+		InputMap.add_action("focus")
+		# Microsoft 🄻T, Nintendo Z🄻, Sony 🄻2
+		var joystick_event = InputEventJoypadMotion.new()
+		joystick_event.axis = JOY_AXIS_TRIGGER_LEFT
+		joystick_event.axis_value = 1.0
+		InputMap.action_add_event("focus", joystick_event)
+		# Mouse [Right-Click]
+		var mouse_event = InputEventMouseButton.new()
+		mouse_event.button_index = MOUSE_BUTTON_RIGHT
+		InputMap.action_add_event("focus", mouse_event)
+
+	# "shoot" { Microsoft: 🅁T, Nintendo: Z🅁, Sony: 🅁2, Mouse: [Right-Click] }
+	if not InputMap.has_action("shoot"):
+		# Add the [shoot] action to the Input Map
+		InputMap.add_action("shoot")
+		# Microsoft 🅁T, Nintendo Z🅁, Sony 🅁2
+		var joystick_event = InputEventJoypadMotion.new()
+		joystick_event.axis = JOY_AXIS_TRIGGER_RIGHT
+		joystick_event.axis_value = 1.0
+		InputMap.action_add_event("shoot", joystick_event)
+		# Mouse [Left-Click]
+		var mouse_event = InputEventMouseButton.new()
+		mouse_event.button_index = MOUSE_BUTTON_LEFT
+		InputMap.action_add_event("shoot", mouse_event)
+
+	# "use" { Microsoft: 🄻B, Nintendo: ZL, Sony: 🄻2, Keyboard: [Q] }
+	if not InputMap.has_action("use"):
+		# Add the [use] action to the Input Map
+		InputMap.add_action("use")
+		# Microsoft 🄻B, Nintendo ZL, Sony 🄻2
+		var joystick_event = InputEventJoypadMotion.new()
+		joystick_event.axis = JOY_AXIS_TRIGGER_LEFT
+		joystick_event.axis_value = 1.0
+		InputMap.action_add_event("use", joystick_event)
+		# Keyboard [Q]
+		var key_event = InputEventKey.new()
+		key_event.physical_keycode = KEY_Q
+		InputMap.action_add_event("use", key_event)
+
+	# "throw" { Microsoft: 🅁B, Nintendo: ZR, Sony: 🅁2, Keyboard: [T] }
+	if not InputMap.has_action("throw"):
+		# Add the [throw] action to the Input Map
+		InputMap.add_action("throw")
+		# Microsoft 🅁B, Nintendo ZR, Sony 🅁2
+		var joystick_event = InputEventJoypadMotion.new()
+		joystick_event.axis = JOY_AXIS_TRIGGER_RIGHT
+		joystick_event.axis_value = 1.0
+		InputMap.action_add_event("throw", joystick_event)
+		# Keyboard [T]
+		var key_event = InputEventKey.new()
+		key_event.physical_keycode = KEY_T
+		InputMap.action_add_event("throw", key_event)
+
+	# "purah_pad" { Microsoft: ⧉, Nintendo: ⊝, Sony: ⦀, Keyboard: [F5] }
+	if not InputMap.has_action("purah_pad"):
+		# Add the [purah_pad] action to the Input Map
+		InputMap.add_action("purah_pad")
+		# Microsoft ⧉, Nintendo ⊝, Sony ⦀
+		var joystick_event = InputEventJoypadButton.new()
+		joystick_event.button_index = JOY_BUTTON_BACK
+		InputMap.action_add_event("purah_pad", joystick_event)
+		# Keyboard [F5]
+		var key_event = InputEventKey.new()
+		key_event.physical_keycode = KEY_F5
+		InputMap.action_add_event("purah_pad", key_event)
+
+	# "share" { Microsoft: ⧉, Nintendo: ⧇, Sony: ?, Keyboard: [PrtScn] }
+	if not InputMap.has_action("share"):
+		# Add the [share] action to the Input Map
+		InputMap.add_action("share")
+		# Microsoft ⧉, Nintendo ⧇, Sony ?
+		var joystick_event = InputEventJoypadButton.new()
+		joystick_event.button_index = JOY_BUTTON_MISC1
+		InputMap.action_add_event("share", joystick_event)
+		# Keyboard [PrtScn]
+		var key_event = InputEventKey.new()
+		key_event.physical_keycode = KEY_PRINT
+		InputMap.action_add_event("share", key_event)
+
+	# "pause" { Microsoft: ☰, Nintendo: ⊕, Sony: ☰, Keyboard: [Esc] }
+	if not InputMap.has_action("pause"):
+		# Add the [pause] action to the Input Map
+		InputMap.add_action("pause")
+		# Microsoft ☰, Nintendo ⊕, Sony ☰
+		var joystick_event = InputEventJoypadButton.new()
+		joystick_event.button_index = JOY_BUTTON_START
+		InputMap.action_add_event("pause", joystick_event)
+		# Keyboard [Esc]
+		var key_event = InputEventKey.new()
+		key_event.physical_keycode = KEY_ESCAPE
+		InputMap.action_add_event("pause", key_event)
+
+	# "seeker" { Controller: DPad Up, Keyboard: [I] }
+	if not InputMap.has_action("seeker"):
+		# Add the [seeker] action to the Input Map
+		InputMap.add_action("seeker")
+		# Controller DPad Up
+		var joystick_event = InputEventJoypadButton.new()
+		joystick_event.button_index = JOY_BUTTON_DPAD_UP
+		InputMap.action_add_event("seeker", joystick_event)
+		# Keyboard [I]
+		var key_event = InputEventKey.new()
+		key_event.physical_keycode = KEY_I
+		InputMap.action_add_event("seeker", key_event)
+
+	# "whistle" { Controller: DPad Down, Keyboard: [K] }
+	if not InputMap.has_action("whistle"):
+		# Add the [whistle] action to the Input Map
+		InputMap.add_action("whistle")
+		# Controller DPad Down
+		var joystick_event = InputEventJoypadButton.new()
+		joystick_event.button_index = JOY_BUTTON_DPAD_DOWN
+		InputMap.action_add_event("whistle", joystick_event)
+		# Keyboard [K]
+		var key_event = InputEventKey.new()
+		key_event.physical_keycode = KEY_K
+		InputMap.action_add_event("whistle", key_event)
+
+	# "last_weapon" { Controller: DPad Left, Keyboard: [J] }
+	if not InputMap.has_action("last_weapon"):
+		# Add the [last_weapon] action to the Input Map
+		InputMap.add_action("last_weapon")
+		# Controller DPad Left
+		var joystick_event = InputEventJoypadButton.new()
+		joystick_event.button_index = JOY_BUTTON_DPAD_LEFT
+		InputMap.action_add_event("last_weapon", joystick_event)
+		# Keyboard [J]
+		var key_event = InputEventKey.new()
+		key_event.physical_keycode = KEY_J
+		InputMap.action_add_event("last_weapon", key_event)
+
+	# "next_weapon" { Controller: DPad Right, Keyboard: [L] }
+	if not InputMap.has_action("next_weapon"):
+		# Add the [next_weapon] action to the Input Map
+		InputMap.add_action("next_weapon")
+		# Controller DPad Right
+		var joystick_event = InputEventJoypadButton.new()
+		joystick_event.button_index = JOY_BUTTON_DPAD_RIGHT
+		InputMap.action_add_event("next_weapon", joystick_event)
+		# Keyboard [L]
+		var key_event = InputEventKey.new()
+		key_event.physical_keycode = KEY_L
+		InputMap.action_add_event("next_weapon", key_event)
+
 
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:
