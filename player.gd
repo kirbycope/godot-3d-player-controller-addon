@@ -1,15 +1,14 @@
 class_name Player
 extends CharacterBody3D
 
-
-#const SPEED = 5.0
-#const JUMP_VELOCITY = 4.5
 const MOTION_INTERPOLATE_SPEED: float = 10.0
 const ROTATION_INTERPOLATE_SPEED: float = 10.0
 
 @export var animation_tree: AnimationTree = get_node_or_null("AnimationTree")
 @export var current_animation: int
 @export var locomotion_blend_position_path: String = "parameters/LocomotionStateMachine/Locomotion/blend_position"
+
+var is_sprinting: bool = false
 
 var motion := Vector2()
 var orientation := Transform3D()
@@ -28,38 +27,6 @@ func _ready() -> void:
 		animation_tree.active = true
 
 
-# https://github.com/godotengine/godot/blob/master/modules/gdscript/editor/script_templates/CharacterBody3D/basic_movement.gd#L10
-#func _physics_process(delta: float) -> void:
-
-	# Add the gravity.
-	#if not is_on_floor():
-	#	velocity += get_gravity() * delta
-
-	# Handle jump.
-	#if Input.is_action_just_pressed("ui_accept") and is_on_floor():
-	#	velocity.y = JUMP_VELOCITY
-
-	# Get the input direction and handle the movement/deceleration.
-	# As good practice, you should replace UI actions with custom gameplay actions.
-	#var input_dir := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
-	#var input_dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
-	#var direction := (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
-	#if direction:
-	#	velocity.x = direction.x * SPEED
-	#	velocity.z = direction.z * SPEED
-	#else:
-	#	velocity.x = move_toward(velocity.x, 0, SPEED)
-	#	velocity.z = move_toward(velocity.z, 0, SPEED)
-
-	#move_and_slide()
-
-	# If walking, send the input direction to "LocomotionStateMachine > Locomotion" blend position.
-	#if animation_tree:
-	#	animation_tree.set(locomotion_blend_position_path, input_dir)
-	#else:
-	#	push_warning("AnimationTree node not found. Please assign it to the 'animation_tree' variable using the Editor.")
-
-
 # https://github.com/godotengine/tps-demo/blob/master/player/player.gd#L54
 func _physics_process(delta: float) -> void:
 	if is_multiplayer_authority():
@@ -71,11 +38,22 @@ func _physics_process(delta: float) -> void:
 # https://github.com/godotengine/tps-demo/blob/master/player/player.gd#L61
 func animate(anim: int, _delta: float) -> void:
 	current_animation = anim
+	# TODO: Finish
 
 
 # https://github.com/godotengine/tps-demo/blob/master/player/player.gd#L86
 func apply_input(delta: float) -> void:
-	motion = motion.lerp(player_input.motion, MOTION_INTERPOLATE_SPEED * delta)
+	var target_motion: Vector2 = player_input.motion
+
+	# Sprint { Microsoft: Ⓑ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Shift]}.
+	if is_on_floor() and Input.is_action_pressed("sprint") and target_motion.y > 0.0:
+		target_motion.y *= 1.5
+		is_sprinting = true
+	else:
+		is_sprinting = false
+
+	motion = motion.lerp(target_motion, MOTION_INTERPOLATE_SPEED * delta)
+
 	if animation_tree:
 		animation_tree.set(locomotion_blend_position_path, motion)
 
