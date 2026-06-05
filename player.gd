@@ -4,22 +4,23 @@ extends CharacterBody3D
 const MOTION_INTERPOLATE_SPEED: float = 10.0
 const ROTATION_INTERPOLATE_SPEED: float = 10.0
 
-@export var animation_tree: AnimationTree = get_node_or_null("AnimationTree")
+@export var animation_tree: AnimationTree
 @export var current_animation: int
 @export var locomotion_blend_position_path: String = "parameters/LocomotionStateMachine/Locomotion/blend_position"
 @export var locomotion_state_playback_path: String = "parameters/LocomotionStateMachine/playback"
 var is_falling: bool = false
+var is_focusing: bool = false
 var is_jumping: bool = false
 var is_jump_queued: bool = false
 var is_sprinting: bool = false
 
-#var motion := Vector2()
 var orientation := Transform3D()
 var root_motion := Transform3D()
 
 @onready var player_model: Node3D = $PlayerModel
 @onready var initial_position: Vector3 = transform.origin
 @onready var player_input: InputSynchronizer = $InputSynchronizer
+@onready var spring_arm: SpringArm3D = $SpringArm3D
 
 
 ## Called when the node enters the scene tree for the first time.
@@ -30,8 +31,9 @@ func _ready() -> void:
 	# Pre-initialize orientation transform.
 	orientation = player_model.global_transform
 	orientation.origin = Vector3()
-	if animation_tree:
-		animation_tree.active = true
+
+	# Ensure the AnimationTree is active so that root motion is applied in the first frame.
+	animation_tree.active = true
 
 
 # https://github.com/godotengine/tps-demo/blob/master/player/player.gd#L54
@@ -60,9 +62,16 @@ func _physics_process(delta: float) -> void:
 
 # https://github.com/godotengine/tps-demo/blob/master/player/player.gd#L86
 func apply_input(delta: float) -> void:
+	# Get the target motion from the synchronized input.
 	var target_motion: Vector2 = player_input.motion
 
-	# Jumping { Microsoft: Ⓐ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Space] }.
+	# Smoothly interpolate the target_motion for more gradual changes in animation blending and rotation.
+	target_motion = target_motion.lerp(target_motion, MOTION_INTERPOLATE_SPEED * delta)
+
+	# Focus { Microsoft: 🄻T, Nintendo: ZL, Sony: L2, Keyboard: [Right Mouse Button] }.
+	is_focusing = Input.is_action_pressed("focus")
+
+	# Jump { Microsoft: Ⓐ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Space] }.
 	if is_on_floor() \
 	and Input.is_action_just_pressed("jump") \
 	and not is_jump_queued:
@@ -77,22 +86,46 @@ func apply_input(delta: float) -> void:
 	and Input.is_action_pressed("sprint") \
 	and not is_jump_queued \
 	and not is_jumping \
-	and target_motion.y > 0.0:
-		target_motion.y *= 1.5 # increase forward blend by 50% when sprinting
-		target_motion.x *= 0.5 # reduce strafe blend by 50% when sprinting
+	and (target_motion.y > 0.0 if is_focusing else target_motion.length() > 0.0):
+		if is_focusing:
+			target_motion.y *= 1.5
+			target_motion.x *= 0.5 # reduce strafe blend by 50% when sprinting so the blend favors the forward direction
+		else:
+			target_motion *= 1.5
 		is_sprinting = true
 	else:
 		is_sprinting = false
 
-	target_motion = target_motion.lerp(target_motion, MOTION_INTERPOLATE_SPEED * delta)
+	# Handle movement is strafing
+	if is_focusing:
 
-	if animation_tree:
-		# Send the movement input to the AnimationTree to blend between the "Locomotion" animations.
+		# Rotate to face the camera direction when focusing
+		var camera_basis := spring_arm.global_transform.basis
+		var camera_forward := -camera_basis.z
+		camera_forward.y = 0.0
+		if camera_forward.length_squared() > 0.001:
+			camera_forward = camera_forward.normalized()
+			var q_from: Quaternion = orientation.basis.get_rotation_quaternion()
+			var q_to: Quaternion = Basis.looking_at(-camera_forward).get_rotation_quaternion()
+			orientation.basis = Basis(q_from.slerp(q_to, delta * ROTATION_INTERPOLATE_SPEED))
 		animation_tree.set(locomotion_blend_position_path, target_motion)
+
+	# Handle movement when not strafing
+	else:
+		# Use camera-relative direction for target_motion direction
+		var camera_basis := spring_arm.global_transform.basis
+		var target_dir := camera_basis * Vector3(target_motion.x, 0.0, -target_motion.y)
+		target_dir.y = 0.0
+		if target_dir.length_squared() > 0.001:
+			target_dir = target_dir.normalized()
+			var q_from: Quaternion = orientation.basis.get_rotation_quaternion()
+			var q_to: Quaternion = Basis.looking_at(-target_dir).get_rotation_quaternion()
+			orientation.basis = Basis(q_from.slerp(q_to, delta * ROTATION_INTERPOLATE_SPEED))
+		var anim_blend := Vector2(0.0, target_motion.length())
+		animation_tree.set(locomotion_blend_position_path, anim_blend)
 
 	root_motion = Transform3D(animation_tree.get_root_motion_rotation(), animation_tree.get_root_motion_position())
 
-	# Apply root motion to orientation.
 	orientation *= root_motion
 
 	var h_velocity: Vector3 = orientation.origin / delta
