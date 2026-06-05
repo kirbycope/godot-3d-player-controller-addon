@@ -25,14 +25,26 @@ offset_right = 155.0
 offset_bottom = 23.0
 text = "STATES"
 
-[node name="is_falling" type="CheckBox" parent="VBoxContainer" unique_id=1585595928]
+[node name="is_crouching" type="CheckBox" parent="VBoxContainer" unique_id=1585595928]
+layout_mode = 2
+text = "is_crouching"
+
+[node name="is_falling" type="CheckBox" parent="VBoxContainer" unique_id=650160220]
 layout_mode = 2
 text = "is_falling"
+
+[node name="is_focusing" type="CheckBox" parent="VBoxContainer" unique_id=202642783]
+layout_mode = 2
+text = "is_focusing"
 
 [node name="is_jumping" type="CheckBox" parent="VBoxContainer" unique_id=681417065]
 layout_mode = 2
 text = "is_jumping"
 
-[node name="is_sprinting" type="CheckBox" parent="VBoxContainer" unique_id=467465081]
+[node name="is_sliding" type="CheckBox" parent="VBoxContainer" unique_id=467465081]
+layout_mode = 2
+text = "is_sliding"
+
+[node name="is_sprinting" type="CheckBox" parent="VBoxContainer" unique_id=1694819929]
 layout_mode = 2
 text = "is_sprinting"

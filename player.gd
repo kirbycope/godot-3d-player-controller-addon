@@ -3,18 +3,20 @@ extends CharacterBody3D
 
 const MOTION_INTERPOLATE_SPEED: float = 10.0
 const ROTATION_INTERPOLATE_SPEED: float = 10.0
+const LOCOMOTION_STATE_PLAYBACK_PATH: String = "parameters/LocomotionStateMachine/playback"
+const CROUCHING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/CrouchingLocomotion/blend_position"
+const STANDING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/StandingLocomotion/blend_position"
 
 @export var animation_tree: AnimationTree
 @export var current_animation: int
-@export var locomotion_blend_position_path: String = "parameters/LocomotionStateMachine/Locomotion/blend_position"
-@export var locomotion_state_playback_path: String = "parameters/LocomotionStateMachine/playback"
+
+var is_crouching: bool = false
 var is_falling: bool = false
 var is_focusing: bool = false
 var is_jumping: bool = false
 var is_jump_queued: bool = false
 var is_sliding: bool = false
 var is_sprinting: bool = false
-
 var orientation := Transform3D()
 var root_motion := Transform3D()
 
@@ -50,7 +52,7 @@ func _physics_process(delta: float) -> void:
 		transform.origin = initial_position
 
 	# Track if the player is "falling"
-	is_falling = animation_tree.get(locomotion_state_playback_path).get_current_node() == "Falling"
+	is_falling = animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).get_current_node() == "Falling"
 
 	# Stop "jumping" if player is "falling".
 	if is_jumping and is_falling:
@@ -60,8 +62,10 @@ func _physics_process(delta: float) -> void:
 	if is_falling and is_on_floor():
 		is_falling = false
 
-	# Stop "sliding" when the animation finishes (the player is no longer in the "RunningSlide" animation state).
-	if is_sliding and animation_tree.get(locomotion_state_playback_path).get_current_node() != "RunningSlide":
+	# Stop "sliding" when the animation finishes.
+	var was_sliding := is_sliding
+	is_sliding = animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).get_current_node() == "RunningSlide"
+	if was_sliding and not is_sliding:
 		is_sliding = false
 
 
@@ -73,6 +77,9 @@ func apply_input(delta: float) -> void:
 	# Smoothly interpolate the target_motion for more gradual changes in animation blending and rotation.
 	target_motion = target_motion.lerp(target_motion, MOTION_INTERPOLATE_SPEED * delta)
 
+	# Crouch { Microsoft: Ⓑ, Nintendo: Ⓑ, Sony: Ⓞ, Keyboard: [Control] }.
+	is_crouching = Input.is_action_pressed("crouch") and is_on_floor() and not is_sliding and not is_sprinting
+
 	# Focus { Microsoft: 🄻T, Nintendo: ZL, Sony: L2, Keyboard: [Right Mouse Button] }.
 	is_focusing = Input.is_action_pressed("focus")
 
@@ -81,16 +88,18 @@ func apply_input(delta: float) -> void:
 	and Input.is_action_just_pressed("jump") \
 	and not is_jump_queued:
 		if target_motion.y > 0.0:
-			animation_tree.get(locomotion_state_playback_path).travel("RunningJump")
+			animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("RunningJump")
 		else:
-			animation_tree.get(locomotion_state_playback_path).travel("JumpingUp")
+			animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("JumpingUp")
 		is_jump_queued = true
 
 	# Sprint { Microsoft: Ⓑ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Shift] }.
 	if is_on_floor() \
 	and Input.is_action_pressed("sprint") \
+	and not is_crouching \
 	and not is_jump_queued \
 	and not is_jumping \
+	and not is_sliding \
 	and (target_motion.y > 0.0 if is_focusing else target_motion.length() > 0.0):
 		if is_focusing:
 			target_motion.y *= 1.5
@@ -105,7 +114,7 @@ func apply_input(delta: float) -> void:
 	if is_sprinting \
 	and Input.is_action_just_pressed("crouch") \
 	and not is_sliding:
-		animation_tree.get(locomotion_state_playback_path).travel("RunningSlide")
+		animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("RunningSlide")
 		is_sliding = true
 
 	# Handle movement is strafing
@@ -120,7 +129,10 @@ func apply_input(delta: float) -> void:
 			var q_from: Quaternion = orientation.basis.get_rotation_quaternion()
 			var q_to: Quaternion = Basis.looking_at(-camera_forward).get_rotation_quaternion()
 			orientation.basis = Basis(q_from.slerp(q_to, delta * ROTATION_INTERPOLATE_SPEED))
-		animation_tree.set(locomotion_blend_position_path, target_motion)
+		if is_crouching:
+			animation_tree.set(CROUCHING_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
+		else:
+			animation_tree.set(STANDING_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 
 	# Handle movement when not strafing
 	else:
@@ -134,7 +146,10 @@ func apply_input(delta: float) -> void:
 			var q_to: Quaternion = Basis.looking_at(-target_dir).get_rotation_quaternion()
 			orientation.basis = Basis(q_from.slerp(q_to, delta * ROTATION_INTERPOLATE_SPEED))
 		var anim_blend := Vector2(0.0, target_motion.length())
-		animation_tree.set(locomotion_blend_position_path, anim_blend)
+		if is_crouching:
+			animation_tree.set(CROUCHING_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
+		else:
+			animation_tree.set(STANDING_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
 
 	root_motion = Transform3D(animation_tree.get_root_motion_rotation(), animation_tree.get_root_motion_position())
 
