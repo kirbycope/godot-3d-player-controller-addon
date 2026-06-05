@@ -1,16 +1,18 @@
 extends Camera3D
 
+@export var camera_spring_arm: SpringArm3D
 @export var joypad_sensitivity: float = 100.0
 @export var mouse_sensitivity: float = 0.1
-
-@onready var camera_spring_arm: SpringArm3D = get_parent()
-@onready var player: Player = camera_spring_arm.get_parent()
+@export var player: Player
 
 
 ## Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
+
+	# Ensure the [CameraSpringArm] doesn't collide with the player
+	camera_spring_arm.add_excluded_object(player.get_rid())
 
 
 ## Called when there is an input event.

@@ -12,6 +12,7 @@ var is_falling: bool = false
 var is_focusing: bool = false
 var is_jumping: bool = false
 var is_jump_queued: bool = false
+var is_sliding: bool = false
 var is_sprinting: bool = false
 
 var orientation := Transform3D()
@@ -59,6 +60,10 @@ func _physics_process(delta: float) -> void:
 	if is_falling and is_on_floor():
 		is_falling = false
 
+	# Stop "sliding" when the animation finishes (the player is no longer in the "RunningSlide" animation state).
+	if is_sliding and animation_tree.get(locomotion_state_playback_path).get_current_node() != "RunningSlide":
+		is_sliding = false
+
 
 # https://github.com/godotengine/tps-demo/blob/master/player/player.gd#L86
 func apply_input(delta: float) -> void:
@@ -96,6 +101,13 @@ func apply_input(delta: float) -> void:
 	else:
 		is_sprinting = false
 
+	# Slide (Crouch while Sprinting)
+	if is_sprinting \
+	and Input.is_action_just_pressed("crouch") \
+	and not is_sliding:
+		animation_tree.get(locomotion_state_playback_path).travel("RunningSlide")
+		is_sliding = true
+
 	# Handle movement is strafing
 	if is_focusing:
 
@@ -129,6 +141,21 @@ func apply_input(delta: float) -> void:
 	orientation *= root_motion
 
 	var h_velocity: Vector3 = orientation.origin / delta
+
+	# Influence of root motion is removed when in the air, and movement is instead based on the input direction to allow for more player control while jumping and falling.
+	if is_jumping or is_falling:
+		var camera_basis := spring_arm.global_transform.basis
+		var target_dir := camera_basis * Vector3(target_motion.x, 0.0, -target_motion.y)
+		target_dir.y = 0.0
+		
+		var current_h_vel := Vector3(velocity.x, 0.0, velocity.z)
+		var current_speed := current_h_vel.length()
+		var air_speed_cap := max(current_speed, 5.0)
+		var target_h_vel = target_dir * air_speed_cap
+		
+		# Slowly lerp to target air speed to preserve momentum
+		h_velocity = current_h_vel.lerp(target_h_vel, 3.0 * delta)
+
 	velocity.x = h_velocity.x
 	velocity.z = h_velocity.z
 	velocity += get_gravity() * delta
