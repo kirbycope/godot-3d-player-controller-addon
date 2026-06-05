@@ -108,6 +108,9 @@ var current_input_type: InputType = InputType.TOUCH:
 
 ## Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+	# Do nothing if not the authority
+	if not is_multiplayer_authority(): return
+
 	# Connect the input_type_changed signal to the update_input_ui function
 	input_type_changed.connect(update_input_ui)
 
@@ -451,6 +454,9 @@ func _ready() -> void:
 
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:
+	# Do nothing if not the authority
+	if not is_multiplayer_authority(): return
+
 	# Check if the input is a keyboard or mouse event
 	if event is InputEventKey or (event is InputEventMouse and Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED):
 		# Set the current input type to Keyboard and Mouse
@@ -479,7 +485,8 @@ func _input(event: InputEvent) -> void:
 
 ## Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
-	pass # Replace with function body.
+	# Do nothing if not the authority
+	if not is_multiplayer_authority(): return
 
 
 func update_input_ui(input_type: InputType) -> void:

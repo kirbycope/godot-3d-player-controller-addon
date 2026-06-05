@@ -9,7 +9,8 @@ extends Camera3D
 
 ## Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	pass # Replace with function body.
+	# Do nothing if not the authority
+	if not is_multiplayer_authority(): return
 
 
 ## Called when there is an input event.
@@ -19,8 +20,7 @@ func _input(event: InputEvent) -> void:
 
 	# Rotate the [Camera3D]'s [SpringArm3D] using the mouse motion input event
 	if event is InputEventMouseMotion \
-	and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED \
-	and not player.is_strafing:
+	and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		rotate_camera_using_mouse_motion(event)
 
 

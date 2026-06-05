@@ -22,7 +22,11 @@ var root_motion := Transform3D()
 @onready var player_input: InputSynchronizer = $InputSynchronizer
 
 
+## Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+	# Do nothing if not the authority
+	if not is_multiplayer_authority(): return
+
 	# Pre-initialize orientation transform.
 	orientation = player_model.global_transform
 	orientation.origin = Vector3()
@@ -32,10 +36,11 @@ func _ready() -> void:
 
 # https://github.com/godotengine/tps-demo/blob/master/player/player.gd#L54
 func _physics_process(delta: float) -> void:
-	if is_multiplayer_authority():
-		apply_input(delta)
-	else:
-		animate(current_animation, delta)
+	# Do nothing if not the authority
+	if not is_multiplayer_authority(): return
+
+	# Apply player input to control the character and update the animation state.
+	apply_input(delta)
 
 	# If we're below -40, respawn (teleport to the initial position).
 	if transform.origin.y < -40.0:
@@ -51,12 +56,6 @@ func _physics_process(delta: float) -> void:
 	# Stop "falling" when player lands on the floor.
 	if is_falling and is_on_floor():
 		is_falling = false
-
-
-# https://github.com/godotengine/tps-demo/blob/master/player/player.gd#L61
-func animate(anim: int, _delta: float) -> void:
-	current_animation = anim
-	# TODO: Finish
 
 
 # https://github.com/godotengine/tps-demo/blob/master/player/player.gd#L86

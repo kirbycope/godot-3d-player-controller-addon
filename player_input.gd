@@ -12,11 +12,15 @@ extends MultiplayerSynchronizer
 
 ## Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	pass # Replace with function body.
+	# Do nothing if not the authority
+	if not is_multiplayer_authority(): return
 
 
 ## Called every frame. '_delta' is the elapsed time since the previous frame.
 func _process(_delta: float) -> void:
+	# Do nothing if not the authority
+	if not is_multiplayer_authority(): return
+
 	motion = Vector2(
 			Input.get_action_strength(&"move_right") - Input.get_action_strength(&"move_left"),
 			Input.get_action_strength(&"move_up") - Input.get_action_strength(&"move_down"))
