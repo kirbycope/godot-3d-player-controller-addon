@@ -7,6 +7,7 @@ const LOCOMOTION_STATE_PLAYBACK_PATH: String = "parameters/LocomotionStateMachin
 const BOW_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/BowLocomotion/blend_position"
 const CROUCHING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/CrouchingLocomotion/blend_position"
 const GREATSWORD_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/GreatSwordLocomotion/blend_position"
+const RIFLE_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/RifleLocomotion/blend_position"
 const SHIELD_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/ShieldLocomotion/blend_position"
 const STANDING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/StandingLocomotion/blend_position"
 
@@ -17,6 +18,7 @@ var equipped_axe_1h: bool = false
 var equipped_axe_2h: bool = false
 var equipped_bow: bool = false
 var equipped_dagger: bool = false
+var equipped_rifle: bool = false
 var equipped_shield: bool = false
 var equipped_staff: bool = false
 var equipped_sword_1h: bool = false
@@ -170,6 +172,8 @@ func apply_input(delta: float) -> void:
 				animation_tree.set(SHIELD_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 			elif equipped_axe_2h or equipped_sword_2h:
 				animation_tree.set(GREATSWORD_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
+			elif equipped_rifle:
+				animation_tree.set(RIFLE_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 			else:
 				animation_tree.set(STANDING_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 
@@ -194,6 +198,8 @@ func apply_input(delta: float) -> void:
 				animation_tree.set(SHIELD_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
 			elif equipped_axe_2h or equipped_sword_2h:
 				animation_tree.set(GREATSWORD_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
+			elif equipped_rifle:
+				animation_tree.set(RIFLE_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
 			else:
 				animation_tree.set(STANDING_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
 

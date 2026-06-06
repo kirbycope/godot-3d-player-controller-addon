@@ -78,32 +78,32 @@ text = "EQUIPMENT"
 
 [node name="equipped_axe_1h" type="CheckBox" parent="Equipment" unique_id=1975789528]
 layout_mode = 2
-text = "eqiupped_axe_1h"
+text = "equipped_axe_1h"
 
 [node name="equipped_axe_2h" type="CheckBox" parent="Equipment" unique_id=1840594010]
 layout_mode = 2
-text = "eqiupped_axe_2h"
+text = "equipped_axe_2h"
 
 [node name="equipped_bow" type="CheckBox" parent="Equipment" unique_id=473779158]
 layout_mode = 2
-text = "eqiupped_bow"
+text = "equipped_bow"
 
 [node name="equipped_dagger" type="CheckBox" parent="Equipment" unique_id=1839184329]
 layout_mode = 2
-text = "eqiupped_dagger"
+text = "equipped_dagger"
 
 [node name="equipped_shield" type="CheckBox" parent="Equipment" unique_id=1351135518]
 layout_mode = 2
-text = "eqiupped_shield"
+text = "equipped_shield"
 
 [node name="equipped_staff" type="CheckBox" parent="Equipment" unique_id=608324050]
 layout_mode = 2
-text = "eqiupped_staff"
+text = "equipped_staff"
 
 [node name="equipped_sword_1h" type="CheckBox" parent="Equipment" unique_id=2088982799]
 layout_mode = 2
-text = "eqiupped_sword_1h"
+text = "equipped_sword_1h"
 
 [node name="equipped_sword_2h" type="CheckBox" parent="Equipment" unique_id=1167562491]
 layout_mode = 2
-text = "eqiupped_sword_2h"
+text = "equipped_sword_2h"
