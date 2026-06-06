@@ -177,17 +177,18 @@ func apply_input(delta: float) -> void:
 		is_sliding = true
 
 	# Handle movement is strafing
-	if is_focusing:
+	if is_shooting or is_focusing:
 
-		# Rotate to face the camera direction when focusing
-		var camera_basis := spring_arm.global_transform.basis
-		var camera_forward := -camera_basis.z
-		camera_forward.y = 0.0
-		if camera_forward.length_squared() > 0.001:
-			camera_forward = camera_forward.normalized()
-			var q_from: Quaternion = orientation.basis.get_rotation_quaternion()
-			var q_to: Quaternion = Basis.looking_at(-camera_forward).get_rotation_quaternion()
-			orientation.basis = Basis(q_from.slerp(q_to, delta * ROTATION_INTERPOLATE_SPEED))
+		# Rotate to face the camera direction when focusing or shooting (unless is_focusing and not is_shooting)
+		if is_shooting or not is_focusing:
+			var camera_basis := spring_arm.global_transform.basis
+			var camera_forward := -camera_basis.z
+			camera_forward.y = 0.0
+			if camera_forward.length_squared() > 0.001:
+				camera_forward = camera_forward.normalized()
+				var q_from: Quaternion = orientation.basis.get_rotation_quaternion()
+				var q_to: Quaternion = Basis.looking_at(-camera_forward).get_rotation_quaternion()
+				orientation.basis = Basis(q_from.slerp(q_to, delta * ROTATION_INTERPOLATE_SPEED))
 		if is_crouching:
 			animation_tree.set(CROUCHING_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 		else:

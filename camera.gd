@@ -46,7 +46,7 @@ func _process(delta: float) -> void:
 	if Input.get_vector("look_left", "look_right", "look_up", "look_down") != Vector2.ZERO:
 		rotate_camera_using_joypad_motion(delta)
 
-	# Slerp camera to face the player's direction when is_focusing
+	# Lerp camera to face the player's direction when is_focusing
 	if player.is_focusing:
 		camera_spring_arm.rotation.y = lerp_angle(camera_spring_arm.rotation.y, player.player_model.rotation.y + PI, delta * 8.0)
 
