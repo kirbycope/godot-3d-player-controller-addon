@@ -3,6 +3,7 @@ extends CharacterBody3D
 
 const MOTION_INTERPOLATE_SPEED: float = 10.0
 const ROTATION_INTERPOLATE_SPEED: float = 10.0
+const EMOTE_STATE_PLAYBACK_PATH: String = "parameters/EmoteStateMachine/playback"
 const LOCOMOTION_STATE_PLAYBACK_PATH: String = "parameters/LocomotionStateMachine/playback"
 const BOW_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/BowLocomotion/blend_position"
 const CROUCHING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/CrouchingLocomotion/blend_position"
@@ -25,7 +26,9 @@ var equipped_shield: bool = false
 var equipped_staff: bool = false
 var equipped_sword_1h: bool = false
 var equipped_sword_2h: bool = false
+
 var is_crouching: bool = false
+var is_emoting: bool = false
 var is_falling: bool = false
 var is_focusing: bool = false
 var is_jumping: bool = false
@@ -33,6 +36,7 @@ var is_jump_queued: bool = false
 var is_shooting: bool = false
 var is_sliding: bool = false
 var is_sprinting: bool = false
+
 var orientation := Transform3D()
 var root_motion := Transform3D()
 
@@ -101,6 +105,19 @@ func _physics_process(delta: float) -> void:
 	is_sliding = animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).get_current_node() == "RunningSlide"
 	if was_sliding and not is_sliding:
 		is_sliding = false
+
+	# DEBUG: Stop emote state when the animation finishes and reset the blend amount.
+	if is_emoting and animation_tree.get(EMOTE_STATE_PLAYBACK_PATH).get_current_node() == "Idle":
+		animation_tree.set("parameters/EmoteSpineBlend2/blend_amount", 0.0)
+		is_emoting = false
+
+	## DEBUG: Toggle emote state for testing purposes.
+	if Input.is_action_just_pressed("emote"):
+		var emote_state = animation_tree.get(EMOTE_STATE_PLAYBACK_PATH)
+		if emote_state.get_current_node() != "Waving":
+			animation_tree.set("parameters/EmoteSpineBlend2/blend_amount", 1.0)
+			emote_state.travel("Waving")
+			is_emoting = true
 
 
 # https://github.com/godotengine/tps-demo/blob/master/player/player.gd#L86
