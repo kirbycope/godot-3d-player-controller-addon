@@ -89,8 +89,9 @@ func _physics_process(delta: float) -> void:
 	if is_jumping and is_falling:
 		is_jumping = false
 
-	# Stop "falling" when player lands on the floor.
-	if is_falling and is_on_floor():
+	# Stop "jumping" and "falling" when player lands on the floor under normal gravity.
+	if is_on_floor() and not is_jump_queued and velocity.y <= 0.0:
+		is_jumping = false
 		is_falling = false
 
 	# Stop "sliding" when the animation finishes.
@@ -122,9 +123,27 @@ func apply_input(delta: float) -> void:
 	and Input.is_action_just_pressed("jump") \
 	and not is_jump_queued:
 		if target_motion.y > 0.0:
-			animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("RunningJump")
+			if equipped_axe_2h or equipped_sword_2h:
+				animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("GreatSwordJumpForward")
+			elif equipped_bow:
+				animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("BowJumpForward")
+			elif equipped_dagger or equipped_shield or equipped_sword_1h:
+				animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("ShieldJumpForward")
+			elif equipped_rifle:
+				animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("RifleJumpForward")
+			else:
+				animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("RunningJump")
 		else:
-			animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("JumpingUp")
+			if equipped_axe_2h or equipped_sword_2h:
+				animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("GreatSwordJump")
+			elif equipped_bow:
+				animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("BowJump")
+			elif equipped_dagger or equipped_shield or equipped_sword_1h:
+				animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("ShieldJump")
+			elif equipped_rifle:
+				animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("RifleJumpUp")
+			else:
+				animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("JumpingUp")
 		is_jump_queued = true
 
 	# Sprint { Microsoft: Ⓑ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Shift] }.
@@ -225,7 +244,7 @@ func apply_input(delta: float) -> void:
 
 	velocity.x = h_velocity.x
 	velocity.z = h_velocity.z
-	velocity += get_gravity() * delta
+	velocity += get_gravity() * 1.5 * delta
 	set_velocity(velocity)
 	set_up_direction(Vector3.UP)
 	move_and_slide()

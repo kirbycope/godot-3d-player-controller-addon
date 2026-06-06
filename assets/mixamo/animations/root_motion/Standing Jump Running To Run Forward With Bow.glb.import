@@ -3,13 +3,13 @@
 importer="animation_library"
 importer_version=1
 type="AnimationLibrary"
-uid="uid://bo3p8yucy3wmu"
-path="res://.godot/imported/Sword And Shield Jump.glb-cc2d0659551a3ac1823ff4aa39135da1.res"
+uid="uid://ccp4k8wm0w401"
+path="res://.godot/imported/Standing Jump Running To Run Forward With Bow.glb-2cd2a0f8be9a70b4c9b80b83cbb4230c.res"
 
 [deps]
 
-source_file="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Sword And Shield Jump.glb"
-dest_files=["res://.godot/imported/Sword And Shield Jump.glb-cc2d0659551a3ac1823ff4aa39135da1.res"]
+source_file="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Standing Jump Running To Run Forward With Bow.glb"
+dest_files=["res://.godot/imported/Standing Jump Running To Run Forward With Bow.glb-2cd2a0f8be9a70b4c9b80b83cbb4230c.res"]
 
 [params]
 
@@ -43,9 +43,9 @@ _subresources={
 "animations": {
 "mixamo_com": {
 "save_to_file/enabled": true,
-"save_to_file/fallback_path": "res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Sword and Shield Jump.tres",
+"save_to_file/fallback_path": "res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Standing Jump Running To Forward With Bow.tres",
 "save_to_file/keep_custom_tracks": true,
-"save_to_file/path": "uid://bdfg2imut0j7f",
+"save_to_file/path": "uid://b56aomjxj1rxn",
 "settings/loop_mode": 0,
 "slice_1/end_frame": 0,
 "slice_1/loop_mode": 0,
