@@ -80,8 +80,10 @@
 [ext_resource type="AnimationLibrary" uid="uid://b05nay4slsc80" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Walking Backwards.glb" id="33_njchi"]
 [ext_resource type="AnimationLibrary" uid="uid://7aawhhr47iip" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Standing Run Left With Bow.glb" id="34_3iail"]
 [ext_resource type="AnimationLibrary" uid="uid://d0i8cdaahdlep" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Pistol Run.glb" id="34_skopi"]
+[ext_resource type="AnimationLibrary" uid="uid://dl5xvjm75mp6o" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Pistol Shooting.glb" id="35_ia82s"]
 [ext_resource type="AnimationLibrary" uid="uid://baflxq2pd7uqu" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Standing Run Right WIth Bow.glb" id="35_qm1cm"]
 [ext_resource type="AnimationLibrary" uid="uid://dnsgw32aywe7" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Standing Sprint Forward With Bow.glb" id="36_b5ppw"]
+[ext_resource type="AnimationLibrary" uid="uid://cubcl6bh11gra" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Pistol Whip.glb" id="36_bdiue"]
 [ext_resource type="AnimationLibrary" uid="uid://bbj4kvucgiye4" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Standing Walk Back With Bow.glb" id="37_0nse3"]
 [ext_resource type="AnimationLibrary" uid="uid://cb7j08hx5nqry" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Standing Walk Forward With Bow.glb" id="37_ufkdo"]
 [ext_resource type="AnimationLibrary" uid="uid://dgqipt8fth2do" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Standing Walk Left With Bow.glb" id="38_jo435"]
@@ -833,6 +835,8 @@ libraries/Jump = ExtResource("5_07327")
 "libraries/Pistol Jump" = ExtResource("32_tfvvt")
 "libraries/Pistol Jump Forward" = ExtResource("33_g6cws")
 "libraries/Pistol Run" = ExtResource("34_skopi")
+"libraries/Pistol Shooting" = ExtResource("35_ia82s")
+"libraries/Pistol Whip" = ExtResource("36_bdiue")
 "libraries/Rifle Falling" = ExtResource("25_dmht5")
 "libraries/Rifle Jump Backward" = ExtResource("26_i6d3u")
 "libraries/Rifle Jump Forward" = ExtResource("27_v5tdj")
