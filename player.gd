@@ -3,6 +3,7 @@ extends CharacterBody3D
 
 const MOTION_INTERPOLATE_SPEED: float = 10.0
 const ROTATION_INTERPOLATE_SPEED: float = 10.0
+const COMBAT_STATE_PLAYBACK_PATH: String = "parameters/CombatStateMachine/playback"
 const EMOTE_STATE_PLAYBACK_PATH: String = "parameters/EmoteStateMachine/playback"
 const LOCOMOTION_STATE_PLAYBACK_PATH: String = "parameters/LocomotionStateMachine/playback"
 const BOW_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/BowLocomotion/blend_position"
@@ -27,6 +28,9 @@ var equipped_staff: bool = false
 var equipped_sword_1h: bool = false
 var equipped_sword_2h: bool = false
 
+var is_aiming_bow: bool = false
+var is_drawing_arrow: bool = false
+var is_shooting_bow: bool = false
 var is_crouching: bool = false
 var is_emoting: bool = false
 var is_falling: bool = false
@@ -130,6 +134,24 @@ func apply_input(delta: float) -> void:
 	
 	# Shoot { Microsoft: 🅁T, Nintendo: 🅁L, Sony: 🅁2, Keyboard: [Left Mouse Button] } 
 	is_shooting = Input.is_action_pressed("shoot")
+	if equipped_bow:
+		var combat_node = animation_tree.get(COMBAT_STATE_PLAYBACK_PATH).get_current_node()
+		is_drawing_arrow = (combat_node == "BowDrawArrow")
+		is_aiming_bow = (combat_node == "BowAim")
+		is_shooting_bow = (combat_node == "BowFireArrow")
+		if combat_node in ["BowIdle", "Idle_mixamo_com", "Start", ""]:
+			animation_tree.set("parameters/CombatSpineBlend2/blend_amount", 0.0)
+
+		if is_shooting:
+			if not is_drawing_arrow and not is_aiming_bow and not is_shooting_bow:
+				animation_tree.set("parameters/CombatSpineBlend2/blend_amount", 1.0)
+				animation_tree.get(COMBAT_STATE_PLAYBACK_PATH).travel("BowDrawArrow")
+		elif is_drawing_arrow or is_aiming_bow:
+			animation_tree.get(COMBAT_STATE_PLAYBACK_PATH).travel("BowFireArrow")
+	else:
+		is_drawing_arrow = false
+		is_aiming_bow = false
+		is_shooting_bow = false
 
 	# Crouch { Console: Left ⬤, Keyboard: [Control] }.
 	is_crouching = Input.is_action_pressed("crouch") and is_on_floor() and not is_sliding and not is_sprinting
