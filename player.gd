@@ -15,6 +15,7 @@ var is_falling: bool = false
 var is_focusing: bool = false
 var is_jumping: bool = false
 var is_jump_queued: bool = false
+var is_shooting: bool = false
 var is_sliding: bool = false
 var is_sprinting: bool = false
 var orientation := Transform3D()
@@ -37,6 +38,23 @@ func _ready() -> void:
 
 	# Ensure the AnimationTree is active so that root motion is applied in the first frame.
 	animation_tree.active = true
+
+
+## Called when there is an input event.
+func _input(event: InputEvent) -> void:
+	# Do nothing if not the authority
+	if not is_multiplayer_authority(): return
+
+	# Toggle mouse capture
+	if event.is_action_pressed("ui_cancel"):
+		# Check if the mouse is currently captured
+		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+			# Set the mouse mode to visible to show the mouse cursor
+			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		# The mouse must not be currently captured
+		else:
+			# Set the mouse mode to captured to hide the mouse cursor
+			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
 # https://github.com/godotengine/tps-demo/blob/master/player/player.gd#L54
@@ -76,8 +94,11 @@ func apply_input(delta: float) -> void:
 
 	# Smoothly interpolate the target_motion for more gradual changes in animation blending and rotation.
 	target_motion = target_motion.lerp(target_motion, MOTION_INTERPOLATE_SPEED * delta)
+	
+	# Shoot { Microsoft: 🅁T, Nintendo: 🅁L, Sony: 🅁2, Keyboard: [Left Mouse Button] } 
+	is_shooting = Input.is_action_pressed("shoot")
 
-	# Crouch { Microsoft: Ⓑ, Nintendo: Ⓑ, Sony: Ⓞ, Keyboard: [Control] }.
+	# Crouch { Console: Left ⬤, Keyboard: [Control] }.
 	is_crouching = Input.is_action_pressed("crouch") and is_on_floor() and not is_sliding and not is_sprinting
 
 	# Focus { Microsoft: 🄻T, Nintendo: ZL, Sony: L2, Keyboard: [Right Mouse Button] }.

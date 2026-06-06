@@ -10,5 +10,6 @@ func _process(_delta: float) -> void:
 		$VBoxContainer/is_falling.button_pressed = player.is_falling
 		$VBoxContainer/is_focusing.button_pressed = player.is_focusing
 		$VBoxContainer/is_jumping.button_pressed = (player.is_jump_queued or player.is_jumping)
+		$VBoxContainer/is_shooting.button_pressed = player.is_shooting
 		$VBoxContainer/is_sliding.button_pressed = player.is_sliding
 		$VBoxContainer/is_sprinting.button_pressed = player.is_sprinting

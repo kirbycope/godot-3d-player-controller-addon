@@ -1,17 +1,22 @@
 extends Camera3D
 
+@export var camera_ray_cast: RayCast3D
 @export var camera_spring_arm: SpringArm3D
 @export var joypad_sensitivity: float = 100.0
 @export var mouse_sensitivity: float = 0.1
 @export var player: Player
 
+var looking_at: Node3D = null
 
 ## Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
 
-	# Ensure the [CameraSpringArm] doesn't collide with the player
+	# Ensure the [RayCast3D] doesn't collide with the player
+	camera_ray_cast.add_exception(player)
+
+	# Ensure the [SpringArm3D] doesn't collide with the player
 	camera_spring_arm.add_excluded_object(player.get_rid())
 
 
@@ -22,8 +27,14 @@ func _input(event: InputEvent) -> void:
 
 	# Rotate the [Camera3D]'s [SpringArm3D] using the mouse motion input event
 	if event is InputEventMouseMotion \
-	and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+	and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED\
+	and not player.is_focusing:
 		rotate_camera_using_mouse_motion(event)
+ 
+	# Check if the player is interacting with an equipment item
+	if looking_at and event.is_action_pressed("action") and looking_at.has_method("equip"):
+		looking_at.equip(player)
+		looking_at = null
 
 
 ## Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -38,6 +49,26 @@ func _process(delta: float) -> void:
 	# Slerp camera to face the player's direction when is_focusing
 	if player.is_focusing:
 		camera_spring_arm.rotation.y = lerp_angle(camera_spring_arm.rotation.y, player.player_model.rotation.y + PI, delta * 8.0)
+
+
+## Called every physics frame. 'delta' is the elapsed time since the previous physics frame.
+func _physics_process(_delta: float) -> void:
+	# Do nothing if not the authority
+	if not is_multiplayer_authority(): return
+
+	# Ensure the raycast matches the spring arm's location and rotation
+	camera_ray_cast.global_transform = camera_spring_arm.global_transform
+
+	# Check if the "CameraRayCast" is colliding with an object that has a "display_menu" method, and if so, call that method
+	if camera_ray_cast.is_colliding():
+		var collider = camera_ray_cast.get_collider()
+		if collider.get_parent().has_method("display_menu"):
+			collider.get_parent().display_menu(player)
+			looking_at = collider.get_parent()
+	else:
+		if looking_at and looking_at.has_method("hide_menu"):
+			looking_at.hide_menu()
+		looking_at = null
 
 
 ## Rotates the [Camera3D]'s [SpringArm3D] using the input from a joypad motion event, while clamping the vertical rotation to prevent flipping.

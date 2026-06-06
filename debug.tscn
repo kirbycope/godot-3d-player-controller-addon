@@ -41,7 +41,11 @@ text = "is_focusing"
 layout_mode = 2
 text = "is_jumping"
 
-[node name="is_sliding" type="CheckBox" parent="VBoxContainer" unique_id=467465081]
+[node name="is_shooting" type="CheckBox" parent="VBoxContainer" unique_id=467465081]
+layout_mode = 2
+text = "is_shooting"
+
+[node name="is_sliding" type="CheckBox" parent="VBoxContainer" unique_id=1734099729]
 layout_mode = 2
 text = "is_sliding"
 
