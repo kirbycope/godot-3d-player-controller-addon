@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://bdugd3bb02abg"
+path="res://.godot/imported/FEETHmn_Footstep Astro Turf Boots Dry Interior 16_ESM_GFOOT.wav-956d196cdc9465691a6199cd1a7e9ca4.sample"
+
+[deps]
+
+source_file="res://addons/3d_player_controller/assets/epicstockmedia/game_footsteps/FS_Astro_Turf_Boots/FEETHmn_Footstep Astro Turf Boots Dry Interior 16_ESM_GFOOT.wav"
+dest_files=["res://.godot/imported/FEETHmn_Footstep Astro Turf Boots Dry Interior 16_ESM_GFOOT.wav-956d196cdc9465691a6199cd1a7e9ca4.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2
