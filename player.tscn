@@ -37,6 +37,7 @@
 [ext_resource type="AnimationLibrary" uid="uid://cvycs2tnvo6n4" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Sword And Shield Right Run Strafe.glb" id="28_wwmmk"]
 [ext_resource type="AnimationLibrary" uid="uid://cpkcfl1xj5wy4" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Sword And Shield Run.glb" id="29_xf1pq"]
 [ext_resource type="AnimationLibrary" uid="uid://dcaislp0mllr7" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Sword And Shield Walk.glb" id="30_3fpkw"]
+[ext_resource type="AnimationLibrary" uid="uid://dc4e8sdatyq81" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Sword And Shield Right Strafe Walk.glb" id="31_njchi"]
 [ext_resource type="AnimationLibrary" uid="uid://b05nay4slsc80" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Walking Backwards.glb" id="33_njchi"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_senyo"]
@@ -104,13 +105,16 @@ animation = &"Sword And Shield Backward Run/mixamo_com"
 animation = &"Sword And Shield Backward Walk/mixamo_com"
 
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_cxirm"]
-animation = &"Sword And Shield Left Run Strafe/mixamo_com"
+animation = &"Sword And Shield Right Run Strafe/mixamo_com"
 
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_wwmmk"]
-animation = &"Sword And Shield Left Strafe Walk/mixamo_com"
+animation = &"Sword And Shield Right Strafe Walk/mixamo_com"
 
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_xf1pq"]
-animation = &"Sword And Shield Right Run Strafe/mixamo_com"
+animation = &"Sword And Shield Left Run Strafe/mixamo_com"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_3fpkw"]
+animation = &"Sword And Shield Left Strafe Walk/mixamo_com"
 
 [sub_resource type="AnimationNodeBlendSpace2D" id="AnimationNodeBlendSpace2D_3fpkw"]
 blend_point_0/node = SubResource("AnimationNodeAnimation_kaeqx")
@@ -137,6 +141,9 @@ blend_point_6/name = &"Sword And Shield Left Strafe Walk_mixamo_com"
 blend_point_7/node = SubResource("AnimationNodeAnimation_xf1pq")
 blend_point_7/pos = Vector2(-1, 0)
 blend_point_7/name = &"Sword And Shield Right Run Strafe_mixamo_com"
+blend_point_8/node = SubResource("AnimationNodeAnimation_3fpkw")
+blend_point_8/pos = Vector2(-0.5, 0)
+blend_point_8/name = &"Sword And Shield Right Strafe Walk_mixamo_com"
 
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_nfheb"]
 animation = &"Idle/mixamo_com"
@@ -244,6 +251,8 @@ advance_mode = 2
 advance_expression = "!is_crouching"
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_iyo7d"]
+advance_mode = 2
+advance_expression = "equipped_axe_1h or equipped_dagger or equipped_shield or equipped_sword_1h"
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_omd1c"]
 
@@ -259,7 +268,7 @@ states/RunningJump/position = Vector2(720.3334, -18.748974)
 states/RunningSlide/node = SubResource("AnimationNodeAnimation_hxj2c")
 states/RunningSlide/position = Vector2(720.3334, 98.79836)
 states/ShieldLocomotion/node = SubResource("AnimationNodeBlendSpace2D_3fpkw")
-states/ShieldLocomotion/position = Vector2(481.875, 224.58333)
+states/ShieldLocomotion/position = Vector2(481.3542, 224.58333)
 states/StandingLocomotion/node = SubResource("AnimationNodeBlendSpace2D_ha6ty")
 states/StandingLocomotion/position = Vector2(482.44446, 99.97531)
 states/Start/position = Vector2(109.83334, 5.6975403)
@@ -269,7 +278,6 @@ graph_offset = Vector2(-63, -62)
 [sub_resource type="AnimationNodeTimeScale" id="AnimationNodeTimeScale_45pxl"]
 
 [sub_resource type="AnimationNodeBlendTree" id="AnimationNodeBlendTree_senyo"]
-graph_offset = Vector2(-255, 58)
 nodes/output/position = Vector2(493.33334, 133.33333)
 nodes/LocomotionStateMachine/node = SubResource("AnimationNodeStateMachine_ikfak")
 nodes/LocomotionStateMachine/position = Vector2(-13.333333, 173.33333)
@@ -296,16 +304,16 @@ transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0
 [node name="GeneralSkeleton" parent="PlayerModel/Armature" parent_id_path=PackedInt32Array(1771073607, 1367199574) index="0" unique_id=1986929927]
 bones/0/position = Vector3(0.002616127, 0, -0.001263435)
 bones/1/position = Vector3(6.945423e-07, 0.9899598, -4.8260063e-11)
-bones/1/rotation = Quaternion(-0.030967832, -0.047224604, -0.029087216, 0.99798036)
-bones/2/rotation = Quaternion(0.028707772, 0.012184068, 0.021777632, 0.9992764)
-bones/3/rotation = Quaternion(0.010125085, 0.0029528658, 0.013594522, 0.999852)
-bones/4/rotation = Quaternion(0.009935876, 0.0031722912, 0.013643488, 0.99985254)
-bones/5/rotation = Quaternion(0.0487864, -0.0009081405, 0.0040878677, 0.9988005)
-bones/6/rotation = Quaternion(-0.06585845, 0.0115560265, -0.0013856144, 0.99776113)
-bones/8/rotation = Quaternion(0.45690918, 0.50043, 0.63233936, -0.37543416)
-bones/9/rotation = Quaternion(0.12301391, 0.8035803, -0.5681092, -0.12797746)
+bones/1/rotation = Quaternion(-0.029270668, -0.050792795, -0.029804226, 0.9978352)
+bones/2/rotation = Quaternion(0.029312871, 0.011899751, 0.021328263, 0.99927187)
+bones/3/rotation = Quaternion(0.010235609, 0.0033668876, 0.013643941, 0.99984896)
+bones/4/rotation = Quaternion(0.010156656, 0.0036641378, 0.013760534, 0.99984705)
+bones/5/rotation = Quaternion(0.048262544, -0.0011262302, 0.0044461996, 0.9988242)
+bones/6/rotation = Quaternion(-0.06710734, 0.011036301, -0.0013911932, 0.99768376)
+bones/8/rotation = Quaternion(0.45725942, 0.50016534, 0.6320013, -0.3759293)
+bones/9/rotation = Quaternion(0.1234359, 0.80338603, -0.56798214, -0.12934747)
 bones/10/rotation = Quaternion(0.009004968, -0.7070495, 0.009005011, 0.7070495)
-bones/11/rotation = Quaternion(0.05284931, 0.47547942, -0.01589154, 0.87799424)
+bones/11/rotation = Quaternion(0.05227351, 0.4766062, -0.017065613, 0.8773955)
 bones/12/rotation = Quaternion(-0.23049825, 0.68289214, 0.17169982, 0.67160124)
 bones/13/rotation = Quaternion(0.20149457, 0.20389189, -0.059591617, 0.9561783)
 bones/14/rotation = Quaternion(0.04001307, -0.052876003, -0.12858759, 0.9894789)
@@ -322,10 +330,10 @@ bones/26/rotation = Quaternion(0.15521277, -1.9371507e-07, -0.015905587, 0.98775
 bones/28/rotation = Quaternion(0.23386711, -0.0035057068, -0.049008608, 0.97102636)
 bones/29/rotation = Quaternion(0.15125789, -1.3411045e-07, -0.015500367, 0.98837286)
 bones/30/rotation = Quaternion(0.14349763, -8.940697e-08, -0.014705032, 0.9895415)
-bones/32/rotation = Quaternion(0.47564772, -0.47974384, -0.63437724, -0.375727)
-bones/33/rotation = Quaternion(-0.1516075, 0.8274405, -0.49677193, 0.21348335)
-bones/34/rotation = Quaternion(0.041240618, 0.7059031, -0.0412405, 0.7059031)
-bones/35/rotation = Quaternion(0.04608965, -0.57173187, 0.03772868, 0.8182756)
+bones/32/rotation = Quaternion(0.47648805, -0.47892743, -0.6340932, -0.37618285)
+bones/33/rotation = Quaternion(-0.15139939, 0.8276499, -0.49615255, 0.2142585)
+bones/34/rotation = Quaternion(0.041107744, 0.7059109, -0.041107625, 0.7059108)
+bones/35/rotation = Quaternion(0.046241853, -0.57146484, 0.038067937, 0.8184378)
 bones/36/rotation = Quaternion(-0.24051937, -0.6719299, -0.18474628, 0.6756696)
 bones/37/rotation = Quaternion(0.2382267, -0.20985532, 0.051183697, 0.94688386)
 bones/38/rotation = Quaternion(0.045545463, 0.04607943, 0.16169317, 0.984712)
@@ -342,14 +350,14 @@ bones/50/rotation = Quaternion(0.15551049, 5.9604645e-08, 0.012668192, 0.9877530
 bones/52/rotation = Quaternion(0.2284934, 0.0034029484, 0.04298061, 0.9725903)
 bones/53/rotation = Quaternion(0.15154798, 7.4505806e-08, 0.012345433, 0.9883728)
 bones/54/rotation = Quaternion(0.14377289, 8.940697e-08, 0.011711985, 0.9895414)
-bones/56/rotation = Quaternion(0.13541973, 0.08510206, 0.98415446, -0.0765453)
-bones/57/rotation = Quaternion(-0.038531356, 0.99260443, -0.114226565, 0.014289048)
-bones/58/rotation = Quaternion(-0.041176572, 0.7104001, -0.70090616, 0.04865026)
+bones/56/rotation = Quaternion(0.13613775, 0.08610895, 0.9838763, -0.07771273)
+bones/57/rotation = Quaternion(-0.038564675, 0.99240077, -0.11564622, 0.016718267)
+bones/58/rotation = Quaternion(-0.041437674, 0.7100078, -0.7012645, 0.04898821)
 bones/59/rotation = Quaternion(-9.186695e-08, 0.9990753, 0.042996287, -1.6792885e-08)
-bones/61/rotation = Quaternion(-0.090445794, -0.010705049, 0.99541104, -0.029360157)
-bones/62/rotation = Quaternion(0.032912, 0.9944696, -0.05488786, -0.08327343)
-bones/63/rotation = Quaternion(0.010033379, 0.68578976, -0.7271872, -0.028116763)
-bones/64/rotation = Quaternion(-9.767006e-09, 0.9979962, 0.063274935, -5.0463203e-09)
+bones/61/rotation = Quaternion(-0.0899127, -0.011135702, 0.99542564, -0.030325603)
+bones/62/rotation = Quaternion(0.032347042, 0.9946723, -0.050538123, -0.08382547)
+bones/63/rotation = Quaternion(0.01146915, 0.6870088, -0.72609764, -0.025878249)
+bones/64/rotation = Quaternion(-1.8304968e-07, 0.9980449, 0.062502205, -2.7904884e-08)
 
 [node name="AnimationPlayer" parent="PlayerModel" index="1" unique_id=44309403]
 "libraries/Crouched Sneaking Left" = ExtResource("3_b226b")
@@ -380,6 +388,7 @@ libraries/Sprint = ExtResource("10_5cw3m")
 "libraries/Sword And Shield Left Run Strafe" = ExtResource("26_v0rb4")
 "libraries/Sword And Shield Left Strafe Walk" = ExtResource("27_cxirm")
 "libraries/Sword And Shield Right Run Strafe" = ExtResource("28_wwmmk")
+"libraries/Sword And Shield Right Strafe Walk" = ExtResource("31_njchi")
 "libraries/Sword And Shield Run" = ExtResource("29_xf1pq")
 "libraries/Sword And Shield Walk" = ExtResource("30_3fpkw")
 "libraries/Walking Backwards" = ExtResource("33_njchi")
@@ -395,7 +404,7 @@ tree_root = SubResource("AnimationNodeBlendTree_senyo")
 advance_expression_base_node = NodePath("..")
 anim_player = NodePath("../PlayerModel/AnimationPlayer")
 parameters/LocomotionStateMachine/CrouchingLocomotion/blend_position = Vector2(0, 0)
-parameters/LocomotionStateMachine/ShieldLocomotion/blend_position = Vector2(0, 0)
+parameters/LocomotionStateMachine/ShieldLocomotion/blend_position = Vector2(0.00091409683, -0.003754735)
 parameters/LocomotionStateMachine/StandingLocomotion/blend_position = Vector2(0, 0)
 parameters/LocomotionTimeScale/scale = 1.0
 

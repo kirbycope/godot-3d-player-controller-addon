@@ -5,11 +5,20 @@ const MOTION_INTERPOLATE_SPEED: float = 10.0
 const ROTATION_INTERPOLATE_SPEED: float = 10.0
 const LOCOMOTION_STATE_PLAYBACK_PATH: String = "parameters/LocomotionStateMachine/playback"
 const CROUCHING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/CrouchingLocomotion/blend_position"
+const SHIELD_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/ShieldLocomotion/blend_position"
 const STANDING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/StandingLocomotion/blend_position"
 
 @export var animation_tree: AnimationTree
 @export var current_animation: int
 
+var equipped_axe_1h: bool = false
+var equipped_axe_2h: bool = false
+var equipped_bow: bool = false
+var equipped_dagger: bool = false
+var equipped_shield: bool = false
+var equipped_staff: bool = false
+var equipped_sword_1h: bool = false
+var equipped_sword_2h: bool = false
 var is_crouching: bool = false
 var is_falling: bool = false
 var is_focusing: bool = false
@@ -153,7 +162,10 @@ func apply_input(delta: float) -> void:
 		if is_crouching:
 			animation_tree.set(CROUCHING_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 		else:
-			animation_tree.set(STANDING_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
+			if equipped_axe_1h or equipped_dagger or equipped_shield or equipped_sword_1h:
+				animation_tree.set(SHIELD_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
+			else:
+				animation_tree.set(STANDING_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 
 	# Handle movement when not strafing
 	else:
@@ -170,7 +182,10 @@ func apply_input(delta: float) -> void:
 		if is_crouching:
 			animation_tree.set(CROUCHING_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
 		else:
-			animation_tree.set(STANDING_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
+			if equipped_axe_1h or equipped_dagger or equipped_shield or equipped_sword_1h:
+				animation_tree.set(SHIELD_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
+			else:
+				animation_tree.set(STANDING_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
 
 	root_motion = Transform3D(animation_tree.get_root_motion_rotation(), animation_tree.get_root_motion_position())
 

@@ -5,50 +5,105 @@
 [node name="Debug" type="CanvasLayer" unique_id=2032410064]
 script = ExtResource("1_86eym")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=332686384]
+[node name="States" type="VBoxContainer" parent="." unique_id=332686384]
 anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
-offset_top = -64.5
+offset_top = -278.5
 offset_right = 160.0
-offset_bottom = 64.5
+offset_bottom = -9.5
 grow_vertical = 2
 
-[node name="Panel" type="Panel" parent="VBoxContainer" unique_id=2017605809]
+[node name="Panel" type="Panel" parent="States" unique_id=2017605809]
 custom_minimum_size = Vector2(160, 24)
 layout_mode = 2
 
-[node name="Label" type="Label" parent="VBoxContainer/Panel" unique_id=1575123927]
+[node name="Label" type="Label" parent="States/Panel" unique_id=1575123927]
 layout_mode = 0
 offset_left = 4.0
 offset_right = 155.0
 offset_bottom = 23.0
 text = "STATES"
 
-[node name="is_crouching" type="CheckBox" parent="VBoxContainer" unique_id=1585595928]
+[node name="is_crouching" type="CheckBox" parent="States" unique_id=1585595928]
 layout_mode = 2
 text = "is_crouching"
 
-[node name="is_falling" type="CheckBox" parent="VBoxContainer" unique_id=650160220]
+[node name="is_falling" type="CheckBox" parent="States" unique_id=650160220]
 layout_mode = 2
 text = "is_falling"
 
-[node name="is_focusing" type="CheckBox" parent="VBoxContainer" unique_id=202642783]
+[node name="is_focusing" type="CheckBox" parent="States" unique_id=202642783]
 layout_mode = 2
 text = "is_focusing"
 
-[node name="is_jumping" type="CheckBox" parent="VBoxContainer" unique_id=681417065]
+[node name="is_jumping" type="CheckBox" parent="States" unique_id=681417065]
 layout_mode = 2
 text = "is_jumping"
 
-[node name="is_shooting" type="CheckBox" parent="VBoxContainer" unique_id=467465081]
+[node name="is_shooting" type="CheckBox" parent="States" unique_id=467465081]
 layout_mode = 2
 text = "is_shooting"
 
-[node name="is_sliding" type="CheckBox" parent="VBoxContainer" unique_id=1734099729]
+[node name="is_sliding" type="CheckBox" parent="States" unique_id=1734099729]
 layout_mode = 2
 text = "is_sliding"
 
-[node name="is_sprinting" type="CheckBox" parent="VBoxContainer" unique_id=1694819929]
+[node name="is_sprinting" type="CheckBox" parent="States" unique_id=1694819929]
 layout_mode = 2
 text = "is_sprinting"
+
+[node name="Equipment" type="VBoxContainer" parent="." unique_id=2044336599]
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -182.0
+offset_top = -272.0
+offset_bottom = 32.0
+grow_horizontal = 0
+grow_vertical = 2
+
+[node name="Panel" type="Panel" parent="Equipment" unique_id=1961482025]
+custom_minimum_size = Vector2(160, 24)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Equipment/Panel" unique_id=2136512824]
+layout_mode = 0
+offset_left = 4.0
+offset_right = 155.0
+offset_bottom = 23.0
+text = "EQUIPMENT"
+
+[node name="equipped_axe_1h" type="CheckBox" parent="Equipment" unique_id=1975789528]
+layout_mode = 2
+text = "eqiupped_axe_1h"
+
+[node name="equipped_axe_2h" type="CheckBox" parent="Equipment" unique_id=1840594010]
+layout_mode = 2
+text = "eqiupped_axe_2h"
+
+[node name="equipped_bow" type="CheckBox" parent="Equipment" unique_id=473779158]
+layout_mode = 2
+text = "eqiupped_bow"
+
+[node name="equipped_dagger" type="CheckBox" parent="Equipment" unique_id=1839184329]
+layout_mode = 2
+text = "eqiupped_dagger"
+
+[node name="equipped_shield" type="CheckBox" parent="Equipment" unique_id=1351135518]
+layout_mode = 2
+text = "eqiupped_shield"
+
+[node name="equipped_staff" type="CheckBox" parent="Equipment" unique_id=608324050]
+layout_mode = 2
+text = "eqiupped_staff"
+
+[node name="equipped_sword_1h" type="CheckBox" parent="Equipment" unique_id=2088982799]
+layout_mode = 2
+text = "eqiupped_sword_1h"
+
+[node name="equipped_sword_2h" type="CheckBox" parent="Equipment" unique_id=1167562491]
+layout_mode = 2
+text = "eqiupped_sword_2h"
