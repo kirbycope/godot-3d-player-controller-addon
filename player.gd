@@ -7,6 +7,7 @@ const LOCOMOTION_STATE_PLAYBACK_PATH: String = "parameters/LocomotionStateMachin
 const BOW_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/BowLocomotion/blend_position"
 const CROUCHING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/CrouchingLocomotion/blend_position"
 const GREATSWORD_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/GreatSwordLocomotion/blend_position"
+const PISTOL_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/PistolLocomotion/blend_position"
 const RIFLE_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/RifleLocomotion/blend_position"
 const SHIELD_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/ShieldLocomotion/blend_position"
 const STANDING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/StandingLocomotion/blend_position"
@@ -18,6 +19,7 @@ var equipped_axe_1h: bool = false
 var equipped_axe_2h: bool = false
 var equipped_bow: bool = false
 var equipped_dagger: bool = false
+var equipped_pistol: bool = false
 var equipped_rifle: bool = false
 var equipped_shield: bool = false
 var equipped_staff: bool = false
@@ -129,6 +131,8 @@ func apply_input(delta: float) -> void:
 				animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("BowJumpForward")
 			elif equipped_dagger or equipped_shield or equipped_sword_1h:
 				animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("ShieldJumpForward")
+			elif equipped_pistol:
+				animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("PistolJumpForward")
 			elif equipped_rifle:
 				animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("RifleJumpForward")
 			else:
@@ -142,6 +146,8 @@ func apply_input(delta: float) -> void:
 				animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("ShieldJump")
 			elif equipped_rifle:
 				animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("RifleJumpUp")
+			elif equipped_pistol:
+				animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("PistolJump")
 			else:
 				animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("JumpingUp")
 		is_jump_queued = true
@@ -191,6 +197,8 @@ func apply_input(delta: float) -> void:
 				animation_tree.set(SHIELD_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 			elif equipped_axe_2h or equipped_sword_2h:
 				animation_tree.set(GREATSWORD_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
+			elif equipped_pistol:
+				animation_tree.set(PISTOL_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 			elif equipped_rifle:
 				animation_tree.set(RIFLE_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 			else:
@@ -217,6 +225,8 @@ func apply_input(delta: float) -> void:
 				animation_tree.set(SHIELD_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
 			elif equipped_axe_2h or equipped_sword_2h:
 				animation_tree.set(GREATSWORD_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
+			elif equipped_pistol:
+				animation_tree.set(PISTOL_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
 			elif equipped_rifle:
 				animation_tree.set(RIFLE_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
 			else:
