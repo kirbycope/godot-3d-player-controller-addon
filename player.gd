@@ -4,7 +4,9 @@ extends CharacterBody3D
 const MOTION_INTERPOLATE_SPEED: float = 10.0
 const ROTATION_INTERPOLATE_SPEED: float = 10.0
 const LOCOMOTION_STATE_PLAYBACK_PATH: String = "parameters/LocomotionStateMachine/playback"
+const BOW_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/BowLocomotion/blend_position"
 const CROUCHING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/CrouchingLocomotion/blend_position"
+const GREATSWORD_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/GreatSwordLocomotion/blend_position"
 const SHIELD_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/ShieldLocomotion/blend_position"
 const STANDING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/StandingLocomotion/blend_position"
 
@@ -162,8 +164,12 @@ func apply_input(delta: float) -> void:
 		if is_crouching:
 			animation_tree.set(CROUCHING_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 		else:
-			if equipped_axe_1h or equipped_dagger or equipped_shield or equipped_sword_1h:
+			if equipped_bow:
+				animation_tree.set(BOW_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
+			elif equipped_axe_1h or equipped_dagger or equipped_shield or equipped_sword_1h:
 				animation_tree.set(SHIELD_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
+			elif equipped_axe_2h or equipped_sword_2h:
+				animation_tree.set(GREATSWORD_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 			else:
 				animation_tree.set(STANDING_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 
@@ -182,8 +188,12 @@ func apply_input(delta: float) -> void:
 		if is_crouching:
 			animation_tree.set(CROUCHING_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
 		else:
-			if equipped_axe_1h or equipped_dagger or equipped_shield or equipped_sword_1h:
+			if equipped_bow:
+				animation_tree.set(BOW_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
+			elif equipped_axe_1h or equipped_dagger or equipped_shield or equipped_sword_1h:
 				animation_tree.set(SHIELD_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
+			elif equipped_axe_2h or equipped_sword_2h:
+				animation_tree.set(GREATSWORD_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
 			else:
 				animation_tree.set(STANDING_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
 

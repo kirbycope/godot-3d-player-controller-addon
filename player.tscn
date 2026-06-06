@@ -14,14 +14,23 @@
 [ext_resource type="AnimationLibrary" uid="uid://c7jp73aayh7dy" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Jumping Up.glb" id="6_t7djy"]
 [ext_resource type="AnimationLibrary" uid="uid://rnwkbqupdbv3" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Crouching Idle.glb" id="6_u6ny4"]
 [ext_resource type="AnimationLibrary" uid="uid://dm6ef4yyxiibs" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Running.glb" id="8_mv4yd"]
+[ext_resource type="AnimationLibrary" uid="uid://4ky8gqbo2jq6" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Great Sword Backward Run.glb" id="8_omd1c"]
 [ext_resource type="Script" uid="uid://w0k2yqsarte5" path="res://addons/3d_player_controller/player_input.gd" id="8_wyssh"]
 [ext_resource type="AnimationLibrary" uid="uid://dsnlxptdo6n1g" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Running Backward.glb" id="9_5cw3m"]
+[ext_resource type="AnimationLibrary" uid="uid://cwa86vnyg1ivg" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Great Sword Backward Walk.glb" id="9_6yort"]
 [ext_resource type="AnimationLibrary" uid="uid://c104u45xena1m" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Sprint.glb" id="10_5cw3m"]
+[ext_resource type="AnimationLibrary" uid="uid://bv5bywv4fis2i" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Great Sword Idle.glb" id="10_v7lsf"]
+[ext_resource type="AnimationLibrary" uid="uid://bb2mfdqx20e1s" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Great Sword Run.glb" id="11_oaa2s"]
 [ext_resource type="Script" uid="uid://c7sgvm3s5tfny" path="res://addons/3d_player_controller/camera.gd" id="12_mv4yd"]
+[ext_resource type="AnimationLibrary" uid="uid://bs6h7v6quicaw" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Great Sword Strafe Left Run.glb" id="12_tkxeg"]
+[ext_resource type="AnimationLibrary" uid="uid://0nx5iqhefhmf" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Great Sword Strafe Right Run.glb" id="13_1hnrs"]
 [ext_resource type="PackedScene" uid="uid://carag3s40qlej" path="res://addons/3d_player_controller/controls.tscn" id="13_fjdng"]
 [ext_resource type="AnimationLibrary" uid="uid://bpd6c6727tn8l" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Running Jump.glb" id="13_yqsj4"]
+[ext_resource type="AnimationLibrary" uid="uid://caf028l7hgcsn" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Great Sword Strafe Right Walk.glb" id="14_ahqpo"]
 [ext_resource type="AnimationLibrary" uid="uid://igfdhfp0kbdy" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Right Strafe Walking.glb" id="14_kaeqx"]
 [ext_resource type="AnimationLibrary" uid="uid://bturhmypujigh" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Running Slide.glb" id="14_yqsj4"]
+[ext_resource type="AnimationLibrary" uid="uid://cqkpved4g0bwx" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Great Sword Strafe Walk Left.glb" id="15_sd0ff"]
+[ext_resource type="AnimationLibrary" uid="uid://l5lb23hw143n" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Great Sword Walk.glb" id="16_1520m"]
 [ext_resource type="AnimationLibrary" uid="uid://b66hh3ma67hrw" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Standard Walk.glb" id="19_h6wsa"]
 [ext_resource type="AnimationLibrary" uid="uid://chv4qnh6xi7o1" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Sword And Shield Backward Run.glb" id="19_qu57g"]
 [ext_resource type="PackedScene" uid="uid://cwb6b4lbm2i0d" path="res://addons/3d_player_controller/debug.tscn" id="20_07327"]
@@ -37,12 +46,86 @@
 [ext_resource type="AnimationLibrary" uid="uid://cvycs2tnvo6n4" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Sword And Shield Right Run Strafe.glb" id="28_wwmmk"]
 [ext_resource type="AnimationLibrary" uid="uid://cpkcfl1xj5wy4" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Sword And Shield Run.glb" id="29_xf1pq"]
 [ext_resource type="AnimationLibrary" uid="uid://dcaislp0mllr7" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Sword And Shield Walk.glb" id="30_3fpkw"]
+[ext_resource type="AnimationLibrary" uid="uid://ckk0j1d71pue1" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Standing Aim Idle With Bow 01.glb" id="30_7pm0t"]
+[ext_resource type="AnimationLibrary" uid="uid://cw21i7lfi3nif" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Standing Idle With Bow 01.glb" id="31_0nse3"]
 [ext_resource type="AnimationLibrary" uid="uid://dc4e8sdatyq81" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Sword And Shield Right Strafe Walk.glb" id="31_njchi"]
+[ext_resource type="AnimationLibrary" uid="uid://binsnfsm8qd0c" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Standing Run Back With Bow.glb" id="32_c2k3f"]
+[ext_resource type="AnimationLibrary" uid="uid://bd77s0om41c6b" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Standing Run Forward with Bow.glb" id="33_ictlc"]
 [ext_resource type="AnimationLibrary" uid="uid://b05nay4slsc80" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Walking Backwards.glb" id="33_njchi"]
+[ext_resource type="AnimationLibrary" uid="uid://7aawhhr47iip" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Standing Run Left With Bow.glb" id="34_3iail"]
+[ext_resource type="AnimationLibrary" uid="uid://baflxq2pd7uqu" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Standing Run Right WIth Bow.glb" id="35_qm1cm"]
+[ext_resource type="AnimationLibrary" uid="uid://dnsgw32aywe7" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Standing Sprint Forward With Bow.glb" id="36_b5ppw"]
+[ext_resource type="AnimationLibrary" uid="uid://bbj4kvucgiye4" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Standing Walk Back With Bow.glb" id="37_0nse3"]
+[ext_resource type="AnimationLibrary" uid="uid://cb7j08hx5nqry" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Standing Walk Forward With Bow.glb" id="37_ufkdo"]
+[ext_resource type="AnimationLibrary" uid="uid://dgqipt8fth2do" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Standing Walk Left With Bow.glb" id="38_jo435"]
+[ext_resource type="AnimationLibrary" uid="uid://bwohc8iuuhvf0" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Standing Walk Right With Bow.glb" id="39_6b7s3"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_senyo"]
 radius = 0.3
 height = 1.8
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_yx0mh"]
+animation = &"Standing Idle With Bow 01/mixamo_com"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_wwnia"]
+animation = &"Standing Walk Forward With Bow/mixamo_com"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_qrmb0"]
+animation = &"Standing Run Back With Bow/mixamo_com"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_xf6l6"]
+animation = &"Standing Run Right WIth Bow/mixamo_com"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_rs4nb"]
+animation = &"Standing Walk Right With Bow/mixamo_com"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_kwisa"]
+animation = &"Standing Walk Left With Bow/mixamo_com"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_q7kt0"]
+animation = &"Standing Run Left With Bow/mixamo_com"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_ladmy"]
+animation = &"Standing Sprint Forward With Bow/mixamo_com"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_eljlq"]
+animation = &"Standing Run Forward with Bow/mixamo_com"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_c2k3f"]
+animation = &"Standing Walk Back With Bow/mixamo_com"
+
+[sub_resource type="AnimationNodeBlendSpace2D" id="AnimationNodeBlendSpace2D_qcvw7"]
+max_space = Vector2(1, 1.5)
+blend_point_0/node = SubResource("AnimationNodeAnimation_yx0mh")
+blend_point_0/pos = Vector2(0, 0)
+blend_point_0/name = &"Standing Idle With Bow 01_mixamo_com"
+blend_point_1/node = SubResource("AnimationNodeAnimation_wwnia")
+blend_point_1/pos = Vector2(0, 0.5)
+blend_point_1/name = &"Standing Walk Forward With Bow_mixamo_com"
+blend_point_2/node = SubResource("AnimationNodeAnimation_qrmb0")
+blend_point_2/pos = Vector2(0, -1)
+blend_point_2/name = &"Standing Run Back With Bow_mixamo_com"
+blend_point_3/node = SubResource("AnimationNodeAnimation_xf6l6")
+blend_point_3/pos = Vector2(1, 0)
+blend_point_3/name = &"Standing Run Right WIth Bow_mixamo_com"
+blend_point_4/node = SubResource("AnimationNodeAnimation_rs4nb")
+blend_point_4/pos = Vector2(0.5, 0)
+blend_point_4/name = &"Standing Walk Right With Bow_mixamo_com"
+blend_point_5/node = SubResource("AnimationNodeAnimation_kwisa")
+blend_point_5/pos = Vector2(-0.5, 0)
+blend_point_5/name = &"Standing Walk Left With Bow_mixamo_com"
+blend_point_6/node = SubResource("AnimationNodeAnimation_q7kt0")
+blend_point_6/pos = Vector2(-1, 0)
+blend_point_6/name = &"Standing Run Left With Bow_mixamo_com"
+blend_point_7/node = SubResource("AnimationNodeAnimation_ladmy")
+blend_point_7/pos = Vector2(0, 1.5)
+blend_point_7/name = &"Standing Sprint Forward With Bow_mixamo_com"
+blend_point_8/node = SubResource("AnimationNodeAnimation_eljlq")
+blend_point_8/pos = Vector2(0, 1)
+blend_point_8/name = &"Standing Run Forward with Bow_mixamo_com"
+blend_point_9/node = SubResource("AnimationNodeAnimation_c2k3f")
+blend_point_9/pos = Vector2(0, -0.5)
+blend_point_9/name = &"Standing Walk Back With Bow_mixamo_com"
 
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_b226b"]
 animation = &"Crouching Idle/mixamo_com"
@@ -79,6 +162,62 @@ blend_point_4/name = &"Crouched Sneaking Left_mixamo_com"
 
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_07327"]
 animation = &"Falling Idle/mixamo_com"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_omd1c"]
+animation = &"Great Sword Idle/mixamo_com"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_6yort"]
+animation = &"Great Sword Run/mixamo_com"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_v7lsf"]
+animation = &"Great Sword Walk/mixamo_com"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_oaa2s"]
+animation = &"Great Sword Backward Run/mixamo_com"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_tkxeg"]
+animation = &"Great Sword Backward Walk/mixamo_com"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_1hnrs"]
+animation = &"Great Sword Strafe Right Run/mixamo_com"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_ahqpo"]
+animation = &"Great Sword Strafe Right Walk/mixamo_com"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_sd0ff"]
+animation = &"Great Sword Strafe Left Run/mixamo_com"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_1520m"]
+animation = &"Great Sword Strafe Walk Left/mixamo_com"
+
+[sub_resource type="AnimationNodeBlendSpace2D" id="AnimationNodeBlendSpace2D_xrkl1"]
+blend_point_0/node = SubResource("AnimationNodeAnimation_omd1c")
+blend_point_0/pos = Vector2(0, 0)
+blend_point_0/name = &"Great Sword Idle_mixamo_com"
+blend_point_1/node = SubResource("AnimationNodeAnimation_6yort")
+blend_point_1/pos = Vector2(0, 1)
+blend_point_1/name = &"Great Sword Run_mixamo_com"
+blend_point_2/node = SubResource("AnimationNodeAnimation_v7lsf")
+blend_point_2/pos = Vector2(0, 0.5)
+blend_point_2/name = &"Great Sword Walk_mixamo_com"
+blend_point_3/node = SubResource("AnimationNodeAnimation_oaa2s")
+blend_point_3/pos = Vector2(0, -1)
+blend_point_3/name = &"Great Sword Backward Run_mixamo_com"
+blend_point_4/node = SubResource("AnimationNodeAnimation_tkxeg")
+blend_point_4/pos = Vector2(0, -0.5)
+blend_point_4/name = &"Great Sword Backward Walk_mixamo_com"
+blend_point_5/node = SubResource("AnimationNodeAnimation_1hnrs")
+blend_point_5/pos = Vector2(1, 0)
+blend_point_5/name = &"Great Sword Strafe Right Run_mixamo_com"
+blend_point_6/node = SubResource("AnimationNodeAnimation_ahqpo")
+blend_point_6/pos = Vector2(0.5, 0)
+blend_point_6/name = &"Great Sword Strafe Right Walk_mixamo_com"
+blend_point_7/node = SubResource("AnimationNodeAnimation_sd0ff")
+blend_point_7/pos = Vector2(-1, 0)
+blend_point_7/name = &"Great Sword Strafe Left Run_mixamo_com"
+blend_point_8/node = SubResource("AnimationNodeAnimation_1520m")
+blend_point_8/pos = Vector2(-0.4, 0)
+blend_point_8/name = &"Great Sword Strafe Walk Left_mixamo_com"
 
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_t7djy"]
 animation = &"Jumping Up/mixamo_com"
@@ -212,7 +351,7 @@ blend_point_9/name = &"Sprint_mixamo_com"
 advance_mode = 2
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_yqsj4"]
-xfade_time = 0.3
+xfade_time = 0.2
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_hxj2c"]
 xfade_time = 0.3
@@ -220,12 +359,12 @@ switch_mode = 2
 advance_mode = 2
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_y12aw"]
-xfade_time = 0.3
+xfade_time = 0.2
 advance_mode = 2
 advance_expression = "is_on_floor()"
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_sjxju"]
-xfade_time = 0.3
+xfade_time = 0.2
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_b226b"]
 xfade_time = 0.3
@@ -233,34 +372,53 @@ switch_mode = 2
 advance_mode = 2
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_osckp"]
-xfade_time = 0.3
+xfade_time = 0.2
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_ithc2"]
-xfade_time = 0.3
+xfade_time = 0.2
 switch_mode = 2
 advance_mode = 2
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_q6nkd"]
-xfade_time = 0.3
+xfade_time = 0.2
 advance_mode = 2
 advance_expression = "is_crouching"
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_u7c7f"]
-xfade_time = 0.3
+xfade_time = 0.2
 advance_mode = 2
 advance_expression = "!is_crouching"
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_iyo7d"]
+xfade_time = 0.2
 advance_mode = 2
 advance_expression = "equipped_axe_1h or equipped_dagger or equipped_shield or equipped_sword_1h"
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_omd1c"]
 
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_7pm0t"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_0nse3"]
+xfade_time = 0.2
+advance_mode = 2
+advance_expression = "equipped_axe_2h or equipped_sword_2h"
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_ni3ff"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_goiqs"]
+xfade_time = 0.2
+advance_mode = 2
+advance_expression = "equipped_bow"
+
 [sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_ikfak"]
+states/BowLocomotion/node = SubResource("AnimationNodeBlendSpace2D_qcvw7")
+states/BowLocomotion/position = Vector2(203.2963, 222.97327)
 states/CrouchingLocomotion/node = SubResource("AnimationNodeBlendSpace2D_50bk4")
 states/CrouchingLocomotion/position = Vector2(202.11111, 101.08333)
 states/Falling/node = SubResource("AnimationNodeAnimation_07327")
 states/Falling/position = Vector2(482.33334, -17.123459)
+states/GreatSwordLocomotion/node = SubResource("AnimationNodeBlendSpace2D_xrkl1")
+states/GreatSwordLocomotion/position = Vector2(482.06174, 222.39507)
 states/JumpingUp/node = SubResource("AnimationNodeAnimation_t7djy")
 states/JumpingUp/position = Vector2(277, -16.629631)
 states/RunningJump/node = SubResource("AnimationNodeAnimation_yqsj4")
@@ -268,16 +426,17 @@ states/RunningJump/position = Vector2(720.3334, -18.748974)
 states/RunningSlide/node = SubResource("AnimationNodeAnimation_hxj2c")
 states/RunningSlide/position = Vector2(720.3334, 98.79836)
 states/ShieldLocomotion/node = SubResource("AnimationNodeBlendSpace2D_3fpkw")
-states/ShieldLocomotion/position = Vector2(481.3542, 224.58333)
+states/ShieldLocomotion/position = Vector2(719.34033, 223.56482)
 states/StandingLocomotion/node = SubResource("AnimationNodeBlendSpace2D_ha6ty")
 states/StandingLocomotion/position = Vector2(482.44446, 99.97531)
 states/Start/position = Vector2(109.83334, 5.6975403)
-transitions = ["Start", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_fjdng"), "StandingLocomotion", "JumpingUp", SubResource("AnimationNodeStateMachineTransition_yqsj4"), "JumpingUp", "Falling", SubResource("AnimationNodeStateMachineTransition_hxj2c"), "Falling", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_y12aw"), "StandingLocomotion", "RunningJump", SubResource("AnimationNodeStateMachineTransition_sjxju"), "RunningJump", "Falling", SubResource("AnimationNodeStateMachineTransition_b226b"), "StandingLocomotion", "RunningSlide", SubResource("AnimationNodeStateMachineTransition_osckp"), "RunningSlide", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_ithc2"), "StandingLocomotion", "CrouchingLocomotion", SubResource("AnimationNodeStateMachineTransition_q6nkd"), "CrouchingLocomotion", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_u7c7f"), "StandingLocomotion", "ShieldLocomotion", SubResource("AnimationNodeStateMachineTransition_iyo7d"), "ShieldLocomotion", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_omd1c")]
-graph_offset = Vector2(-63, -62)
+transitions = ["Start", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_fjdng"), "StandingLocomotion", "JumpingUp", SubResource("AnimationNodeStateMachineTransition_yqsj4"), "JumpingUp", "Falling", SubResource("AnimationNodeStateMachineTransition_hxj2c"), "Falling", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_y12aw"), "StandingLocomotion", "RunningJump", SubResource("AnimationNodeStateMachineTransition_sjxju"), "RunningJump", "Falling", SubResource("AnimationNodeStateMachineTransition_b226b"), "StandingLocomotion", "RunningSlide", SubResource("AnimationNodeStateMachineTransition_osckp"), "RunningSlide", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_ithc2"), "StandingLocomotion", "CrouchingLocomotion", SubResource("AnimationNodeStateMachineTransition_q6nkd"), "CrouchingLocomotion", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_u7c7f"), "StandingLocomotion", "ShieldLocomotion", SubResource("AnimationNodeStateMachineTransition_iyo7d"), "ShieldLocomotion", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_omd1c"), "GreatSwordLocomotion", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_7pm0t"), "StandingLocomotion", "GreatSwordLocomotion", SubResource("AnimationNodeStateMachineTransition_0nse3"), "BowLocomotion", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_ni3ff"), "StandingLocomotion", "BowLocomotion", SubResource("AnimationNodeStateMachineTransition_goiqs")]
+graph_offset = Vector2(-245, 21)
 
 [sub_resource type="AnimationNodeTimeScale" id="AnimationNodeTimeScale_45pxl"]
 
 [sub_resource type="AnimationNodeBlendTree" id="AnimationNodeBlendTree_senyo"]
+graph_offset = Vector2(-465.33334, 93.333336)
 nodes/output/position = Vector2(493.33334, 133.33333)
 nodes/LocomotionStateMachine/node = SubResource("AnimationNodeStateMachine_ikfak")
 nodes/LocomotionStateMachine/position = Vector2(-13.333333, 173.33333)
@@ -301,19 +460,19 @@ animation_tree = NodePath("AnimationTree")
 [node name="PlayerModel" parent="." unique_id=1771073607 instance=ExtResource("2_om2v3")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0)
 
-[node name="GeneralSkeleton" parent="PlayerModel/Armature" parent_id_path=PackedInt32Array(1771073607, 1367199574) index="0" unique_id=1986929927]
+[node name="GeneralSkeleton" parent="PlayerModel/Armature" parent_id_path=PackedInt32Array(1771073607, 318010379) index="0" unique_id=939687078]
 bones/0/position = Vector3(0.002616127, 0, -0.001263435)
 bones/1/position = Vector3(6.945423e-07, 0.9899598, -4.8260063e-11)
-bones/1/rotation = Quaternion(-0.029270668, -0.050792795, -0.029804226, 0.9978352)
-bones/2/rotation = Quaternion(0.029312871, 0.011899751, 0.021328263, 0.99927187)
-bones/3/rotation = Quaternion(0.010235609, 0.0033668876, 0.013643941, 0.99984896)
-bones/4/rotation = Quaternion(0.010156656, 0.0036641378, 0.013760534, 0.99984705)
-bones/5/rotation = Quaternion(0.048262544, -0.0011262302, 0.0044461996, 0.9988242)
-bones/6/rotation = Quaternion(-0.06710734, 0.011036301, -0.0013911932, 0.99768376)
-bones/8/rotation = Quaternion(0.45725942, 0.50016534, 0.6320013, -0.3759293)
-bones/9/rotation = Quaternion(0.1234359, 0.80338603, -0.56798214, -0.12934747)
+bones/1/rotation = Quaternion(-0.037971165, -0.04138018, -0.024449578, 0.9981223)
+bones/2/rotation = Quaternion(0.030490512, 0.016315047, 0.024294171, 0.99910665)
+bones/3/rotation = Quaternion(0.01024163, 0.0041183433, 0.014417091, 0.9998352)
+bones/4/rotation = Quaternion(0.00979154, 0.004150067, 0.014385385, 0.9998401)
+bones/5/rotation = Quaternion(0.05109614, -0.0023228119, 0.004581489, 0.9986806)
+bones/6/rotation = Quaternion(-0.069867775, 0.007940962, -0.0013558469, 0.9975237)
+bones/8/rotation = Quaternion(0.45802945, 0.4997843, 0.6305458, -0.37793738)
+bones/9/rotation = Quaternion(0.12571195, 0.80103457, -0.5722242, -0.122880206)
 bones/10/rotation = Quaternion(0.009004968, -0.7070495, 0.009005011, 0.7070495)
-bones/11/rotation = Quaternion(0.05227351, 0.4766062, -0.017065613, 0.8773955)
+bones/11/rotation = Quaternion(0.05276411, 0.4767935, -0.01552324, 0.877293)
 bones/12/rotation = Quaternion(-0.23049825, 0.68289214, 0.17169982, 0.67160124)
 bones/13/rotation = Quaternion(0.20149457, 0.20389189, -0.059591617, 0.9561783)
 bones/14/rotation = Quaternion(0.04001307, -0.052876003, -0.12858759, 0.9894789)
@@ -330,10 +489,10 @@ bones/26/rotation = Quaternion(0.15521277, -1.9371507e-07, -0.015905587, 0.98775
 bones/28/rotation = Quaternion(0.23386711, -0.0035057068, -0.049008608, 0.97102636)
 bones/29/rotation = Quaternion(0.15125789, -1.3411045e-07, -0.015500367, 0.98837286)
 bones/30/rotation = Quaternion(0.14349763, -8.940697e-08, -0.014705032, 0.9895415)
-bones/32/rotation = Quaternion(0.47648805, -0.47892743, -0.6340932, -0.37618285)
-bones/33/rotation = Quaternion(-0.15139939, 0.8276499, -0.49615255, 0.2142585)
-bones/34/rotation = Quaternion(0.041107744, 0.7059109, -0.041107625, 0.7059108)
-bones/35/rotation = Quaternion(0.046241853, -0.57146484, 0.038067937, 0.8184378)
+bones/32/rotation = Quaternion(0.47497737, -0.4796152, -0.6371784, -0.37198052)
+bones/33/rotation = Quaternion(-0.14668763, 0.82781506, -0.49737382, 0.21406612)
+bones/34/rotation = Quaternion(0.040450368, 0.7059489, -0.04045028, 0.70594877)
+bones/35/rotation = Quaternion(0.042180948, -0.5702439, 0.036063015, 0.8195988)
 bones/36/rotation = Quaternion(-0.24051937, -0.6719299, -0.18474628, 0.6756696)
 bones/37/rotation = Quaternion(0.2382267, -0.20985532, 0.051183697, 0.94688386)
 bones/38/rotation = Quaternion(0.045545463, 0.04607943, 0.16169317, 0.984712)
@@ -350,21 +509,30 @@ bones/50/rotation = Quaternion(0.15551049, 5.9604645e-08, 0.012668192, 0.9877530
 bones/52/rotation = Quaternion(0.2284934, 0.0034029484, 0.04298061, 0.9725903)
 bones/53/rotation = Quaternion(0.15154798, 7.4505806e-08, 0.012345433, 0.9883728)
 bones/54/rotation = Quaternion(0.14377289, 8.940697e-08, 0.011711985, 0.9895414)
-bones/56/rotation = Quaternion(0.13613775, 0.08610895, 0.9838763, -0.07771273)
-bones/57/rotation = Quaternion(-0.038564675, 0.99240077, -0.11564622, 0.016718267)
-bones/58/rotation = Quaternion(-0.041437674, 0.7100078, -0.7012645, 0.04898821)
+bones/56/rotation = Quaternion(0.13769712, 0.0718332, 0.9849498, -0.0758517)
+bones/57/rotation = Quaternion(-0.038562898, 0.9931677, -0.10999577, 0.005646156)
+bones/58/rotation = Quaternion(-0.042529386, 0.71075696, -0.7003446, 0.050330795)
 bones/59/rotation = Quaternion(-9.186695e-08, 0.9990753, 0.042996287, -1.6792885e-08)
-bones/61/rotation = Quaternion(-0.0899127, -0.011135702, 0.99542564, -0.030325603)
-bones/62/rotation = Quaternion(0.032347042, 0.9946723, -0.050538123, -0.08382547)
-bones/63/rotation = Quaternion(0.01146915, 0.6870088, -0.72609764, -0.025878249)
-bones/64/rotation = Quaternion(-1.8304968e-07, 0.9980449, 0.062502205, -2.7904884e-08)
+bones/61/rotation = Quaternion(-0.093333595, -0.017910238, 0.99509794, -0.027352547)
+bones/62/rotation = Quaternion(0.034504253, 0.99376154, -0.06562306, -0.083314136)
+bones/63/rotation = Quaternion(0.007432649, 0.6761238, -0.73611766, -0.0305321)
+bones/64/rotation = Quaternion(-2.3438872e-07, 0.9981015, 0.06159137, -2.4744129e-08)
 
-[node name="AnimationPlayer" parent="PlayerModel" index="1" unique_id=44309403]
+[node name="AnimationPlayer" parent="PlayerModel" index="1" unique_id=1005353344]
 "libraries/Crouched Sneaking Left" = ExtResource("3_b226b")
 "libraries/Crouched Sneaking Right" = ExtResource("4_osckp")
 "libraries/Crouched Walking" = ExtResource("5_ithc2")
 "libraries/Crouching Idle" = ExtResource("6_u6ny4")
 "libraries/Falling Idle" = ExtResource("3_ro8tf")
+"libraries/Great Sword Backward Run" = ExtResource("8_omd1c")
+"libraries/Great Sword Backward Walk" = ExtResource("9_6yort")
+"libraries/Great Sword Idle" = ExtResource("10_v7lsf")
+"libraries/Great Sword Run" = ExtResource("11_oaa2s")
+"libraries/Great Sword Strafe Left Run" = ExtResource("12_tkxeg")
+"libraries/Great Sword Strafe Right Run" = ExtResource("13_1hnrs")
+"libraries/Great Sword Strafe Right Walk" = ExtResource("14_ahqpo")
+"libraries/Great Sword Strafe Walk Left" = ExtResource("15_sd0ff")
+"libraries/Great Sword Walk" = ExtResource("16_1520m")
 libraries/Idle = ExtResource("3_y8e45")
 libraries/Jump = ExtResource("5_07327")
 "libraries/Jumping Up" = ExtResource("6_t7djy")
@@ -378,6 +546,17 @@ libraries/Running = ExtResource("8_mv4yd")
 "libraries/Running Slide" = ExtResource("14_yqsj4")
 libraries/Sprint = ExtResource("10_5cw3m")
 "libraries/Standard Walk" = ExtResource("19_h6wsa")
+"libraries/Standing Aim Idle With Bow 01" = ExtResource("30_7pm0t")
+"libraries/Standing Idle With Bow 01" = ExtResource("31_0nse3")
+"libraries/Standing Run Back With Bow" = ExtResource("32_c2k3f")
+"libraries/Standing Run Forward with Bow" = ExtResource("33_ictlc")
+"libraries/Standing Run Left With Bow" = ExtResource("34_3iail")
+"libraries/Standing Run Right WIth Bow" = ExtResource("35_qm1cm")
+"libraries/Standing Sprint Forward With Bow" = ExtResource("36_b5ppw")
+"libraries/Standing Walk Back With Bow" = ExtResource("37_0nse3")
+"libraries/Standing Walk Forward With Bow" = ExtResource("37_ufkdo")
+"libraries/Standing Walk Left With Bow" = ExtResource("38_jo435")
+"libraries/Standing Walk Right With Bow" = ExtResource("39_6b7s3")
 "libraries/Sword And Shield Backward Run" = ExtResource("19_qu57g")
 "libraries/Sword And Shield Backward Walk" = ExtResource("20_h6wsa")
 "libraries/Sword And Shield Block Idle" = ExtResource("21_md63x")
@@ -403,7 +582,9 @@ root_motion_track = NodePath("%GeneralSkeleton:Root")
 tree_root = SubResource("AnimationNodeBlendTree_senyo")
 advance_expression_base_node = NodePath("..")
 anim_player = NodePath("../PlayerModel/AnimationPlayer")
+parameters/LocomotionStateMachine/BowLocomotion/blend_position = Vector2(0, 0)
 parameters/LocomotionStateMachine/CrouchingLocomotion/blend_position = Vector2(0, 0)
+parameters/LocomotionStateMachine/GreatSwordLocomotion/blend_position = Vector2(0, 0)
 parameters/LocomotionStateMachine/ShieldLocomotion/blend_position = Vector2(0.00091409683, -0.003754735)
 parameters/LocomotionStateMachine/StandingLocomotion/blend_position = Vector2(0, 0)
 parameters/LocomotionTimeScale/scale = 1.0
