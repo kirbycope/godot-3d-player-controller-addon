@@ -43,7 +43,7 @@ _subresources={
 "animations": {
 "mixamo_com": {
 "save_to_file/enabled": true,
-"save_to_file/fallback_path": "res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Standing Jump Running To Forward With Bow.tres",
+"save_to_file/fallback_path": "res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Standing Jump Running To Run Forward With Bow.tres",
 "save_to_file/keep_custom_tracks": true,
 "save_to_file/path": "uid://b56aomjxj1rxn",
 "settings/loop_mode": 0,

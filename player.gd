@@ -17,6 +17,7 @@ const STANDING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionSt
 @export var animation_tree: AnimationTree
 @export var current_animation: int
 
+var equipment: Array = []
 var equipped_axe_1h: bool = false
 var equipped_axe_2h: bool = false
 var equipped_bow: bool = false
@@ -126,20 +127,25 @@ func _physics_process(delta: float) -> void:
 	
 	## DEBUG: Remove all equipment for testing purposes.
 	if Input.is_action_just_pressed("unequip"):
-		equipped_axe_1h = false
-		equipped_axe_2h = false
-		equipped_bow = false
-		equipped_dagger = false
-		equipped_pistol = false
-		equipped_rifle = false
-		equipped_shield = false
-		equipped_staff = false
-		equipped_sword_1h = false
-		equipped_sword_2h = false
-		for child in skeleton.get_children():
-			if child is BoneAttachment3D:
-				child.queue_free()
-		animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("StandingLocomotion")
+		debug_unequip_all()
+
+
+func debug_unequip_all() -> void:
+	equipped_axe_1h = false
+	equipped_axe_2h = false
+	equipped_bow = false
+	equipped_dagger = false
+	equipped_pistol = false
+	equipped_rifle = false
+	equipped_shield = false
+	equipped_staff = false
+	equipped_sword_1h = false
+	equipped_sword_2h = false
+	equipment.clear()
+	for child in skeleton.get_children():
+		if child is BoneAttachment3D:
+			child.queue_free()
+	animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("StandingLocomotion")
 
 
 # https://github.com/godotengine/tps-demo/blob/master/player/player.gd#L86
@@ -151,7 +157,13 @@ func apply_input(delta: float) -> void:
 	target_motion = target_motion.lerp(target_motion, MOTION_INTERPOLATE_SPEED * delta)
 	
 	# Shoot { Microsoft: 🅁T, Nintendo: 🅁L, Sony: 🅁2, Keyboard: [Left Mouse Button] } 
-	is_shooting = Input.is_action_pressed("shoot")
+	var can_player_shoot := false
+	for item in equipment:
+		if "can_shoot" in item and item.can_shoot:
+			can_player_shoot = true
+			break
+
+	is_shooting = Input.is_action_pressed("shoot") and can_player_shoot
 	if equipped_bow:
 		var combat_node = animation_tree.get(COMBAT_STATE_PLAYBACK_PATH).get_current_node()
 		is_drawing_arrow = (combat_node == "BowDrawArrow")
@@ -182,7 +194,7 @@ func apply_input(delta: float) -> void:
 	and Input.is_action_just_pressed("jump") \
 	and not is_jump_queued:
 		if target_motion.y > 0.0:
-			if equipped_axe_2h or equipped_sword_2h:
+			if equipped_axe_2h or equipped_staff or equipped_sword_2h:
 				animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("GreatSwordJumpForward")
 			elif equipped_bow:
 				animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("BowJumpForward")
@@ -195,7 +207,7 @@ func apply_input(delta: float) -> void:
 			else:
 				animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("RunningJump")
 		else:
-			if equipped_axe_2h or equipped_sword_2h:
+			if equipped_axe_2h or equipped_staff or equipped_sword_2h:
 				animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("GreatSwordJump")
 			elif equipped_bow:
 				animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("BowJump")
@@ -251,9 +263,9 @@ func apply_input(delta: float) -> void:
 		else:
 			if equipped_bow:
 				animation_tree.set(BOW_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
-			elif equipped_axe_1h or equipped_dagger or equipped_shield or equipped_sword_1h:
+			elif equipped_axe_1h or equipped_dagger or equipped_sword_1h:
 				animation_tree.set(SHIELD_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
-			elif equipped_axe_2h or equipped_sword_2h:
+			elif equipped_axe_2h or equipped_staff or equipped_sword_2h:
 				animation_tree.set(GREATSWORD_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 			elif equipped_pistol:
 				animation_tree.set(PISTOL_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
@@ -281,7 +293,7 @@ func apply_input(delta: float) -> void:
 				animation_tree.set(BOW_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
 			elif equipped_axe_1h or equipped_dagger or equipped_shield or equipped_sword_1h:
 				animation_tree.set(SHIELD_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
-			elif equipped_axe_2h or equipped_sword_2h:
+			elif equipped_axe_2h or equipped_staff or equipped_sword_2h:
 				animation_tree.set(GREATSWORD_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
 			elif equipped_pistol:
 				animation_tree.set(PISTOL_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
