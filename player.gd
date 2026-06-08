@@ -165,19 +165,21 @@ func apply_input(delta: float) -> void:
 
 	is_shooting = Input.is_action_pressed("shoot") and can_player_shoot
 	if equipped_bow:
-		var combat_node = animation_tree.get(COMBAT_STATE_PLAYBACK_PATH).get_current_node()
-		is_drawing_arrow = (combat_node == "BowDrawArrow")
-		is_aiming_bow = (combat_node == "BowAim")
-		is_shooting_bow = (combat_node == "BowFireArrow")
-		if combat_node in ["BowIdle", "Idle_mixamo_com", "Start", ""]:
-			animation_tree.set("parameters/CombatSpineBlend2/blend_amount", 0.0)
+		#var combat_node = animation_tree.get(COMBAT_STATE_PLAYBACK_PATH).get_current_node()
+		#is_drawing_arrow = (combat_node == "BowDrawArrow")
+		#is_aiming_bow = (combat_node == "BowAim")
+		#is_shooting_bow = (combat_node == "BowFireArrow")
+		#if combat_node in ["BowIdle", "Idle_mixamo_com", "Start", ""]:
+		#	animation_tree.set("parameters/CombatSpineBlend2/blend_amount", 0.0)
 
 		if is_shooting:
 			if not is_drawing_arrow and not is_aiming_bow and not is_shooting_bow:
-				animation_tree.set("parameters/CombatSpineBlend2/blend_amount", 1.0)
-				animation_tree.get(COMBAT_STATE_PLAYBACK_PATH).travel("BowDrawArrow")
+				#animation_tree.set("parameters/CombatSpineBlend2/blend_amount", 1.0)
+				#animation_tree.get(COMBAT_STATE_PLAYBACK_PATH).travel("BowDrawArrow")
+				pass
 		elif is_drawing_arrow or is_aiming_bow:
-			animation_tree.get(COMBAT_STATE_PLAYBACK_PATH).travel("BowFireArrow")
+			#animation_tree.get(COMBAT_STATE_PLAYBACK_PATH).travel("BowFireArrow")
+			pass
 	else:
 		is_drawing_arrow = false
 		is_aiming_bow = false
