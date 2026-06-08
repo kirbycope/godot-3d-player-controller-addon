@@ -44,9 +44,10 @@ var is_sprinting: bool = false
 var orientation := Transform3D()
 var root_motion := Transform3D()
 
-@onready var player_model: Node3D = $PlayerModel
 @onready var initial_position: Vector3 = transform.origin
 @onready var player_input: InputSynchronizer = $InputSynchronizer
+@onready var player_model: Node3D = $PlayerModel
+@onready var skeleton: Skeleton3D = $PlayerModel/Armature/GeneralSkeleton
 @onready var spring_arm: SpringArm3D = $SpringArm3D
 
 
@@ -122,6 +123,23 @@ func _physics_process(delta: float) -> void:
 			animation_tree.set("parameters/EmoteSpineBlend2/blend_amount", 1.0)
 			emote_state.travel("Waving")
 			is_emoting = true
+	
+	## DEBUG: Remove all equipment for testing purposes.
+	if Input.is_action_just_pressed("unequip"):
+		equipped_axe_1h = false
+		equipped_axe_2h = false
+		equipped_bow = false
+		equipped_dagger = false
+		equipped_pistol = false
+		equipped_rifle = false
+		equipped_shield = false
+		equipped_staff = false
+		equipped_sword_1h = false
+		equipped_sword_2h = false
+		for child in skeleton.get_children():
+			if child is BoneAttachment3D:
+				child.queue_free()
+		animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("StandingLocomotion")
 
 
 # https://github.com/godotengine/tps-demo/blob/master/player/player.gd#L86
