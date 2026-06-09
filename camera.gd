@@ -5,6 +5,7 @@ extends Camera3D
 @export var joypad_sensitivity: float = 100.0
 @export var mouse_sensitivity: float = 0.1
 @export var player: Player
+@export var projectile_spring_arm: SpringArm3D
 
 var looking_at: Node3D = null
 
@@ -16,7 +17,7 @@ func _ready() -> void:
 	# Ensure the [RayCast3D] doesn't collide with the player
 	camera_ray_cast.add_exception(player)
 
-	# Ensure the [SpringArm3D] doesn't collide with the player
+	# Ensure the Camera's [SpringArm3D] doesn't collide with the player
 	camera_spring_arm.add_excluded_object(player.get_rid())
 
 

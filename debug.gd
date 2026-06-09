@@ -22,3 +22,8 @@ func _process(_delta: float) -> void:
 		$Equipment/equipped_staff.button_pressed = player.equipped_staff
 		$Equipment/equipped_sword_1h.button_pressed = player.equipped_sword_1h
 		$Equipment/equipped_sword_2h.button_pressed = player.equipped_sword_2h
+
+		$Bow.visible = player.equipped_bow
+		$Bow/is_aiming_bow.button_pressed = player.is_aiming_bow
+		$Bow/is_drawing_arrow.button_pressed = player.is_drawing_arrow
+		$Bow/is_firing_arrow.button_pressed = player.is_firing_arrow

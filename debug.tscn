@@ -65,6 +65,39 @@ text = "equipped_sword_1h"
 layout_mode = 2
 text = "equipped_sword_2h"
 
+[node name="Bow" type="VBoxContainer" parent="." unique_id=1681548686]
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 184.0
+offset_top = -267.0
+offset_right = 366.0
+offset_bottom = -138.0
+grow_vertical = 2
+
+[node name="Panel" type="Panel" parent="Bow" unique_id=1423285820]
+custom_minimum_size = Vector2(160, 24)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Bow/Panel" unique_id=305305311]
+layout_mode = 0
+offset_left = 4.0
+offset_right = 155.0
+offset_bottom = 23.0
+text = "BOW"
+
+[node name="is_aiming_bow" type="CheckBox" parent="Bow" unique_id=582271956]
+layout_mode = 2
+text = "is_aiming_bow"
+
+[node name="is_drawing_arrow" type="CheckBox" parent="Bow" unique_id=1538718491]
+layout_mode = 2
+text = "is_drawing_arrow"
+
+[node name="is_firing_arrow" type="CheckBox" parent="Bow" unique_id=998672137]
+layout_mode = 2
+text = "is_firing_arrow"
+
 [node name="States" type="VBoxContainer" parent="." unique_id=332686384]
 anchors_preset = 6
 anchor_left = 1.0

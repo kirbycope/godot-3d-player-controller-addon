@@ -3,9 +3,9 @@ extends CharacterBody3D
 
 const MOTION_INTERPOLATE_SPEED: float = 10.0
 const ROTATION_INTERPOLATE_SPEED: float = 10.0
-const COMBAT_STATE_PLAYBACK_PATH: String = "parameters/CombatStateMachine/playback"
 const EMOTE_STATE_PLAYBACK_PATH: String = "parameters/EmoteStateMachine/playback"
 const LOCOMOTION_STATE_PLAYBACK_PATH: String = "parameters/LocomotionStateMachine/playback"
+const ARCHERY_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/ArcheryLocomotion/blend_position"
 const BOW_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/BowLocomotion/blend_position"
 const CROUCHING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/CrouchingLocomotion/blend_position"
 const GREATSWORD_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/GreatSwordLocomotion/blend_position"
@@ -31,7 +31,7 @@ var equipped_sword_2h: bool = false
 
 var is_aiming_bow: bool = false
 var is_drawing_arrow: bool = false
-var is_shooting_bow: bool = false
+var is_firing_arrow: bool = false
 var is_crouching: bool = false
 var is_emoting: bool = false
 var is_falling: bool = false
@@ -45,9 +45,14 @@ var is_sprinting: bool = false
 var orientation := Transform3D()
 var root_motion := Transform3D()
 
+var locomotion_state: ## Gets the [StateMachine] "LocomotionStateMachine"
+	get:
+		return animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH)
+
 @onready var initial_position: Vector3 = transform.origin
 @onready var player_input: InputSynchronizer = $InputSynchronizer
 @onready var player_model: Node3D = $PlayerModel
+@onready var projectile_raycast: RayCast3D = $SpringArm3D/ProjectileRaycast
 @onready var skeleton: Skeleton3D = $PlayerModel/Armature/GeneralSkeleton
 @onready var spring_arm: SpringArm3D = $SpringArm3D
 
@@ -87,6 +92,9 @@ func _physics_process(delta: float) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
 
+	# Track was_firing_arrow using the state BEFORE updating input
+	var was_firing_arrow := is_firing_arrow
+
 	# Apply player input to control the character and update the animation state.
 	apply_input(delta)
 
@@ -95,7 +103,7 @@ func _physics_process(delta: float) -> void:
 		transform.origin = initial_position
 
 	# Track if the player is "falling"
-	is_falling = animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).get_current_node() == "Falling"
+	is_falling = locomotion_state.get_current_node() == "Falling"
 
 	# Stop "jumping" if player is "falling".
 	if is_jumping and is_falling:
@@ -108,7 +116,7 @@ func _physics_process(delta: float) -> void:
 
 	# Stop "sliding" when the animation finishes.
 	var was_sliding := is_sliding
-	is_sliding = animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).get_current_node() == "RunningSlide"
+	is_sliding = locomotion_state.get_current_node() == "RunningSlide"
 	if was_sliding and not is_sliding:
 		is_sliding = false
 
@@ -129,6 +137,37 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("unequip"):
 		debug_unequip_all()
 
+	## DEBUG: Fire arrow for testing purposes.
+	if is_firing_arrow and not was_firing_arrow and equipped_bow:
+		var bow: Node3D = null
+		for item in equipment:
+			if "equipment_type" in item and item.equipment_type == item.EquipmentType.BOW:
+				bow = item
+				break
+		if bow:
+			# Duplicate the bow's $Arrow node
+			var arrow_node = bow.get_node("Arrow")
+			var arrow_instance = arrow_node.duplicate()
+			get_tree().current_scene.add_child(arrow_instance)
+			arrow_instance.global_transform = arrow_node.global_transform
+			arrow_instance.visible = true
+			# Tween the arrow's position from the bow to a point in front of the player
+			var projectile_collider = projectile_raycast.get_collider()
+			var target_position: Vector3
+			if projectile_collider:
+				target_position = projectile_raycast.get_collision_point()
+			else:
+				target_position = projectile_raycast.global_transform.origin + -projectile_raycast.global_transform.basis.z * 40.0
+			if arrow_instance.global_transform.origin.distance_to(target_position) > 0.1:
+				arrow_instance.look_at(target_position, Vector3.UP)
+				arrow_instance.rotate_object_local(Vector3.RIGHT, -PI / 2.0)
+			var distance: float = arrow_instance.global_transform.origin.distance_to(target_position)
+			var projectile_speed: float = bow.projectile_speed if "projectile_speed" in bow else 45.0
+			var duration: float = distance / projectile_speed
+			var tween: Tween = create_tween()
+			tween.tween_property(arrow_instance, "global_transform:origin", target_position, duration)
+			tween.tween_callback(Callable(arrow_instance, "queue_free"))
+
 
 func debug_unequip_all() -> void:
 	equipped_axe_1h = false
@@ -145,50 +184,50 @@ func debug_unequip_all() -> void:
 	for child in skeleton.get_children():
 		if child is BoneAttachment3D:
 			child.queue_free()
-	animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("StandingLocomotion")
+	locomotion_state.travel("StandingLocomotion")
 
 
 # https://github.com/godotengine/tps-demo/blob/master/player/player.gd#L86
 func apply_input(delta: float) -> void:
+	var locomotion_state_currently_playing_animation = locomotion_state.get_current_node()
+	is_aiming_bow = equipped_bow and locomotion_state_currently_playing_animation == "ArcheryLocomotion"
+	is_drawing_arrow = equipped_bow and locomotion_state_currently_playing_animation == "BowDrawArrow"
+	is_firing_arrow = locomotion_state_currently_playing_animation == "BowFireArrow"
+
+	# DEBUG: Hide/show the original arrow on the bow when aiming
+	if equipped_bow:
+		var bow: Node3D = null
+		for item in equipment:
+			if "equipment_type" in item and item.equipment_type == item.EquipmentType.BOW:
+				bow = item
+				break
+		if bow:
+			var arrow_node = bow.get_node_or_null("Arrow")
+			if arrow_node:
+				if is_shooting and locomotion_state_currently_playing_animation != "BowDrawArrow" and not is_firing_arrow:
+					arrow_node.show()
+				else:
+					arrow_node.hide()
 	# Get the target motion from the synchronized input.
 	var target_motion: Vector2 = player_input.motion
 
 	# Smoothly interpolate the target_motion for more gradual changes in animation blending and rotation.
 	target_motion = target_motion.lerp(target_motion, MOTION_INTERPOLATE_SPEED * delta)
-	
-	# Shoot { Microsoft: 🅁T, Nintendo: 🅁L, Sony: 🅁2, Keyboard: [Left Mouse Button] } 
+
+	# Check if the player can shoot based on their equipped items.
 	var can_player_shoot := false
 	for item in equipment:
 		if "can_shoot" in item and item.can_shoot:
 			can_player_shoot = true
 			break
 
+	# Shoot { Microsoft: 🅁T, Nintendo: 🅁L, Sony: 🅁2, Keyboard: [Left Mouse Button] } 
 	is_shooting = Input.is_action_pressed("shoot") and can_player_shoot
-	if equipped_bow:
-		#var combat_node = animation_tree.get(COMBAT_STATE_PLAYBACK_PATH).get_current_node()
-		#is_drawing_arrow = (combat_node == "BowDrawArrow")
-		#is_aiming_bow = (combat_node == "BowAim")
-		#is_shooting_bow = (combat_node == "BowFireArrow")
-		#if combat_node in ["BowIdle", "Idle_mixamo_com", "Start", ""]:
-		#	animation_tree.set("parameters/CombatSpineBlend2/blend_amount", 0.0)
-
-		if is_shooting:
-			if not is_drawing_arrow and not is_aiming_bow and not is_shooting_bow:
-				#animation_tree.set("parameters/CombatSpineBlend2/blend_amount", 1.0)
-				#animation_tree.get(COMBAT_STATE_PLAYBACK_PATH).travel("BowDrawArrow")
-				pass
-		elif is_drawing_arrow or is_aiming_bow:
-			#animation_tree.get(COMBAT_STATE_PLAYBACK_PATH).travel("BowFireArrow")
-			pass
-	else:
-		is_drawing_arrow = false
-		is_aiming_bow = false
-		is_shooting_bow = false
 
 	# Crouch { Console: Left ⬤, Keyboard: [Control] }.
 	is_crouching = Input.is_action_pressed("crouch") and is_on_floor() and not is_sliding and not is_sprinting
 
-	# Focus { Microsoft: 🄻T, Nintendo: ZL, Sony: L2, Keyboard: [Right Mouse Button] }.
+	# Focus { Microsoft: 🄻T, Nintendo: Z🄻, Sony: 🄻2, Keyboard: [Right Mouse Button] }.
 	is_focusing = Input.is_action_pressed("focus")
 
 	# Jump { Microsoft: Ⓐ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Space] }.
@@ -197,30 +236,30 @@ func apply_input(delta: float) -> void:
 	and not is_jump_queued:
 		if target_motion.y > 0.0:
 			if equipped_axe_2h or equipped_staff or equipped_sword_2h:
-				animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("GreatSwordJumpForward")
+				locomotion_state.travel("GreatSwordJumpForward")
 			elif equipped_bow:
-				animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("BowJumpForward")
+				locomotion_state.travel("BowJumpForward")
 			elif equipped_dagger or equipped_shield or equipped_sword_1h:
-				animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("ShieldJumpForward")
+				locomotion_state.travel("ShieldJumpForward")
 			elif equipped_pistol:
-				animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("PistolJumpForward")
+				locomotion_state.travel("PistolJumpForward")
 			elif equipped_rifle:
-				animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("RifleJumpForward")
+				locomotion_state.travel("RifleJumpForward")
 			else:
-				animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("RunningJump")
+				locomotion_state.travel("RunningJump")
 		else:
 			if equipped_axe_2h or equipped_staff or equipped_sword_2h:
-				animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("GreatSwordJump")
+				locomotion_state.travel("GreatSwordJump")
 			elif equipped_bow:
-				animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("BowJump")
+				locomotion_state.travel("BowJump")
 			elif equipped_dagger or equipped_shield or equipped_sword_1h:
-				animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("ShieldJump")
+				locomotion_state.travel("ShieldJump")
 			elif equipped_rifle:
-				animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("RifleJumpUp")
+				locomotion_state.travel("RifleJumpUp")
 			elif equipped_pistol:
-				animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("PistolJump")
+				locomotion_state.travel("PistolJump")
 			else:
-				animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("JumpingUp")
+				locomotion_state.travel("JumpingUp")
 		is_jump_queued = true
 
 	# Sprint { Microsoft: Ⓑ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Shift] }.
@@ -244,14 +283,14 @@ func apply_input(delta: float) -> void:
 	if is_sprinting \
 	and Input.is_action_just_pressed("crouch") \
 	and not is_sliding:
-		animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).travel("RunningSlide")
+		locomotion_state.travel("RunningSlide")
 		is_sliding = true
 
 	# Handle movement is strafing
 	if is_shooting or is_focusing:
 
 		# Rotate to face the camera direction when focusing or shooting (unless is_focusing and not is_shooting)
-		if is_shooting or not is_focusing:
+		if (is_shooting or not is_focusing) and not is_firing_arrow:
 			var camera_basis := spring_arm.global_transform.basis
 			var camera_forward := -camera_basis.z
 			camera_forward.y = 0.0
@@ -264,7 +303,10 @@ func apply_input(delta: float) -> void:
 			animation_tree.set(CROUCHING_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 		else:
 			if equipped_bow:
-				animation_tree.set(BOW_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
+				if is_shooting:
+					animation_tree.set(ARCHERY_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
+				else:
+					animation_tree.set(BOW_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 			elif equipped_axe_1h or equipped_dagger or equipped_sword_1h:
 				animation_tree.set(SHIELD_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 			elif equipped_axe_2h or equipped_staff or equipped_sword_2h:
@@ -282,7 +324,7 @@ func apply_input(delta: float) -> void:
 		var camera_basis := spring_arm.global_transform.basis
 		var target_dir := camera_basis * Vector3(target_motion.x, 0.0, -target_motion.y)
 		target_dir.y = 0.0
-		if target_dir.length_squared() > 0.001:
+		if target_dir.length_squared() > 0.001 and not is_firing_arrow:
 			target_dir = target_dir.normalized()
 			var q_from: Quaternion = orientation.basis.get_rotation_quaternion()
 			var q_to: Quaternion = Basis.looking_at(-target_dir).get_rotation_quaternion()
@@ -292,7 +334,10 @@ func apply_input(delta: float) -> void:
 			animation_tree.set(CROUCHING_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
 		else:
 			if equipped_bow:
-				animation_tree.set(BOW_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
+				if is_shooting:
+					animation_tree.set(ARCHERY_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
+				else:
+					animation_tree.set(BOW_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
 			elif equipped_axe_1h or equipped_dagger or equipped_shield or equipped_sword_1h:
 				animation_tree.set(SHIELD_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
 			elif equipped_axe_2h or equipped_staff or equipped_sword_2h:
