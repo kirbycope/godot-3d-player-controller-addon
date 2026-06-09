@@ -148,6 +148,7 @@ func _physics_process(delta: float) -> void:
 			# Duplicate the bow's $Arrow node
 			var arrow_node = bow.get_node("Arrow")
 			var arrow_instance = arrow_node.duplicate()
+			_set_collision_shapes_disabled(arrow_instance, false)
 			get_tree().current_scene.add_child(arrow_instance)
 			arrow_instance.global_transform = arrow_node.global_transform
 			arrow_instance.visible = true
@@ -166,7 +167,15 @@ func _physics_process(delta: float) -> void:
 			var duration: float = distance / projectile_speed
 			var tween: Tween = create_tween()
 			tween.tween_property(arrow_instance, "global_transform:origin", target_position, duration)
+			tween.tween_interval(0.1)
 			tween.tween_callback(Callable(arrow_instance, "queue_free"))
+
+
+func _set_collision_shapes_disabled(node: Node, disabled: bool) -> void:
+	if node is CollisionShape3D:
+		node.disabled = disabled
+	for child in node.get_children():
+		_set_collision_shapes_disabled(child, disabled)
 
 
 func debug_unequip_all() -> void:
