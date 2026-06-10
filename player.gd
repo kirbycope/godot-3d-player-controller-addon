@@ -95,6 +95,8 @@ func _physics_process(delta: float) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
 
+	# Track previous bow animation states before input updates them.
+	var was_drawing_arrow := is_drawing_arrow
 	# Track was_firing_arrow using the state BEFORE updating input
 	var was_firing_arrow := is_firing_arrow
 
@@ -172,6 +174,30 @@ func _physics_process(delta: float) -> void:
 			tween.tween_property(arrow_instance, "global_transform:origin", target_position, duration)
 			tween.tween_interval(0.1)
 			tween.tween_callback(Callable(arrow_instance, "queue_free"))
+
+	## DEBUG Play Bow sounds once when entering draw/fire arrow animations.
+	if equipped_bow:
+		var bow: Node3D = null
+		for item in equipment:
+			if "equipment_type" in item and item.equipment_type == item.EquipmentType.BOW:
+				bow = item
+				break
+		if bow:
+			if is_drawing_arrow and not was_drawing_arrow and bow.has_node("BowDrawArrow"):
+				bow.get_node("BowDrawArrow").play()
+			if is_firing_arrow and not was_firing_arrow and bow.has_node("BowFireArrow"):
+				bow.get_node("BowFireArrow").play()
+				if not projectile_raycast.is_colliding():
+					bow.get_node("Arrow/Swish").play()
+				else:
+					var hit_object := projectile_raycast.get_collider()
+					if hit_object and hit_object is RigidBody3D:
+						var collision_point := projectile_raycast.get_collision_point()
+						var collision_normal := projectile_raycast.get_collision_normal()
+						var force_direction := -projectile_raycast.global_transform.basis.z
+						var force_magnitude := 10.0
+						(hit_object as RigidBody3D).apply_impulse(collision_point - hit_object.global_transform.origin, force_direction * force_magnitude)
+					#bow.get_node("Arrow/Twang").play()
 
 
 func _set_collision_shapes_disabled(node: Node, disabled: bool) -> void:

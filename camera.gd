@@ -70,10 +70,10 @@ func _physics_process(_delta: float) -> void:
 			if collider.get_parent().has_method("display_menu"):
 				collider.get_parent().display_menu(player)
 				looking_at = collider.get_parent()
-		else:
-			if looking_at and looking_at.has_method("hide_menu"):
-				looking_at.hide_menu()
-			looking_at = null
+	else:
+		if looking_at and looking_at.has_method("hide_menu"):
+			looking_at.hide_menu()
+		looking_at = null
 
 
 ## Rotates the [Camera3D]'s [SpringArm3D] using the input from a joypad motion event, while clamping the vertical rotation to prevent flipping.

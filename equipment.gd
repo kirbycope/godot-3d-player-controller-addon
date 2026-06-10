@@ -34,6 +34,7 @@ enum EquipmentType {
 
 var equipment_instance: Node3D
 var menu_displayed: bool = false
+var player: Player
 
 @onready var action_prompt: Node3D = $ActionPrompt
 
@@ -102,9 +103,11 @@ func equip(player: Player) -> void:
 
 	# 4. Duplicate this weapon and add it to the attachment
 	equipment_instance = duplicate()
+	equipment_instance.player = player
 	new_attachment.add_child(equipment_instance)
 	_disable_collisions(equipment_instance)
 	_update_attachment_offsets()
+	_configure_animation_trees(equipment_instance, equipment_instance)
 
 	# 5. Flag the player as having equipped the item
 	_set_equipped_flag(player, equipment_type, true)
@@ -142,6 +145,14 @@ func _disable_collisions(node: Node) -> void:
 		node.disabled = true
 	for child in node.get_children():
 		_disable_collisions(child)
+
+
+func _configure_animation_trees(node: Node, base_node: Node) -> void:
+	if node is AnimationTree:
+		node.active = true
+		node.advance_expression_base_node = node.get_path_to(base_node)
+	for child in node.get_children():
+		_configure_animation_trees(child, base_node)
 
 
 func hide_menu() -> void:
