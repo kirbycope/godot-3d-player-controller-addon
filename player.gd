@@ -53,6 +53,7 @@ var locomotion_state: ## Gets the [StateMachine] "LocomotionStateMachine"
 @onready var debug: CanvasLayer = $Debug
 @onready var initial_position: Vector3 = transform.origin
 @onready var look_at_modifier = $PlayerModel/Armature/GeneralSkeleton/LookAtModifier3D
+@onready var look_at_target: Marker3D = $SpringArm3D/ProjectileRaycast/LookAtTarget
 @onready var player_input: InputSynchronizer = $InputSynchronizer
 @onready var player_model: Node3D = $PlayerModel
 @onready var projectile_raycast: RayCast3D = $SpringArm3D/ProjectileRaycast
@@ -105,6 +106,14 @@ func _physics_process(delta: float) -> void:
 
 	# Apply player input to control the character and update the animation state.
 	apply_input(delta)
+
+	# Update look_at_modifier target based on aiming state
+	if is_aiming_bow:
+		look_at_modifier.target_node = look_at_target.get_path()
+		look_at_modifier.active = true
+	else:
+		look_at_modifier.target_node = NodePath("")
+		look_at_modifier.active = false
 
 	# If we're below -40, respawn (teleport to the initial position).
 	if transform.origin.y < -40.0:
