@@ -160,6 +160,10 @@ var current_input_type: InputType = InputType.TOUCH:
 			input_type_changed.emit(value)
 
 
+var all_buttons: Array[TouchScreenButton] = []
+var _normal_textures: Dictionary = {}
+
+
 ## Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	# Do nothing if not the authority
@@ -167,6 +171,17 @@ func _ready() -> void:
 
 	# Connect the input_type_changed signal to the update_input_ui function
 	input_type_changed.connect(update_input_ui)
+
+	all_buttons = [
+		joypad_button_0, joypad_button_1, joypad_button_2, joypad_button_3,
+		joypad_button_4, joypad_button_15, joypad_button_6, joypad_button_7,
+		joypad_button_8, joypad_button_9, joypad_button_10, joypad_axis_4_plus,
+		joypad_axis_5_plus, joypad_button_11, joypad_button_12, joypad_button_13,
+		joypad_button_14, key_w, key_a, key_s, key_d, key_i, key_j, key_k,
+		key_l, key_up, key_left, key_down, key_right
+	]
+
+	update_input_ui(current_input_type)
 
 	# "move_up" { Controller: (left-stick) forward, Keyboard: [W] }
 	if not InputMap.has_action("move_up"):
@@ -415,17 +430,17 @@ func _ready() -> void:
 		InputMap.action_add_event("throw", key_event)
 
 	# "purah_pad" { Microsoft: ⧉, Nintendo: ⊝, Sony: ⦀, Keyboard: [F5] }
-	if not InputMap.has_action("purah_pad"):
+	if not InputMap.has_action("select"):
 		# Add the [purah_pad] action to the Input Map
-		InputMap.add_action("purah_pad")
+		InputMap.add_action("select")
 		# Microsoft ⧉, Nintendo ⊝, Sony ⦀
 		var joystick_event = InputEventJoypadButton.new()
 		joystick_event.button_index = JOY_BUTTON_BACK
-		InputMap.action_add_event("purah_pad", joystick_event)
+		InputMap.action_add_event("select", joystick_event)
 		# Keyboard [F5]
 		var key_event = InputEventKey.new()
 		key_event.physical_keycode = KEY_F5
-		InputMap.action_add_event("purah_pad", key_event)
+		InputMap.action_add_event("select", key_event)
 
 	# "share" { Microsoft: ⧉, Nintendo: ⧇, Sony: ?, Keyboard: [PrtScn] }
 	if not InputMap.has_action("share"):
@@ -441,17 +456,17 @@ func _ready() -> void:
 		InputMap.action_add_event("share", key_event)
 
 	# "pause" { Microsoft: ☰, Nintendo: ⊕, Sony: ☰, Keyboard: [Esc] }
-	if not InputMap.has_action("pause"):
+	if not InputMap.has_action("start"):
 		# Add the [pause] action to the Input Map
-		InputMap.add_action("pause")
+		InputMap.add_action("start")
 		# Microsoft ☰, Nintendo ⊕, Sony ☰
 		var joystick_event = InputEventJoypadButton.new()
 		joystick_event.button_index = JOY_BUTTON_START
-		InputMap.action_add_event("pause", joystick_event)
+		InputMap.action_add_event("start", joystick_event)
 		# Keyboard [Esc]
 		var key_event = InputEventKey.new()
 		key_event.physical_keycode = KEY_ESCAPE
-		InputMap.action_add_event("pause", key_event)
+		InputMap.action_add_event("start", key_event)
 
 	# "seeker" { Controller: DPad Up, Keyboard: [I] }
 	if not InputMap.has_action("seeker"):
@@ -535,6 +550,18 @@ func _input(event: InputEvent) -> void:
 	elif event is InputEventScreenTouch or event is InputEventScreenDrag:
 		# Set the current input type to Touch
 		current_input_type = InputType.TOUCH
+
+	# Check the action of any touchscreen button and display visual press/release state
+	for btn in all_buttons:
+		if btn == null or btn.action.is_empty():
+			continue
+		if event.is_action(btn.action):
+			if event.is_action_pressed(btn.action):
+				if btn.texture_pressed != null:
+					btn.texture_normal = btn.texture_pressed
+			elif event.is_action_released(btn.action):
+				if btn in _normal_textures:
+					btn.texture_normal = _normal_textures[btn]
 
 
 ## Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -693,3 +720,8 @@ func update_input_ui(input_type: InputType) -> void:
 		key_down.hide()
 		key_left.hide()
 		key_right.hide()
+
+	# Cache normal textures for visual pressed/released state feedback
+	for btn in all_buttons:
+		if btn != null:
+			_normal_textures[btn] = btn.texture_normal
