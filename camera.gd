@@ -43,6 +43,9 @@ func _process(delta: float) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
 
+	# Ensure the raycast matches the spring arm's location and rotation
+	camera_ray_cast.global_transform = camera_spring_arm.global_transform
+
 	# Rotate the [Camera3D]'s [SpringArm3D] using the joypad motion input event
 	if Input.get_vector("look_left", "look_right", "look_up", "look_down") != Vector2.ZERO:
 		rotate_camera_using_joypad_motion(delta)
@@ -63,13 +66,14 @@ func _physics_process(_delta: float) -> void:
 	# Check if the "CameraRayCast" is colliding with an object that has a "display_menu" method, and if so, call that method
 	if camera_ray_cast.is_colliding():
 		var collider = camera_ray_cast.get_collider()
-		if collider.get_parent().has_method("display_menu"):
-			collider.get_parent().display_menu(player)
-			looking_at = collider.get_parent()
-	else:
-		if looking_at and looking_at.has_method("hide_menu"):
-			looking_at.hide_menu()
-		looking_at = null
+		if collider:
+			if collider.get_parent().has_method("display_menu"):
+				collider.get_parent().display_menu(player)
+				looking_at = collider.get_parent()
+		else:
+			if looking_at and looking_at.has_method("hide_menu"):
+				looking_at.hide_menu()
+			looking_at = null
 
 
 ## Rotates the [Camera3D]'s [SpringArm3D] using the input from a joypad motion event, while clamping the vertical rotation to prevent flipping.

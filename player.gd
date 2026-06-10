@@ -69,6 +69,9 @@ func _ready() -> void:
 	# Ensure the AnimationTree is active so that root motion is applied in the first frame.
 	animation_tree.active = true
 
+	# Ensure the projectile RayCast3D doesn't collide with the player.
+	projectile_raycast.add_exception(self)
+
 
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:
@@ -153,9 +156,9 @@ func _physics_process(delta: float) -> void:
 			arrow_instance.global_transform = arrow_node.global_transform
 			arrow_instance.visible = true
 			# Tween the arrow's position from the bow to a point in front of the player
-			var projectile_collider = projectile_raycast.get_collider()
+			projectile_raycast.force_raycast_update()
 			var target_position: Vector3
-			if projectile_collider:
+			if projectile_raycast.is_colliding():
 				target_position = projectile_raycast.get_collision_point()
 			else:
 				target_position = projectile_raycast.global_transform.origin + -projectile_raycast.global_transform.basis.z * 40.0
