@@ -30,13 +30,13 @@ signal input_type_changed(input_type: InputType)
 @export var keyboard_mouse_button_7_pressed: Texture2D ## Keyboard [Ctrl] key (Pressed)
 @export var keyboard_mouse_button_8_normal: Texture2D ## Keyboard [Mouse-Scroll] key (Normal)
 @export var keyboard_mouse_button_8_pressed: Texture2D ## Keyboard [Mouse-Scroll] key (Pressed)
-@export var keyboard_mouse_button_9_normal: Texture2D  
-@export var keyboard_mouse_button_9_pressed: Texture2D 
-@export var keyboard_mouse_button_10_normal: Texture2D
-@export var keyboard_mouse_button_10_pressed: Texture2D
-@export var keyboard_mouse_axis_4_plus_normal: Texture2D ## Keyboard [Mouse-Left] key (Pressed)
+@export var keyboard_mouse_button_9_normal: Texture2D  ## Keyboard [Q] key (Normal)
+@export var keyboard_mouse_button_9_pressed: Texture2D  ## Keyboard [Q] key (Pressed)
+@export var keyboard_mouse_button_10_normal: Texture2D ## Keyboard [T] key (Normal)
+@export var keyboard_mouse_button_10_pressed: Texture2D ## Keyboard [T] key (Pressed)
+@export var keyboard_mouse_axis_4_plus_normal: Texture2D ## Keyboard [Mouse-Left] key (Normal)
 @export var keyboard_mouse_axis_4_plus_pressed: Texture2D ## Keyboard [Mouse-Left] key (Pressed)
-@export var keyboard_mouse_axis_5_plus_normal: Texture2D ## Keyboard [Mouse-Right] key (Pressed)
+@export var keyboard_mouse_axis_5_plus_normal: Texture2D ## Keyboard [Mouse-Right] key (Normal)
 @export var keyboard_mouse_axis_5_plus_pressed: Texture2D ## Keyboard [Mouse-Right] key (Pressed)
 @export_category("Microsoft Textures")
 @export var microsoft_button_0_normal: Texture2D  ## XBox A (Normal)
@@ -47,6 +47,24 @@ signal input_type_changed(input_type: InputType)
 @export var microsoft_button_2_pressed: Texture2D ## XBox X (Pressed)
 @export var microsoft_button_3_normal: Texture2D  ## XBox Y (Normal)
 @export var microsoft_button_3_pressed: Texture2D ## XBox Y (Pressed)
+@export var microsoft_button_4_normal: Texture2D ## XBox Back(Normal)
+@export var microsoft_button_4_pressed: Texture2D ## XBox Back (Pressed)
+@export var microsoft_button_15_normal: Texture2D ## XBox Share (Normal)
+@export var microsoft_button_15_pressed: Texture2D ## XBox Share (Pressed)
+@export var microsoft_button_6_normal: Texture2D ## XBox Forward (Normal)
+@export var microsoft_button_6_pressed: Texture2D ## XBox Forward (Pressed)
+@export var microsoft_button_7_normal: Texture2D ## XBox LS (Normal)
+@export var microsoft_button_7_pressed: Texture2D ## XBox LS (Pressed)
+@export var microsoft_button_8_normal: Texture2D ## XBox RS (Normal)
+@export var microsoft_button_8_pressed: Texture2D ## XBox RS (Pressed)
+@export var microsoft_button_9_normal: Texture2D ## XBox LB (Normal)
+@export var microsoft_button_9_pressed: Texture2D ## XBox LB (Pressed)
+@export var microsoft_button_10_normal: Texture2D ## XBox RB (Normal)
+@export var microsoft_button_10_pressed: Texture2D ## XBox RB (Pressed)
+@export var microsoft_axis_4_plus_normal: Texture2D ## XBox LT (Normal)
+@export var microsoft_axis_4_plus_pressed: Texture2D ## XBox LT (Pressed)
+@export var microsoft_axis_5_plus_normal: Texture2D ## XBox RT (Normal)
+@export var microsoft_axis_5_plus_pressed: Texture2D ## XBox RT (Pressed)
 @export_category("Nintendo Textures")
 @export var nintendo_button_0_normal: Texture2D  ## Nintendo B (Normal)
 @export var nintendo_button_0_pressed: Texture2D ## Nintendo B (Pressed)
@@ -56,6 +74,24 @@ signal input_type_changed(input_type: InputType)
 @export var nintendo_button_2_pressed: Texture2D ## Nintendo Y (Pressed)
 @export var nintendo_button_3_normal: Texture2D  ## Nintendo X (Normal)
 @export var nintendo_button_3_pressed: Texture2D ## Nintendo X (Pressed)
+@export var nintendo_button_4_normal: Texture2D ## Nintendo - (Normal)
+@export var nintendo_button_4_pressed: Texture2D ## Nintendo - (Pressed)
+@export var nintendo_button_15_normal: Texture2D ## Nintendo Share (Normal)
+@export var nintendo_button_15_pressed: Texture2D ## Nintendo Share (Pressed)
+@export var nintendo_button_6_normal: Texture2D ## Nintendo + (Normal)
+@export var nintendo_button_6_pressed: Texture2D ## Nintendo + (Pressed)
+@export var nintendo_button_7_normal: Texture2D ## Nintendo LS (Normal)
+@export var nintendo_button_7_pressed: Texture2D ## Nintendo LS (Pressed)
+@export var nintendo_button_8_normal: Texture2D ## Nintendo RS (Normal)
+@export var nintendo_button_8_pressed: Texture2D ## Nintendo RS (Pressed)
+@export var nintendo_button_9_normal: Texture2D ## Nintendo L (Normal)
+@export var nintendo_button_9_pressed: Texture2D ## Nintendo L (Pressed)
+@export var nintendo_button_10_normal: Texture2D ## Nintendo R (Normal)
+@export var nintendo_button_10_pressed: Texture2D ## Nintendo R (Pressed)
+@export var nintendo_axis_4_plus_normal: Texture2D ## Nintendo ZL (Normal)
+@export var nintendo_axis_4_plus_pressed: Texture2D ## Nintendo ZL (Pressed)
+@export var nintendo_axis_5_plus_normal: Texture2D ## Nintendo ZR (Normal)
+@export var nintendo_axis_5_plus_pressed: Texture2D ## Nintendo ZR (Pressed)
 @export_category("Sony Textures")
 @export var sony_button_0_normal: Texture2D  ## Sony Cross (Normal)
 @export var sony_button_0_pressed: Texture2D ## Sony Cross (Pressed)
@@ -65,38 +101,56 @@ signal input_type_changed(input_type: InputType)
 @export var sony_button_2_pressed: Texture2D ## Sony Square (Pressed)
 @export var sony_button_3_normal: Texture2D  ## Sony Triangle (Normal)
 @export var sony_button_3_pressed: Texture2D ## Sony Triangle (Pressed)
+@export var sony_button_4_normal: Texture2D ## Sony Select (Normal)
+@export var sony_button_4_pressed: Texture2D ## Sony Select (Pressed)
+@export var sony_button_15_normal: Texture2D ## Sony Share (Normal)
+@export var sony_button_15_pressed: Texture2D ## Sony Share (Pressed)
+@export var sony_button_6_normal: Texture2D ## Sony Options (Normal)
+@export var sony_button_6_pressed: Texture2D ## Sony Options (Pressed)
+@export var sony_button_7_normal: Texture2D ## Sony L3 (Normal)
+@export var sony_button_7_pressed: Texture2D ## Sony L3 (Pressed)
+@export var sony_button_8_normal: Texture2D ## Sony R3 (Normal)
+@export var sony_button_8_pressed: Texture2D ## Sony R3 (Pressed)
+@export var sony_button_9_normal: Texture2D ## Sony L1 (Normal)
+@export var sony_button_9_pressed: Texture2D ## Sony L1 (Pressed)
+@export var sony_button_10_normal: Texture2D ## Sony R1 (Normal)
+@export var sony_button_10_pressed: Texture2D ## Sony R1 (Pressed)
+@export var sony_axis_4_plus_normal: Texture2D ## Sony L2 (Normal)
+@export var sony_axis_4_plus_pressed: Texture2D ## Sony L2 (Pressed)
+@export var sony_axis_5_plus_normal: Texture2D ## Sony R2 (Normal)
+@export var sony_axis_5_plus_pressed: Texture2D ## Sony R2 (Pressed)
 
 @onready var joypad_button_0: TouchScreenButton = $BottomRight/JoypadButton0 ## Joypad Button 0 (Bottom Action, Sony Cross, XBox A, Nintendo B)
 @onready var joypad_button_1: TouchScreenButton = $BottomRight/JoypadButton1 ## Joypad Button 1 (Right Action, Sony Circle, XBox B, Nintendo A)
 @onready var joypad_button_2: TouchScreenButton = $BottomRight/JoypadButton2 ## Joypad Button 2 (Left Action, Sony Square, XBox X, Nintendo Y)
 @onready var joypad_button_3: TouchScreenButton = $BottomRight/JoypadButton3 ## Joypad Button 3 (Top Action, Sony Triangle, XBox Y, Nintendo X)
-@onready var joypad_button_4: TouchScreenButton = $TopCenter/JoypadButton4
-@onready var joypad_button_15: TouchScreenButton = $TopCenter/JoypadButton15
-@onready var joypad_button_6: TouchScreenButton = $TopCenter/JoypadButton6
-@onready var joypad_button_7: TouchScreenButton = $BottomLeft/JoypadButton7
-@onready var joypad_button_8: TouchScreenButton = $BottomRight/JoypadButton8
-@onready var joypad_button_9: TouchScreenButton = $TopLeft/JoypadButton9
-@onready var joypad_button_10: TouchScreenButton = $TopRight/JoypadButton10
-@onready var joypad_axis_4_plus: TouchScreenButton = $TopLeft/JoypadAxis4Plus
-@onready var joypad_axis_5_plus: TouchScreenButton = $TopRight/JoypadAxis5Plus
-@onready var joypad_button_11: TouchScreenButton = $BottomLeft/JoypadButton11
-@onready var joypad_button_12: TouchScreenButton = $BottomLeft/JoypadButton12
-@onready var joypad_button_13: TouchScreenButton = $BottomLeft/JoypadButton13
-@onready var joypad_button_14: TouchScreenButton = $BottomLeft/JoypadButton14
-@onready var key_w: TouchScreenButton = $BottomLeft/KeyW
-@onready var key_a: TouchScreenButton = $BottomLeft/KeyA
-@onready var key_s: TouchScreenButton = $BottomLeft/KeyS
-@onready var key_d: TouchScreenButton = $BottomLeft/KeyD
-@onready var key_i: TouchScreenButton = $BottomLeft/KeyI
-@onready var key_j: TouchScreenButton = $BottomLeft/KeyJ
-@onready var key_k: TouchScreenButton = $BottomLeft/KeyK
-@onready var key_l: TouchScreenButton = $BottomLeft/KeyL
-@onready var left_joystick: VirtualJoystick = $BottomLeft/LeftJoystick
-@onready var right_joystick: VirtualJoystick = $BottomRight/RightJoystick
-@onready var key_up: TouchScreenButton = $BottomRight/KeyUp
-@onready var key_left: TouchScreenButton = $BottomRight/KeyLeft
-@onready var key_down: TouchScreenButton = $BottomRight/KeyDown
-@onready var key_right: TouchScreenButton = $BottomRight/KeyRight
+@onready var joypad_button_4: TouchScreenButton = $TopCenter/JoypadButton4 ## Joypad Button 4 (Back, Sony Select, XBox Back, Nintendo -)
+@onready var joypad_button_15: TouchScreenButton = $TopCenter/JoypadButton15 ## Joypad Button 15 (Share Action, Sony Share, XBox Share, Nintendo Share)
+@onready var joypad_button_6: TouchScreenButton = $TopCenter/JoypadButton6 ## Joypad Button 6 (Start, Sony Options, XBox Menu, Nintendo Plus)
+@onready var joypad_button_7: TouchScreenButton = $BottomLeft/JoypadButton7 ## Joypad Button 7 (Left Stick, Sony L3, XBox Left Stick, Nintendo Left Stick)
+@onready var joypad_button_8: TouchScreenButton = $BottomRight/JoypadButton8 ## Joypad Button 8 (Right Stick, Sony R3, XBox Right Stick, Nintendo Right Stick)
+@onready var joypad_button_9: TouchScreenButton = $TopLeft/JoypadButton9 ## Joypad Button 9 (Left Shoulder, Sony L1, XBox L, Nintendo L)
+@onready var joypad_button_10: TouchScreenButton = $TopRight/JoypadButton10 ## Joypad Button 10 (Right Shoulder, Sony R1, XBox RB, Nintendo R)
+@onready var joypad_axis_4_plus: TouchScreenButton = $TopLeft/JoypadAxis4Plus ## Joypad Axis 4 + (Left Trigger, Sony L2, XBox LT, Nintendo ZL)
+@onready var joypad_axis_5_plus: TouchScreenButton = $TopRight/JoypadAxis5Plus ## Joypad Axis 5 + (Right Trigger, Sony R2, XBox RT, Nintendo ZR)
+@onready var joypad_button_11: TouchScreenButton = $BottomLeft/JoypadButton11 ## Joypad Button 11 (DPad Up)
+@onready var joypad_button_12: TouchScreenButton = $BottomLeft/JoypadButton12 ## Joypad Button 12 (DPad Down)
+@onready var joypad_button_13: TouchScreenButton = $BottomLeft/JoypadButton13 ## Joypad Button 13 (DPad Left)
+@onready var joypad_button_14: TouchScreenButton = $BottomLeft/JoypadButton14 ## Joypad Button 14 (DPad Right)
+@onready var key_w: TouchScreenButton = $BottomLeft/KeyW ## Keyboard [W] key
+@onready var key_a: TouchScreenButton = $BottomLeft/KeyA ## Keyboard [A] key
+@onready var key_s: TouchScreenButton = $BottomLeft/KeyS ## Keyboard [S] key
+@onready var key_d: TouchScreenButton = $BottomLeft/KeyD ## Keyboard [D] key
+@onready var key_i: TouchScreenButton = $BottomLeft/KeyI ## Keyboard [I] key
+@onready var key_j: TouchScreenButton = $BottomLeft/KeyJ ## Keyboard [J] key
+@onready var key_k: TouchScreenButton = $BottomLeft/KeyK ## Keyboard [K] key
+@onready var key_l: TouchScreenButton = $BottomLeft/KeyL ## Keyboard [L] key
+@onready var left_joystick: VirtualJoystick = $BottomLeft/LeftJoystick ## Virtual Joystick (introduced in Godot 4.7) for player movement
+@onready var right_joystick: VirtualJoystick = $BottomRight/RightJoystick ## Virtual Joystick (introduced in Godot 4.7) for camera movement
+@onready var key_up: TouchScreenButton = $BottomRight/KeyUp ## Keyboard [Up] key
+@onready var key_left: TouchScreenButton = $BottomRight/KeyLeft ## Keyboard [Left] key
+@onready var key_down: TouchScreenButton = $BottomRight/KeyDown ## Keyboard [Down] key
+@onready var key_right: TouchScreenButton = $BottomRight/KeyRight ## Keyboard [Right] key
 
 
 var current_input_type: InputType = InputType.TOUCH:
@@ -521,6 +575,8 @@ func update_input_ui(input_type: InputType) -> void:
 		joypad_button_12.hide()
 		joypad_button_13.hide()
 		joypad_button_14.hide()
+		left_joystick.hide()
+		right_joystick.hide()
 		key_w.show()
 		key_a.show()
 		key_s.show()
@@ -533,8 +589,6 @@ func update_input_ui(input_type: InputType) -> void:
 		key_down.show()
 		key_left.show()
 		key_right.show()
-		left_joystick.hide()
-		right_joystick.hide()
 	elif input_type == InputType.MICROSOFT \
 	or input_type == InputType.TOUCH:
 		joypad_button_0.texture_normal = microsoft_button_0_normal
@@ -545,6 +599,24 @@ func update_input_ui(input_type: InputType) -> void:
 		joypad_button_2.texture_pressed = microsoft_button_2_pressed
 		joypad_button_3.texture_normal = microsoft_button_3_normal
 		joypad_button_3.texture_pressed = microsoft_button_3_pressed
+		joypad_button_4.texture_normal = microsoft_button_4_normal
+		joypad_button_4.texture_pressed = microsoft_button_4_pressed
+		joypad_button_15.texture_normal = microsoft_button_15_normal
+		joypad_button_15.texture_pressed = microsoft_button_15_pressed
+		joypad_button_6.texture_normal = microsoft_button_6_normal
+		joypad_button_6.texture_pressed = microsoft_button_6_pressed
+		joypad_button_7.texture_normal = microsoft_button_7_normal
+		joypad_button_7.texture_pressed = microsoft_button_7_pressed
+		joypad_button_8.texture_normal = microsoft_button_8_normal
+		joypad_button_8.texture_pressed = microsoft_button_8_pressed
+		joypad_button_9.texture_normal = microsoft_button_9_normal
+		joypad_button_9.texture_pressed = microsoft_button_9_pressed
+		joypad_button_10.texture_normal = microsoft_button_10_normal
+		joypad_button_10.texture_pressed = microsoft_button_10_pressed
+		joypad_axis_4_plus.texture_normal = microsoft_axis_4_plus_normal
+		joypad_axis_4_plus.texture_pressed = microsoft_axis_4_plus_pressed
+		joypad_axis_5_plus.texture_normal = microsoft_axis_5_plus_normal
+		joypad_axis_5_plus.texture_pressed = microsoft_axis_5_plus_pressed
 	elif input_type == InputType.NINTENDO:
 		joypad_button_0.texture_normal = nintendo_button_0_normal
 		joypad_button_0.texture_pressed = nintendo_button_0_pressed
@@ -554,6 +626,24 @@ func update_input_ui(input_type: InputType) -> void:
 		joypad_button_2.texture_pressed = nintendo_button_2_pressed
 		joypad_button_3.texture_normal = nintendo_button_3_normal
 		joypad_button_3.texture_pressed = nintendo_button_3_pressed
+		joypad_button_4.texture_normal = nintendo_button_4_normal
+		joypad_button_4.texture_pressed = nintendo_button_4_pressed
+		joypad_button_15.texture_normal = nintendo_button_15_normal
+		joypad_button_15.texture_pressed = nintendo_button_15_pressed
+		joypad_button_6.texture_normal = nintendo_button_6_normal
+		joypad_button_6.texture_pressed = nintendo_button_6_pressed
+		joypad_button_7.texture_normal = nintendo_button_7_normal
+		joypad_button_7.texture_pressed = nintendo_button_7_pressed
+		joypad_button_8.texture_normal = nintendo_button_8_normal
+		joypad_button_8.texture_pressed = nintendo_button_8_pressed
+		joypad_button_9.texture_normal = nintendo_button_9_normal
+		joypad_button_9.texture_pressed = nintendo_button_9_pressed
+		joypad_button_10.texture_normal = nintendo_button_10_normal
+		joypad_button_10.texture_pressed = nintendo_button_10_pressed
+		joypad_axis_4_plus.texture_normal = nintendo_axis_4_plus_normal
+		joypad_axis_4_plus.texture_pressed = nintendo_axis_4_plus_pressed
+		joypad_axis_5_plus.texture_normal = nintendo_axis_5_plus_normal
+		joypad_axis_5_plus.texture_pressed = nintendo_axis_5_plus_pressed
 	elif input_type == InputType.SONY:
 		joypad_button_0.texture_normal = sony_button_0_normal
 		joypad_button_0.texture_pressed = sony_button_0_pressed
@@ -563,12 +653,34 @@ func update_input_ui(input_type: InputType) -> void:
 		joypad_button_2.texture_pressed = sony_button_2_pressed
 		joypad_button_3.texture_normal = sony_button_3_normal
 		joypad_button_3.texture_pressed = sony_button_3_pressed
+		joypad_button_4.texture_normal = sony_button_4_normal
+		joypad_button_4.texture_pressed = sony_button_4_pressed
+		joypad_button_15.texture_normal = sony_button_15_normal
+		joypad_button_15.texture_pressed = sony_button_15_pressed
+		joypad_button_6.texture_normal = sony_button_6_normal
+		joypad_button_6.texture_pressed = sony_button_6_pressed
+		joypad_button_7.texture_normal = sony_button_7_normal
+		joypad_button_7.texture_pressed = sony_button_7_pressed
+		joypad_button_8.texture_normal = sony_button_8_normal
+		joypad_button_8.texture_pressed = sony_button_8_pressed
+		joypad_button_9.texture_normal = sony_button_9_normal
+		joypad_button_9.texture_pressed = sony_button_9_pressed
+		joypad_button_10.texture_normal = sony_button_10_normal
+		joypad_button_10.texture_pressed = sony_button_10_pressed
+		joypad_axis_4_plus.texture_normal = sony_axis_4_plus_normal
+		joypad_axis_4_plus.texture_pressed = sony_axis_4_plus_pressed
+		joypad_axis_5_plus.texture_normal = sony_axis_5_plus_normal
+		joypad_axis_5_plus.texture_pressed = sony_axis_5_plus_pressed
 
 	if input_type != InputType.KEYBOARD_MOUSE:
+		# Show joypad controls
 		joypad_button_11.show()
 		joypad_button_12.show()
 		joypad_button_13.show()
 		joypad_button_14.show()
+		left_joystick.show()
+		right_joystick.show()
+		# Hide keyboard controls
 		key_w.hide()
 		key_a.hide()
 		key_s.hide()
@@ -581,5 +693,3 @@ func update_input_ui(input_type: InputType) -> void:
 		key_down.hide()
 		key_left.hide()
 		key_right.hide()
-		left_joystick.show()
-		right_joystick.show()

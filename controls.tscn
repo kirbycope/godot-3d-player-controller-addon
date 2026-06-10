@@ -59,21 +59,37 @@
 [ext_resource type="Texture2D" uid="uid://cxqt76lu3fyed" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_ls_outline.svg" id="57_tfvmf"]
 [ext_resource type="Texture2D" uid="uid://7eg1mh64qwip" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_ls.svg" id="58_tnbvb"]
 [ext_resource type="Texture2D" uid="uid://csiyxsrpxy1x8" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_button_outline.svg" id="59_mdrx2"]
+[ext_resource type="Texture2D" uid="uid://bkxjwnccton1q" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Nintendo Switch/Vector/switch_button_minus_outline.svg" id="60_b010b"]
 [ext_resource type="Texture2D" uid="uid://bf6msts20ycda" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_w_outline.svg" id="60_eenuy"]
 [ext_resource type="Texture2D" uid="uid://bhlaskkn7nbxj" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_w.svg" id="61_1p6a3"]
+[ext_resource type="Texture2D" uid="uid://dxnq7e8uto3o2" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Nintendo Switch/Vector/switch_button_minus.svg" id="61_8h48d"]
+[ext_resource type="Texture2D" uid="uid://dw1y612opo0vp" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Nintendo Switch/Vector/switch_button_sync_outline.svg" id="62_kjj4c"]
 [ext_resource type="Texture2D" uid="uid://cpuk50ll20wea" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_a_outline.svg" id="62_sxdkc"]
 [ext_resource type="Texture2D" uid="uid://cyrh70egpfuu7" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_a.svg" id="63_10i3g"]
+[ext_resource type="Texture2D" uid="uid://b5qy00fjfduof" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Nintendo Switch/Vector/switch_button_sync.svg" id="63_41yui"]
+[ext_resource type="Texture2D" uid="uid://d1mnwpwpl2k5e" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Nintendo Switch/Vector/switch_button_plus_outline.svg" id="64_aio4o"]
 [ext_resource type="Texture2D" uid="uid://dtyh7b8xpfsb2" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_s_outline.svg" id="64_g0qd0"]
+[ext_resource type="Texture2D" uid="uid://cbqp5rf55hxn0" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Nintendo Switch/Vector/switch_button_plus.svg" id="65_amydg"]
 [ext_resource type="Texture2D" uid="uid://d1rcbxhxjqbcg" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_s.svg" id="65_tqkpd"]
+[ext_resource type="Texture2D" uid="uid://b12s2xl6s0dph" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Nintendo Switch/Vector/switch_stick_top_l.svg" id="66_gjgvo"]
 [ext_resource type="Texture2D" uid="uid://6jbcphd81nwf" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_d_outline.svg" id="66_sttyu"]
 [ext_resource type="Texture2D" uid="uid://dfsvarl32qaoc" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_d.svg" id="67_kc587"]
+[ext_resource type="Texture2D" uid="uid://gin43r8jm3il" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Nintendo Switch/Vector/switch_stick_top_r.svg" id="67_tk4r0"]
+[ext_resource type="Texture2D" uid="uid://yrblpx1ksamj" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Nintendo Switch/Vector/switch_button_l_outline.svg" id="68_t71u3"]
 [ext_resource type="Texture2D" uid="uid://p35mxwd8guqj" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_i_outline.svg" id="68_y0ckb"]
 [ext_resource type="Texture2D" uid="uid://cq8yrlc2gpvjh" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_i.svg" id="69_c88j6"]
+[ext_resource type="Texture2D" uid="uid://b1p5jeu3y5ay7" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Nintendo Switch/Vector/switch_button_l.svg" id="69_vij6g"]
+[ext_resource type="Texture2D" uid="uid://6r1s0apqbl60" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Nintendo Switch/Vector/switch_button_r_outline.svg" id="70_qjulo"]
 [ext_resource type="Texture2D" uid="uid://byl8adwl5vl8q" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_j_outline.svg" id="70_thqgb"]
 [ext_resource type="Texture2D" uid="uid://d0omkiac41aaq" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_j.svg" id="71_fqvfc"]
+[ext_resource type="Texture2D" uid="uid://b3jsytx1m8axt" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Nintendo Switch/Vector/switch_button_r.svg" id="71_i0xa6"]
+[ext_resource type="Texture2D" uid="uid://ca1r4fdwresa2" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Nintendo Switch/Vector/switch_button_zl_outline.svg" id="72_sx22o"]
 [ext_resource type="Texture2D" uid="uid://bkdn81sit36oh" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_k_outline.svg" id="72_tr8h5"]
+[ext_resource type="Texture2D" uid="uid://bhshn23xiswyq" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Nintendo Switch/Vector/switch_button_zl.svg" id="73_cx3uy"]
 [ext_resource type="Texture2D" uid="uid://bnq54bhq4o7of" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_k.svg" id="73_l1jde"]
+[ext_resource type="Texture2D" uid="uid://dgpt1b56e83yc" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Nintendo Switch/Vector/switch_button_zr_outline.svg" id="74_6juye"]
 [ext_resource type="Texture2D" uid="uid://drajod7p6gfok" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_l_outline.svg" id="74_bcmhq"]
+[ext_resource type="Texture2D" uid="uid://dtps8jrqdodsy" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Nintendo Switch/Vector/switch_button_zr.svg" id="75_8ds14"]
 [ext_resource type="Texture2D" uid="uid://b5aw7ciy0g4gr" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_l.svg" id="75_msk0v"]
 [ext_resource type="Texture2D" uid="uid://cdjddgf556kjt" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_rs_outline.svg" id="76_a0h6d"]
 [ext_resource type="Texture2D" uid="uid://o15ln4wybn4a" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_rs.svg" id="77_iikrr"]
@@ -83,22 +99,40 @@
 [ext_resource type="Texture2D" uid="uid://cciy74dnv8y13" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_arrow_left.svg" id="81_k80tt"]
 [ext_resource type="Texture2D" uid="uid://c1fvqwoyccvu1" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_arrow_down_outline.svg" id="82_08dr4"]
 [ext_resource type="Texture2D" uid="uid://bsgmyqaqebo73" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_arrow_down.svg" id="83_ay47k"]
+[ext_resource type="Texture2D" uid="uid://b1mb8s60w2nst" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/PlayStation Series/Vector/playstation5_button_create_outline.svg" id="84_3sapm"]
 [ext_resource type="Texture2D" uid="uid://dmgwqxju2cyfe" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_arrow_right_outline.svg" id="84_o5u1y"]
+[ext_resource type="Texture2D" uid="uid://ml7bdqo0v5ja" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/PlayStation Series/Vector/playstation5_button_create.svg" id="85_iccxp"]
 [ext_resource type="Texture2D" uid="uid://b3cvd04a167xq" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_arrow_right.svg" id="85_osf25"]
+[ext_resource type="Texture2D" uid="uid://bi7t1rghxrjgm" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/PlayStation Series/Vector/playstation4_touchpad_outline.svg" id="86_1mwrh"]
 [ext_resource type="Texture2D" uid="uid://dv0iqqk34c7ve" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_lb_outline.svg" id="86_6rw3k"]
 [ext_resource type="Texture2D" uid="uid://bji81b6l8eid0" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_lb.svg" id="87_h8pou"]
+[ext_resource type="Texture2D" uid="uid://bj48a7pyp5xe1" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/PlayStation Series/Vector/playstation4_touchpad_selected.svg" id="87_uepbl"]
+[ext_resource type="Texture2D" uid="uid://dr7c6vky6427t" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/PlayStation Series/Vector/playstation5_button_options_outline.svg" id="88_8gkmr"]
 [ext_resource type="Texture2D" uid="uid://c1n1m3jo7bisj" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_lt_outline.svg" id="88_bt0ik"]
 [ext_resource type="Texture2D" uid="uid://3uks54sktwjm" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_lt.svg" id="89_qjs60"]
+[ext_resource type="Texture2D" uid="uid://cypuj0hy6qw17" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/PlayStation Series/Vector/playstation5_button_options.svg" id="89_t8hsd"]
+[ext_resource type="Texture2D" uid="uid://djcbdkhnshxj2" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/PlayStation Series/Vector/playstation_button_l3_outline.svg" id="90_tfvmf"]
 [ext_resource type="Texture2D" uid="uid://ci86323vtaa6m" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_button_view_outline.svg" id="90_y4q6c"]
 [ext_resource type="Texture2D" uid="uid://b3issnm7j2by5" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_button_view.svg" id="91_d88iv"]
+[ext_resource type="Texture2D" uid="uid://6aahoe6c2cwd" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/PlayStation Series/Vector/playstation_button_l3.svg" id="91_tnbvb"]
+[ext_resource type="Texture2D" uid="uid://blhs0v05v6rkk" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/PlayStation Series/Vector/playstation_button_r3_outline.svg" id="92_mdrx2"]
 [ext_resource type="Texture2D" uid="uid://cj7q5injyl13i" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_button_share_outline.svg" id="92_wqt5i"]
 [ext_resource type="Texture2D" uid="uid://boy5is2mgxje5" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_button_share.svg" id="93_d78lw"]
+[ext_resource type="Texture2D" uid="uid://dkhs3yuw522oy" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/PlayStation Series/Vector/playstation_button_r3.svg" id="93_eenuy"]
+[ext_resource type="Texture2D" uid="uid://tuosbv216y5d" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/PlayStation Series/Vector/playstation_trigger_l1_alternative_outline.svg" id="94_1p6a3"]
 [ext_resource type="Texture2D" uid="uid://df2ggww1swume" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_button_menu_outline.svg" id="94_24ci8"]
 [ext_resource type="Texture2D" uid="uid://bpspmyqfy4ke2" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_button_menu.svg" id="95_ms6j8"]
+[ext_resource type="Texture2D" uid="uid://dg1yalw6st38y" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/PlayStation Series/Vector/playstation_trigger_l1_alternative.svg" id="95_sxdkc"]
+[ext_resource type="Texture2D" uid="uid://c8qu2arfbpbkq" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/PlayStation Series/Vector/playstation_trigger_r1_alternative_outline.svg" id="96_10i3g"]
 [ext_resource type="Texture2D" uid="uid://bfvw48aix1fw2" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_rb_outline.svg" id="96_b4cxv"]
 [ext_resource type="Texture2D" uid="uid://ci5djbpqh6int" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_rb.svg" id="97_7jfjc"]
+[ext_resource type="Texture2D" uid="uid://pp6w3axl2y3o" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/PlayStation Series/Vector/playstation_trigger_r1_alternative.svg" id="97_g0qd0"]
 [ext_resource type="Texture2D" uid="uid://yhfs0k0sb43n" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_rt_outline.svg" id="98_qc2ra"]
+[ext_resource type="Texture2D" uid="uid://nvxth0rpnfqp" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/PlayStation Series/Vector/playstation_trigger_l2_alternative_outline.svg" id="98_tqkpd"]
+[ext_resource type="Texture2D" uid="uid://cpy2n0x8ru2p5" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/PlayStation Series/Vector/playstation_trigger_l2_alternative.svg" id="99_sttyu"]
 [ext_resource type="Texture2D" uid="uid://bbcey1dfwnf15" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_rt.svg" id="99_yvgal"]
+[ext_resource type="Texture2D" uid="uid://dune22i0s7fm8" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/PlayStation Series/Vector/playstation_trigger_r2_alternative_outline.svg" id="100_kc587"]
+[ext_resource type="Texture2D" uid="uid://dcxj4mkcfgpva" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/PlayStation Series/Vector/playstation_trigger_r2_alternative.svg" id="101_y0ckb"]
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_rs4nb"]
 points = PackedVector2Array(-9, -9, -9, -24, 9, -24, 9, -9, 0, 0)
@@ -194,14 +228,50 @@ microsoft_button_2_normal = ExtResource("32_8vtad")
 microsoft_button_2_pressed = ExtResource("33_hblaw")
 microsoft_button_3_normal = ExtResource("34_o0hr1")
 microsoft_button_3_pressed = ExtResource("35_b010b")
-nintendo_button_0_normal = ExtResource("36_8h48d")
-nintendo_button_0_pressed = ExtResource("37_kjj4c")
-nintendo_button_1_normal = ExtResource("38_41yui")
-nintendo_button_1_pressed = ExtResource("39_aio4o")
-nintendo_button_2_normal = ExtResource("40_amydg")
-nintendo_button_2_pressed = ExtResource("41_gjgvo")
-nintendo_button_3_normal = ExtResource("42_tk4r0")
-nintendo_button_3_pressed = ExtResource("43_t71u3")
+microsoft_button_4_normal = ExtResource("90_y4q6c")
+microsoft_button_4_pressed = ExtResource("91_d88iv")
+microsoft_button_15_normal = ExtResource("92_wqt5i")
+microsoft_button_15_pressed = ExtResource("93_d78lw")
+microsoft_button_6_normal = ExtResource("94_24ci8")
+microsoft_button_6_pressed = ExtResource("95_ms6j8")
+microsoft_button_7_normal = ExtResource("57_tfvmf")
+microsoft_button_7_pressed = ExtResource("58_tnbvb")
+microsoft_button_8_normal = ExtResource("76_a0h6d")
+microsoft_button_8_pressed = ExtResource("77_iikrr")
+microsoft_button_9_normal = ExtResource("86_6rw3k")
+microsoft_button_9_pressed = ExtResource("87_h8pou")
+microsoft_button_10_normal = ExtResource("96_b4cxv")
+microsoft_button_10_pressed = ExtResource("97_7jfjc")
+microsoft_axis_4_plus_normal = ExtResource("88_bt0ik")
+microsoft_axis_4_plus_pressed = ExtResource("89_qjs60")
+microsoft_axis_5_plus_normal = ExtResource("98_qc2ra")
+microsoft_axis_5_plus_pressed = ExtResource("99_yvgal")
+nintendo_button_0_normal = ExtResource("38_41yui")
+nintendo_button_0_pressed = ExtResource("39_aio4o")
+nintendo_button_1_normal = ExtResource("36_8h48d")
+nintendo_button_1_pressed = ExtResource("37_kjj4c")
+nintendo_button_2_normal = ExtResource("42_tk4r0")
+nintendo_button_2_pressed = ExtResource("43_t71u3")
+nintendo_button_3_normal = ExtResource("40_amydg")
+nintendo_button_3_pressed = ExtResource("41_gjgvo")
+nintendo_button_4_normal = ExtResource("60_b010b")
+nintendo_button_4_pressed = ExtResource("61_8h48d")
+nintendo_button_15_normal = ExtResource("62_kjj4c")
+nintendo_button_15_pressed = ExtResource("63_41yui")
+nintendo_button_6_normal = ExtResource("64_aio4o")
+nintendo_button_6_pressed = ExtResource("65_amydg")
+nintendo_button_7_normal = ExtResource("66_gjgvo")
+nintendo_button_7_pressed = ExtResource("66_gjgvo")
+nintendo_button_8_normal = ExtResource("67_tk4r0")
+nintendo_button_8_pressed = ExtResource("67_tk4r0")
+nintendo_button_9_normal = ExtResource("68_t71u3")
+nintendo_button_9_pressed = ExtResource("69_vij6g")
+nintendo_button_10_normal = ExtResource("70_qjulo")
+nintendo_button_10_pressed = ExtResource("71_i0xa6")
+nintendo_axis_4_plus_normal = ExtResource("72_sx22o")
+nintendo_axis_4_plus_pressed = ExtResource("73_cx3uy")
+nintendo_axis_5_plus_normal = ExtResource("74_6juye")
+nintendo_axis_5_plus_pressed = ExtResource("75_8ds14")
 sony_button_0_normal = ExtResource("44_vij6g")
 sony_button_0_pressed = ExtResource("45_qjulo")
 sony_button_1_normal = ExtResource("46_i0xa6")
@@ -210,6 +280,24 @@ sony_button_2_normal = ExtResource("48_cx3uy")
 sony_button_2_pressed = ExtResource("49_6juye")
 sony_button_3_normal = ExtResource("50_8ds14")
 sony_button_3_pressed = ExtResource("51_3sapm")
+sony_button_4_normal = ExtResource("84_3sapm")
+sony_button_4_pressed = ExtResource("85_iccxp")
+sony_button_15_normal = ExtResource("86_1mwrh")
+sony_button_15_pressed = ExtResource("87_uepbl")
+sony_button_6_normal = ExtResource("88_8gkmr")
+sony_button_6_pressed = ExtResource("89_t8hsd")
+sony_button_7_normal = ExtResource("90_tfvmf")
+sony_button_7_pressed = ExtResource("91_tnbvb")
+sony_button_8_normal = ExtResource("92_mdrx2")
+sony_button_8_pressed = ExtResource("93_eenuy")
+sony_button_9_normal = ExtResource("94_1p6a3")
+sony_button_9_pressed = ExtResource("95_sxdkc")
+sony_button_10_normal = ExtResource("96_10i3g")
+sony_button_10_pressed = ExtResource("97_g0qd0")
+sony_axis_4_plus_normal = ExtResource("98_tqkpd")
+sony_axis_4_plus_pressed = ExtResource("99_sttyu")
+sony_axis_5_plus_normal = ExtResource("100_kc587")
+sony_axis_5_plus_pressed = ExtResource("101_y0ckb")
 
 [node name="BottomLeft" type="Control" parent="." unique_id=1713088668]
 layout_mode = 3
