@@ -401,28 +401,26 @@ func _ready() -> void:
 		mouse_event.button_index = MOUSE_BUTTON_LEFT
 		InputMap.action_add_event("shoot", mouse_event)
 
-	# "use" { Microsoft: 🄻B, Nintendo: ZL, Sony: 🄻2, Keyboard: [Q] }
+	# "use" { Microsoft: 🄻B, Nintendo: L, Sony: L1, Keyboard: [Q] }
 	if not InputMap.has_action("use"):
 		# Add the [use] action to the Input Map
 		InputMap.add_action("use")
-		# Microsoft 🄻B, Nintendo ZL, Sony 🄻2
-		var joystick_event = InputEventJoypadMotion.new()
-		joystick_event.axis = JOY_AXIS_TRIGGER_LEFT
-		joystick_event.axis_value = 1.0
+		# Microsoft 🄻B, Nintendo L, Sony L1
+		var joystick_event = InputEventJoypadButton.new()
+		joystick_event.button_index = JOY_BUTTON_LEFT_SHOULDER
 		InputMap.action_add_event("use", joystick_event)
 		# Keyboard [Q]
 		var key_event = InputEventKey.new()
 		key_event.physical_keycode = KEY_Q
 		InputMap.action_add_event("use", key_event)
 
-	# "throw" { Microsoft: 🅁B, Nintendo: ZR, Sony: 🅁2, Keyboard: [T] }
+	# "throw" { Microsoft: 🅁B, Nintendo: R, Sony: R1, Keyboard: [T] }
 	if not InputMap.has_action("throw"):
 		# Add the [throw] action to the Input Map
 		InputMap.add_action("throw")
-		# Microsoft 🅁B, Nintendo ZR, Sony 🅁2
-		var joystick_event = InputEventJoypadMotion.new()
-		joystick_event.axis = JOY_AXIS_TRIGGER_RIGHT
-		joystick_event.axis_value = 1.0
+		# Microsoft 🅁B, Nintendo R, Sony R1
+		var joystick_event = InputEventJoypadButton.new()
+		joystick_event.button_index = JOY_BUTTON_RIGHT_SHOULDER
 		InputMap.action_add_event("throw", joystick_event)
 		# Keyboard [T]
 		var key_event = InputEventKey.new()

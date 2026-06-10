@@ -52,6 +52,7 @@ var locomotion_state: ## Gets the [StateMachine] "LocomotionStateMachine"
 @onready var controls: CanvasLayer = $Controls
 @onready var debug: CanvasLayer = $Debug
 @onready var initial_position: Vector3 = transform.origin
+@onready var look_at_modifier = $PlayerModel/Armature/GeneralSkeleton/LookAtModifier3D
 @onready var player_input: InputSynchronizer = $InputSynchronizer
 @onready var player_model: Node3D = $PlayerModel
 @onready var projectile_raycast: RayCast3D = $SpringArm3D/ProjectileRaycast
@@ -196,7 +197,7 @@ func _physics_process(delta: float) -> void:
 					if hit_object and hit_object is RigidBody3D:
 						var collision_point := projectile_raycast.get_collision_point()
 						var collision_normal := projectile_raycast.get_collision_normal()
-						var force_direction := -projectile_raycast.global_transform.basis.z
+						var force_direction := projectile_raycast.global_transform.basis.z
 						var force_magnitude := 10.0
 						(hit_object as RigidBody3D).apply_impulse(collision_point - hit_object.global_transform.origin, force_direction * force_magnitude)
 					#bow.get_node("Arrow/Twang").play()
