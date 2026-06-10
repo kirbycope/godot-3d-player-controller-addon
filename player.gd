@@ -49,6 +49,8 @@ var locomotion_state: ## Gets the [StateMachine] "LocomotionStateMachine"
 	get:
 		return animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH)
 
+@onready var controls: CanvasLayer = $Controls
+@onready var debug: CanvasLayer = $Debug
 @onready var initial_position: Vector3 = transform.origin
 @onready var player_input: InputSynchronizer = $InputSynchronizer
 @onready var player_model: Node3D = $PlayerModel

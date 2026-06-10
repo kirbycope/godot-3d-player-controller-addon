@@ -57,9 +57,21 @@ func _update_attachment_offsets() -> void:
 		equipment_instance.scale = scale_offset
 
 
-func display_menu(_player: Player) -> void:
+func display_menu(player: Player) -> void:
 	if action_prompt:
 		action_prompt.show()
+		action_prompt.get_node("KeyboardMouse").hide()
+		action_prompt.get_node("Microsoft").hide()
+		action_prompt.get_node("Nintendo").hide()
+		action_prompt.get_node("Sony").hide()
+		if player.controls.current_input_type == player.controls.InputType.KEYBOARD_MOUSE:
+			action_prompt.get_node("KeyboardMouse").show()
+		elif player.controls.current_input_type == player.controls.InputType.MICROSOFT:
+			action_prompt.get_node("Microsoft").show()
+		elif player.controls.current_input_type == player.controls.InputType.NINTENDO:
+			action_prompt.get_node("Nintendo").show()
+		elif player.controls.current_input_type == player.controls.InputType.SONY:
+			action_prompt.get_node("Sony").show()
 	menu_displayed = true
 
 
