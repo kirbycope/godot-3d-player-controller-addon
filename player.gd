@@ -284,7 +284,7 @@ func apply_input(delta: float) -> void:
 	if is_on_floor() \
 	and Input.is_action_just_pressed("jump") \
 	and not is_jump_queued:
-		if target_motion.y > 0.0:
+		if target_motion.length() > 0.0:
 			if equipped_axe_2h or equipped_staff or equipped_sword_2h:
 				locomotion_state.travel("GreatSwordJumpForward")
 			elif equipped_bow:
