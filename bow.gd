@@ -34,6 +34,8 @@ func _physics_process(delta: float) -> void:
 				# Get the arrow instance from the player's equipped bow
 				var arrow_node = bow.get_node_or_null("Arrow")
 				if arrow_node:
+					arrow_node.freeze = true
+					set_collision_shapes_disabled(arrow_node, true)
 					# Show the arrow when "aiming" but not drawing or firing
 					if player.is_shooting \
 					and not player.is_drawing_arrow \
@@ -64,27 +66,30 @@ func _physics_process(delta: float) -> void:
 				# Duplicate the bow's $Arrow node
 				var arrow_node = bow.get_node("Arrow")
 				var arrow_instance = arrow_node.duplicate()
+				arrow_instance.is_template = false
+				arrow_instance.shooter = player
 				set_collision_shapes_disabled(arrow_instance, false)
+				
 				get_tree().current_scene.add_child(arrow_instance)
 				arrow_instance.global_transform = arrow_node.global_transform
+				arrow_instance.freeze = false
 				arrow_instance.visible = true
-				# Tween the arrow's position from the bow to a point in front of the player
+				
 				player.projectile_raycast.force_raycast_update()
 				var target_position: Vector3
 				if player.projectile_raycast.is_colliding():
 					target_position = player.projectile_raycast.get_collision_point()
 				else:
 					target_position = player.projectile_raycast.global_transform.origin + -player.projectile_raycast.global_transform.basis.z * 40.0
+				
+				var launch_direction = (target_position - arrow_instance.global_transform.origin).normalized()
+				var projectile_speed: float = bow.projectile_speed if "projectile_speed" in bow else 45.0
+				
 				if arrow_instance.global_transform.origin.distance_to(target_position) > 0.1:
 					arrow_instance.look_at(target_position, Vector3.UP)
 					arrow_instance.rotate_object_local(Vector3.RIGHT, -PI / 2.0)
-				var distance: float = arrow_instance.global_transform.origin.distance_to(target_position)
-				var projectile_speed: float = bow.projectile_speed if "projectile_speed" in bow else 45.0
-				var duration: float = distance / projectile_speed
-				var tween: Tween = create_tween()
-				tween.tween_property(arrow_instance, "global_transform:origin", target_position, duration)
-				tween.tween_interval(0.1)
-				tween.tween_callback(Callable(arrow_instance, "queue_free"))
+				
+				arrow_instance.linear_velocity = launch_direction * projectile_speed
 
 		## Play Bow sound(s) once when entering draw/fire arrow animations.
 		if player.equipped_bow:
