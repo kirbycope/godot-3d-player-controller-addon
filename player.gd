@@ -1,8 +1,6 @@
 class_name Player
 extends CharacterBody3D
 
-const MOTION_INTERPOLATE_SPEED: float = 10.0
-const ROTATION_INTERPOLATE_SPEED: float = 10.0
 const EMOTE_STATE_PLAYBACK_PATH: String = "parameters/EmoteStateMachine/playback"
 const LOCOMOTION_STATE_PLAYBACK_PATH: String = "parameters/LocomotionStateMachine/playback"
 const ARCHERY_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/ArcheryLocomotion/blend_position"
@@ -16,6 +14,8 @@ const STANDING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionSt
 
 @export var animation_tree: AnimationTree
 @export var current_animation: int
+@export var motion_interpolate_speed: float = 10.0
+@export var rotation_interpolate_speed: float = 10.0
 
 var equipment: Array = []
 var equipped_axe_1h: bool = false
@@ -99,21 +99,8 @@ func _physics_process(delta: float) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
 
-	# Track previous bow animation states before input updates them.
-	var was_drawing_arrow := is_drawing_arrow
-	# Track was_firing_arrow using the state BEFORE updating input
-	var was_firing_arrow := is_firing_arrow
-
 	# Apply player input to control the character and update the animation state.
 	apply_input(delta)
-
-	# Update look_at_modifier target based on aiming state
-	if is_aiming_bow:
-		look_at_modifier.target_node = look_at_target.get_path()
-		look_at_modifier.active = true
-	else:
-		look_at_modifier.target_node = NodePath("")
-		look_at_modifier.active = false
 
 	# If we're below -40, respawn (teleport to the initial position).
 	if transform.origin.y < -40.0:
@@ -137,7 +124,7 @@ func _physics_process(delta: float) -> void:
 	if was_sliding and not is_sliding:
 		is_sliding = false
 
-	# DEBUG: Stop emote state when the animation finishes and reset the blend amount.
+	# Stop emote state when the animation finishes and reset the blend amount.
 	if is_emoting and animation_tree.get(EMOTE_STATE_PLAYBACK_PATH).get_current_node() == "Idle":
 		animation_tree.set("parameters/EmoteSpineBlend2/blend_amount", 0.0)
 		is_emoting = false
@@ -149,74 +136,11 @@ func _physics_process(delta: float) -> void:
 			animation_tree.set("parameters/EmoteSpineBlend2/blend_amount", 1.0)
 			emote_state.travel("Waving")
 			is_emoting = true
-	
+
 	## DEBUG: Remove all equipment for testing purposes.
 	if Input.is_action_just_pressed("unequip"):
 		debug_unequip_all()
 
-	## DEBUG: Fire arrow for testing purposes.
-	if is_firing_arrow and not was_firing_arrow and equipped_bow:
-		var bow: Node3D = null
-		for item in equipment:
-			if "equipment_type" in item and item.equipment_type == item.EquipmentType.BOW:
-				bow = item
-				break
-		if bow:
-			# Duplicate the bow's $Arrow node
-			var arrow_node = bow.get_node("Arrow")
-			var arrow_instance = arrow_node.duplicate()
-			_set_collision_shapes_disabled(arrow_instance, false)
-			get_tree().current_scene.add_child(arrow_instance)
-			arrow_instance.global_transform = arrow_node.global_transform
-			arrow_instance.visible = true
-			# Tween the arrow's position from the bow to a point in front of the player
-			projectile_raycast.force_raycast_update()
-			var target_position: Vector3
-			if projectile_raycast.is_colliding():
-				target_position = projectile_raycast.get_collision_point()
-			else:
-				target_position = projectile_raycast.global_transform.origin + -projectile_raycast.global_transform.basis.z * 40.0
-			if arrow_instance.global_transform.origin.distance_to(target_position) > 0.1:
-				arrow_instance.look_at(target_position, Vector3.UP)
-				arrow_instance.rotate_object_local(Vector3.RIGHT, -PI / 2.0)
-			var distance: float = arrow_instance.global_transform.origin.distance_to(target_position)
-			var projectile_speed: float = bow.projectile_speed if "projectile_speed" in bow else 45.0
-			var duration: float = distance / projectile_speed
-			var tween: Tween = create_tween()
-			tween.tween_property(arrow_instance, "global_transform:origin", target_position, duration)
-			tween.tween_interval(0.1)
-			tween.tween_callback(Callable(arrow_instance, "queue_free"))
-
-	## DEBUG Play Bow sounds once when entering draw/fire arrow animations.
-	if equipped_bow:
-		var bow: Node3D = null
-		for item in equipment:
-			if "equipment_type" in item and item.equipment_type == item.EquipmentType.BOW:
-				bow = item
-				break
-		if bow:
-			if is_drawing_arrow and not was_drawing_arrow and bow.has_node("BowDrawArrow"):
-				bow.get_node("BowDrawArrow").play()
-			if is_firing_arrow and not was_firing_arrow and bow.has_node("BowFireArrow"):
-				bow.get_node("BowFireArrow").play()
-				if not projectile_raycast.is_colliding():
-					bow.get_node("Arrow/Swish").play()
-				else:
-					var hit_object := projectile_raycast.get_collider()
-					if hit_object and hit_object is RigidBody3D:
-						var collision_point := projectile_raycast.get_collision_point()
-						var collision_normal := projectile_raycast.get_collision_normal()
-						var force_direction := projectile_raycast.global_transform.basis.z
-						var force_magnitude := 10.0
-						(hit_object as RigidBody3D).apply_impulse(collision_point - hit_object.global_transform.origin, force_direction * force_magnitude)
-					#bow.get_node("Arrow/Twang").play()
-
-
-func _set_collision_shapes_disabled(node: Node, disabled: bool) -> void:
-	if node is CollisionShape3D:
-		node.disabled = disabled
-	for child in node.get_children():
-		_set_collision_shapes_disabled(child, disabled)
 
 
 func debug_unequip_all() -> void:
@@ -239,30 +163,11 @@ func debug_unequip_all() -> void:
 
 # https://github.com/godotengine/tps-demo/blob/master/player/player.gd#L86
 func apply_input(delta: float) -> void:
-	var locomotion_state_currently_playing_animation = locomotion_state.get_current_node()
-	is_aiming_bow = equipped_bow and locomotion_state_currently_playing_animation == "ArcheryLocomotion"
-	is_drawing_arrow = equipped_bow and locomotion_state_currently_playing_animation == "BowDrawArrow"
-	is_firing_arrow = locomotion_state_currently_playing_animation == "BowFireArrow"
-
-	# DEBUG: Hide/show the original arrow on the bow when aiming
-	if equipped_bow:
-		var bow: Node3D = null
-		for item in equipment:
-			if "equipment_type" in item and item.equipment_type == item.EquipmentType.BOW:
-				bow = item
-				break
-		if bow:
-			var arrow_node = bow.get_node_or_null("Arrow")
-			if arrow_node:
-				if is_shooting and locomotion_state_currently_playing_animation != "BowDrawArrow" and not is_firing_arrow:
-					arrow_node.show()
-				else:
-					arrow_node.hide()
 	# Get the target motion from the synchronized input.
 	var target_motion: Vector2 = player_input.motion
 
 	# Smoothly interpolate the target_motion for more gradual changes in animation blending and rotation.
-	target_motion = target_motion.lerp(target_motion, MOTION_INTERPOLATE_SPEED * delta)
+	target_motion = target_motion.lerp(target_motion, motion_interpolate_speed * delta)
 
 	# Check if the player can shoot based on their equipped items.
 	var can_player_shoot := false
@@ -348,7 +253,7 @@ func apply_input(delta: float) -> void:
 				camera_forward = camera_forward.normalized()
 				var q_from: Quaternion = orientation.basis.get_rotation_quaternion()
 				var q_to: Quaternion = Basis.looking_at(-camera_forward).get_rotation_quaternion()
-				orientation.basis = Basis(q_from.slerp(q_to, delta * ROTATION_INTERPOLATE_SPEED))
+				orientation.basis = Basis(q_from.slerp(q_to, delta * rotation_interpolate_speed))
 		if is_crouching:
 			animation_tree.set(CROUCHING_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 		else:
@@ -378,7 +283,7 @@ func apply_input(delta: float) -> void:
 			target_dir = target_dir.normalized()
 			var q_from: Quaternion = orientation.basis.get_rotation_quaternion()
 			var q_to: Quaternion = Basis.looking_at(-target_dir).get_rotation_quaternion()
-			orientation.basis = Basis(q_from.slerp(q_to, delta * ROTATION_INTERPOLATE_SPEED))
+			orientation.basis = Basis(q_from.slerp(q_to, delta * rotation_interpolate_speed))
 		var anim_blend := Vector2(0.0, target_motion.length())
 		if is_crouching:
 			animation_tree.set(CROUCHING_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)

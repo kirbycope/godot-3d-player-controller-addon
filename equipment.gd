@@ -1,3 +1,4 @@
+class_name Equipment
 extends Node3D
 
 enum EquipmentType {
@@ -37,11 +38,6 @@ var menu_displayed: bool = false
 var player: Player
 
 @onready var action_prompt: Node3D = $ActionPrompt
-
-
-## Called when the node enters the scene tree for the first time.
-func _ready() -> void:
-	pass
 
 
 func _update_attachment_offsets() -> void:
