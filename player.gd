@@ -32,8 +32,14 @@ var equipped_sword_2h: bool = false
 var is_aiming_bow: bool = false
 var is_drawing_arrow: bool = false
 var is_firing_arrow: bool = false
+var is_climbing: bool = false
 var is_crouching: bool = false
 var is_emoting: bool = false
+var is_hanging_braced: bool = false
+var is_hanging_free: bool = false
+var is_hopping_left: bool = false
+var is_hopping_right: bool = false
+var is_hopping_up: bool = false
 var is_falling: bool = false
 var is_focusing: bool = false
 var is_jumping: bool = false
@@ -52,6 +58,9 @@ var locomotion_state: ## Gets the [StateMachine] "LocomotionStateMachine"
 @onready var controls: CanvasLayer = $Controls
 @onready var debug: CanvasLayer = $Debug
 @onready var initial_position: Vector3 = transform.origin
+@onready var ledge_detection_horizontal: RayCast3D = $PlayerModel/Armature/LedgeDetectionHorizontal
+@onready var ledge_detection_vertical: RayCast3D = $PlayerModel/Armature/LedgeDetectionHorizontal/LedgeDetectionVertical
+@onready var ledge_detection_marker: MeshInstance3D = $PlayerModel/Armature/LedgeDetectionHorizontal/LedgeDetectionVertical/LedgeDetectionMarker
 @onready var look_at_modifier = $PlayerModel/Armature/GeneralSkeleton/LookAtModifier3D
 @onready var look_at_target: Marker3D = $SpringArm3D/ProjectileRaycast/LookAtTarget
 @onready var player_input: InputSynchronizer = $InputSynchronizer
@@ -92,6 +101,12 @@ func _input(event: InputEvent) -> void:
 		else:
 			# Set the mouse mode to captured to hide the mouse cursor
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	
+	# Stop "climbing" and start "falling" when the player manually cancels climbing with the "crouch" button.
+	if event.is_action_pressed("crouch") and is_climbing:
+		is_climbing = false
+		locomotion_state.travel("Falling")
+		is_falling = true
 
 
 # https://github.com/godotengine/tps-demo/blob/master/player/player.gd#L54
@@ -106,6 +121,20 @@ func _physics_process(delta: float) -> void:
 	if transform.origin.y < -40.0:
 		transform.origin = initial_position
 
+	# Ledge detection
+	var forward_direction := -ledge_detection_horizontal.global_transform.basis.z.normalized()
+	if ledge_detection_horizontal and ledge_detection_horizontal.is_colliding():
+		ledge_detection_vertical.global_position = ledge_detection_horizontal.get_collision_point() + (forward_direction * 0.05) + up_direction
+		ledge_detection_vertical.force_raycast_update()
+		if ledge_detection_vertical.is_colliding():
+			ledge_detection_marker.global_position = ledge_detection_vertical.get_collision_point() + (ledge_detection_vertical.get_collision_normal() * 0.02)
+			ledge_detection_marker.show()
+		else:
+			ledge_detection_marker.hide()
+	else:
+		ledge_detection_vertical.position = Vector3(0, 0, -1) # Reset to default
+		ledge_detection_marker.hide()
+
 	# Track if the player is "falling"
 	is_falling = locomotion_state.get_current_node() == "Falling"
 
@@ -113,10 +142,13 @@ func _physics_process(delta: float) -> void:
 	if is_jumping and is_falling:
 		is_jumping = false
 
-	# Stop "jumping" and "falling" when player lands on the floor under normal gravity.
+	# Stop "climbing", "falling", "hanging" (braced/free), and "jumping" when player lands on the floor under normal gravity.
 	if is_on_floor() and not is_jump_queued and velocity.y <= 0.0:
-		is_jumping = false
+		is_climbing = false
 		is_falling = false
+		is_hanging_braced = false
+		is_hanging_free = false
+		is_jumping = false
 
 	# Stop "sliding" when the animation finishes.
 	var was_sliding := is_sliding
@@ -140,7 +172,6 @@ func _physics_process(delta: float) -> void:
 	## DEBUG: Remove all equipment for testing purposes.
 	if Input.is_action_just_pressed("unequip"):
 		debug_unequip_all()
-
 
 
 func debug_unequip_all() -> void:
@@ -185,7 +216,7 @@ func apply_input(delta: float) -> void:
 	# Focus { Microsoft: 🄻T, Nintendo: Z🄻, Sony: 🄻2, Keyboard: [Right Mouse Button] }.
 	is_focusing = Input.is_action_pressed("focus")
 
-	# Jump { Microsoft: Ⓐ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Space] }.
+	# Jump { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
 	if is_on_floor() \
 	and Input.is_action_just_pressed("jump") \
 	and not is_jump_queued:
@@ -217,6 +248,22 @@ func apply_input(delta: float) -> void:
 				locomotion_state.travel("JumpingUp")
 		is_jump_queued = true
 
+	# Climb { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
+	if not is_on_floor() \
+	and not is_climbing \
+	and Input.is_action_just_pressed("jump") \
+	and ledge_detection_horizontal.is_colliding():
+		locomotion_state.travel("ClimbingLocomotion")
+		is_climbing = true
+
+	# Hop { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
+	if is_climbing \
+	and Input.is_action_just_pressed("jump") \
+	and locomotion_state.get_current_node() == "ClimbingLocomotion":
+		locomotion_state.travel("BracedHangHopUp")
+		is_climbing = false
+		is_hopping_up = true
+
 	# Sprint { Microsoft: Ⓑ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Shift] }.
 	if is_on_floor() \
 	and Input.is_action_pressed("sprint") \
@@ -245,7 +292,7 @@ func apply_input(delta: float) -> void:
 	if is_shooting or is_focusing:
 
 		# Rotate to face the camera direction when focusing or shooting (unless is_focusing and not is_shooting)
-		if (is_shooting or not is_focusing) and not is_firing_arrow:
+		if (is_shooting or not is_focusing) and not is_firing_arrow and not is_hanging_braced and not is_hanging_free and not is_climbing:
 			var camera_basis := spring_arm.global_transform.basis
 			var camera_forward := -camera_basis.z
 			camera_forward.y = 0.0
@@ -279,7 +326,7 @@ func apply_input(delta: float) -> void:
 		var camera_basis := spring_arm.global_transform.basis
 		var target_dir := camera_basis * Vector3(target_motion.x, 0.0, -target_motion.y)
 		target_dir.y = 0.0
-		if target_dir.length_squared() > 0.001 and not is_firing_arrow:
+		if target_dir.length_squared() > 0.001 and not is_firing_arrow and not is_hanging_braced and not is_hanging_free and not is_climbing:
 			target_dir = target_dir.normalized()
 			var q_from: Quaternion = orientation.basis.get_rotation_quaternion()
 			var q_to: Quaternion = Basis.looking_at(-target_dir).get_rotation_quaternion()
@@ -326,7 +373,10 @@ func apply_input(delta: float) -> void:
 
 	velocity.x = h_velocity.x
 	velocity.z = h_velocity.z
-	velocity += get_gravity() * 1.5 * delta
+	if is_climbing or is_hanging_braced or is_hanging_free:
+		velocity.y = 0.0
+	else:
+		velocity += get_gravity() * 1.5 * delta
 	set_velocity(velocity)
 	set_up_direction(Vector3.UP)
 	move_and_slide()

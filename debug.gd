@@ -6,6 +6,7 @@ extends CanvasLayer
 ## Called every frame. '_delta' is the elapsed time since the previous frame.
 func _process(_delta: float) -> void:
 	if player:
+		$States/is_climbing.button_pressed = player.is_climbing
 		$States/is_crouching.button_pressed = player.is_crouching
 		$States/is_falling.button_pressed = player.is_falling
 		$States/is_focusing.button_pressed = player.is_focusing

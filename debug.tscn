@@ -9,9 +9,10 @@ script = ExtResource("1_86eym")
 anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
-offset_top = -267.0
-offset_right = 182.0
-offset_bottom = 107.0
+offset_left = 184.0
+offset_top = -395.0
+offset_right = 366.0
+offset_bottom = -21.0
 grow_vertical = 2
 
 [node name="Panel" type="Panel" parent="Equipment" unique_id=1961482025]
@@ -69,9 +70,9 @@ text = "equipped_sword_2h"
 anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
-offset_left = 184.0
+offset_left = 368.0
 offset_top = -267.0
-offset_right = 366.0
+offset_right = 550.0
 offset_bottom = -138.0
 grow_vertical = 2
 
@@ -104,9 +105,10 @@ anchor_left = 1.0
 anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
-offset_left = -160.0
-offset_top = -264.0
-offset_bottom = 40.0
+offset_left = -346.0
+offset_top = -388.5
+offset_right = -176.0
+offset_bottom = 20.5
 grow_horizontal = 0
 grow_vertical = 2
 
@@ -121,6 +123,10 @@ offset_right = 155.0
 offset_bottom = 23.0
 text = "STATES"
 
+[node name="is_climbing" type="CheckBox" parent="States" unique_id=1740747748]
+layout_mode = 2
+text = "is_climbing"
+
 [node name="is_crouching" type="CheckBox" parent="States" unique_id=1585595928]
 layout_mode = 2
 text = "is_crouching"
@@ -128,6 +134,14 @@ text = "is_crouching"
 [node name="is_emoting" type="CheckBox" parent="States" unique_id=1149137227]
 layout_mode = 2
 text = "is_emoting"
+
+[node name="is_hanging_braced" type="CheckBox" parent="States" unique_id=819864313]
+layout_mode = 2
+text = "is_hanging_braced"
+
+[node name="is_hanging_free" type="CheckBox" parent="States" unique_id=1379468290]
+layout_mode = 2
+text = "is_hanging_free"
 
 [node name="is_falling" type="CheckBox" parent="States" unique_id=650160220]
 layout_mode = 2
