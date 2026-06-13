@@ -51,6 +51,7 @@ var is_shooting: bool = false
 var is_sliding: bool = false
 var is_sprinting: bool = false
 
+var cached_ledge_position := Vector3.ZERO
 var orientation := Transform3D()
 var root_motion := Transform3D()
 
@@ -125,21 +126,34 @@ func _physics_process(delta: float) -> void:
 		transform.origin = initial_position
 
 	# Ledge detection
-	var forward_direction := -ledge_detection_horizontal.global_transform.basis.z.normalized()
-	if ledge_detection_horizontal and ledge_detection_horizontal.is_colliding():
+	var ledge_detected := false
+	if not is_on_floor() and ledge_detection_horizontal and ledge_detection_horizontal.is_colliding():
+		var forward_direction := -ledge_detection_horizontal.global_transform.basis.z.normalized()
 		ledge_detection_vertical.global_position = ledge_detection_horizontal.get_collision_point() + (forward_direction * 0.05) + up_direction
 		ledge_detection_vertical.force_raycast_update()
 		if ledge_detection_vertical.is_colliding():
-			ledge_detection_marker.global_position = ledge_detection_vertical.get_collision_point() + (ledge_detection_vertical.get_collision_normal() * 0.02)
-			ledge_detection_horizontal.show()
-			ledge_detection_marker.show()
-		else:
-			ledge_detection_horizontal.hide()
-			ledge_detection_marker.hide()
+			cached_ledge_position = ledge_detection_vertical.get_collision_point() + (ledge_detection_vertical.get_collision_normal() * 0.02)
+			ledge_detection_marker.global_position = cached_ledge_position
+			ledge_detected = true
+
+	if ledge_detected:
+		ledge_detection_horizontal.show()
+		ledge_detection_marker.show()
 	else:
 		ledge_detection_vertical.position = Vector3(0, 0, -1) # Reset to default
 		ledge_detection_horizontal.hide()
 		ledge_detection_marker.hide()
+
+	# Check if "climbing" player has reeached a ledge
+	if is_climbing and player_input.motion.length() > 0.1:
+		if $CollisionShape3D.shape.height >= (cached_ledge_position - global_position).dot(up_direction) + 0.1:
+			is_falling = false
+			is_climbing = false
+			is_jumping = false
+			is_hanging_free = false
+			is_hanging_braced = true
+			locomotion_state.travel("BracedHangLocomotion")
+			global_position += up_direction * ((cached_ledge_position - global_position).dot(up_direction) - $CollisionShape3D.shape.height)
 
 	# Track if the player is "falling"
 	is_falling = locomotion_state.get_current_node() == "Falling"
@@ -268,6 +282,8 @@ func apply_input(delta: float) -> void:
 	and ledge_detection_horizontal.is_colliding():
 		locomotion_state.travel("ClimbingLocomotion")
 		is_climbing = true
+		is_falling = false
+		is_jumping = false
 
 	# Climbing, Hop Up { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
 	elif not is_on_floor() \
@@ -393,7 +409,7 @@ func apply_input(delta: float) -> void:
 	velocity.x = h_velocity.x
 	velocity.z = h_velocity.z
 	if is_climbing or is_hanging_braced or is_hanging_free or is_hopping_up:
-		velocity.y = 0.0
+		velocity.y = h_velocity.y
 	else:
 		velocity += get_gravity() * 1.5 * delta
 	set_velocity(velocity)
