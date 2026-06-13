@@ -51,7 +51,6 @@ var is_shooting: bool = false
 var is_sliding: bool = false
 var is_sprinting: bool = false
 
-var cached_ledge_position := Vector3.ZERO
 var orientation := Transform3D()
 var root_motion := Transform3D()
 
@@ -106,9 +105,11 @@ func _input(event: InputEvent) -> void:
 			# Set the mouse mode to captured to hide the mouse cursor
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	
-	# Stop "climbing" and start "falling" when the player manually cancels climbing with the "crouch" button.
-	if event.is_action_pressed("crouch") and is_climbing:
+	# Stop "climbing" and "hanging" and start "falling" when the player manually cancels with the "crouch" button.
+	if event.is_action_pressed("crouch") and (is_climbing or is_hanging_braced or is_hanging_free):
 		is_climbing = false
+		is_hanging_braced = false
+		is_hanging_free = false
 		locomotion_state.travel("Falling")
 		is_falling = true
 
@@ -132,10 +133,10 @@ func _physics_process(delta: float) -> void:
 		ledge_detection_vertical.global_position = ledge_detection_horizontal.get_collision_point() + (forward_direction * 0.05) + up_direction
 		ledge_detection_vertical.force_raycast_update()
 		if ledge_detection_vertical.is_colliding():
-			cached_ledge_position = ledge_detection_vertical.get_collision_point() + (ledge_detection_vertical.get_collision_normal() * 0.02)
-			ledge_detection_marker.global_position = cached_ledge_position
+			ledge_detection_marker.global_position = ledge_detection_vertical.get_collision_point() + (ledge_detection_vertical.get_collision_normal() * 0.02)
 			ledge_detected = true
 
+	# Show/hide ledge detection gizmos.
 	if ledge_detected:
 		ledge_detection_horizontal.show()
 		ledge_detection_marker.show()
@@ -144,16 +145,14 @@ func _physics_process(delta: float) -> void:
 		ledge_detection_horizontal.hide()
 		ledge_detection_marker.hide()
 
-	# Check if "climbing" player has reeached a ledge
-	if is_climbing and player_input.motion.length() > 0.1:
-		if $CollisionShape3D.shape.height >= (cached_ledge_position - global_position).dot(up_direction) + 0.1:
-			is_falling = false
-			is_climbing = false
-			is_jumping = false
-			is_hanging_free = false
-			is_hanging_braced = true
+	# Check if "climbing" player has reached a ledge
+	if ledge_detected and is_climbing and player_input.motion.length() > 0.1:
+		var player_top_position = global_position.y + $CollisionShape3D.shape.height + 0.2
+		if player_top_position >= ledge_detection_marker.global_position.y:
 			locomotion_state.travel("BracedHangLocomotion")
-			global_position += up_direction * ((cached_ledge_position - global_position).dot(up_direction) - $CollisionShape3D.shape.height)
+			is_climbing = false
+			is_hanging_braced = true
+			is_hanging_free = false
 
 	# Track if the player is "falling"
 	is_falling = locomotion_state.get_current_node() == "Falling"
@@ -163,7 +162,8 @@ func _physics_process(delta: float) -> void:
 		is_jumping = false
 
 	# Stop "climbing", "falling", "hanging" (braced/free), and "jumping" when player lands on the floor under normal gravity.
-	if is_on_floor() and not is_jump_queued and velocity.y <= 0.0:
+	var climbing_down := is_climbing and player_input.motion.y < -0.1
+	if is_on_floor() and not is_jump_queued and velocity.y <= 0.0 and not is_hanging_braced and not is_hanging_free and (not is_climbing or climbing_down):
 		is_climbing = false
 		is_falling = false
 		is_hanging_braced = false
@@ -273,7 +273,12 @@ func apply_input(delta: float) -> void:
 
 	# Climbing, Hopping Up
 	if is_climbing or is_hanging_braced or is_hopping_up:
+		var was_hopping_up := is_hopping_up
 		is_hopping_up = animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).get_current_node() == "BracedHangHopUp"
+		if was_hopping_up and not is_hopping_up:
+			is_climbing = false
+			is_hanging_braced = false
+			is_hanging_free = false
 
 	# Climbing, Start { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
 	if not is_on_floor() \
@@ -289,7 +294,7 @@ func apply_input(delta: float) -> void:
 	elif not is_on_floor() \
 	and (is_climbing or is_hanging_braced) \
 	and Input.is_action_just_pressed("jump") \
-	and locomotion_state.get_current_node() == "ClimbingLocomotion":
+	and (locomotion_state.get_current_node() == "ClimbingLocomotion" or locomotion_state.get_current_node() == "BracedHangLocomotion"):
 		locomotion_state.travel("BracedHangHopUp")
 		is_hopping_up = true
 

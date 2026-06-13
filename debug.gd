@@ -8,6 +8,9 @@ func _process(_delta: float) -> void:
 	if player:
 		$States/is_climbing.button_pressed = player.is_climbing
 		$States/is_crouching.button_pressed = player.is_crouching
+		$States/is_emoting.button_pressed = player.is_emoting
+		$States/is_hanging_braced.button_pressed = player.is_hanging_braced
+		$States/is_hanging_free.button_pressed = player.is_hanging_free
 		$States/is_falling.button_pressed = player.is_falling
 		$States/is_focusing.button_pressed = player.is_focusing
 		$States/is_jumping.button_pressed = (player.is_jump_queued or player.is_jumping)
