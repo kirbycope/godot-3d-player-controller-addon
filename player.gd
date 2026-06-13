@@ -128,11 +128,14 @@ func _physics_process(delta: float) -> void:
 		ledge_detection_vertical.force_raycast_update()
 		if ledge_detection_vertical.is_colliding():
 			ledge_detection_marker.global_position = ledge_detection_vertical.get_collision_point() + (ledge_detection_vertical.get_collision_normal() * 0.02)
+			ledge_detection_horizontal.show()
 			ledge_detection_marker.show()
 		else:
+			ledge_detection_horizontal.hide()
 			ledge_detection_marker.hide()
 	else:
 		ledge_detection_vertical.position = Vector3(0, 0, -1) # Reset to default
+		ledge_detection_horizontal.hide()
 		ledge_detection_marker.hide()
 
 	# Track if the player is "falling"
@@ -219,6 +222,9 @@ func apply_input(delta: float) -> void:
 	# Jump { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
 	if is_on_floor() \
 	and Input.is_action_just_pressed("jump") \
+	and not is_climbing \
+	and not is_hanging_braced \
+	and not is_hanging_free \
 	and not is_jump_queued:
 		if target_motion.length() > 0.0:
 			if equipped_axe_2h or equipped_staff or equipped_sword_2h:
@@ -248,7 +254,11 @@ func apply_input(delta: float) -> void:
 				locomotion_state.travel("JumpingUp")
 		is_jump_queued = true
 
-	# Climb { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
+	# Climbing, Hopping Up
+	if is_climbing or is_hanging_braced or is_hopping_up:
+		is_hopping_up = animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).get_current_node() == "BracedHangHopUp"
+
+	# Climbing, Start { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
 	if not is_on_floor() \
 	and not is_climbing \
 	and Input.is_action_just_pressed("jump") \
@@ -256,12 +266,12 @@ func apply_input(delta: float) -> void:
 		locomotion_state.travel("ClimbingLocomotion")
 		is_climbing = true
 
-	# Hop { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
-	if is_climbing \
+	# Climbing, Hop Up { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
+	elif not is_on_floor() \
+	and (is_climbing or is_hanging_braced) \
 	and Input.is_action_just_pressed("jump") \
 	and locomotion_state.get_current_node() == "ClimbingLocomotion":
 		locomotion_state.travel("BracedHangHopUp")
-		is_climbing = false
 		is_hopping_up = true
 
 	# Sprint { Microsoft: Ⓑ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Shift] }.
@@ -373,7 +383,7 @@ func apply_input(delta: float) -> void:
 
 	velocity.x = h_velocity.x
 	velocity.z = h_velocity.z
-	if is_climbing or is_hanging_braced or is_hanging_free:
+	if is_climbing or is_hanging_braced or is_hanging_free or is_hopping_up:
 		velocity.y = 0.0
 	else:
 		velocity += get_gravity() * 1.5 * delta
