@@ -61,9 +61,10 @@ var locomotion_state: ## Gets the [StateMachine] "LocomotionStateMachine"
 @onready var controls: CanvasLayer = $Controls
 @onready var debug: CanvasLayer = $Debug
 @onready var initial_position: Vector3 = transform.origin
-@onready var ledge_detection_horizontal: RayCast3D = $PlayerModel/Armature/LedgeDetectionHorizontal
-@onready var ledge_detection_vertical: RayCast3D = $PlayerModel/Armature/LedgeDetectionHorizontal/LedgeDetectionVertical
-@onready var ledge_detection_marker: MeshInstance3D = $PlayerModel/Armature/LedgeDetectionHorizontal/LedgeDetectionVertical/LedgeDetectionMarker
+@onready var hanging_braced_detection: RayCast3D = $PlayerModel/HangingBracedDetection
+@onready var ledge_detection_horizontal: RayCast3D = $PlayerModel/LedgeDetectionHorizontal
+@onready var ledge_detection_vertical: RayCast3D = $PlayerModel/LedgeDetectionHorizontal/LedgeDetectionVertical
+@onready var ledge_detection_marker: MeshInstance3D = $PlayerModel/LedgeDetectionHorizontal/LedgeDetectionVertical/LedgeDetectionMarker
 @onready var look_at_modifier = $PlayerModel/Armature/GeneralSkeleton/LookAtModifier3D
 @onready var look_at_target: Marker3D = $SpringArm3D/ProjectileRaycast/LookAtTarget
 @onready var player_input: InputSynchronizer = $InputSynchronizer
@@ -147,7 +148,7 @@ func _physics_process(delta: float) -> void:
 
 	# Check if "climbing" player has reached a ledge
 	if ledge_detected and is_climbing and player_input.motion.length() > 0.1:
-		var player_top_position = global_position.y + $CollisionShape3D.shape.height + 0.2
+		var player_top_position = global_position.y + $CollisionShape3D.shape.height + 0.1
 		if player_top_position >= ledge_detection_marker.global_position.y:
 			locomotion_state.travel("BracedHangLocomotion")
 			is_climbing = false
@@ -235,6 +236,20 @@ func apply_input(delta: float) -> void:
 
 	# Focus { Microsoft: 🄻T, Nintendo: Z🄻, Sony: 🄻2, Keyboard: [Right Mouse Button] }.
 	is_focusing = Input.is_action_pressed("focus")
+
+	# Check if braced "hanging" player is [now] free
+	if is_hanging_braced \
+	and not hanging_braced_detection.is_colliding():
+		locomotion_state.travel("FreeHangingLocomotion")
+		is_hanging_braced = false
+		is_hanging_free = true
+
+	# Check if free "hanging" player is [now] braced
+	if is_hanging_free \
+	and hanging_braced_detection.is_colliding():
+		locomotion_state.travel("BracedHangLocomotion")
+		is_hanging_braced = true
+		is_hanging_free = false
 
 	# Jump { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
 	if is_on_floor() \
@@ -368,9 +383,9 @@ func apply_input(delta: float) -> void:
 		if is_climbing:
 			animation_tree.set(CLIMBING_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 		elif is_hanging_braced:
-			animation_tree.set(BRACED_HANG_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
+			animation_tree.set(BRACED_HANG_LOCOMOTION_BLEND_POSITION_PATH, target_motion.x)
 		elif is_hanging_free:
-			animation_tree.set(FREE_HANGING_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
+			animation_tree.set(FREE_HANGING_LOCOMOTION_BLEND_POSITION_PATH, target_motion.x)
 		else:
 			var anim_blend := Vector2(0.0, target_motion.length())
 			if is_crouching:
@@ -413,8 +428,10 @@ func apply_input(delta: float) -> void:
 
 	velocity.x = h_velocity.x
 	velocity.z = h_velocity.z
-	if is_climbing or is_hanging_braced or is_hanging_free or is_hopping_up:
+	if is_climbing or is_hopping_up:
 		velocity.y = h_velocity.y
+	elif is_hanging_braced or is_hanging_free:
+		velocity.y = 0.0
 	else:
 		velocity += get_gravity() * 1.5 * delta
 	set_velocity(velocity)
