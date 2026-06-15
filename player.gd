@@ -86,6 +86,9 @@ func _ready() -> void:
 	# Ensure the AnimationTree is active so that root motion is applied in the first frame.
 	animation_tree.active = true
 
+	# Keep animation sampling in physics domain to match root-motion consumption in _physics_process.
+	animation_tree.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_PHYSICS
+
 	# Ensure the projectile RayCast3D doesn't collide with the player.
 	projectile_raycast.add_exception(self)
 
