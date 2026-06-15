@@ -380,7 +380,18 @@ func apply_input(delta: float) -> void:
 			var q_from: Quaternion = orientation.basis.get_rotation_quaternion()
 			var q_to: Quaternion = Basis.looking_at(-target_dir).get_rotation_quaternion()
 			orientation.basis = Basis(q_from.slerp(q_to, delta * rotation_interpolate_speed))
-		if is_climbing:
+		# While climbing or hanging keep (rotate towards) facing the wall surface from the LedgeDetectionHorizontal raycast
+		if is_climbing or is_hanging_braced or is_hanging_free:
+			if ledge_detection_horizontal and ledge_detection_horizontal.is_colliding():
+				var normal := ledge_detection_horizontal.get_collision_normal()
+				var wall_dir := -normal
+				wall_dir.y = 0.0
+				if wall_dir.length_squared() > 0.001:
+					wall_dir = wall_dir.normalized()
+					var q_from: Quaternion = orientation.basis.get_rotation_quaternion()
+					var q_to: Quaternion = Basis.looking_at(-wall_dir).get_rotation_quaternion()
+					orientation.basis = Basis(q_from.slerp(q_to, delta * rotation_interpolate_speed))
+		if is_climbing:			
 			animation_tree.set(CLIMBING_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 		elif is_hanging_braced:
 			animation_tree.set(BRACED_HANG_LOCOMOTION_BLEND_POSITION_PATH, target_motion.x)
