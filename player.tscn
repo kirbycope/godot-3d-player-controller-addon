@@ -50,6 +50,7 @@
 [ext_resource type="AnimationLibrary" uid="uid://csddkdx3nayti" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Braced Hang Idle.glb" id="23_jmy3t"]
 [ext_resource type="AnimationLibrary" uid="uid://dxoxh1e47n4ps" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Sword And Shield Crouch Idle.glb" id="23_njchi"]
 [ext_resource type="AnimationLibrary" uid="uid://sd4b0516e7c3" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Rifle Run Forward.glb" id="23_qrmb0"]
+[ext_resource type="AnimationLibrary" uid="uid://082i0naeuuou" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Braced Hang Climbing On.glb" id="23_vn1rt"]
 [ext_resource type="AnimationLibrary" uid="uid://h656gwfwn6ss" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Sword And Shield Idle.glb" id="24_2dxso"]
 [ext_resource type="AnimationLibrary" uid="uid://b3j82q22sk70e" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Braced Hang Shimmy Left.glb" id="24_4pi5w"]
 [ext_resource type="AnimationLibrary" uid="uid://wgyy63xxilc5" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Braced Hang Hop Right.glb" id="24_w678r"]
@@ -101,6 +102,7 @@
 [ext_resource type="AnimationLibrary" uid="uid://cubcl6bh11gra" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Pistol Whip.glb" id="36_bdiue"]
 [ext_resource type="AnimationLibrary" uid="uid://dxrn6vltmo0ww" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Free Hanging Hop Left.glb" id="36_rlekb"]
 [ext_resource type="AnimationLibrary" uid="uid://bbj4kvucgiye4" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Bow Standing Walk Back.glb" id="37_0nse3"]
+[ext_resource type="AnimationLibrary" uid="uid://dujmmt6q2crdf" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Free Hanging Climbing On.glb" id="37_rlekb"]
 [ext_resource type="AnimationLibrary" uid="uid://ckhurvbxlgc1k" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Free Hanging Hop Right.glb" id="37_skqw1"]
 [ext_resource type="AnimationLibrary" uid="uid://cb7j08hx5nqry" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Bow Standing Walk Forward.glb" id="37_ufkdo"]
 [ext_resource type="AnimationLibrary" uid="uid://dgqipt8fth2do" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Bow Standing Walk Left.glb" id="38_jo435"]
@@ -1060,7 +1062,7 @@ graph_offset = Vector2(-773.77765, -194.54504)
 [sub_resource type="AnimationNodeTimeScale" id="AnimationNodeTimeScale_45pxl"]
 
 [sub_resource type="AnimationNodeBlendTree" id="AnimationNodeBlendTree_senyo"]
-graph_offset = Vector2(-611.6986, 0)
+graph_offset = Vector2(-626.94867, 0)
 nodes/output/position = Vector2(506.66666, 133.33333)
 nodes/LocomotionStateMachine/node = SubResource("AnimationNodeStateMachine_ikfak")
 nodes/LocomotionStateMachine/position = Vector2(-226.66667, 120)
@@ -1091,20 +1093,20 @@ transform = Transform3D(-1, 0, -1.509958e-07, 0, 1, 0, 1.509958e-07, 0, -1, 0, 0
 [node name="GeneralSkeleton" parent="PlayerModel/Armature" parent_id_path=PackedInt32Array(1771073607, 318010379) index="0" unique_id=939687078]
 bones/0/position = Vector3(0.002616127, 0, -0.001263435)
 bones/1/position = Vector3(6.945423e-07, 0.9899598, -4.8260063e-11)
-bones/1/rotation = Quaternion(-0.029172426, -0.050696567, -0.029216662, 0.9978603)
-bones/2/rotation = Quaternion(0.029839676, 0.013566731, 0.021573463, 0.9992298)
-bones/3/rotation = Quaternion(0.010318538, 0.0036775395, 0.013681021, 0.99984646)
-bones/4/rotation = Quaternion(0.010322312, 0.0040331837, 0.013848355, 0.99984276)
-bones/5/rotation = Quaternion(0.048651874, -0.0015443466, 0.0044197915, 0.99880487)
-bones/6/rotation = Quaternion(-0.06818306, 0.010611634, -0.0019189304, 0.9976146)
-bones/8/rotation = Quaternion(0.458219, 0.49931794, 0.63150805, -0.37671548)
-bones/9/rotation = Quaternion(0.12469739, 0.80440575, -0.56747824, -0.12389751)
+bones/1/rotation = Quaternion(-0.030975662, -0.047208637, -0.029086774, 0.9979809)
+bones/2/rotation = Quaternion(0.028717013, 0.012197451, 0.021783276, 0.9992758)
+bones/3/rotation = Quaternion(0.010124298, 0.0029499168, 0.01359417, 0.99985206)
+bones/4/rotation = Quaternion(0.009934304, 0.0031687883, 0.013642656, 0.99985266)
+bones/5/rotation = Quaternion(0.048793115, -0.0009075571, 0.0040841894, 0.99880016)
+bones/6/rotation = Quaternion(-0.06586077, 0.011564759, -0.0013881108, 0.9977609)
+bones/8/rotation = Quaternion(0.50003165, 0.49996847, 0.50003153, -0.49996835)
+bones/9/rotation = Quaternion(-1.3411045e-06, 1, 1.9103289e-05, 2.0861626e-07)
 bones/10/rotation = Quaternion(0.009004968, -0.7070495, 0.009005011, 0.7070495)
-bones/11/rotation = Quaternion(0.05126419, 0.476862, -0.01465659, 0.87735957)
+bones/11/rotation = Quaternion(0.05285571, 0.4754737, -0.015875233, 0.8779972)
 bones/12/rotation = Quaternion(-0.23049825, 0.68289214, 0.17169982, 0.67160124)
 bones/13/rotation = Quaternion(0.20149457, 0.20389189, -0.059591617, 0.9561783)
 bones/14/rotation = Quaternion(0.04001307, -0.052876003, -0.12858759, 0.9894789)
-bones/15/scale = Vector3(1.0005779, 1.0004861, 1.0001523)
+bones/15/scale = Vector3(1.0005776, 1.0004866, 1.0001521)
 bones/16/rotation = Quaternion(0.06621675, 0.00073319674, 0.008431077, 0.9977695)
 bones/17/rotation = Quaternion(0.15099785, -2.9802322e-08, -0.015473753, 0.988413)
 bones/18/rotation = Quaternion(0.070081905, -1.3411045e-07, -0.0071816742, 0.99751544)
@@ -1114,17 +1116,17 @@ bones/22/rotation = Quaternion(0.15993267, -1.0430813e-07, -0.016389221, 0.98699
 bones/24/rotation = Quaternion(0.18325119, -0.0046532154, -0.03145516, 0.9825518)
 bones/25/rotation = Quaternion(0.18138772, -8.940695e-08, -0.018587975, 0.98323596)
 bones/26/rotation = Quaternion(0.15521277, -1.9371507e-07, -0.015905587, 0.98775303)
-bones/28/rotation = Quaternion(0.23386711, -0.0035057068, -0.049008608, 0.97102636)
-bones/29/rotation = Quaternion(0.15125789, -1.3411045e-07, -0.015500367, 0.98837286)
-bones/30/rotation = Quaternion(0.14349763, -8.940697e-08, -0.014705032, 0.9895415)
-bones/32/rotation = Quaternion(0.4768093, -0.47823596, -0.6352422, -0.37471396)
-bones/33/rotation = Quaternion(-0.14965507, 0.82675886, -0.49874592, 0.21289839)
-bones/34/rotation = Quaternion(0.041008044, 0.70591676, -0.041007932, 0.70591664)
-bones/35/rotation = Quaternion(0.04607608, -0.5709673, 0.03816576, 0.8187898)
+bones/28/rotation = Quaternion(-2.7418137e-06, 5.9604645e-08, -0.0001411289, 1)
+bones/29/rotation = Quaternion(6.1690807e-06, 1.0430813e-07, 0.0003683418, 1)
+bones/30/rotation = Quaternion(-3.5464768e-06, -2.9802326e-08, -0.00022961202, 1)
+bones/32/rotation = Quaternion(0.49996847, -0.5000314, -0.4999686, -0.50003153)
+bones/33/rotation = Quaternion(-4.7683704e-07, 1, -2.0027155e-05, -1.7881389e-07)
+bones/34/rotation = Quaternion(0.04124157, 0.7059031, -0.041241445, 0.7059031)
+bones/35/rotation = Quaternion(0.04608637, -0.5717166, 0.03772401, 0.8182867)
 bones/36/rotation = Quaternion(-0.24051937, -0.6719299, -0.18474628, 0.6756696)
 bones/37/rotation = Quaternion(0.2382267, -0.20985532, 0.051183697, 0.94688386)
 bones/38/rotation = Quaternion(0.045545463, 0.04607943, 0.16169317, 0.984712)
-bones/39/scale = Vector3(1.0005774, 1.0004866, 1.0001522)
+bones/39/scale = Vector3(1.0005778, 1.0004861, 1.0001523)
 bones/40/rotation = Quaternion(0.059512973, -0.00099127, -0.010975808, 0.99816674)
 bones/41/rotation = Quaternion(0.15128753, 2.9802322e-08, 0.012324184, 0.988413)
 bones/42/rotation = Quaternion(0.07021642, -4.4703484e-08, 0.00571993, 0.9975154)
@@ -1135,16 +1137,16 @@ bones/48/rotation = Quaternion(0.17745186, 0.0045017004, 0.02645886, 0.98376346)
 bones/49/rotation = Quaternion(0.18173558, 1.6391279e-07, 0.014804484, 0.9832361)
 bones/50/rotation = Quaternion(0.15551049, 5.9604645e-08, 0.012668192, 0.98775303)
 bones/52/rotation = Quaternion(0.2284934, 0.0034029484, 0.04298061, 0.9725903)
-bones/53/rotation = Quaternion(0.15154798, 7.4505806e-08, 0.012345433, 0.9883728)
-bones/54/rotation = Quaternion(0.14377289, 8.940697e-08, 0.011711985, 0.9895414)
-bones/56/rotation = Quaternion(0.13692874, 0.085175306, 0.9838479, -0.077710725)
-bones/57/rotation = Quaternion(-0.038315434, 0.99251854, -0.11484562, 0.015790178)
-bones/58/rotation = Quaternion(-0.041579314, 0.71024555, -0.7010043, 0.049147468)
+bones/53/rotation = Quaternion(1.490116e-07, -8.940695e-08, -1.0550021e-05, 1)
+bones/54/rotation = Quaternion(-4.4703484e-08, 5.9604645e-08, 1.0535121e-05, 1)
+bones/56/rotation = Quaternion(8.253667e-09, 1.0295366e-05, 1, -8.7962896e-08)
+bones/57/rotation = Quaternion(6.984918e-10, 1, -1.9792931e-05, -5.468791e-08)
+bones/58/rotation = Quaternion(-0.041174565, 0.7104044, -0.7009021, 0.048647597)
 bones/59/rotation = Quaternion(-9.186695e-08, 0.9990753, 0.042996287, -1.6792885e-08)
-bones/61/rotation = Quaternion(-0.09003906, -0.012541094, 0.995399, -0.030276807)
-bones/62/rotation = Quaternion(0.032340188, 0.99472576, -0.049703576, -0.08369178)
-bones/63/rotation = Quaternion(0.012051266, 0.6862907, -0.7267869, -0.02531304)
-bones/64/rotation = Quaternion(-1.953509e-07, 0.9980545, 0.06234774, -2.8076627e-08)
+bones/61/rotation = Quaternion(-0.09044627, -0.010692327, 0.9954111, -0.029359393)
+bones/62/rotation = Quaternion(0.032914575, 0.9944681, -0.054914717, -0.08327259)
+bones/63/rotation = Quaternion(0.01002472, 0.6857778, -0.7271981, -0.028128086)
+bones/64/rotation = Quaternion(-8.532782e-09, 0.9979958, 0.06328043, -4.8835074e-09)
 
 [node name="LookAtModifier3D" type="LookAtModifier3D" parent="PlayerModel/Armature/GeneralSkeleton" index="2" unique_id=703324849]
 active = false
@@ -1183,6 +1185,7 @@ secondary_damp_threshold = 1.0
 "libraries/Bow Standing Walk Forward" = ExtResource("37_ufkdo")
 "libraries/Bow Standing Walk Left" = ExtResource("38_jo435")
 "libraries/Bow Standing Walk Right" = ExtResource("39_6b7s3")
+"libraries/Braced Hang Climbing On" = ExtResource("23_vn1rt")
 "libraries/Braced Hang Hop Left" = ExtResource("23_aisa3")
 "libraries/Braced Hang Hop Right" = ExtResource("24_w678r")
 "libraries/Braced Hang Hop Up" = ExtResource("25_vn1rt")
@@ -1196,6 +1199,7 @@ secondary_damp_threshold = 1.0
 "libraries/Crouched Walking" = ExtResource("5_ithc2")
 "libraries/Crouching Idle" = ExtResource("6_u6ny4")
 "libraries/Falling Idle" = ExtResource("3_ro8tf")
+"libraries/Free Hanging Climbing On" = ExtResource("37_rlekb")
 "libraries/Free Hanging Hop Left" = ExtResource("36_rlekb")
 "libraries/Free Hanging Hop Right" = ExtResource("37_skqw1")
 "libraries/Free Hanging Idle" = ExtResource("33_aisa3")
