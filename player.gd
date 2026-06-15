@@ -20,6 +20,8 @@ const STANDING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionSt
 @export var motion_interpolate_speed: float = 10.0
 @export var rotation_interpolate_speed: float = 10.0
 
+var climbing_on_target: Vector3
+
 var equipment: Array = []
 var equipped_axe_1h: bool = false
 var equipped_axe_2h: bool = false
@@ -36,6 +38,7 @@ var is_aiming_bow: bool = false
 var is_drawing_arrow: bool = false
 var is_firing_arrow: bool = false
 var is_climbing: bool = false
+var is_climbing_on: bool = false
 var is_crouching: bool = false
 var is_emoting: bool = false
 var is_hanging_braced: bool = false
@@ -289,6 +292,14 @@ func apply_input(delta: float) -> void:
 				locomotion_state.travel("JumpingUp")
 		is_jump_queued = true
 
+	# Climbing, Climbing On
+	if is_climbing_on:
+		var was_climbing_on := is_climbing_on
+		is_climbing_on = animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).get_current_node() == "BracedHangClimbingOn"
+		if was_climbing_on and not is_climbing_on:
+			global_position = climbing_on_target
+			is_climbing_on = false
+
 	# Climbing, Hopping Up
 	if is_climbing or is_hanging_braced or is_hopping_up:
 		var was_hopping_up := is_hopping_up
@@ -313,8 +324,17 @@ func apply_input(delta: float) -> void:
 	and (is_climbing or is_hanging_braced) \
 	and Input.is_action_just_pressed("jump") \
 	and (locomotion_state.get_current_node() == "ClimbingLocomotion" or locomotion_state.get_current_node() == "BracedHangLocomotion"):
-		locomotion_state.travel("BracedHangHopUp")
-		is_hopping_up = true
+		if is_hanging_braced and ledge_detection_vertical and ledge_detection_vertical.is_colliding():
+			climbing_on_target = ledge_detection_vertical.get_collision_point()
+			locomotion_state.travel("BracedHangClimbingOn")
+			is_climbing = false
+			is_climbing_on = true
+			is_hanging_braced = false
+			is_hanging_free = false
+			is_hopping_up = false
+		else:
+			locomotion_state.travel("BracedHangHopUp")
+			is_hopping_up = true
 
 	# Sprint { Microsoft: Ⓑ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Shift] }.
 	if is_on_floor() \
@@ -442,7 +462,7 @@ func apply_input(delta: float) -> void:
 
 	velocity.x = h_velocity.x
 	velocity.z = h_velocity.z
-	if is_climbing or is_hopping_up:
+	if is_climbing or is_climbing_on or is_hopping_up:
 		velocity.y = h_velocity.y
 	elif is_hanging_braced or is_hanging_free:
 		velocity.y = 0.0
