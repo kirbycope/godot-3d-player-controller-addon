@@ -15,6 +15,7 @@ enum EquipmentType {
 }
 
 @export var bone_attachment_bone_name: String
+@export var can_attack: bool = false
 @export var can_shoot: bool = false
 @export var equipment_type: EquipmentType
 @export var is_exclusive: bool = false
