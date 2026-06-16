@@ -98,10 +98,8 @@ func equip(player: Player) -> void:
 			# OR unequip exclusive/two-handed weapons if equipping any new item.
 			if child.bone_name == bone_attachment_bone_name or is_exclusive or is_exclusive_attachment:
 				for sub_child in child.get_children():
-					if "equipment_type" in sub_child:
-						_set_equipped_flag(player, sub_child.equipment_type, false)
-						if player.equipment.has(sub_child):
-							player.equipment.erase(sub_child)
+					if "equipment_type" in sub_child and player.equipment.has(sub_child):
+						player.equipment.erase(sub_child)
 				skeleton.remove_child(child)
 				child.queue_free() # Clean it up from memory
 
@@ -118,35 +116,12 @@ func equip(player: Player) -> void:
 	_update_attachment_offsets()
 	_configure_animation_trees(equipment_instance, equipment_instance)
 
-	# 5. Flag the player as having equipped the item
-	_set_equipped_flag(player, equipment_type, true)
-
-	# 6. Add a reference to this equipment to the player
+	# 5. Add a reference to this equipment to the player
 	if not player.equipment.has(equipment_instance):
 		player.equipment.append(equipment_instance)
 
-
-func _set_equipped_flag(player: Player, type: EquipmentType, state: bool) -> void:
-	if type == EquipmentType.AXE_1H:
-		player.equipped_axe_1h = state
-	elif type == EquipmentType.AXE_2H:
-		player.equipped_axe_2h = state
-	elif type == EquipmentType.BOW:
-		player.equipped_bow = state
-	elif type == EquipmentType.DAGGER:
-		player.equipped_dagger = state
-	elif type == EquipmentType.PISTOL:
-		player.equipped_pistol = state
-	elif type == EquipmentType.RIFLE:
-		player.equipped_rifle = state
-	elif type == EquipmentType.STAFF:
-		player.equipped_staff = state
-	elif type == EquipmentType.SWORD_AND_SHIELD:
-		player.equipped_shield = state
-	elif type == EquipmentType.SWORD_1H:
-		player.equipped_sword_1h = state
-	elif type == EquipmentType.SWORD_2H:
-		player.equipped_sword_2h = state
+	# 6. Rebuild quick lookup/cache so input logic does O(1) reads per frame.
+	player.rebuild_equipment_cache()
 
 
 func _disable_collisions(node: Node) -> void:

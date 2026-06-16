@@ -18,31 +18,26 @@ func _physics_process(delta: float) -> void:
 		var was_firing_arrow := player.is_firing_arrow
 
 		# Update archery flags on the player based on the currently playing animation in the locomotion state machine
-		player.is_aiming_bow = player.equipped_bow and locomotion_state_currently_playing_animation == "ArcheryLocomotion"
-		player.is_drawing_arrow = player.equipped_bow and locomotion_state_currently_playing_animation == "BowDrawArrow"
-		player.is_firing_arrow = player.equipped_bow and locomotion_state_currently_playing_animation == "BowFireArrow"
+		var has_bow := player.has_equipment(Equipment.EquipmentType.BOW)
+		player.is_aiming_bow = has_bow and locomotion_state_currently_playing_animation == "ArcheryLocomotion"
+		player.is_drawing_arrow = has_bow and locomotion_state_currently_playing_animation == "BowDrawArrow"
+		player.is_firing_arrow = has_bow and locomotion_state_currently_playing_animation == "BowFireArrow"
+		var bow: Node3D = player.get_equipment_by_type(Equipment.EquipmentType.BOW)
 
 		# Check if the player has a bow equipped
-		if player.equipped_bow:
-			# Get the bow instance from the player's equipment
-			var bow: Node3D = null
-			for item in player.equipment:
-				if "equipment_type" in item and item.equipment_type == item.EquipmentType.BOW:
-					bow = item
-					break
-			if bow:
-				# Get the arrow instance from the player's equipped bow
-				var arrow_node = bow.get_node_or_null("Arrow")
-				if arrow_node:
-					arrow_node.freeze = true
-					set_collision_shapes_disabled(arrow_node, true)
-					# Show the arrow when "aiming" but not drawing or firing
-					if player.is_shooting \
-					and not player.is_drawing_arrow \
-					and not player.is_firing_arrow:
-						arrow_node.show()
-					else:
-						arrow_node.hide()
+		if has_bow and bow:
+			# Get the arrow instance from the player's equipped bow
+			var arrow_node = bow.get_node_or_null("Arrow")
+			if arrow_node:
+				arrow_node.freeze = true
+				set_collision_shapes_disabled(arrow_node, true)
+				# Show the arrow when "aiming" but not drawing or firing
+				if player.is_shooting \
+				and not player.is_drawing_arrow \
+				and not player.is_firing_arrow:
+					arrow_node.show()
+				else:
+					arrow_node.hide()
 
 		# Have the player look at the crosshair when aiming
 		if player.is_aiming_bow:
@@ -54,15 +49,10 @@ func _physics_process(delta: float) -> void:
 			player.look_at_modifier.active = false
 
 		## Fire arrow
-		if player.equipped_bow \
+		if has_bow \
 		and player.is_firing_arrow \
-		and not was_firing_arrow:
-			var bow: Node3D = null
-			for item in player.equipment:
-				if "equipment_type" in item and item.equipment_type == item.EquipmentType.BOW:
-					bow = item
-					break
-			if bow:
+		and not was_firing_arrow \
+		and bow:
 				# Duplicate the bow's $Arrow node
 				var arrow_node = bow.get_node("Arrow")
 				var arrow_instance = arrow_node.duplicate()
@@ -92,28 +82,22 @@ func _physics_process(delta: float) -> void:
 				arrow_instance.linear_velocity = launch_direction * projectile_speed
 
 		## Play Bow sound(s) once when entering draw/fire arrow animations.
-		if player.equipped_bow:
-			var bow: Node3D = null
-			for item in player.equipment:
-				if "equipment_type" in item and item.equipment_type == item.EquipmentType.BOW:
-					bow = item
-					break
-			if bow:
-				if player.is_drawing_arrow and not was_drawing_arrow and bow.has_node("BowDrawArrow"):
-					bow.get_node("BowDrawArrow").play()
-				if player.is_firing_arrow and not was_firing_arrow and bow.has_node("BowFireArrow"):
-					bow.get_node("BowFireArrow").play()
-					if not player.projectile_raycast.is_colliding():
-						bow.get_node("Arrow/Swish").play()
-					else:
-						var hit_object := player.projectile_raycast.get_collider()
-						if hit_object and hit_object is RigidBody3D:
-							var collision_point := player.projectile_raycast.get_collision_point()
-							var collision_normal := player.projectile_raycast.get_collision_normal()
-							var force_direction := player.projectile_raycast.global_transform.basis.z
-							var force_magnitude := 10.0
-							(hit_object as RigidBody3D).apply_impulse(collision_point - hit_object.global_transform.origin, force_direction * force_magnitude)
-						#bow.get_node("Arrow/Twang").play()
+		if has_bow and bow:
+			if player.is_drawing_arrow and not was_drawing_arrow and bow.has_node("BowDrawArrow"):
+				bow.get_node("BowDrawArrow").play()
+			if player.is_firing_arrow and not was_firing_arrow and bow.has_node("BowFireArrow"):
+				bow.get_node("BowFireArrow").play()
+				if not player.projectile_raycast.is_colliding():
+					bow.get_node("Arrow/Swish").play()
+				else:
+					var hit_object := player.projectile_raycast.get_collider()
+					if hit_object and hit_object is RigidBody3D:
+						var collision_point := player.projectile_raycast.get_collision_point()
+						var collision_normal := player.projectile_raycast.get_collision_normal()
+						var force_direction := player.projectile_raycast.global_transform.basis.z
+						var force_magnitude := 10.0
+						(hit_object as RigidBody3D).apply_impulse(collision_point - hit_object.global_transform.origin, force_direction * force_magnitude)
+					#bow.get_node("Arrow/Twang").play()
 
 
 ## Sets the collision shape to disabled or enabled for the given node and all of its children recursively.

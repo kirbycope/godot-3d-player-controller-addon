@@ -23,16 +23,9 @@ const STANDING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionSt
 var climbing_on_target: Vector3
 
 var equipment: Array = []
-var equipped_axe_1h: bool = false
-var equipped_axe_2h: bool = false
-var equipped_bow: bool = false
-var equipped_dagger: bool = false
-var equipped_pistol: bool = false
-var equipped_rifle: bool = false
-var equipped_shield: bool = false
-var equipped_staff: bool = false
-var equipped_sword_1h: bool = false
-var equipped_sword_2h: bool = false
+var equipment_by_type: Dictionary = {}
+var can_player_attack: bool = false
+var can_player_shoot: bool = false
 
 var is_aiming_bow: bool = false
 var is_attacking: bool = false
@@ -203,21 +196,61 @@ func _physics_process(delta: float) -> void:
 
 
 func debug_unequip_all() -> void:
-	equipped_axe_1h = false
-	equipped_axe_2h = false
-	equipped_bow = false
-	equipped_dagger = false
-	equipped_pistol = false
-	equipped_rifle = false
-	equipped_shield = false
-	equipped_staff = false
-	equipped_sword_1h = false
-	equipped_sword_2h = false
 	equipment.clear()
+	equipment_by_type.clear()
+	can_player_attack = false
+	can_player_shoot = false
 	for child in skeleton.get_children():
 		if child is BoneAttachment3D:
 			child.queue_free()
 	locomotion_state.travel("StandingLocomotion")
+
+
+func rebuild_equipment_cache() -> void:
+	equipment_by_type.clear()
+	can_player_attack = false
+	can_player_shoot = false
+	for item in equipment:
+		if item == null:
+			continue
+		if "equipment_type" in item:
+			equipment_by_type[item.equipment_type] = item
+		if "can_attack" in item and item.can_attack:
+			can_player_attack = true
+		if "can_shoot" in item and item.can_shoot:
+			can_player_shoot = true
+
+
+func get_equipment_by_type(type: int) -> Node3D:
+	return equipment_by_type.get(type, null)
+
+
+func has_equipment(type: int) -> bool:
+	return equipment_by_type.has(type)
+
+
+func has_any_equipment(types: Array) -> bool:
+	for type in types:
+		if equipment_by_type.has(type):
+			return true
+	return false
+
+
+func has_heavy_weapon_equipped() -> bool:
+	return has_any_equipment([
+		Equipment.EquipmentType.AXE_2H,
+		Equipment.EquipmentType.STAFF,
+		Equipment.EquipmentType.SWORD_2H,
+	])
+
+
+func has_one_handed_or_shield_equipped() -> bool:
+	return has_any_equipment([
+		Equipment.EquipmentType.AXE_1H,
+		Equipment.EquipmentType.DAGGER,
+		Equipment.EquipmentType.SWORD_1H,
+		Equipment.EquipmentType.SWORD_AND_SHIELD,
+	])
 
 
 # https://github.com/godotengine/tps-demo/blob/master/player/player.gd#L86
@@ -228,22 +261,9 @@ func apply_input(delta: float) -> void:
 	# Smoothly interpolate the target_motion for more gradual changes in animation blending and rotation.
 	target_motion = target_motion.lerp(target_motion, motion_interpolate_speed * delta)
 
-	# Check if the player can attack based on their equipped items.
-	var can_player_attack := false
-	for item in equipment:
-		if "can_attack" in item and item.can_attack:
-			can_player_attack = true
-			break
-
 	# Attack { Microsoft: X, Nintendo: Y, Sony: Square, Keyboard: [Alt] }.
 	is_attacking = Input.is_action_just_pressed("attack") and can_player_attack
 
-	# Check if the player can shoot based on their equipped items.
-	var can_player_shoot := false
-	for item in equipment:
-		if "can_shoot" in item and item.can_shoot:
-			can_player_shoot = true
-			break
 	# Shoot { Microsoft: 🅁T, Nintendo: 🅁L, Sony: 🅁2, Keyboard: [Left Mouse Button] } 
 	is_shooting = Input.is_action_pressed("shoot") and can_player_shoot
 
@@ -252,6 +272,29 @@ func apply_input(delta: float) -> void:
 
 	# Focus { Microsoft: 🄻T, Nintendo: Z🄻, Sony: 🄻2, Keyboard: [Right Mouse Button] }.
 	is_focusing = Input.is_action_pressed("focus")
+
+	# Update locomotion state based on equipped items if not in special states
+	if not is_climbing and not is_hanging_braced and not is_hanging_free and not is_falling and not is_jumping and not is_sliding:
+		var current_state = locomotion_state.get_current_node()
+		var target_state = "StandingLocomotion"
+		
+		if is_crouching:
+			target_state = "CrouchingLocomotion"
+		elif has_heavy_weapon_equipped():
+			target_state = "GreatSwordLocomotion"
+		elif has_equipment(Equipment.EquipmentType.BOW):
+			target_state = "BowLocomotion" if not is_shooting else "ArcheryLocomotion"
+		elif has_one_handed_or_shield_equipped():
+			target_state = "ShieldLocomotion"
+		elif has_equipment(Equipment.EquipmentType.PISTOL):
+			target_state = "PistolLocomotion"
+		elif has_equipment(Equipment.EquipmentType.RIFLE):
+			target_state = "RifleLocomotion"
+		
+		# Transition if target differs from current (skip Jump states but allow transition from any normal state)
+		if current_state != target_state:
+			if not current_state.contains("Jump"):
+				locomotion_state.travel(target_state)
 
 	# Check if braced "hanging" player is [now] free
 	if is_hanging_braced \
@@ -275,28 +318,28 @@ func apply_input(delta: float) -> void:
 	and not is_hanging_free \
 	and not is_jump_queued:
 		if target_motion.length() > 0.0:
-			if equipped_axe_2h or equipped_staff or equipped_sword_2h:
+			if has_heavy_weapon_equipped():
 				locomotion_state.travel("GreatSwordJumpForward")
-			elif equipped_bow:
+			elif has_equipment(Equipment.EquipmentType.BOW):
 				locomotion_state.travel("BowJumpForward")
-			elif equipped_dagger or equipped_shield or equipped_sword_1h:
+			elif has_one_handed_or_shield_equipped():
 				locomotion_state.travel("ShieldJumpForward")
-			elif equipped_pistol:
+			elif has_equipment(Equipment.EquipmentType.PISTOL):
 				locomotion_state.travel("PistolJumpForward")
-			elif equipped_rifle:
+			elif has_equipment(Equipment.EquipmentType.RIFLE):
 				locomotion_state.travel("RifleJumpForward")
 			else:
 				locomotion_state.travel("RunningJump")
 		else:
-			if equipped_axe_2h or equipped_staff or equipped_sword_2h:
+			if has_heavy_weapon_equipped():
 				locomotion_state.travel("GreatSwordJump")
-			elif equipped_bow:
+			elif has_equipment(Equipment.EquipmentType.BOW):
 				locomotion_state.travel("BowJump")
-			elif equipped_dagger or equipped_shield or equipped_sword_1h:
+			elif has_one_handed_or_shield_equipped():
 				locomotion_state.travel("ShieldJump")
-			elif equipped_rifle:
+			elif has_equipment(Equipment.EquipmentType.RIFLE):
 				locomotion_state.travel("RifleJumpUp")
-			elif equipped_pistol:
+			elif has_equipment(Equipment.EquipmentType.PISTOL):
 				locomotion_state.travel("PistolJump")
 			else:
 				locomotion_state.travel("JumpingUp")
@@ -386,18 +429,22 @@ func apply_input(delta: float) -> void:
 		if is_crouching:
 			animation_tree.set(CROUCHING_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 		else:
-			if equipped_bow:
+			if has_equipment(Equipment.EquipmentType.BOW):
 				if is_shooting:
 					animation_tree.set(ARCHERY_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 				else:
 					animation_tree.set(BOW_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
-			elif equipped_axe_1h or equipped_dagger or equipped_sword_1h:
+			elif has_any_equipment([
+				Equipment.EquipmentType.AXE_1H,
+				Equipment.EquipmentType.DAGGER,
+				Equipment.EquipmentType.SWORD_1H,
+			]):
 				animation_tree.set(SHIELD_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
-			elif equipped_axe_2h or equipped_staff or equipped_sword_2h:
+			elif has_heavy_weapon_equipped():
 				animation_tree.set(GREATSWORD_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
-			elif equipped_pistol:
+			elif has_equipment(Equipment.EquipmentType.PISTOL):
 				animation_tree.set(PISTOL_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
-			elif equipped_rifle:
+			elif has_equipment(Equipment.EquipmentType.RIFLE):
 				animation_tree.set(RIFLE_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 			else:
 				animation_tree.set(STANDING_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
@@ -434,18 +481,18 @@ func apply_input(delta: float) -> void:
 			var anim_blend := Vector2(0.0, target_motion.length())
 			if is_crouching:
 				animation_tree.set(CROUCHING_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
-			if equipped_bow:
+			if has_equipment(Equipment.EquipmentType.BOW):
 				if is_shooting:
 					animation_tree.set(ARCHERY_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
 				else:
 					animation_tree.set(BOW_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
-			elif equipped_axe_1h or equipped_dagger or equipped_shield or equipped_sword_1h:
+			elif has_one_handed_or_shield_equipped():
 				animation_tree.set(SHIELD_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
-			elif equipped_axe_2h or equipped_staff or equipped_sword_2h:
+			elif has_heavy_weapon_equipped():
 				animation_tree.set(GREATSWORD_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
-			elif equipped_pistol:
+			elif has_equipment(Equipment.EquipmentType.PISTOL):
 				animation_tree.set(PISTOL_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
-			elif equipped_rifle:
+			elif has_equipment(Equipment.EquipmentType.RIFLE):
 				animation_tree.set(RIFLE_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
 			else:
 				animation_tree.set(STANDING_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
