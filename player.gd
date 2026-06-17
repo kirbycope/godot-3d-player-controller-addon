@@ -20,6 +20,7 @@ const STANDING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionSt
 @export var motion_interpolate_speed: float = 10.0
 @export var rotation_interpolate_speed: float = 10.0
 
+var attack_sequence: int = 0
 var climbing_on_target: Vector3
 
 var equipment: Array = []
@@ -29,6 +30,8 @@ var can_player_shoot: bool = false
 
 var is_aiming_bow: bool = false
 var is_attacking: bool = false
+var is_attacking_2: bool = false
+var is_attacking_3: bool = false
 var is_drawing_arrow: bool = false
 var is_firing_arrow: bool = false
 var is_climbing: bool = false
@@ -55,6 +58,7 @@ var locomotion_state: ## Gets the [StateMachine] "LocomotionStateMachine"
 	get:
 		return animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH)
 
+@onready var attack_sequence_timer: Timer = $AttackSequenceTimer
 @onready var controls: CanvasLayer = $Controls
 @onready var debug: CanvasLayer = $Debug
 @onready var initial_position: Vector3 = transform.origin
@@ -262,7 +266,21 @@ func apply_input(delta: float) -> void:
 	target_motion = target_motion.lerp(target_motion, motion_interpolate_speed * delta)
 
 	# Attack { Microsoft: X, Nintendo: Y, Sony: Square, Keyboard: [Alt] }.
-	is_attacking = Input.is_action_just_pressed("attack") and can_player_attack
+	var attack_pressed := Input.is_action_just_pressed("attack") and can_player_attack
+	is_attacking = attack_pressed and attack_sequence == 0
+	is_attacking_2 = attack_pressed and attack_sequence == 1
+	is_attacking_3 = attack_pressed and attack_sequence == 2
+
+	# Attack Sequence: Sword and Shield
+	if attack_pressed and has_one_handed_or_shield_equipped():
+		attack_sequence_timer.start()
+		if locomotion_state.get_current_node() == "ShieldDownwardSlash":
+			attack_sequence = 1
+		elif locomotion_state.get_current_node() == "ShieldCrossSlash":
+			attack_sequence = 2
+		elif locomotion_state.get_current_node() == "ShieldPowerSlash":
+			attack_sequence = 0
+			attack_sequence_timer.stop()
 
 	# Shoot { Microsoft: 🅁T, Nintendo: 🅁L, Sony: 🅁2, Keyboard: [Left Mouse Button] } 
 	is_shooting = Input.is_action_pressed("shoot") and can_player_shoot
@@ -277,6 +295,7 @@ func apply_input(delta: float) -> void:
 	if not is_climbing and not is_hanging_braced and not is_hanging_free and not is_falling and not is_jumping and not is_sliding:
 		var current_state = locomotion_state.get_current_node()
 		var target_state = "StandingLocomotion"
+		var is_shield_attack_state: bool = current_state == "ShieldDownwardSlash" or current_state == "ShieldCrossSlash" or current_state == "ShieldPowerSlash"
 		
 		if is_crouching:
 			target_state = "CrouchingLocomotion"
@@ -293,7 +312,7 @@ func apply_input(delta: float) -> void:
 		
 		# Transition if target differs from current (skip Jump states but allow transition from any normal state)
 		if current_state != target_state:
-			if not current_state.contains("Jump"):
+			if not current_state.contains("Jump") and not is_shield_attack_state:
 				locomotion_state.travel(target_state)
 
 	# Check if braced "hanging" player is [now] free
@@ -540,3 +559,7 @@ func execute_jump() -> void:
 	velocity.y = 5.0
 	is_jump_queued = false
 	is_jumping = true
+
+
+func _on_attack_sequence_timer_timeout() -> void:
+	attack_sequence = 0
