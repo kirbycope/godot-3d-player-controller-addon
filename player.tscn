@@ -33,6 +33,7 @@
 [ext_resource type="AnimationLibrary" uid="uid://bb8bqxaoljtea" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Great Sword Jump Forward.glb" id="13_4dtsf"]
 [ext_resource type="PackedScene" uid="uid://carag3s40qlej" path="res://addons/3d_player_controller/controls.tscn" id="13_fjdng"]
 [ext_resource type="AnimationLibrary" uid="uid://bpd6c6727tn8l" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Running Jump.glb" id="13_yqsj4"]
+[ext_resource type="AnimationLibrary" uid="uid://ci6knm3gyds83" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Bow Standing Melee Punch.glb" id="14_65hob"]
 [ext_resource type="AnimationLibrary" uid="uid://caf028l7hgcsn" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Great Sword Strafe Right Walk.glb" id="14_ahqpo"]
 [ext_resource type="AnimationLibrary" uid="uid://igfdhfp0kbdy" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Right Strafe Walking.glb" id="14_kaeqx"]
 [ext_resource type="AnimationLibrary" uid="uid://bturhmypujigh" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Running Slide.glb" id="14_yqsj4"]
@@ -117,6 +118,7 @@
 [ext_resource type="AnimationLibrary" uid="uid://nqmxuwqipixi" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Bow Standing Draw Arrow.glb" id="60_6670k"]
 [ext_resource type="AnimationLibrary" uid="uid://djmfv5qy41m6c" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Bow Standing Fire Arrow.glb" id="61_y5ufv"]
 [ext_resource type="AnimationLibrary" uid="uid://cih2s5nl7qamp" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Sword And Shield Jump Forward.glb" id="67_pmh06"]
+[ext_resource type="AnimationLibrary" uid="uid://bl7mkfcwv3fc5" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Rifle Punch.glb" id="81_qrlyd"]
 [ext_resource type="AnimationLibrary" uid="uid://bfj3c8tq3weh8" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Waving.glb" id="87_bdiue"]
 [ext_resource type="AnimationLibrary" uid="uid://btuxf1l213ine" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Sword And Shield Cross Slash.glb" id="96_1xr2m"]
 [ext_resource type="AnimationLibrary" uid="uid://dm8pkmluwkwfl" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Sword And Shield Downward Slash.glb" id="99_2pyf1"]
@@ -274,6 +276,9 @@ blend_point_8/name = &"Bow Standing Walk Right_mixamo_com"
 blend_point_9/node = SubResource("AnimationNodeAnimation_gfpdn")
 blend_point_9/pos = Vector2(-0.5, 0)
 blend_point_9/name = &"Bow Standing Walk Left_mixamo_com"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_x0r6x"]
+animation = &"Bow Standing Melee Punch/mixamo_com"
 
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_i5x2b"]
 animation = &"Braced Hang Climbing On/mixamo_com"
@@ -519,6 +524,9 @@ blend_point_6/node = SubResource("AnimationNodeAnimation_58cou")
 blend_point_6/pos = Vector2(0, 0.5)
 blend_point_6/name = &"Pistol Aimed Walk_mixamo_com"
 
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_108j8"]
+animation = &"Pistol Whip/mixamo_com"
+
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_3tfnm"]
 animation = &"Rifle Falling/mixamo_com"
 
@@ -590,6 +598,9 @@ blend_point_8/name = &"Rifle Walk Left_mixamo_com"
 blend_point_9/node = SubResource("AnimationNodeAnimation_1y44o")
 blend_point_9/pos = Vector2(0, 1.5)
 blend_point_9/name = &"Rifle Sprint Forward_mixamo_com"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_yo4rg"]
+animation = &"Rifle Punch/mixamo_com"
 
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_yqsj4"]
 animation = &"Running Jump/mixamo_com"
@@ -1118,19 +1129,49 @@ advance_expression = "attack_sequence == 2"
 switch_mode = 2
 advance_mode = 2
 
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_80vgy"]
+xfade_time = 0.2
+switch_mode = 2
+advance_mode = 2
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_miiyk"]
+xfade_time = 0.2
+advance_mode = 2
+advance_expression = "is_attacking"
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_0742e"]
+xfade_time = 0.2
+advance_mode = 2
+advance_expression = "is_attacking"
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_r2tgl"]
+xfade_time = 0.2
+switch_mode = 2
+advance_mode = 2
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_q83rh"]
+advance_mode = 2
+advance_expression = "is_attacking"
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_02pgl"]
+switch_mode = 2
+advance_mode = 2
+
 [sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_ikfak"]
 states/ArcheryLocomotion/node = SubResource("AnimationNodeBlendSpace2D_7oe5o")
-states/ArcheryLocomotion/position = Vector2(-26.812017, 503.8292)
+states/ArcheryLocomotion/position = Vector2(-276.312, 618.5059)
 states/BowDrawArrow/node = SubResource("AnimationNodeAnimation_7oe5o")
-states/BowDrawArrow/position = Vector2(204.77087, 504.28513)
+states/BowDrawArrow/position = Vector2(-44.729126, 618.96185)
 states/BowFireArrow/node = SubResource("AnimationNodeAnimation_u0uda")
-states/BowFireArrow/position = Vector2(-26.761978, 400.65237)
+states/BowFireArrow/position = Vector2(-276.26196, 515.3291)
 states/BowJump/node = SubResource("AnimationNodeAnimation_8gy6p")
-states/BowJump/position = Vector2(-27.40515, 222.14569)
+states/BowJump/position = Vector2(-276.90515, 336.82242)
 states/BowJumpForward/node = SubResource("AnimationNodeAnimation_pmh06")
-states/BowJumpForward/position = Vector2(-27.775843, 312.38986)
+states/BowJumpForward/position = Vector2(-277.27585, 427.0666)
 states/BowLocomotion/node = SubResource("AnimationNodeBlendSpace2D_qcvw7")
-states/BowLocomotion/position = Vector2(203.2963, 222.97327)
+states/BowLocomotion/position = Vector2(-46.203705, 337.65)
+states/BowMeleePunch/node = SubResource("AnimationNodeAnimation_x0r6x")
+states/BowMeleePunch/position = Vector2(135.33911, 459.7306)
 states/BracedHangClimbingOn/node = SubResource("AnimationNodeAnimation_i5x2b")
 states/BracedHangClimbingOn/position = Vector2(13.722351, -268.04504)
 states/BracedHangHopLeft/node = SubResource("AnimationNodeAnimation_qvjkr")
@@ -1170,14 +1211,18 @@ states/PistolJumpForward/node = SubResource("AnimationNodeAnimation_8sny1")
 states/PistolJumpForward/position = Vector2(752.788, -314.69757)
 states/PistolLocomotion/node = SubResource("AnimationNodeBlendSpace2D_2rpu5")
 states/PistolLocomotion/position = Vector2(641.8879, -212.02664)
+states/PistolWhip/node = SubResource("AnimationNodeAnimation_108j8")
+states/PistolWhip/position = Vector2(846.41907, -212.06238)
 states/RifleFalling/node = SubResource("AnimationNodeAnimation_3tfnm")
-states/RifleFalling/position = Vector2(899.64557, -123.1096)
+states/RifleFalling/position = Vector2(1177.9001, -122.3868)
 states/RifleJumpForward/node = SubResource("AnimationNodeAnimation_y5ufv")
-states/RifleJumpForward/position = Vector2(955.641, -18.974165)
+states/RifleJumpForward/position = Vector2(1233.8955, -18.251373)
 states/RifleJumpUp/node = SubResource("AnimationNodeAnimation_6670k")
-states/RifleJumpUp/position = Vector2(718.3472, -122.35068)
+states/RifleJumpUp/position = Vector2(996.6018, -121.627884)
 states/RifleLocomotion/node = SubResource("AnimationNodeBlendSpace2D_goiqs")
-states/RifleLocomotion/position = Vector2(717.89355, -17.41975)
+states/RifleLocomotion/position = Vector2(996.14813, -16.696957)
+states/RiflePunch/node = SubResource("AnimationNodeAnimation_yo4rg")
+states/RiflePunch/position = Vector2(1233.1973, 101.32048)
 states/RunningJump/node = SubResource("AnimationNodeAnimation_yqsj4")
 states/RunningJump/position = Vector2(490.16055, -123.346115)
 states/RunningSlide/node = SubResource("AnimationNodeAnimation_hxj2c")
@@ -1199,13 +1244,13 @@ states/ShieldPowerSlash/position = Vector2(1229.5089, 459.30435)
 states/StandingLocomotion/node = SubResource("AnimationNodeBlendSpace2D_ha6ty")
 states/StandingLocomotion/position = Vector2(482.0031, 100.48486)
 states/Start/position = Vector2(205.62967, 156.02467)
-transitions = ["Start", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_fjdng"), "StandingLocomotion", "JumpingUp", SubResource("AnimationNodeStateMachineTransition_yqsj4"), "JumpingUp", "Falling", SubResource("AnimationNodeStateMachineTransition_hxj2c"), "Falling", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_y12aw"), "StandingLocomotion", "RunningJump", SubResource("AnimationNodeStateMachineTransition_sjxju"), "RunningJump", "Falling", SubResource("AnimationNodeStateMachineTransition_b226b"), "StandingLocomotion", "RunningSlide", SubResource("AnimationNodeStateMachineTransition_osckp"), "RunningSlide", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_ithc2"), "StandingLocomotion", "CrouchingLocomotion", SubResource("AnimationNodeStateMachineTransition_q6nkd"), "CrouchingLocomotion", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_u7c7f"), "StandingLocomotion", "ShieldLocomotion", SubResource("AnimationNodeStateMachineTransition_iyo7d"), "ShieldLocomotion", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_omd1c"), "GreatSwordLocomotion", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_7pm0t"), "StandingLocomotion", "GreatSwordLocomotion", SubResource("AnimationNodeStateMachineTransition_0nse3"), "BowLocomotion", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_ni3ff"), "StandingLocomotion", "BowLocomotion", SubResource("AnimationNodeStateMachineTransition_goiqs"), "StandingLocomotion", "RifleLocomotion", SubResource("AnimationNodeStateMachineTransition_xe2mw"), "RifleLocomotion", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_4dtsf"), "ShieldLocomotion", "ShieldJump", SubResource("AnimationNodeStateMachineTransition_bdiue"), "ShieldJump", "ShieldLocomotion", SubResource("AnimationNodeStateMachineTransition_3tfnm"), "GreatSwordLocomotion", "GreatSwordJump", SubResource("AnimationNodeStateMachineTransition_6670k"), "GreatSwordJump", "GreatSwordLocomotion", SubResource("AnimationNodeStateMachineTransition_y5ufv"), "BowLocomotion", "BowJump", SubResource("AnimationNodeStateMachineTransition_tfvvt"), "BowJump", "BowLocomotion", SubResource("AnimationNodeStateMachineTransition_g6cws"), "ShieldLocomotion", "ShieldJumpForward", SubResource("AnimationNodeStateMachineTransition_pmh06"), "ShieldJumpForward", "ShieldLocomotion", SubResource("AnimationNodeStateMachineTransition_8gy6p"), "BowLocomotion", "BowJumpForward", SubResource("AnimationNodeStateMachineTransition_skopi"), "BowJumpForward", "BowLocomotion", SubResource("AnimationNodeStateMachineTransition_58cou"), "GreatSwordJumpForward", "GreatSwordLocomotion", SubResource("AnimationNodeStateMachineTransition_0ivy0"), "GreatSwordLocomotion", "GreatSwordJumpForward", SubResource("AnimationNodeStateMachineTransition_gsv3e"), "RifleJumpUp", "RifleFalling", SubResource("AnimationNodeStateMachineTransition_k7rbq"), "RifleFalling", "RifleLocomotion", SubResource("AnimationNodeStateMachineTransition_2rpu5"), "RifleLocomotion", "RifleJumpUp", SubResource("AnimationNodeStateMachineTransition_8sny1"), "RifleJumpForward", "RifleLocomotion", SubResource("AnimationNodeStateMachineTransition_k2txm"), "RifleLocomotion", "RifleJumpForward", SubResource("AnimationNodeStateMachineTransition_jmy3t"), "StandingLocomotion", "PistolLocomotion", SubResource("AnimationNodeStateMachineTransition_4pi5w"), "PistolLocomotion", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_sbq7t"), "PistolLocomotion", "PistolJump", SubResource("AnimationNodeStateMachineTransition_35mdr"), "PistolJump", "PistolLocomotion", SubResource("AnimationNodeStateMachineTransition_ohxis"), "PistolLocomotion", "PistolJumpForward", SubResource("AnimationNodeStateMachineTransition_aisa3"), "PistolJumpForward", "PistolLocomotion", SubResource("AnimationNodeStateMachineTransition_w678r"), "BowDrawArrow", "ArcheryLocomotion", SubResource("AnimationNodeStateMachineTransition_65hob"), "BowLocomotion", "BowDrawArrow", SubResource("AnimationNodeStateMachineTransition_qrlyd"), "ArcheryLocomotion", "BowFireArrow", SubResource("AnimationNodeStateMachineTransition_435fm"), "BowFireArrow", "BowLocomotion", SubResource("AnimationNodeStateMachineTransition_0hp1n"), "BowDrawArrow", "BowLocomotion", SubResource("AnimationNodeStateMachineTransition_gfpdn"), "StandingLocomotion", "ClimbingLocomotion", SubResource("AnimationNodeStateMachineTransition_lgxfc"), "ClimbingLocomotion", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_3nrqr"), "FreeHangingLocomotion", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_acai3"), "StandingLocomotion", "FreeHangingLocomotion", SubResource("AnimationNodeStateMachineTransition_i5x2b"), "FreeHangingLocomotion", "BracedHangLocomotion", SubResource("AnimationNodeStateMachineTransition_7y4ty"), "BracedHangLocomotion", "FreeHangingLocomotion", SubResource("AnimationNodeStateMachineTransition_nyhat"), "FreeHangingLocomotion", "Falling", SubResource("AnimationNodeStateMachineTransition_dtq52"), "BracedHangLocomotion", "Falling", SubResource("AnimationNodeStateMachineTransition_barxw"), "ClimbingLocomotion", "Falling", SubResource("AnimationNodeStateMachineTransition_w3427"), "ClimbingLocomotion", "BracedHangHopLeft", SubResource("AnimationNodeStateMachineTransition_aujnh"), "BracedHangHopLeft", "ClimbingLocomotion", SubResource("AnimationNodeStateMachineTransition_0ktn1"), "BracedHangLocomotion", "BracedHangHopLeft", SubResource("AnimationNodeStateMachineTransition_8f4nr"), "BracedHangHopLeft", "BracedHangLocomotion", SubResource("AnimationNodeStateMachineTransition_yo4rg"), "ClimbingLocomotion", "BracedHangHopRight", SubResource("AnimationNodeStateMachineTransition_108j8"), "BracedHangHopRight", "ClimbingLocomotion", SubResource("AnimationNodeStateMachineTransition_x0r6x"), "BracedHangLocomotion", "BracedHangHopRight", SubResource("AnimationNodeStateMachineTransition_5j8id"), "BracedHangHopRight", "BracedHangLocomotion", SubResource("AnimationNodeStateMachineTransition_16twp"), "ClimbingLocomotion", "BracedHangHopUp", SubResource("AnimationNodeStateMachineTransition_7fh25"), "BracedHangHopUp", "ClimbingLocomotion", SubResource("AnimationNodeStateMachineTransition_al104"), "BracedHangHopUp", "BracedHangLocomotion", SubResource("AnimationNodeStateMachineTransition_nuaah"), "BracedHangLocomotion", "BracedHangHopUp", SubResource("AnimationNodeStateMachineTransition_mdcor"), "RunningJump", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_1xr2m"), "ClimbingLocomotion", "BracedHangLocomotion", SubResource("AnimationNodeStateMachineTransition_2pyf1"), "BracedHangLocomotion", "ClimbingLocomotion", SubResource("AnimationNodeStateMachineTransition_t7ta7"), "BracedHangLocomotion", "BracedHangClimbingOn", SubResource("AnimationNodeStateMachineTransition_jlii4"), "BracedHangClimbingOn", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_uie4o"), "ShieldLocomotion", "ShieldDownwardSlash", SubResource("AnimationNodeStateMachineTransition_xsdw7"), "ShieldDownwardSlash", "ShieldLocomotion", SubResource("AnimationNodeStateMachineTransition_mihb1"), "ShieldDownwardSlash", "ShieldCrossSlash", SubResource("AnimationNodeStateMachineTransition_xyp3y"), "ShieldCrossSlash", "ShieldLocomotion", SubResource("AnimationNodeStateMachineTransition_hdh45"), "ShieldLocomotion", "ShieldCrossSlash", SubResource("AnimationNodeStateMachineTransition_si0et"), "ShieldCrossSlash", "ShieldPowerSlash", SubResource("AnimationNodeStateMachineTransition_pij8a"), "ShieldPowerSlash", "ShieldLocomotion", SubResource("AnimationNodeStateMachineTransition_osk5u"), "ShieldLocomotion", "ShieldPowerSlash", SubResource("AnimationNodeStateMachineTransition_3avsa"), "ShieldLocomotion", "ShieldJumpAttack", SubResource("AnimationNodeStateMachineTransition_rb0fi"), "ShieldJumpAttack", "ShieldLocomotion", SubResource("AnimationNodeStateMachineTransition_75oso"), "GreatSwordLocomotion", "GreatSwordDownwardSlash", SubResource("AnimationNodeStateMachineTransition_jtt00"), "GreatSwordDownwardSlash", "GreatSwordLocomotion", SubResource("AnimationNodeStateMachineTransition_36tao"), "GreatSwordDownwardSlash", "GreatSwordLowSlash", SubResource("AnimationNodeStateMachineTransition_1t4v8"), "GreatSwordLowSlash", "GreatSwordPowerSlash", SubResource("AnimationNodeStateMachineTransition_3acf8"), "GreatSwordLocomotion", "GreatSwordLowSlash", SubResource("AnimationNodeStateMachineTransition_lq5p6"), "GreatSwordLowSlash", "GreatSwordLocomotion", SubResource("AnimationNodeStateMachineTransition_vtuwp"), "GreatSwordLocomotion", "GreatSwordPowerSlash", SubResource("AnimationNodeStateMachineTransition_jatfe"), "GreatSwordPowerSlash", "GreatSwordLocomotion", SubResource("AnimationNodeStateMachineTransition_y3ps5")]
-graph_offset = Vector2(94.159454, -114.10796)
+transitions = ["Start", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_fjdng"), "StandingLocomotion", "JumpingUp", SubResource("AnimationNodeStateMachineTransition_yqsj4"), "JumpingUp", "Falling", SubResource("AnimationNodeStateMachineTransition_hxj2c"), "Falling", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_y12aw"), "StandingLocomotion", "RunningJump", SubResource("AnimationNodeStateMachineTransition_sjxju"), "RunningJump", "Falling", SubResource("AnimationNodeStateMachineTransition_b226b"), "StandingLocomotion", "RunningSlide", SubResource("AnimationNodeStateMachineTransition_osckp"), "RunningSlide", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_ithc2"), "StandingLocomotion", "CrouchingLocomotion", SubResource("AnimationNodeStateMachineTransition_q6nkd"), "CrouchingLocomotion", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_u7c7f"), "StandingLocomotion", "ShieldLocomotion", SubResource("AnimationNodeStateMachineTransition_iyo7d"), "ShieldLocomotion", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_omd1c"), "GreatSwordLocomotion", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_7pm0t"), "StandingLocomotion", "GreatSwordLocomotion", SubResource("AnimationNodeStateMachineTransition_0nse3"), "BowLocomotion", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_ni3ff"), "StandingLocomotion", "BowLocomotion", SubResource("AnimationNodeStateMachineTransition_goiqs"), "StandingLocomotion", "RifleLocomotion", SubResource("AnimationNodeStateMachineTransition_xe2mw"), "RifleLocomotion", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_4dtsf"), "ShieldLocomotion", "ShieldJump", SubResource("AnimationNodeStateMachineTransition_bdiue"), "ShieldJump", "ShieldLocomotion", SubResource("AnimationNodeStateMachineTransition_3tfnm"), "GreatSwordLocomotion", "GreatSwordJump", SubResource("AnimationNodeStateMachineTransition_6670k"), "GreatSwordJump", "GreatSwordLocomotion", SubResource("AnimationNodeStateMachineTransition_y5ufv"), "BowLocomotion", "BowJump", SubResource("AnimationNodeStateMachineTransition_tfvvt"), "BowJump", "BowLocomotion", SubResource("AnimationNodeStateMachineTransition_g6cws"), "ShieldLocomotion", "ShieldJumpForward", SubResource("AnimationNodeStateMachineTransition_pmh06"), "ShieldJumpForward", "ShieldLocomotion", SubResource("AnimationNodeStateMachineTransition_8gy6p"), "BowLocomotion", "BowJumpForward", SubResource("AnimationNodeStateMachineTransition_skopi"), "BowJumpForward", "BowLocomotion", SubResource("AnimationNodeStateMachineTransition_58cou"), "GreatSwordJumpForward", "GreatSwordLocomotion", SubResource("AnimationNodeStateMachineTransition_0ivy0"), "GreatSwordLocomotion", "GreatSwordJumpForward", SubResource("AnimationNodeStateMachineTransition_gsv3e"), "RifleJumpUp", "RifleFalling", SubResource("AnimationNodeStateMachineTransition_k7rbq"), "RifleFalling", "RifleLocomotion", SubResource("AnimationNodeStateMachineTransition_2rpu5"), "RifleLocomotion", "RifleJumpUp", SubResource("AnimationNodeStateMachineTransition_8sny1"), "RifleJumpForward", "RifleLocomotion", SubResource("AnimationNodeStateMachineTransition_k2txm"), "RifleLocomotion", "RifleJumpForward", SubResource("AnimationNodeStateMachineTransition_jmy3t"), "StandingLocomotion", "PistolLocomotion", SubResource("AnimationNodeStateMachineTransition_4pi5w"), "PistolLocomotion", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_sbq7t"), "PistolLocomotion", "PistolJump", SubResource("AnimationNodeStateMachineTransition_35mdr"), "PistolJump", "PistolLocomotion", SubResource("AnimationNodeStateMachineTransition_ohxis"), "PistolLocomotion", "PistolJumpForward", SubResource("AnimationNodeStateMachineTransition_aisa3"), "PistolJumpForward", "PistolLocomotion", SubResource("AnimationNodeStateMachineTransition_w678r"), "BowDrawArrow", "ArcheryLocomotion", SubResource("AnimationNodeStateMachineTransition_65hob"), "BowLocomotion", "BowDrawArrow", SubResource("AnimationNodeStateMachineTransition_qrlyd"), "ArcheryLocomotion", "BowFireArrow", SubResource("AnimationNodeStateMachineTransition_435fm"), "BowFireArrow", "BowLocomotion", SubResource("AnimationNodeStateMachineTransition_0hp1n"), "BowDrawArrow", "BowLocomotion", SubResource("AnimationNodeStateMachineTransition_gfpdn"), "StandingLocomotion", "ClimbingLocomotion", SubResource("AnimationNodeStateMachineTransition_lgxfc"), "ClimbingLocomotion", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_3nrqr"), "FreeHangingLocomotion", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_acai3"), "StandingLocomotion", "FreeHangingLocomotion", SubResource("AnimationNodeStateMachineTransition_i5x2b"), "FreeHangingLocomotion", "BracedHangLocomotion", SubResource("AnimationNodeStateMachineTransition_7y4ty"), "BracedHangLocomotion", "FreeHangingLocomotion", SubResource("AnimationNodeStateMachineTransition_nyhat"), "FreeHangingLocomotion", "Falling", SubResource("AnimationNodeStateMachineTransition_dtq52"), "BracedHangLocomotion", "Falling", SubResource("AnimationNodeStateMachineTransition_barxw"), "ClimbingLocomotion", "Falling", SubResource("AnimationNodeStateMachineTransition_w3427"), "ClimbingLocomotion", "BracedHangHopLeft", SubResource("AnimationNodeStateMachineTransition_aujnh"), "BracedHangHopLeft", "ClimbingLocomotion", SubResource("AnimationNodeStateMachineTransition_0ktn1"), "BracedHangLocomotion", "BracedHangHopLeft", SubResource("AnimationNodeStateMachineTransition_8f4nr"), "BracedHangHopLeft", "BracedHangLocomotion", SubResource("AnimationNodeStateMachineTransition_yo4rg"), "ClimbingLocomotion", "BracedHangHopRight", SubResource("AnimationNodeStateMachineTransition_108j8"), "BracedHangHopRight", "ClimbingLocomotion", SubResource("AnimationNodeStateMachineTransition_x0r6x"), "BracedHangLocomotion", "BracedHangHopRight", SubResource("AnimationNodeStateMachineTransition_5j8id"), "BracedHangHopRight", "BracedHangLocomotion", SubResource("AnimationNodeStateMachineTransition_16twp"), "ClimbingLocomotion", "BracedHangHopUp", SubResource("AnimationNodeStateMachineTransition_7fh25"), "BracedHangHopUp", "ClimbingLocomotion", SubResource("AnimationNodeStateMachineTransition_al104"), "BracedHangHopUp", "BracedHangLocomotion", SubResource("AnimationNodeStateMachineTransition_nuaah"), "BracedHangLocomotion", "BracedHangHopUp", SubResource("AnimationNodeStateMachineTransition_mdcor"), "RunningJump", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_1xr2m"), "ClimbingLocomotion", "BracedHangLocomotion", SubResource("AnimationNodeStateMachineTransition_2pyf1"), "BracedHangLocomotion", "ClimbingLocomotion", SubResource("AnimationNodeStateMachineTransition_t7ta7"), "BracedHangLocomotion", "BracedHangClimbingOn", SubResource("AnimationNodeStateMachineTransition_jlii4"), "BracedHangClimbingOn", "StandingLocomotion", SubResource("AnimationNodeStateMachineTransition_uie4o"), "ShieldLocomotion", "ShieldDownwardSlash", SubResource("AnimationNodeStateMachineTransition_xsdw7"), "ShieldDownwardSlash", "ShieldLocomotion", SubResource("AnimationNodeStateMachineTransition_mihb1"), "ShieldDownwardSlash", "ShieldCrossSlash", SubResource("AnimationNodeStateMachineTransition_xyp3y"), "ShieldCrossSlash", "ShieldLocomotion", SubResource("AnimationNodeStateMachineTransition_hdh45"), "ShieldLocomotion", "ShieldCrossSlash", SubResource("AnimationNodeStateMachineTransition_si0et"), "ShieldCrossSlash", "ShieldPowerSlash", SubResource("AnimationNodeStateMachineTransition_pij8a"), "ShieldPowerSlash", "ShieldLocomotion", SubResource("AnimationNodeStateMachineTransition_osk5u"), "ShieldLocomotion", "ShieldPowerSlash", SubResource("AnimationNodeStateMachineTransition_3avsa"), "ShieldLocomotion", "ShieldJumpAttack", SubResource("AnimationNodeStateMachineTransition_rb0fi"), "ShieldJumpAttack", "ShieldLocomotion", SubResource("AnimationNodeStateMachineTransition_75oso"), "GreatSwordLocomotion", "GreatSwordDownwardSlash", SubResource("AnimationNodeStateMachineTransition_jtt00"), "GreatSwordDownwardSlash", "GreatSwordLocomotion", SubResource("AnimationNodeStateMachineTransition_36tao"), "GreatSwordDownwardSlash", "GreatSwordLowSlash", SubResource("AnimationNodeStateMachineTransition_1t4v8"), "GreatSwordLowSlash", "GreatSwordPowerSlash", SubResource("AnimationNodeStateMachineTransition_3acf8"), "GreatSwordLocomotion", "GreatSwordLowSlash", SubResource("AnimationNodeStateMachineTransition_lq5p6"), "GreatSwordLowSlash", "GreatSwordLocomotion", SubResource("AnimationNodeStateMachineTransition_vtuwp"), "GreatSwordLocomotion", "GreatSwordPowerSlash", SubResource("AnimationNodeStateMachineTransition_jatfe"), "GreatSwordPowerSlash", "GreatSwordLocomotion", SubResource("AnimationNodeStateMachineTransition_y3ps5"), "RiflePunch", "RifleLocomotion", SubResource("AnimationNodeStateMachineTransition_80vgy"), "RifleLocomotion", "RiflePunch", SubResource("AnimationNodeStateMachineTransition_miiyk"), "PistolLocomotion", "PistolWhip", SubResource("AnimationNodeStateMachineTransition_0742e"), "PistolWhip", "PistolLocomotion", SubResource("AnimationNodeStateMachineTransition_r2tgl"), "BowLocomotion", "BowMeleePunch", SubResource("AnimationNodeStateMachineTransition_q83rh"), "BowMeleePunch", "BowLocomotion", SubResource("AnimationNodeStateMachineTransition_02pgl")]
+graph_offset = Vector2(-569.80084, 234.38698)
 
 [sub_resource type="AnimationNodeTimeScale" id="AnimationNodeTimeScale_45pxl"]
 
 [sub_resource type="AnimationNodeBlendTree" id="AnimationNodeBlendTree_senyo"]
-graph_offset = Vector2(-340.84863, 63.290268)
+graph_offset = Vector2(-441.64917, -48.069687)
 nodes/output/position = Vector2(506.66666, 133.33333)
 nodes/LocomotionStateMachine/node = SubResource("AnimationNodeStateMachine_ikfak")
 nodes/LocomotionStateMachine/position = Vector2(-226.66667, 120)
@@ -1236,16 +1281,16 @@ transform = Transform3D(-1, 0, -1.509958e-07, 0, 1, 0, 1.509958e-07, 0, -1, 0, 0
 [node name="GeneralSkeleton" parent="PlayerModel/Armature" parent_id_path=PackedInt32Array(1771073607, 1367199574) index="0" unique_id=1986929927]
 bones/0/position = Vector3(0.002616127, 0, -0.001263435)
 bones/1/position = Vector3(6.945423e-07, 0.9899598, -4.8260063e-11)
-bones/1/rotation = Quaternion(-0.03398458, -0.046004828, -0.02596905, 0.9980252)
-bones/2/rotation = Quaternion(0.032499913, 0.016513206, 0.023902174, 0.9990494)
-bones/3/rotation = Quaternion(0.010717371, 0.0044178003, 0.01420517, 0.9998319)
-bones/4/rotation = Quaternion(0.010195371, 0.004325359, 0.014143219, 0.9998387)
-bones/5/rotation = Quaternion(0.050454646, -0.0020974565, 0.0031011908, 0.99871933)
-bones/6/rotation = Quaternion(-0.07413392, 0.0069427406, -0.0015248747, 0.99722296)
-bones/8/rotation = Quaternion(0.45816833, 0.49868315, 0.6338485, -0.37367502)
-bones/9/rotation = Quaternion(0.12567274, 0.805052, -0.56677973, -0.121895164)
+bones/1/rotation = Quaternion(-0.036590263, -0.04266509, -0.02620264, 0.99807537)
+bones/2/rotation = Quaternion(0.032632776, 0.017129343, 0.023940926, 0.9990338)
+bones/3/rotation = Quaternion(0.010562511, 0.0043203225, 0.014274156, 0.9998331)
+bones/4/rotation = Quaternion(0.010063916, 0.0042682984, 0.014222048, 0.9998392)
+bones/5/rotation = Quaternion(0.050985422, -0.0022205045, 0.002956047, 0.99869263)
+bones/6/rotation = Quaternion(-0.075135365, 0.006702919, -0.001675257, 0.99714947)
+bones/8/rotation = Quaternion(0.45836577, 0.4985352, 0.63366175, -0.37394708)
+bones/9/rotation = Quaternion(0.12568334, 0.8049751, -0.56697655, -0.12147616)
 bones/10/rotation = Quaternion(0.009004968, -0.7070495, 0.009005011, 0.7070495)
-bones/11/rotation = Quaternion(0.05223011, 0.47577146, -0.013012504, 0.8779204)
+bones/11/rotation = Quaternion(0.052094046, 0.47580594, -0.013339671, 0.87790495)
 bones/12/rotation = Quaternion(-0.23049825, 0.68289214, 0.17169982, 0.67160124)
 bones/13/rotation = Quaternion(0.20149457, 0.20389189, -0.059591617, 0.9561783)
 bones/14/rotation = Quaternion(0.04001307, -0.052876003, -0.12858759, 0.9894789)
@@ -1262,10 +1307,10 @@ bones/26/rotation = Quaternion(0.15521277, -1.9371507e-07, -0.015905587, 0.98775
 bones/28/rotation = Quaternion(0.23386711, -0.0035057068, -0.049008608, 0.97102636)
 bones/29/rotation = Quaternion(0.15125789, -1.3411045e-07, -0.015500367, 0.98837286)
 bones/30/rotation = Quaternion(0.14349763, -8.940697e-08, -0.014705032, 0.9895415)
-bones/32/rotation = Quaternion(0.47466484, -0.47964177, -0.63816404, -0.37065306)
-bones/33/rotation = Quaternion(-0.14709605, 0.8281076, -0.49634367, 0.21504363)
-bones/34/rotation = Quaternion(0.040696297, 0.7059348, -0.0406962, 0.7059347)
-bones/35/rotation = Quaternion(0.041206997, -0.56917495, 0.035873987, 0.82039934)
+bones/32/rotation = Quaternion(0.47480267, -0.47955444, -0.63797385, -0.37091696)
+bones/33/rotation = Quaternion(-0.14694886, 0.82789963, -0.49687383, 0.21472046)
+bones/34/rotation = Quaternion(0.04061624, 0.7059394, -0.04061615, 0.7059392)
+bones/35/rotation = Quaternion(0.041088693, -0.5697706, 0.036411006, 0.819968)
 bones/36/rotation = Quaternion(-0.24051937, -0.6719299, -0.18474628, 0.6756696)
 bones/37/rotation = Quaternion(0.2382267, -0.20985532, 0.051183697, 0.94688386)
 bones/38/rotation = Quaternion(0.045545463, 0.04607943, 0.16169317, 0.984712)
@@ -1282,14 +1327,14 @@ bones/50/rotation = Quaternion(0.15551049, 5.9604645e-08, 0.012668192, 0.9877530
 bones/52/rotation = Quaternion(0.2284934, 0.0034029484, 0.04298061, 0.9725903)
 bones/53/rotation = Quaternion(0.15154798, 7.4505806e-08, 0.012345433, 0.9883728)
 bones/54/rotation = Quaternion(0.14377289, 8.940697e-08, 0.011711985, 0.9895414)
-bones/56/rotation = Quaternion(0.13799018, 0.07734186, 0.98447245, -0.07609952)
-bones/57/rotation = Quaternion(-0.038158245, 0.9929605, -0.1117083, 0.009728839)
-bones/58/rotation = Quaternion(-0.042039026, 0.7105147, -0.7006642, 0.049712766)
+bones/56/rotation = Quaternion(0.13808154, 0.07666977, 0.9844749, -0.07657976)
+bones/57/rotation = Quaternion(-0.037983928, 0.9926194, -0.115000196, 0.0062395483)
+bones/58/rotation = Quaternion(-0.042179808, 0.7097439, -0.70141953, 0.04995023)
 bones/59/rotation = Quaternion(-9.186695e-08, 0.9990753, 0.042996287, -1.6792885e-08)
-bones/61/rotation = Quaternion(-0.09205634, -0.013797131, 0.99526584, -0.027949061)
-bones/62/rotation = Quaternion(0.03429648, 0.99397635, -0.06243954, -0.08328307)
-bones/63/rotation = Quaternion(0.009832482, 0.6795345, -0.7330248, -0.028477723)
-bones/64/rotation = Quaternion(-2.1717344e-07, 0.99808085, 0.061924927, -2.621373e-08)
+bones/61/rotation = Quaternion(-0.09243427, -0.01524364, 0.9952009, -0.028265174)
+bones/62/rotation = Quaternion(0.034741823, 0.9937472, -0.06584291, -0.08321344)
+bones/63/rotation = Quaternion(0.008341147, 0.67769676, -0.7346569, -0.03060589)
+bones/64/rotation = Quaternion(-2.2277732e-07, 0.99808764, 0.06181635, -2.5735348e-08)
 
 [node name="LookAtModifier3D" type="LookAtModifier3D" parent="PlayerModel/Armature/GeneralSkeleton" index="2" unique_id=703324849]
 active = false
@@ -1319,6 +1364,7 @@ secondary_damp_threshold = 1.0
 "libraries/Bow Standing Idle 01" = ExtResource("31_0nse3")
 "libraries/Bow Standing Jump" = ExtResource("50_uo0sf")
 "libraries/Bow Standing Jump Running To Run Forward" = ExtResource("49_1y44o")
+"libraries/Bow Standing Melee Punch" = ExtResource("14_65hob")
 "libraries/Bow Standing Run Back" = ExtResource("32_c2k3f")
 "libraries/Bow Standing Run Forward" = ExtResource("33_ictlc")
 "libraries/Bow Standing Run Left" = ExtResource("34_3iail")
@@ -1385,6 +1431,7 @@ libraries/Jump = ExtResource("5_07327")
 "libraries/Rifle Jump Backward" = ExtResource("26_i6d3u")
 "libraries/Rifle Jump Forward" = ExtResource("27_v5tdj")
 "libraries/Rifle Jump Up" = ExtResource("28_rsuuk")
+"libraries/Rifle Punch" = ExtResource("81_qrlyd")
 "libraries/Rifle Run Backward" = ExtResource("22_wwnia")
 "libraries/Rifle Run Forward" = ExtResource("23_qrmb0")
 "libraries/Rifle Run Left" = ExtResource("24_xf6l6")
