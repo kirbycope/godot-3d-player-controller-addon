@@ -281,6 +281,17 @@ func apply_input(delta: float) -> void:
 		elif locomotion_state.get_current_node() == "ShieldPowerSlash":
 			attack_sequence = 0
 			attack_sequence_timer.stop()
+	
+	# Attack Sequence: Greatsword
+	elif attack_pressed and has_heavy_weapon_equipped():
+		attack_sequence_timer.start()
+		if locomotion_state.get_current_node() == "GreatSwordDownwardSlash":
+			attack_sequence = 1
+		elif locomotion_state.get_current_node() == "GreatSwordLowSlash":
+			attack_sequence = 2
+		elif locomotion_state.get_current_node() == "GreatSwordPowerSlash":
+			attack_sequence = 0
+			attack_sequence_timer.stop()
 
 	# Shoot { Microsoft: 🅁T, Nintendo: 🅁L, Sony: 🅁2, Keyboard: [Left Mouse Button] } 
 	is_shooting = Input.is_action_pressed("shoot") and can_player_shoot
