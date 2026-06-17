@@ -1,15 +1,15 @@
 [remap]
 
-importer="scene"
+importer="animation_library"
 importer_version=1
-type="PackedScene"
+type="AnimationLibrary"
 uid="uid://bdl3yymua2mfv"
-path="res://.godot/imported/Rifle Aiming Jump.glb-3febbb8d21f6231111c9fb46dd8210e4.scn"
+path="res://.godot/imported/Rifle Aiming Jump.glb-3febbb8d21f6231111c9fb46dd8210e4.res"
 
 [deps]
 
 source_file="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Rifle Aiming Jump.glb"
-dest_files=["res://.godot/imported/Rifle Aiming Jump.glb-3febbb8d21f6231111c9fb46dd8210e4.scn"]
+dest_files=["res://.godot/imported/Rifle Aiming Jump.glb-3febbb8d21f6231111c9fb46dd8210e4.res"]
 
 [params]
 
@@ -39,7 +39,13 @@ import_script/path=""
 materials/extract=0
 materials/extract_format=0
 materials/extract_path=""
-_subresources={}
+_subresources={
+"nodes": {
+"PATH:Armature/Skeleton3D": {
+"retarget/bone_map": Resource("uid://cbom5s7xsb5nn", "res://addons/3d_player_controller/assets/mixamo/characters/mixamo_root_bone_map.tres")
+}
+}
+}
 gltf/naming_version=2
 gltf/embedded_image_handling=1
 gltf/texture_map_mode=1
