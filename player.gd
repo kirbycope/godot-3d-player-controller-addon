@@ -30,8 +30,9 @@ var can_player_shoot: bool = false
 
 var is_aiming_bow: bool = false
 var is_attacking: bool = false
-var is_attacking_2: bool = false
-var is_attacking_3: bool = false
+var is_attacking_1: bool = false # Attack Sequence: 1 of n
+var is_attacking_2: bool = false # Attack Sequence: 2 of n
+var is_attacking_3: bool = false # Attack Sequence: 3 of n
 var is_drawing_arrow: bool = false
 var is_firing_arrow: bool = false
 var is_climbing: bool = false
@@ -266,8 +267,18 @@ func apply_input(delta: float) -> void:
 	target_motion = target_motion.lerp(target_motion, motion_interpolate_speed * delta)
 
 	# Attack { Microsoft: X, Nintendo: Y, Sony: Square, Keyboard: [Alt] }.
+	is_attacking = locomotion_state.get_current_node() in [
+		"ShieldDownwardSlash",
+		"ShieldCrossSlash",
+		"ShieldPowerSlash",
+		"GreatSwordDownwardSlash",
+		"GreatSwordLowSlash",
+		"GreatSwordPowerSlash",
+	] or (Input.is_action_pressed("attack") and can_player_attack)
+
+	# Attack { Microsoft: X, Nintendo: Y, Sony: Square, Keyboard: [Alt] }.
 	var attack_pressed := Input.is_action_just_pressed("attack") and can_player_attack
-	is_attacking = attack_pressed and attack_sequence == 0
+	is_attacking_1 = attack_pressed and attack_sequence == 0
 	is_attacking_2 = attack_pressed and attack_sequence == 1
 	is_attacking_3 = attack_pressed and attack_sequence == 2
 

@@ -123,7 +123,11 @@ offset_right = 155.0
 offset_bottom = 23.0
 text = "STATES"
 
-[node name="is_climbing" type="CheckBox" parent="States" unique_id=1740747748]
+[node name="is_attacking" type="CheckBox" parent="States" unique_id=1740747748]
+layout_mode = 2
+text = "is_attacking"
+
+[node name="is_climbing" type="CheckBox" parent="States" unique_id=241498315]
 layout_mode = 2
 text = "is_climbing"
 
