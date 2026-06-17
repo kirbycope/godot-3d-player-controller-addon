@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://f7edcjgqq1jp"
-path="res://.godot/imported/Standing Draw Arrow.fbx-9bcc20f3c0a39b9612521664fb65b3a9.scn"
+uid="uid://cwu7kho4i80kw"
+path="res://.godot/imported/Rifle Firing Running.fbx-f4d33355a3f67b33392a661e979fa33a.scn"
 
 [deps]
 
-source_file="res://addons/3d_player_controller/assets/mixamo/animations/source/Standing Draw Arrow.fbx"
-dest_files=["res://.godot/imported/Standing Draw Arrow.fbx-9bcc20f3c0a39b9612521664fb65b3a9.scn"]
+source_file="res://addons/3d_player_controller/assets/mixamo/animations/source/Rifle Firing Running.fbx"
+dest_files=["res://.godot/imported/Rifle Firing Running.fbx-f4d33355a3f67b33392a661e979fa33a.scn"]
 
 [params]
 
