@@ -1,0 +1,22 @@
+[gd_scene format=3 uid="uid://p8gc2np8d4ej"]
+
+[ext_resource type="Script" uid="uid://bbtrlr2iw4qic" path="res://addons/3d_player_controller/assets/quaternius/paraglider/paraglider.gd" id="1_1x2d5"]
+[ext_resource type="PackedScene" uid="uid://28w5vav5xicg" path="res://addons/3d_player_controller/assets/quaternius/paraglider/Paraglider.glb" id="1_pqews"]
+[ext_resource type="AudioStream" uid="uid://b6p3jfykr2tns" path="res://addons/3d_player_controller/assets/freesound/72853__benboncan__parachute.wav" id="3_b4i8u"]
+[ext_resource type="AudioStream" uid="uid://cu12hhqie3sjn" path="res://addons/3d_player_controller/assets/freesound/570701__robinhood76__10136-flag-flicking-on-strong-wind-isolated.wav" id="4_i248c"]
+
+[node name="Paraglider" type="Node3D" unique_id=986503034]
+script = ExtResource("1_1x2d5")
+
+[node name="Paraglider2" parent="." unique_id=169648825 instance=ExtResource("1_pqews")]
+transform = Transform3D(0.9961947, -0.08715578, 0, 0.043577865, 0.49809757, -0.86602587, 0.07547908, 0.8627304, 0.5000002, 0.245, 0.165, -0.33)
+
+[node name="LeftWing" type="Marker3D" parent="." unique_id=383172567]
+
+[node name="RightWing" type="Marker3D" parent="." unique_id=323862821]
+
+[node name="Opening" type="AudioStreamPlayer3D" parent="." unique_id=404195623]
+stream = ExtResource("3_b4i8u")
+
+[node name="ClothRuffling" type="AudioStreamPlayer3D" parent="." unique_id=700950393]
+stream = ExtResource("4_i248c")

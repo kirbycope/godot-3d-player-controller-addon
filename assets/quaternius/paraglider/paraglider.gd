@@ -32,3 +32,16 @@ func _process(_delta: float) -> void:
 		visible = false
 		$LeftWing.visible = false
 		$RightWing.visible = false
+
+
+func _physics_process(delta: float) -> void:
+	if not visible:
+		if player.is_jumping and Input.is_action_just_pressed("jump"):
+			show()
+			player.locomotion_state.travel("Paragliding")
+			player.is_jumping = false
+			player.velocity.y = min(player.velocity.y, 0.0)
+			player.is_paragliding = true
+	if visible and player.is_on_floor():
+		player.is_paragliding = false
+		hide()

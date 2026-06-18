@@ -48,6 +48,7 @@ var is_falling: bool = false
 var is_focusing: bool = false
 var is_jumping: bool = false
 var is_jump_queued: bool = false
+var is_paragliding: bool = false
 var is_shooting: bool = false
 var is_sliding: bool = false
 var is_sprinting: bool = false
@@ -161,7 +162,7 @@ func _physics_process(delta: float) -> void:
 			is_hanging_free = false
 
 	# Track if the player is "falling"
-	is_falling = locomotion_state.get_current_node() == "Falling"
+	is_falling = locomotion_state.get_current_node() == "Falling" and not is_paragliding
 
 	# Stop "jumping" if player is "falling".
 	if is_jumping and is_falling:
@@ -265,6 +266,59 @@ func apply_input(delta: float) -> void:
 
 	# Smoothly interpolate the target_motion for more gradual changes in animation blending and rotation.
 	target_motion = target_motion.lerp(target_motion, motion_interpolate_speed * delta)
+
+	# While paragliding, block regular locomotion transitions and drive movement directly.
+	if is_paragliding:
+		is_attacking = false
+		is_attacking_1 = false
+		is_attacking_2 = false
+		is_attacking_3 = false
+		is_shooting = false
+		is_crouching = false
+		is_focusing = false
+		is_sprinting = false
+		is_sliding = false
+		is_climbing = false
+		is_climbing_on = false
+		is_hanging_braced = false
+		is_hanging_free = false
+		is_hopping_up = false
+		is_falling = false
+		is_jump_queued = false
+
+		if is_on_floor():
+			is_paragliding = false
+		else:
+			if locomotion_state.get_current_node() != "Paragliding":
+				locomotion_state.travel("Paragliding")
+
+			var camera_basis := spring_arm.global_transform.basis
+			var target_dir := camera_basis * Vector3(target_motion.x, 0.0, -target_motion.y)
+			target_dir.y = 0.0
+			if target_dir.length_squared() > 0.001 and not is_firing_arrow:
+				target_dir = target_dir.normalized()
+				var q_from: Quaternion = orientation.basis.get_rotation_quaternion()
+				var q_to: Quaternion = Basis.looking_at(-target_dir).get_rotation_quaternion()
+				orientation.basis = Basis(q_from.slerp(q_to, delta * rotation_interpolate_speed))
+
+			var current_h_vel := Vector3(velocity.x, 0.0, velocity.z)
+			var glide_speed := max(current_h_vel.length(), 4.0)
+			if target_dir.length_squared() > 0.001:
+				current_h_vel = target_dir.normalized() * glide_speed
+
+			velocity.x = current_h_vel.x
+			velocity.z = current_h_vel.z
+			velocity.y = min(velocity.y, 0.0)
+			velocity += get_gravity() * 0.35 * delta
+			velocity.y = max(velocity.y, -4.0)
+			set_velocity(velocity)
+			set_up_direction(Vector3.UP)
+			move_and_slide()
+
+			orientation.origin = Vector3()
+			orientation = orientation.orthonormalized()
+			player_model.global_transform.basis = orientation.basis
+			return
 
 	# Attack { Microsoft: X, Nintendo: Y, Sony: Square, Keyboard: [Alt] }.
 	is_attacking = locomotion_state.get_current_node() in [
