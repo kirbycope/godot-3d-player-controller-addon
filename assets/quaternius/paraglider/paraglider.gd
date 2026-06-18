@@ -13,35 +13,28 @@ func _ready() -> void:
 
 
 ## Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(_delta: float) -> void:
-	if not visible and player.is_paragliding:
-		if not opening.playing:
-			opening.play()
-		await get_tree().create_timer(0.5).timeout
-		visible = true
-		if not cloth_ruffling.playing: 
-			cloth_ruffling.play()
-		await get_tree().create_timer(0.3).timeout
-		$LeftWing.visible = true
-		$RightWing.visible = true
-	elif visible and not player.is_paragliding:
-		if opening.playing:
-			opening.play()
-		if cloth_ruffling.playing:
-			cloth_ruffling.stop()
-		visible = false
-		$LeftWing.visible = false
-		$RightWing.visible = false
-
-
 func _physics_process(delta: float) -> void:
 	if not visible:
 		if player.is_jumping and Input.is_action_just_pressed("jump"):
-			show()
 			player.locomotion_state.travel("Paragliding")
 			player.is_jumping = false
 			player.velocity.y = min(player.velocity.y, 0.0)
 			player.is_paragliding = true
+			if not opening.playing:
+				opening.play()
+				await get_tree().create_timer(0.2).timeout
+				show()
+				if not cloth_ruffling.playing: 
+					cloth_ruffling.play()
+				await get_tree().create_timer(0.3).timeout
+				$LeftWing.visible = true
+				$RightWing.visible = true
 	if visible and player.is_on_floor():
 		player.is_paragliding = false
 		hide()
+		if opening.playing:
+			opening.stop()
+		if cloth_ruffling.playing:
+			cloth_ruffling.stop()
+		$LeftWing.visible = false
+		$RightWing.visible = false

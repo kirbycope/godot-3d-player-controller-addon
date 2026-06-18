@@ -17,6 +17,8 @@ transform = Transform3D(0.9961947, -0.08715578, 0, 0.043577865, 0.49809757, -0.8
 
 [node name="Opening" type="AudioStreamPlayer3D" parent="." unique_id=404195623]
 stream = ExtResource("3_b4i8u")
+max_db = -6.0
 
 [node name="ClothRuffling" type="AudioStreamPlayer3D" parent="." unique_id=700950393]
 stream = ExtResource("4_i248c")
+max_db = -6.0
