@@ -119,6 +119,3 @@ func removePoint(i):
 	points.remove_at(i)
 	widths.remove_at(i)
 	lifePoints.remove_at(i)
-
-
-
