@@ -2,6 +2,7 @@ class_name Bow
 extends Equipment
 
 
+## Called once on each physics tick, and allows Nodes to synchronize their logic with physics ticks.
 func _physics_process(delta: float) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return

@@ -14,22 +14,22 @@ enum EquipmentType {
 	SWORD_AND_SHIELD,
 }
 
-@export var bone_attachment_bone_name: String
-@export var can_attack: bool = false
-@export var can_shoot: bool = false
-@export var equipment_type: EquipmentType
-@export var is_exclusive: bool = false
-@export var is_throwable: bool = false
+@export var bone_attachment_bone_name: String ## The name of the bone on the player's skeleton to which this equipment will be attached when equipped. (e.g. "RightHand", "LeftHand", etc.)
+@export var can_attack: bool = false ## Does this equipment have an attack/melee action that the player can perform?
+@export var can_shoot: bool = false ## Does this equipment have a shooting/ranged action that the player can perform?
+@export var equipment_type: EquipmentType ## The type of equipment (e.g. AXE_1H, BOW, RIFLE, etc.)
+@export var is_exclusive: bool = false ## Is this equipment exclusive, meaning it cannot be equipped with other equipment types simultaneously?
+@export var is_throwable: bool = false ## Can this equipment be thrown?
 @export var projectile_speed: float = 50.0 ## meters/second (Arrows, Bullets, etc.)
-@export var position_offset: Vector3:
+@export var position_offset: Vector3: ## Positional offset applied to the equipment when attached to the player.
 	set(val):
 		position_offset = val
 		_update_attachment_offsets()
-@export var rotation_offset_degrees: Vector3:
+@export var rotation_offset_degrees: Vector3: ## Rotational offset in degrees applied to the equipment when attached to the player.
 	set(val):
 		rotation_offset_degrees = val
 		_update_attachment_offsets()
-@export var scale_offset: Vector3 = Vector3.ONE:
+@export var scale_offset: Vector3 = Vector3.ONE: ## Scale offset applied to the equipment when attached to the player.
 	set(val):
 		scale_offset = val
 		_update_attachment_offsets()
