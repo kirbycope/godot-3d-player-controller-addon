@@ -67,9 +67,21 @@ func _physics_process(_delta: float) -> void:
 	if camera_ray_cast.is_colliding():
 		var collider = camera_ray_cast.get_collider()
 		if collider:
-			if collider.get_parent().has_method("display_menu"):
-				collider.get_parent().display_menu(player)
-				looking_at = collider.get_parent()
+			var target = null
+			if collider.has_method("display_menu"):
+				target = collider
+			elif collider.get_parent() and collider.get_parent().has_method("display_menu"):
+				target = collider.get_parent()
+			
+			if target:
+				if looking_at and looking_at != target and looking_at.has_method("hide_menu"):
+					looking_at.hide_menu()
+				target.display_menu(player)
+				looking_at = target
+			else:
+				if looking_at and looking_at.has_method("hide_menu"):
+					looking_at.hide_menu()
+				looking_at = null
 	else:
 		if looking_at and looking_at.has_method("hide_menu"):
 			looking_at.hide_menu()
