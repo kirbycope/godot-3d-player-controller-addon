@@ -41,9 +41,10 @@ var is_crouching: bool = false
 var is_emoting: bool = false
 var is_hanging_braced: bool = false
 var is_hanging_free: bool = false
-var is_hopping_left: bool = false
-var is_hopping_right: bool = false
-var is_hopping_up: bool = false
+var is_climbing_hopping_left: bool = false
+var is_climbing_hopping_right: bool = false
+var is_climbing_hopping_up: bool = false
+var is_hopping_from_climbing: bool = false
 var is_falling: bool = false
 var is_focusing: bool = false
 var is_jumping: bool = false
@@ -117,6 +118,10 @@ func _input(event: InputEvent) -> void:
 		is_climbing = false
 		is_hanging_braced = false
 		is_hanging_free = false
+		is_climbing_hopping_left = false
+		is_climbing_hopping_right = false
+		is_climbing_hopping_up = false
+		is_hopping_from_climbing = false
 		locomotion_state.travel("Falling")
 		is_falling = true
 
@@ -176,6 +181,10 @@ func _physics_process(delta: float) -> void:
 		is_hanging_braced = false
 		is_hanging_free = false
 		is_jumping = false
+		is_climbing_hopping_left = false
+		is_climbing_hopping_right = false
+		is_climbing_hopping_up = false
+		is_hopping_from_climbing = false
 
 	# Stop "sliding" when the animation finishes.
 	var was_sliding := is_sliding
@@ -282,7 +291,10 @@ func apply_input(delta: float) -> void:
 		is_climbing_on = false
 		is_hanging_braced = false
 		is_hanging_free = false
-		is_hopping_up = false
+		is_climbing_hopping_left = false
+		is_climbing_hopping_right = false
+		is_climbing_hopping_up = false
+		is_hopping_from_climbing = false
 		is_falling = false
 		is_jump_queued = false
 
@@ -448,14 +460,18 @@ func apply_input(delta: float) -> void:
 			global_position = climbing_on_target
 			is_climbing_on = false
 
-	# Climbing, Hopping Up
-	if is_climbing or is_hanging_braced or is_hopping_up:
-		var was_hopping_up := is_hopping_up
-		is_hopping_up = animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).get_current_node() == "BracedHangHopUp"
-		if was_hopping_up and not is_hopping_up:
-			is_climbing = false
-			is_hanging_braced = false
+	# Climbing, Hopping
+	if is_climbing or is_hanging_braced or is_climbing_hopping_left or is_climbing_hopping_right or is_climbing_hopping_up:
+		var was_hopping := is_climbing_hopping_left or is_climbing_hopping_right or is_climbing_hopping_up
+		var current_node = animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).get_current_node()
+		is_climbing_hopping_left = current_node == "BracedHangHopLeft"
+		is_climbing_hopping_right = current_node == "BracedHangHopRight"
+		is_climbing_hopping_up = current_node == "BracedHangHopUp"
+		if was_hopping and not (is_climbing_hopping_left or is_climbing_hopping_right or is_climbing_hopping_up):
+			is_climbing = is_hopping_from_climbing
+			is_hanging_braced = not is_hopping_from_climbing
 			is_hanging_free = false
+			is_hopping_from_climbing = false
 
 	# Climbing, Start { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
 	if not is_on_floor() \
@@ -479,10 +495,15 @@ func apply_input(delta: float) -> void:
 			is_climbing_on = true
 			is_hanging_braced = false
 			is_hanging_free = false
-			is_hopping_up = false
+			is_climbing_hopping_left = false
+			is_climbing_hopping_right = false
+			is_climbing_hopping_up = false
 		else:
 			locomotion_state.travel("BracedHangHopUp")
-			is_hopping_up = true
+			is_hopping_from_climbing = is_climbing
+			is_climbing_hopping_left = false
+			is_climbing_hopping_right = false
+			is_climbing_hopping_up = true
 	
 	# Climbing, Speed Up { Microsoft: Ⓑ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Shift] }.
 	if is_climbing \
@@ -623,7 +644,7 @@ func apply_input(delta: float) -> void:
 
 	velocity.x = h_velocity.x
 	velocity.z = h_velocity.z
-	if is_climbing or is_climbing_on or is_hopping_up:
+	if is_climbing or is_climbing_on or is_climbing_hopping_left or is_climbing_hopping_right or is_climbing_hopping_up:
 		velocity.y = h_velocity.y
 	elif is_hanging_braced or is_hanging_free:
 		velocity.y = 0.0
