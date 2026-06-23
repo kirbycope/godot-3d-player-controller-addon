@@ -1,15 +1,9 @@
 extends Node3D
 
 @export var player: Player
-@export var paragliding_state_name: String = "Paragliding"
 
 @onready var opening: AudioStreamPlayer3D = $Opening
 @onready var cloth_ruffling: AudioStreamPlayer3D = $ClothRuffling
-
-
-## Called when the node enters the scene tree for the first time.
-func _ready() -> void:
-	pass # Replace with function body.
 
 
 ## Called every frame. 'delta' is the elapsed time since the previous frame.
