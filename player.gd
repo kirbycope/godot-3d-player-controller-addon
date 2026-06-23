@@ -483,6 +483,15 @@ func apply_input(delta: float) -> void:
 		else:
 			locomotion_state.travel("BracedHangHopUp")
 			is_hopping_up = true
+	
+	# Climbing, Speed Up { Microsoft: Ⓑ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Shift] }.
+	if is_climbing \
+	and Input.is_action_pressed("sprint"):
+		animation_tree.set("parameters/LocomotionTimeScale/scale", 1.5)
+		is_sprinting = true
+	else:
+		is_sprinting = false
+		animation_tree.set("parameters/LocomotionTimeScale/scale", 1.0)
 
 	# Sprint { Microsoft: Ⓑ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Shift] }.
 	if is_on_floor() \
@@ -498,7 +507,7 @@ func apply_input(delta: float) -> void:
 		else:
 			target_motion *= 1.5
 		is_sprinting = true
-	else:
+	elif not is_climbing:
 		is_sprinting = false
 
 	# Slide (Crouch while Sprinting)

@@ -15,8 +15,9 @@ func _ready() -> void:
 ## Called every frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(delta: float) -> void:
 	if not visible:
-		if player.is_jumping and Input.is_action_just_pressed("jump"):
+		if (player.is_falling or player.is_jumping) and Input.is_action_just_pressed("jump"):
 			player.locomotion_state.travel("Paragliding")
+			player.is_falling = false
 			player.is_jumping = false
 			player.velocity.y = min(player.velocity.y, 0.0)
 			player.is_paragliding = true
