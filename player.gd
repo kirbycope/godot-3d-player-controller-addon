@@ -73,6 +73,7 @@ var locomotion_state: ## Gets the [StateMachine] "LocomotionStateMachine"
 @onready var look_at_target: Marker3D = $SpringArm3D/ProjectileRaycast/LookAtTarget
 @onready var player_input: InputSynchronizer = $InputSynchronizer
 @onready var player_model: Node3D = $PlayerModel
+@onready var paraglider_raycast: RayCast3D = $ParagliderRaycast
 @onready var projectile_raycast: RayCast3D = $SpringArm3D/ProjectileRaycast
 @onready var skeleton: Skeleton3D = $PlayerModel/Armature/GeneralSkeleton
 @onready var spring_arm: SpringArm3D = $SpringArm3D

@@ -1310,7 +1310,7 @@ animation_tree = NodePath("AnimationTree")
 [node name="PlayerModel" parent="." unique_id=1771073607 instance=ExtResource("2_om2v3")]
 transform = Transform3D(-1, 0, -1.509958e-07, 0, 1, 0, 1.509958e-07, 0, -1, 0, 0, 0)
 
-[node name="GeneralSkeleton" parent="PlayerModel/Armature" parent_id_path=PackedInt32Array(1771073607, 1367199574) index="0" unique_id=1986929927]
+[node name="GeneralSkeleton" parent="PlayerModel/Armature" parent_id_path=PackedInt32Array(1771073607, 318010379) index="0" unique_id=939687078]
 bones/0/position = Vector3(0.002616127, 0, -0.001263435)
 bones/1/position = Vector3(6.945423e-07, 0.9899598, -4.8260063e-11)
 bones/1/rotation = Quaternion(-0.036986616, -0.041182883, -0.026028868, 0.99812746)
@@ -1392,7 +1392,7 @@ bone_idx = 35
 visible = false
 player = NodePath("../../../../..")
 
-[node name="AnimationPlayer" parent="PlayerModel" index="1" unique_id=44309403]
+[node name="AnimationPlayer" parent="PlayerModel" index="1" unique_id=1005353344]
 "libraries/Bow Falling Idle" = ExtResource("8_goiqs")
 "libraries/Bow Standing Aim Idle 01" = ExtResource("30_7pm0t")
 "libraries/Bow Standing Aim Walk Back" = ExtResource("5_skopi")
@@ -1596,6 +1596,9 @@ transform = Transform3D(1, 0, 0, 0, 0.99999994, 0, 0, 0, 0.99999994, 0, -1.07288
 transform = Transform3D(1, 0, 0, 0, 0.96592575, 0.258819, 0, -0.258819, 0.96592575, 0, 2, 0)
 target_position = Vector3(0, 0, -3)
 collide_with_areas = true
+
+[node name="ParagliderRaycast" type="RayCast3D" parent="." unique_id=1114703451]
+visible = false
 
 [node name="AttackSequenceTimer" type="Timer" parent="." unique_id=724736604]
 wait_time = 0.4
