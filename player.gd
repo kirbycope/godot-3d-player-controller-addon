@@ -49,6 +49,7 @@ var is_falling: bool = false
 var is_focusing: bool = false
 var is_jumping: bool = false
 var is_jump_queued: bool = false
+var is_mining: bool = false
 var is_paragliding: bool = false
 var is_shooting: bool = false
 var is_sliding: bool = false
@@ -274,6 +275,11 @@ func apply_input(delta: float) -> void:
 	# Get the target motion from the synchronized input.
 	var target_motion: Vector2 = player_input.motion
 
+	# Track if player is mining.
+	is_mining = locomotion_state.get_current_node() == "Mining" or "Mining" in locomotion_state.get_travel_path()
+	if is_mining:
+		target_motion = Vector2.ZERO
+
 	# Smoothly interpolate the target_motion for more gradual changes in animation blending and rotation.
 	target_motion = target_motion.lerp(target_motion, motion_interpolate_speed * delta)
 
@@ -297,6 +303,7 @@ func apply_input(delta: float) -> void:
 		is_climbing_hopping_up = false
 		is_hopping_from_climbing = false
 		is_falling = false
+		is_jumping = false
 		is_jump_queued = false
 
 		if is_on_floor():
@@ -381,7 +388,7 @@ func apply_input(delta: float) -> void:
 	is_focusing = Input.is_action_pressed("focus")
 
 	# Update locomotion state based on equipped items if not in special states
-	if not is_climbing and not is_hanging_braced and not is_hanging_free and not is_falling and not is_jumping and not is_sliding:
+	if not is_climbing and not is_hanging_braced and not is_hanging_free and not is_falling and not is_jumping and not is_sliding and not is_mining:
 		var current_state = locomotion_state.get_current_node()
 		var target_state = "StandingLocomotion"
 		var is_shield_attack_state: bool = current_state == "ShieldDownwardSlash" or current_state == "ShieldCrossSlash" or current_state == "ShieldPowerSlash"
@@ -401,7 +408,7 @@ func apply_input(delta: float) -> void:
 		
 		# Transition if target differs from current (skip Jump states but allow transition from any normal state)
 		if current_state != target_state:
-			if not current_state.contains("Jump") and not is_shield_attack_state:
+			if not current_state.contains("Jump") and not is_shield_attack_state and current_state != "Mining":
 				locomotion_state.travel(target_state)
 
 	# Check if braced "hanging" player is [now] free
