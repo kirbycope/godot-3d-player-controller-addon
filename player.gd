@@ -50,6 +50,7 @@ var is_focusing: bool = false
 var is_jumping: bool = false
 var is_jump_queued: bool = false
 var is_mining: bool = false
+var is_logging: bool = false
 var is_paragliding: bool = false
 var is_shooting: bool = false
 var is_sliding: bool = false
@@ -275,9 +276,10 @@ func apply_input(delta: float) -> void:
 	# Get the target motion from the synchronized input.
 	var target_motion: Vector2 = player_input.motion
 
-	# Track if player is mining.
+	# Track if player is mining or logging.
 	is_mining = locomotion_state.get_current_node() == "Mining" or "Mining" in locomotion_state.get_travel_path()
-	if is_mining:
+	is_logging = locomotion_state.get_current_node() == "Logging" or "Logging" in locomotion_state.get_travel_path()
+	if is_mining or is_logging:
 		target_motion = Vector2.ZERO
 
 	# Smoothly interpolate the target_motion for more gradual changes in animation blending and rotation.
@@ -388,7 +390,7 @@ func apply_input(delta: float) -> void:
 	is_focusing = Input.is_action_pressed("focus")
 
 	# Update locomotion state based on equipped items if not in special states
-	if not is_climbing and not is_hanging_braced and not is_hanging_free and not is_falling and not is_jumping and not is_sliding and not is_mining:
+	if not is_climbing and not is_hanging_braced and not is_hanging_free and not is_falling and not is_jumping and not is_sliding and not is_mining and not is_logging:
 		var current_state = locomotion_state.get_current_node()
 		var target_state = "StandingLocomotion"
 		var is_shield_attack_state: bool = current_state == "ShieldDownwardSlash" or current_state == "ShieldCrossSlash" or current_state == "ShieldPowerSlash"
@@ -408,7 +410,7 @@ func apply_input(delta: float) -> void:
 		
 		# Transition if target differs from current (skip Jump states but allow transition from any normal state)
 		if current_state != target_state:
-			if not current_state.contains("Jump") and not is_shield_attack_state and current_state != "Mining":
+			if not current_state.contains("Jump") and not is_shield_attack_state and current_state != "Mining" and current_state != "Logging":
 				locomotion_state.travel(target_state)
 
 	# Check if braced "hanging" player is [now] free
@@ -496,22 +498,37 @@ func apply_input(delta: float) -> void:
 	and (is_climbing or is_hanging_braced) \
 	and Input.is_action_just_pressed("jump") \
 	and (locomotion_state.get_current_node() == "ClimbingLocomotion" or locomotion_state.get_current_node() == "BracedHangLocomotion"):
-		if is_hanging_braced and ledge_detection_vertical and ledge_detection_vertical.is_colliding():
-			climbing_on_target = ledge_detection_vertical.get_collision_point()
-			locomotion_state.travel("BracedHangClimbingOn")
-			is_climbing = false
-			is_climbing_on = true
-			is_hanging_braced = false
-			is_hanging_free = false
-			is_climbing_hopping_left = false
+		var hop_left = target_motion.x < -0.1 and abs(target_motion.x) > abs(target_motion.y)
+		var hop_right = target_motion.x > 0.1 and abs(target_motion.x) > abs(target_motion.y)
+		if hop_left:
+			locomotion_state.travel("BracedHangHopLeft")
+			is_hopping_from_climbing = is_climbing
+			is_climbing_hopping_left = true
 			is_climbing_hopping_right = false
 			is_climbing_hopping_up = false
-		else:
-			locomotion_state.travel("BracedHangHopUp")
+		elif hop_right:
+			locomotion_state.travel("BracedHangHopRight")
 			is_hopping_from_climbing = is_climbing
 			is_climbing_hopping_left = false
-			is_climbing_hopping_right = false
-			is_climbing_hopping_up = true
+			is_climbing_hopping_right = true
+			is_climbing_hopping_up = false
+		else:
+			if is_hanging_braced and ledge_detection_vertical and ledge_detection_vertical.is_colliding():
+				climbing_on_target = ledge_detection_vertical.get_collision_point()
+				locomotion_state.travel("BracedHangClimbingOn")
+				is_climbing = false
+				is_climbing_on = true
+				is_hanging_braced = false
+				is_hanging_free = false
+				is_climbing_hopping_left = false
+				is_climbing_hopping_right = false
+				is_climbing_hopping_up = false
+			else:
+				locomotion_state.travel("BracedHangHopUp")
+				is_hopping_from_climbing = is_climbing
+				is_climbing_hopping_left = false
+				is_climbing_hopping_right = false
+				is_climbing_hopping_up = true
 	
 	# Climbing, Speed Up { Microsoft: Ⓑ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Shift] }.
 	if is_climbing \
