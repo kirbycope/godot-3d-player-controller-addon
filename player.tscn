@@ -141,6 +141,9 @@
 [ext_resource type="AnimationLibrary" uid="uid://4yhg1s3tdwyn" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Standing Throw.glb" id="104_lgxfc"]
 [ext_resource type="AnimationLibrary" uid="uid://de2748eruoj6s" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Sword And Shield Low Spin Attack.glb" id="106_si0et"]
 [ext_resource type="AnimationLibrary" uid="uid://jemtyi12d3wa" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Sword And Shield Power Slash.glb" id="107_7oe5o"]
+[ext_resource type="Script" uid="uid://he15kukt0ytm" path="res://addons/3d_player_controller/state.gd" id="142_aujnh"]
+[ext_resource type="Script" uid="uid://dkwe2gyieafo2" path="res://addons/3d_player_controller/climbing.gd" id="142_barxw"]
+[ext_resource type="Script" uid="uid://difhaam5qdn4r" path="res://addons/3d_player_controller/hanging.gd" id="144_0ktn1"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_fk680"]
 transparency = 1
@@ -1315,7 +1318,7 @@ graph_offset = Vector2(-448.71454, -165.20313)
 [sub_resource type="AnimationNodeTimeScale" id="AnimationNodeTimeScale_45pxl"]
 
 [sub_resource type="AnimationNodeBlendTree" id="AnimationNodeBlendTree_senyo"]
-graph_offset = Vector2(-394, 52)
+graph_offset = Vector2(-393.6002, 33.6)
 nodes/output/position = Vector2(506.66666, 133.33333)
 nodes/LocomotionStateMachine/node = SubResource("AnimationNodeStateMachine_ikfak")
 nodes/LocomotionStateMachine/position = Vector2(-226.66667, 120)
@@ -1339,23 +1342,26 @@ properties/0/replication_mode = 1
 [node name="Player" type="CharacterBody3D" unique_id=548622605 node_paths=PackedStringArray("animation_tree")]
 script = ExtResource("1_ho2o7")
 animation_tree = NodePath("AnimationTree")
+current_animation = null
+motion_interpolate_speed = null
+rotation_interpolate_speed = null
 
 [node name="PlayerModel" parent="." unique_id=1771073607 instance=ExtResource("2_om2v3")]
 transform = Transform3D(-1, 0, -1.509958e-07, 0, 1, 0, 1.509958e-07, 0, -1, 0, 0, 0)
 
-[node name="GeneralSkeleton" parent="PlayerModel/Armature" parent_id_path=PackedInt32Array(1771073607, 318010379) index="0" unique_id=939687078]
+[node name="GeneralSkeleton" parent="PlayerModel/Armature" parent_id_path=PackedInt32Array(1771073607, 1367199574) index="0" unique_id=1986929927]
 bones/0/position = Vector3(0.002616127, 0, -0.001263435)
 bones/1/position = Vector3(6.945423e-07, 0.9899598, -4.8260063e-11)
-bones/1/rotation = Quaternion(-0.03463264, -0.044895116, -0.024477, 0.9980912)
-bones/2/rotation = Quaternion(0.025402898, 0.014190632, 0.022944635, 0.99931324)
-bones/3/rotation = Quaternion(0.009736637, 0.0037580295, 0.014252448, 0.9998441)
-bones/4/rotation = Quaternion(0.009167008, 0.003652975, 0.014183136, 0.99985075)
-bones/5/rotation = Quaternion(0.04524909, -0.0014174342, 0.00467152, 0.99896383)
-bones/6/rotation = Quaternion(-0.06719477, 0.011403695, -0.002227272, 0.9976723)
-bones/8/rotation = Quaternion(0.4589156, 0.49965376, 0.62775594, -0.381661)
-bones/9/rotation = Quaternion(0.12286553, 0.79916745, -0.57477987, -0.12595075)
+bones/1/rotation = Quaternion(-0.036816802, -0.0450038, -0.025741613, 0.9979763)
+bones/2/rotation = Quaternion(0.03589596, 0.01823703, 0.025752774, 0.99885726)
+bones/3/rotation = Quaternion(0.011766286, 0.004985013, 0.014738415, 0.9998098)
+bones/4/rotation = Quaternion(0.0116512, 0.0050686067, 0.014717843, 0.99981093)
+bones/5/rotation = Quaternion(0.054756954, -0.0018326982, 0.002523407, 0.9984949)
+bones/6/rotation = Quaternion(-0.07705305, 0.008010208, -0.0008839804, 0.99699444)
+bones/8/rotation = Quaternion(0.45692623, 0.49941272, 0.6356986, -0.3710696)
+bones/9/rotation = Quaternion(0.12929875, 0.805464, -0.565787, -0.11997795)
 bones/10/rotation = Quaternion(0.009004968, -0.7070495, 0.009005011, 0.7070495)
-bones/11/rotation = Quaternion(0.05406346, 0.48130924, -0.017987771, 0.8746972)
+bones/11/rotation = Quaternion(0.05286126, 0.47124386, -0.005641815, 0.8803995)
 bones/12/rotation = Quaternion(-0.23049825, 0.68289214, 0.17169982, 0.67160124)
 bones/13/rotation = Quaternion(0.20149457, 0.20389189, -0.059591617, 0.9561783)
 bones/14/rotation = Quaternion(0.04001307, -0.052876003, -0.12858759, 0.9894789)
@@ -1372,10 +1378,10 @@ bones/26/rotation = Quaternion(0.15521277, -1.9371507e-07, -0.015905587, 0.98775
 bones/28/rotation = Quaternion(0.23386711, -0.0035057068, -0.049008608, 0.97102636)
 bones/29/rotation = Quaternion(0.15125789, -1.3411045e-07, -0.015500367, 0.98837286)
 bones/30/rotation = Quaternion(0.14349763, -8.940697e-08, -0.014705032, 0.9895415)
-bones/32/rotation = Quaternion(0.4779679, -0.47743815, -0.6337196, -0.37682748)
-bones/33/rotation = Quaternion(-0.15093218, 0.82816374, -0.49423772, 0.21701013)
-bones/34/rotation = Quaternion(0.040873554, 0.7059246, -0.040873494, 0.70592433)
-bones/35/rotation = Quaternion(0.04202603, -0.5716117, 0.036105238, 0.8186516)
+bones/32/rotation = Quaternion(0.4737357, -0.48042694, -0.6389017, -0.36955282)
+bones/33/rotation = Quaternion(-0.14582235, 0.8292609, -0.496527, 0.21100532)
+bones/34/rotation = Quaternion(0.04118015, 0.70590675, -0.04118008, 0.7059066)
+bones/35/rotation = Quaternion(0.040474012, -0.56794727, 0.033223454, 0.8213976)
 bones/36/rotation = Quaternion(-0.24051937, -0.6719299, -0.18474628, 0.6756696)
 bones/37/rotation = Quaternion(0.2382267, -0.20985532, 0.051183697, 0.94688386)
 bones/38/rotation = Quaternion(0.045545463, 0.04607943, 0.16169317, 0.984712)
@@ -1392,14 +1398,14 @@ bones/50/rotation = Quaternion(0.15551049, 5.9604645e-08, 0.012668192, 0.9877530
 bones/52/rotation = Quaternion(0.2284934, 0.0034029484, 0.04298061, 0.9725903)
 bones/53/rotation = Quaternion(0.15154798, 7.4505806e-08, 0.012345433, 0.9883728)
 bones/54/rotation = Quaternion(0.14377289, 8.940697e-08, 0.011711985, 0.9895414)
-bones/56/rotation = Quaternion(0.13445964, 0.072429284, 0.9855554, -0.073179245)
-bones/57/rotation = Quaternion(-0.039275374, 0.9936268, -0.10483269, 0.013174789)
-bones/58/rotation = Quaternion(-0.042537108, 0.7125568, -0.6985249, 0.050162833)
+bones/56/rotation = Quaternion(0.13991274, 0.075454816, 0.98428524, -0.07689997)
+bones/57/rotation = Quaternion(-0.038140327, 0.9925523, -0.1155736, 0.0052907555)
+bones/58/rotation = Quaternion(-0.042297132, 0.70817226, -0.702975, 0.050292984)
 bones/59/rotation = Quaternion(-9.186695e-08, 0.9990753, 0.042996287, -1.6792885e-08)
-bones/61/rotation = Quaternion(-0.09276898, -0.017356265, 0.9951955, -0.026051003)
-bones/62/rotation = Quaternion(0.033529904, 0.99431056, -0.057129666, -0.083418705)
-bones/63/rotation = Quaternion(0.00976858, 0.68094337, -0.73171425, -0.028547898)
-bones/64/rotation = Quaternion(-4.3926633e-08, 0.99815327, 0.060746763, -2.5574716e-08)
+bones/61/rotation = Quaternion(-0.0925283, -0.015917642, 0.9951861, -0.028103031)
+bones/62/rotation = Quaternion(0.034666114, 0.9936388, -0.06750907, -0.083203316)
+bones/63/rotation = Quaternion(0.010434701, 0.67607117, -0.7362255, -0.028122632)
+bones/64/rotation = Quaternion(-2.144594e-07, 0.998047, 0.062468346, 1.6196974e-08)
 
 [node name="LookAtModifier3D" type="LookAtModifier3D" parent="PlayerModel/Armature/GeneralSkeleton" index="2" unique_id=703324849]
 active = false
@@ -1417,7 +1423,7 @@ secondary_limit_angle = 1.9198622
 secondary_damp_threshold = 1.0
 
 [node name="BoneAttachment3D" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton" index="3" unique_id=1910251258]
-transform = Transform3D(0.40476656, 0.019690646, 0.91420794, 0.078039765, -0.9968645, -0.013081029, 0.9110838, 0.07663943, -0.40503415, -0.24529916, 0.83984816, 0.0008525476)
+transform = Transform3D(0.40985054, 0.032308526, 0.9115803, 0.06807807, -0.9976687, 0.0047517363, 0.9096087, 0.060111165, -0.41109455, -0.23742977, 0.8361957, 0.00019672886)
 bone_name = "RightHand"
 bone_idx = 35
 
@@ -1425,7 +1431,7 @@ bone_idx = 35
 visible = false
 player = NodePath("../../../../..")
 
-[node name="AnimationPlayer" parent="PlayerModel" index="1" unique_id=1005353344]
+[node name="AnimationPlayer" parent="PlayerModel" index="1" unique_id=44309403]
 "libraries/Axe Standing Melee Attack Downward" = ExtResource("4_dtq52")
 "libraries/Axe Standing Melee Attack Horizontal" = ExtResource("5_barxw")
 "libraries/Bow Falling Idle" = ExtResource("8_goiqs")
@@ -1662,6 +1668,20 @@ texture = SubResource("AtlasTexture_fk680")
 [node name="InputSynchronizer" type="MultiplayerSynchronizer" parent="." unique_id=1044493989]
 replication_config = SubResource("SceneReplicationConfig_x4u5g")
 script = ExtResource("8_wyssh")
+
+[node name="StateMachine" type="Node" parent="." unique_id=933239176 node_paths=PackedStringArray("player")]
+script = ExtResource("142_aujnh")
+player = NodePath("..")
+
+[node name="Climbing" type="Node" parent="StateMachine" unique_id=735495711 node_paths=PackedStringArray("player")]
+process_mode = 4
+script = ExtResource("142_barxw")
+player = NodePath("../..")
+
+[node name="Hanging" type="Node" parent="StateMachine" unique_id=1621275317 node_paths=PackedStringArray("player")]
+process_mode = 4
+script = ExtResource("144_0ktn1")
+player = NodePath("../..")
 
 [connection signal="timeout" from="AttackSequenceTimer" to="." method="_on_attack_sequence_timer_timeout"]
 
