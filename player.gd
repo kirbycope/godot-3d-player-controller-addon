@@ -20,32 +20,40 @@ const STANDING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionSt
 @export var motion_interpolate_speed: float = 10.0
 @export var rotation_interpolate_speed: float = 10.0
 
-var attack_sequence: int = 0
-var climbing_on_target: Vector3
+var current_state: int ## The current state of the Player (from the Node/Code [NodeStateMachine], not the AnimationTree NodeStateMachine).
+var locomotion_state: ## Gets the [NodeStateMachine] "LocomotionStateMachine"
+	get:
+		return animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH)
 
+# Equipment
 var equipment: Array = []
 var equipment_by_type: Dictionary = {}
-var can_player_attack: bool = false
-var can_player_shoot: bool = false
-var current_state: int
+var can_player_attack: bool = false ## Does the currently equipped item allow the Player to attack?
+var can_player_shoot: bool = false ## Does the currently equipped item allow the Player to shoot?
 
-var is_aiming_bow: bool = false
+# Attack Sequence (while holding equipment)
+var attack_sequence: int = 0
 var is_attacking: bool = false
 var is_attacking_1: bool = false # Attack Sequence: 1 of n
 var is_attacking_2: bool = false # Attack Sequence: 2 of n
 var is_attacking_3: bool = false # Attack Sequence: 3 of n
+# Bow and Arrow
+var is_aiming_bow: bool = false
 var is_drawing_arrow: bool = false
 var is_firing_arrow: bool = false
-var is_climbing: bool = false
-var is_climbing_on: bool = false
-var is_crouching: bool = false
-var is_emoting: bool = false
-var is_hanging_braced: bool = false
-var is_hanging_free: bool = false
-var is_climbing_hopping_left: bool = false
-var is_climbing_hopping_right: bool = false
-var is_climbing_hopping_up: bool = false
-var is_hopping_from_climbing: bool = false
+# Climbing
+var is_climbing: bool = false ## Is the Player currently climbing?
+var is_climbing_on: bool = false ## Is the Player currently climbing on to a ledge?
+var climbing_on_target: Vector3  ## The target position the Player is climbing on to (from ledge detection).
+var is_climbing_hopping_left: bool = false ## Is the Player currently hopping left while climbing?
+var is_climbing_hopping_right: bool = false ## Is the Player currently hopping right while climbing?
+var is_climbing_hopping_up: bool = false ## Is the Player currently hopping up while climbing?
+var is_hopping_from_climbing: bool = false ## Is the Player currently hopping while climbing?
+# Hanging
+var is_hanging_braced: bool = false ## Is the Player currently hanging (braced)?
+var is_hanging_free: bool = false ## Is the Player currently hanging (free)?
+var is_crouching: bool = false ## Is the Player currently crouching?
+var is_emoting: bool = false ## Is the Player currently emoting?
 var is_falling: bool = false
 var is_focusing: bool = false
 var is_jumping: bool = false
@@ -59,10 +67,6 @@ var is_sprinting: bool = false
 
 var orientation := Transform3D()
 var root_motion := Transform3D()
-
-var locomotion_state: ## Gets the [StateMachine] "LocomotionStateMachine"
-	get:
-		return animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH)
 
 @onready var attack_sequence_timer: Timer = $AttackSequenceTimer
 @onready var controls: CanvasLayer = $Controls
@@ -80,7 +84,7 @@ var locomotion_state: ## Gets the [StateMachine] "LocomotionStateMachine"
 @onready var projectile_raycast: RayCast3D = $SpringArm3D/ProjectileRaycast
 @onready var skeleton: Skeleton3D = $PlayerModel/Armature/GeneralSkeleton
 @onready var spring_arm: SpringArm3D = $SpringArm3D
-@onready var state_machine: StateMachine = $StateMachine
+@onready var state_machine: NodeStateMachine = $NodeStateMachine
 
 
 ## Called when the node enters the scene tree for the first time.
@@ -98,7 +102,7 @@ func _ready() -> void:
 	# Keep animation sampling in physics domain to match root-motion consumption in _physics_process.
 	animation_tree.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_PHYSICS
 
-	# Ensure the projectile RayCast3D doesn't collide with the player.
+	# Ensure the projectile RayCast3D doesn't collide with the 
 	projectile_raycast.add_exception(self)
 
 
@@ -119,7 +123,7 @@ func _input(event: InputEvent) -> void:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
-# https://github.com/godotengine/tps-demo/blob/master/player/player.gd#L54
+# https://github.com/godotengine/tps-demo/blob/master/player/gd#L54
 func _physics_process(delta: float) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
@@ -134,9 +138,8 @@ func _physics_process(delta: float) -> void:
 	# Track if the player is "falling"
 	is_falling = locomotion_state.get_current_node() == "Falling" and not is_paragliding
 
-	# Stop "jumping" if player is "falling".
-	if is_jumping and is_falling:
-		is_jumping = false
+	# Player is jumping if jump is queued or animation is in a Jump state.
+	is_jumping = is_jump_queued or locomotion_state.get_current_node().contains("Jump")
 
 	# Stop "sliding" when the animation finishes.
 	var was_sliding := is_sliding
@@ -220,7 +223,7 @@ func has_one_handed_or_shield_equipped() -> bool:
 	])
 
 
-# https://github.com/godotengine/tps-demo/blob/master/player/player.gd#L86
+# https://github.com/godotengine/tps-demo/blob/master/player/gd#L86
 func apply_input(delta: float) -> void:
 	# Get the target motion from the synchronized input.
 	var target_motion: Vector2 = player_input.motion
@@ -343,7 +346,7 @@ func apply_input(delta: float) -> void:
 		var current_state = locomotion_state.get_current_node()
 		var target_state = "StandingLocomotion"
 		var is_shield_attack_state: bool = current_state == "ShieldDownwardSlash" or current_state == "ShieldCrossSlash" or current_state == "ShieldPowerSlash"
-		
+
 		if is_crouching:
 			target_state = "CrouchingLocomotion"
 		elif has_heavy_weapon_equipped():
@@ -356,7 +359,7 @@ func apply_input(delta: float) -> void:
 			target_state = "PistolLocomotion"
 		elif has_equipment(Equipment.EquipmentType.RIFLE):
 			target_state = "RifleLocomotion"
-		
+
 		# Transition if target differs from current (skip Jump states but allow transition from any normal state)
 		if current_state != target_state:
 			if not current_state.contains("Jump") and not is_shield_attack_state and current_state != "Mining" and current_state != "Logging":
@@ -397,37 +400,18 @@ func apply_input(delta: float) -> void:
 				locomotion_state.travel("JumpingUp")
 		is_jump_queued = true
 
-	# Climbing, Climbing On
-	if is_climbing_on:
-		var was_climbing_on := is_climbing_on
-		is_climbing_on = animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).get_current_node() == "BracedHangClimbingOn"
-		if was_climbing_on and not is_climbing_on:
-			global_position = climbing_on_target
-			is_climbing_on = false
-
-	# Climbing, Hopping
-	if is_climbing or is_hanging_braced or is_climbing_hopping_left or is_climbing_hopping_right or is_climbing_hopping_up:
-		var was_hopping := is_climbing_hopping_left or is_climbing_hopping_right or is_climbing_hopping_up
-		var current_node = animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH).get_current_node()
-		is_climbing_hopping_left = current_node == "BracedHangHopLeft"
-		is_climbing_hopping_right = current_node == "BracedHangHopRight"
-		is_climbing_hopping_up = current_node == "BracedHangHopUp"
-		if was_hopping and not (is_climbing_hopping_left or is_climbing_hopping_right or is_climbing_hopping_up):
-			is_climbing = is_hopping_from_climbing
-			is_hanging_braced = not is_hopping_from_climbing
-			is_hanging_free = false
-			is_hopping_from_climbing = false
-
 	# Climbing, Start { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
 	if not is_on_floor() \
 	and not is_climbing \
+	and not is_hanging_braced \
+	and not is_hanging_free \
 	and Input.is_action_just_pressed("jump") \
 	and ledge_detection_horizontal.is_colliding():
 		# Stop "falling"/"jumping"
 		is_falling = false
 		is_jumping = false
 		# Start "climbing"
-		state_machine.travel(StateMachine.States.CLIMBING)
+		state_machine.travel(NodeStateMachine.States.CLIMBING)
 
 	# Sprint { Microsoft: Ⓑ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Shift] }.
 	if is_on_floor() \
@@ -511,7 +495,7 @@ func apply_input(delta: float) -> void:
 					var q_from: Quaternion = orientation.basis.get_rotation_quaternion()
 					var q_to: Quaternion = Basis.looking_at(-wall_dir).get_rotation_quaternion()
 					orientation.basis = Basis(q_from.slerp(q_to, delta * rotation_interpolate_speed))
-		if is_climbing:			
+		if is_climbing:
 			animation_tree.set(CLIMBING_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 		elif is_hanging_braced:
 			animation_tree.set(BRACED_HANG_LOCOMOTION_BLEND_POSITION_PATH, target_motion.x)
@@ -573,6 +557,30 @@ func apply_input(delta: float) -> void:
 	orientation = orientation.orthonormalized() # Orthonormalize orientation.
 
 	player_model.global_transform.basis = orientation.basis
+
+
+func detect_ledge() -> bool:
+	# Ledge detection [Raycast]
+	var ledge_detected := false
+	if not is_on_floor() and ledge_detection_horizontal and ledge_detection_horizontal.is_colliding():
+		var forward_direction := -ledge_detection_horizontal.global_transform.basis.z.normalized()
+		ledge_detection_vertical.global_position = ledge_detection_horizontal.get_collision_point() + (forward_direction * 0.05) + up_direction
+		ledge_detection_vertical.force_raycast_update()
+		if ledge_detection_vertical.is_colliding():
+			ledge_detection_marker.global_position = ledge_detection_vertical.get_collision_point() + (ledge_detection_vertical.get_collision_normal() * 0.02)
+			ledge_detected = true
+
+	# Show/hide ledge detection gizmos.
+	if ledge_detected:
+		climbing_on_target = ledge_detection_marker.global_position
+		ledge_detection_horizontal.show()
+		ledge_detection_marker.show()
+	else:
+		ledge_detection_vertical.position = Vector3(0, 0, -1) # Reset to default
+		ledge_detection_horizontal.hide()
+		ledge_detection_marker.hide()
+
+	return ledge_detected
 
 
 ## Called by the animation(s) using "Call Method Track" to execute the jump logic at the right time. 

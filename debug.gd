@@ -33,3 +33,11 @@ func _process(_delta: float) -> void:
 		$Bow/is_aiming_bow.button_pressed = player.is_aiming_bow
 		$Bow/is_drawing_arrow.button_pressed = player.is_drawing_arrow
 		$Bow/is_firing_arrow.button_pressed = player.is_firing_arrow
+
+		$Climbing.visible = player.is_climbing
+		$Climbing/is_climbing_on.button_pressed = player.is_climbing_on
+		$Climbing/is_climbing_hopping_left.button_pressed = player.is_climbing_hopping_left
+		$Climbing/is_climbing_hopping_right.button_pressed = player.is_climbing_hopping_right
+		$Climbing/is_climbing_hopping_up.button_pressed = player.is_climbing_hopping_up
+		$Climbing/is_hopping_from_climbing.button_pressed = player.is_hopping_from_climbing
+		
