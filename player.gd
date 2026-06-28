@@ -559,6 +559,7 @@ func apply_input(delta: float) -> void:
 	player_model.global_transform.basis = orientation.basis
 
 
+## Detect if the player is in front of a ledge and can hang from it and/or climb on to it.
 func detect_ledge() -> bool:
 	# Ledge detection [Raycast]
 	var ledge_detected := false
@@ -590,5 +591,6 @@ func execute_jump() -> void:
 	is_jumping = true
 
 
+## Reset the attack sequence when the attack sequence timer times out.
 func _on_attack_sequence_timer_timeout() -> void:
 	attack_sequence = 0
