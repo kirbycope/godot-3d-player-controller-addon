@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://enjtpg74fpxr"
 path.s3tc="res://.godot/imported/switch_button_b_outline.svg-cdb4efceca4f6a60cdf9f63aa11f150d.s3tc.ctex"
+path.etc2="res://.godot/imported/switch_button_b_outline.svg-cdb4efceca4f6a60cdf9f63aa11f150d.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Nintendo Switch/Vector/switch_button_b_outline.svg"
-dest_files=["res://.godot/imported/switch_button_b_outline.svg-cdb4efceca4f6a60cdf9f63aa11f150d.s3tc.ctex"]
+dest_files=["res://.godot/imported/switch_button_b_outline.svg-cdb4efceca4f6a60cdf9f63aa11f150d.s3tc.ctex", "res://.godot/imported/switch_button_b_outline.svg-cdb4efceca4f6a60cdf9f63aa11f150d.etc2.ctex"]
 
 [params]
 

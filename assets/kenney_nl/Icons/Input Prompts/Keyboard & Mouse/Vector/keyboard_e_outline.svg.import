@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://5ralud042mx3"
 path.s3tc="res://.godot/imported/keyboard_e_outline.svg-85aa925f1eff81c656273065addde0f1.s3tc.ctex"
+path.etc2="res://.godot/imported/keyboard_e_outline.svg-85aa925f1eff81c656273065addde0f1.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector/keyboard_e_outline.svg"
-dest_files=["res://.godot/imported/keyboard_e_outline.svg-85aa925f1eff81c656273065addde0f1.s3tc.ctex"]
+dest_files=["res://.godot/imported/keyboard_e_outline.svg-85aa925f1eff81c656273065addde0f1.s3tc.ctex", "res://.godot/imported/keyboard_e_outline.svg-85aa925f1eff81c656273065addde0f1.etc2.ctex"]
 
 [params]
 

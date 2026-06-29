@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://cdew4cemfiitk"
 path.s3tc="res://.godot/imported/playstation_button_cross_outline.svg-3a92f1f8923cc664967765e486f830f1.s3tc.ctex"
+path.etc2="res://.godot/imported/playstation_button_cross_outline.svg-3a92f1f8923cc664967765e486f830f1.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/PlayStation Series/Vector/playstation_button_cross_outline.svg"
-dest_files=["res://.godot/imported/playstation_button_cross_outline.svg-3a92f1f8923cc664967765e486f830f1.s3tc.ctex"]
+dest_files=["res://.godot/imported/playstation_button_cross_outline.svg-3a92f1f8923cc664967765e486f830f1.s3tc.ctex", "res://.godot/imported/playstation_button_cross_outline.svg-3a92f1f8923cc664967765e486f830f1.etc2.ctex"]
 
 [params]
 
