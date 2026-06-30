@@ -3,6 +3,13 @@ extends CanvasLayer
 @export var player: Player
 
 
+## Called when there is an input event.
+func _input(event: InputEvent) -> void:
+	if player:
+		if event.is_action_pressed("dubug"):
+			visible = !visible
+
+
 ## Called every frame. '_delta' is the elapsed time since the previous frame.
 func _process(_delta: float) -> void:
 	if player:
@@ -40,4 +47,3 @@ func _process(_delta: float) -> void:
 		$Climbing/is_climbing_hopping_right.button_pressed = player.is_climbing_hopping_right
 		$Climbing/is_climbing_hopping_up.button_pressed = player.is_climbing_hopping_up
 		$Climbing/is_hopping_from_climbing.button_pressed = player.is_hopping_from_climbing
-		
