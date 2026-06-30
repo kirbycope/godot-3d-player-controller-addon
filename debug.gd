@@ -6,7 +6,7 @@ extends CanvasLayer
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:
 	if player:
-		if event.is_action_pressed("dubug"):
+		if event.is_action_pressed("debug"):
 			visible = !visible
 
 
