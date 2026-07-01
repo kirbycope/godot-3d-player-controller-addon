@@ -65,10 +65,13 @@ var is_shooting: bool = false
 var is_sliding: bool = false
 var is_sprinting: bool = false
 
+var initial_collision_shape_height: float
+var initial_collision_shape_position: Vector3
 var orientation := Transform3D()
 var root_motion := Transform3D()
 
 @onready var attack_sequence_timer: Timer = $AttackSequenceTimer
+@onready var collision_shape: CollisionShape3D = $CollisionShape3D
 @onready var controls: CanvasLayer = $Controls
 @onready var debug: CanvasLayer = $Debug
 @onready var initial_position: Vector3 = transform.origin
@@ -96,13 +99,17 @@ func _ready() -> void:
 	orientation = player_model.global_transform
 	orientation.origin = Vector3()
 
+	# Record the initial collision shape height and position for crouching and sliding.
+	initial_collision_shape_height = collision_shape.shape.height
+	initial_collision_shape_position = collision_shape.position
+
 	# Ensure the AnimationTree is active so that root motion is applied in the first frame.
 	animation_tree.active = true
 
 	# Keep animation sampling in physics domain to match root-motion consumption in _physics_process.
 	animation_tree.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_PHYSICS
 
-	# Ensure the projectile RayCast3D doesn't collide with the 
+	# Ensure the projectile RayCast3D doesn't collide with the player
 	projectile_raycast.add_exception(self)
 
 
@@ -128,6 +135,15 @@ func _physics_process(delta: float) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
 
+	# Stop "sliding" when the animation finishes.
+	var was_sliding := is_sliding
+	is_sliding = locomotion_state.get_current_node() == "RunningSlide" \
+		or "RunningSlide" in locomotion_state.get_travel_path()
+	if was_sliding and not is_sliding:
+		is_sliding = false
+		collision_shape.shape.height = initial_collision_shape_height
+		collision_shape.position = initial_collision_shape_position
+
 	# Apply player input to control the character and update the animation state.
 	apply_input(delta)
 
@@ -140,12 +156,6 @@ func _physics_process(delta: float) -> void:
 
 	# Player is jumping if jump is queued or animation is in a Jump state.
 	is_jumping = is_jump_queued or locomotion_state.get_current_node().contains("Jump")
-
-	# Stop "sliding" when the animation finishes.
-	var was_sliding := is_sliding
-	is_sliding = locomotion_state.get_current_node() == "RunningSlide"
-	if was_sliding and not is_sliding:
-		is_sliding = false
 
 	# Stop emote state when the animation finishes and reset the blend amount.
 	if is_emoting and animation_tree.get(EMOTE_STATE_PLAYBACK_PATH).get_current_node() == "Idle":
@@ -336,7 +346,16 @@ func apply_input(delta: float) -> void:
 	is_shooting = Input.is_action_pressed("shoot") and can_player_shoot
 
 	# Crouch { Console: Left ⬤, Keyboard: [Control] }.
+	var was_crouching := is_crouching
 	is_crouching = Input.is_action_pressed("crouch") and is_on_floor() and not is_sliding and not is_sprinting
+	# Reset collision shape when the player stops crouching.
+	if was_crouching and not is_crouching:
+		collision_shape.shape.height = initial_collision_shape_height
+		collision_shape.position = initial_collision_shape_position
+	# Reduce collision shape height when the player starts crouching.
+	elif not was_crouching and is_crouching:
+		collision_shape.shape.height = initial_collision_shape_height * 0.8
+		collision_shape.position = Vector3(0, collision_shape.shape.height * 0.5, 0)
 
 	# Focus { Microsoft: 🄻T, Nintendo: Z🄻, Sony: 🄻2, Keyboard: [Right Mouse Button] }.
 	is_focusing = Input.is_action_pressed("focus")
@@ -436,6 +455,8 @@ func apply_input(delta: float) -> void:
 	and not is_sliding:
 		locomotion_state.travel("RunningSlide")
 		is_sliding = true
+		collision_shape.shape.height = initial_collision_shape_height * 0.5
+		collision_shape.position = Vector3(0, collision_shape.shape.height * 0.5, 0)
 
 	# Handle movement is strafing
 	if is_shooting or is_focusing:
