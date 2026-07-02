@@ -1,6 +1,5 @@
-extends RigidBody3D
-
 class_name Arrow
+extends RigidBody3D
 
 @export var is_template := true ## If true, this is the main template arrow on the Bow model that shouldn't move
 @export var lifetime := 10.0 ## How long in seconds before the arrow is freed from the scene

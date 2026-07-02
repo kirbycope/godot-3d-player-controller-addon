@@ -52,18 +52,20 @@ var is_hopping_from_climbing: bool = false ## Is the Player currently hopping wh
 # Hanging
 var is_hanging_braced: bool = false ## Is the Player currently hanging (braced)?
 var is_hanging_free: bool = false ## Is the Player currently hanging (free)?
+
 var is_crouching: bool = false ## Is the Player currently crouching?
 var is_emoting: bool = false ## Is the Player currently emoting?
-var is_falling: bool = false
-var is_focusing: bool = false
-var is_jumping: bool = false
-var is_jump_queued: bool = false
-var is_mining: bool = false
-var is_logging: bool = false
-var is_paragliding: bool = false
-var is_shooting: bool = false
-var is_sliding: bool = false
-var is_sprinting: bool = false
+var is_exhausted: bool = false ## Is the Player currently exhausted?
+var is_falling: bool = false ## Is the Player currently falling?
+var is_focusing: bool = false ## Is the Player currently focusing (forward or on a target)?
+var is_jumping: bool = false ## Is the Player currently jumping?
+var is_jump_queued: bool = false ## Is the Player currently queued to jump?
+var is_mining: bool = false ## Is the Player currently mining?
+var is_logging: bool = false ## Is the Player currently logging?
+var is_paragliding: bool = false ## Is the Player currently paragliding?
+var is_shooting: bool = false ## Is the Player currently shooting?
+var is_sliding: bool = false ## Is the Player currently sliding?
+var is_sprinting: bool = false ## Is the Player currently sprinting?
 
 var initial_collision_shape_height: float
 var initial_collision_shape_position: Vector3

@@ -1,5 +1,7 @@
 extends CanvasLayer
 
+signal input_type_changed(input_type: InputType)
+
 enum InputType {
 	KEYBOARD_MOUSE,
 	MICROSOFT,
@@ -7,8 +9,6 @@ enum InputType {
 	SONY,
 	TOUCH,
 }
-
-signal input_type_changed(input_type: InputType)
 
 @export var input_deadzone: float = 0.05 ## Address joystick drift by setting a deadzone threshold for joystick motion inputs
 @export_category("Keyboard and Mouse Textures")
