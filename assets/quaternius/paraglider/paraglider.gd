@@ -12,11 +12,12 @@ func _physics_process(delta: float) -> void:
 		if (player.is_falling) or (player.is_jumping and not player.is_jump_queued) \
 		and Input.is_action_just_pressed("jump") \
 		and not player.paraglider_raycast.is_colliding():
-			player.locomotion_state.travel("Paragliding")
+			# Stop "falling"/"jumping"
 			player.is_falling = false
 			player.is_jumping = false
-			player.velocity.y = min(player.velocity.y, 0.0)
-			player.is_paragliding = true
+			# Start "paragliding"
+			player.state_machine.travel(NodeStateMachine.States.PARAGLIDING)
+			# Start "paragliding" audio and visuals
 			if not opening.playing:
 				opening.play()
 				await get_tree().create_timer(0.2).timeout
@@ -26,8 +27,7 @@ func _physics_process(delta: float) -> void:
 				await get_tree().create_timer(0.3).timeout
 				$LeftWing.visible = true
 				$RightWing.visible = true
-	if visible and player.is_on_floor():
-		player.is_paragliding = false
+	if visible and not player.is_paragliding:
 		hide()
 		if opening.playing:
 			opening.stop()
