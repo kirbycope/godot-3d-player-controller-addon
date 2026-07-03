@@ -20,7 +20,7 @@ const STANDING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionSt
 @export var motion_interpolate_speed: float = 10.0
 @export var rotation_interpolate_speed: float = 10.0
 
-var current_state: int ## The current state of the Player (from the Node/Code [NodeStateMachine], not the AnimationTree NodeStateMachine).
+var current_state: int = -1 ## The current state of the Player (from the Node/Code [NodeStateMachine], not the AnimationTree NodeStateMachine).
 var locomotion_state: ## Gets the [NodeStateMachine] "LocomotionStateMachine"
 	get:
 		return animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH)
@@ -89,7 +89,7 @@ var root_motion := Transform3D()
 @onready var projectile_raycast: RayCast3D = $SpringArm3D/ProjectileRaycast
 @onready var skeleton: Skeleton3D = $PlayerModel/Armature/GeneralSkeleton
 @onready var spring_arm: SpringArm3D = $SpringArm3D
-@onready var state_machine: NodeStateMachine = $NodeStateMachine
+@onready var state_machine: NodeStateMachine = $NodeStateMachine ## Enables/Disables the scripts that run when various States are entered/exited.
 
 
 ## Called when the node enters the scene tree for the first time.
@@ -137,26 +137,14 @@ func _physics_process(delta: float) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
 
-	# Track and trigger "falling" from physics state only.
-	var was_falling := is_falling
-	is_falling = not is_on_floor() \
-		and velocity.dot(up_direction) < -0.05 \
-		and not is_climbing and not is_climbing_on \
-		and not is_climbing_hopping_left and not is_climbing_hopping_right \
-		and not is_climbing_hopping_up and not is_hopping_from_climbing \
-		and not is_hanging_braced and not is_hanging_free and not is_paragliding \
-		and not is_jumping
-	if not was_falling and is_falling:
-		locomotion_state.travel("Falling")
-
-	# Stop "sliding" when the animation finishes.
-	var was_sliding := is_sliding
-	is_sliding = locomotion_state.get_current_node() == "RunningSlide" \
-		or "RunningSlide" in locomotion_state.get_travel_path()
-	if was_sliding and not is_sliding:
-		is_sliding = false
-		collision_shape.shape.height = initial_collision_shape_height
-		collision_shape.position = initial_collision_shape_position
+	# Start falling if the player is not on the floor and not already falling.
+	if not is_on_floor() and not is_falling \
+	and not is_climbing and not is_climbing_on \
+	and not is_hanging_braced and not is_hanging_free \
+	and not is_jumping and not is_jump_queued \
+	and not is_paragliding:
+		# Enable the "falling" state in the NodeStateMachine. The AnimationTree will automatically transition to the "Falling" animation state.
+		state_machine.travel(NodeStateMachine.States.FALLING)
 
 	# Apply player input to control the character and update the animation state.
 	apply_input(delta)
@@ -248,6 +236,7 @@ func apply_input(delta: float) -> void:
 	# Track if player is mining or logging.
 	is_mining = locomotion_state.get_current_node() == "Mining" or "Mining" in locomotion_state.get_travel_path()
 	is_logging = locomotion_state.get_current_node() == "Logging" or "Logging" in locomotion_state.get_travel_path()
+	# If the player is mining or logging, block regular locomotion transitions by setting the `target_motion` to zero.
 	if is_mining or is_logging:
 		target_motion = Vector2.ZERO
 
@@ -460,10 +449,12 @@ func apply_input(delta: float) -> void:
 	if is_sprinting \
 	and Input.is_action_just_pressed("crouch") \
 	and not is_sliding:
-		locomotion_state.travel("RunningSlide")
-		is_sliding = true
-		collision_shape.shape.height = initial_collision_shape_height * 0.5
-		collision_shape.position = Vector3(0, collision_shape.shape.height * 0.5, 0)
+		# Enable the "sliding" state in the NodeStateMachine. The AnimationTree will automatically transition to the "Falling" animation state.
+		state_machine.travel(NodeStateMachine.States.SLIDING)
+		#locomotion_state.travel("RunningSlide")
+		#is_sliding = true
+		#collision_shape.shape.height = initial_collision_shape_height * 0.5
+		#collision_shape.position = Vector3(0, collision_shape.shape.height * 0.5, 0)
 
 	# Handle movement is strafing
 	if is_shooting or is_focusing:

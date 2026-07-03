@@ -40,7 +40,7 @@ func start() -> void:
 	# Enable _this_ state node
 	process_mode = Node.PROCESS_MODE_INHERIT
 	# Set the player's new state
-	player.current_state = States.PARAGLIDING
+	player.current_state = NodeStateMachine.States.PARAGLIDING
 	# Travel to the "Paragliding" locomotion state
 	player.locomotion_state.travel("Paragliding")
 	# Flag the player as "paragliding"

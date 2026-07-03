@@ -43,7 +43,7 @@ func _physics_process(delta: float) -> void:
 		# Check if the player's top position has reached or exceeded the ledge detection marker's Y-position
 		if player_top_position >= player.ledge_detection_marker.global_position.y:
 			# Start "hanging"
-			player.state_machine.travel(NodeStateMachine.States.HANGING)
+				player.state_machine.travel(NodeStateMachine.States.HANGING)
 
 	# Climbing, Hopping [Status]
 	if player.is_climbing or player.is_hanging_braced or player.is_climbing_hopping_left or player.is_climbing_hopping_right or player.is_climbing_hopping_up:
@@ -130,7 +130,7 @@ func start() -> void:
 	# Enable _this_ state node
 	process_mode = Node.PROCESS_MODE_INHERIT
 	# Set the player's new state
-	player.current_state = States.CLIMBING
+	player.current_state = NodeStateMachine.States.CLIMBING
 	# Flag the player as "climbing"
 	player.is_climbing = true
 	# Travel to the "climbing" locomotion state

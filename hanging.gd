@@ -79,7 +79,7 @@ func start() -> void:
 	# Enable _this_ state node
 	process_mode = Node.PROCESS_MODE_INHERIT
 	# Set the player's new state
-	player.current_state = States.HANGING
+	player.current_state = NodeStateMachine.States.HANGING
 	# Determine if the player can hang braced
 	if player.hanging_braced_detection.is_colliding():
 		# Travel to the "hanging" (braced) locomotion state
