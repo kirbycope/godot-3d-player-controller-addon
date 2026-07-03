@@ -37,9 +37,9 @@ func _physics_process(_delta: float) -> void:
 	# Point the arrow toward its movement trajectory while in flight
 	if not freeze and linear_velocity.length() > 0.1:
 		var dir := linear_velocity.normalized()
-		var up := Vector3.UP
-		if abs(dir.dot(Vector3.UP)) > 0.99:
-			up = Vector3.FORWARD
+		var up := global_basis.y.normalized()
+		if abs(dir.dot(up)) > 0.99:
+			up = global_basis.z.normalized()
 		look_at(global_position + dir, up)
 		rotate_object_local(Vector3.RIGHT, -PI / 2.0)
 

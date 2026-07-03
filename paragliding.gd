@@ -46,7 +46,9 @@ func start() -> void:
 	# Flag the player as "paragliding"
 	player.is_paragliding = true
 	# Limit the player's downward velocity
-	player.velocity.y = min(player.velocity.y, 0.0)
+	var vertical_speed := player.velocity.dot(player.up_direction)
+	vertical_speed = min(vertical_speed, 0.0)
+	player.velocity = player.velocity.slide(player.up_direction) + (player.up_direction * vertical_speed)
 
 
 ## Stop "paragliding".

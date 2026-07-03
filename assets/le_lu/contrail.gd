@@ -187,7 +187,7 @@ func _build_draw_sides() -> Array:
 			side -= tangent * side.dot(tangent)
 
 			if side.length_squared() < 0.00001:
-				side = tangent.cross(Vector3.UP)
+				side = tangent.cross(global_basis.y.normalized())
 			if side.length_squared() < 0.00001:
 				side = tangent.cross(Vector3.RIGHT)
 			side = side.normalized()

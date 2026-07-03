@@ -137,6 +137,18 @@ func _physics_process(delta: float) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
 
+	# Track and trigger "falling" from physics state only.
+	var was_falling := is_falling
+	is_falling = not is_on_floor() \
+		and velocity.dot(up_direction) < -0.05 \
+		and not is_climbing and not is_climbing_on \
+		and not is_climbing_hopping_left and not is_climbing_hopping_right \
+		and not is_climbing_hopping_up and not is_hopping_from_climbing \
+		and not is_hanging_braced and not is_hanging_free and not is_paragliding \
+		and not is_jumping
+	if not was_falling and is_falling:
+		locomotion_state.travel("Falling")
+
 	# Stop "sliding" when the animation finishes.
 	var was_sliding := is_sliding
 	is_sliding = locomotion_state.get_current_node() == "RunningSlide" \
@@ -149,15 +161,8 @@ func _physics_process(delta: float) -> void:
 	# Apply player input to control the character and update the animation state.
 	apply_input(delta)
 
-	# If we're below -40, respawn (teleport to the initial position).
-	if transform.origin.y < -40.0:
-		transform.origin = initial_position
-
-	# Track if the player is "falling"
-	is_falling = locomotion_state.get_current_node() == "Falling" and not is_paragliding
-
-	# Player is jumping if jump is queued or animation is in a Jump state.
-	is_jumping = is_jump_queued or locomotion_state.get_current_node().contains("Jump")
+	# Treat "jumping" as queued jump or upward airborne movement.
+	is_jumping = (is_on_floor() and is_jump_queued) or (not is_on_floor() and locomotion_state.get_current_node().contains("Jump"))
 
 	# Stop emote state when the animation finishes and reset the blend amount.
 	if is_emoting and animation_tree.get(EMOTE_STATE_PLAYBACK_PATH).get_current_node() == "Idle":
@@ -280,25 +285,25 @@ func apply_input(delta: float) -> void:
 
 			var camera_basis := spring_arm.global_transform.basis
 			var target_dir := camera_basis * Vector3(target_motion.x, 0.0, -target_motion.y)
-			target_dir.y = 0.0
+			target_dir = target_dir.slide(up_direction)
 			if target_dir.length_squared() > 0.001 and not is_firing_arrow:
 				target_dir = target_dir.normalized()
 				var q_from: Quaternion = orientation.basis.get_rotation_quaternion()
 				var q_to: Quaternion = Basis.looking_at(-target_dir).get_rotation_quaternion()
 				orientation.basis = Basis(q_from.slerp(q_to, delta * rotation_interpolate_speed))
 
-			var current_h_vel := Vector3(velocity.x, 0.0, velocity.z)
+			var current_h_vel := velocity.slide(up_direction)
 			var glide_speed := max(current_h_vel.length(), 4.0)
 			if target_dir.length_squared() > 0.001:
 				current_h_vel = target_dir.normalized() * glide_speed
 
-			velocity.x = current_h_vel.x
-			velocity.z = current_h_vel.z
-			velocity.y = min(velocity.y, 0.0)
-			velocity += get_gravity() * 0.35 * delta
-			velocity.y = max(velocity.y, -4.0)
+			var vertical_speed := velocity.dot(up_direction)
+			vertical_speed = min(vertical_speed, 0.0)
+			vertical_speed += get_gravity().dot(up_direction) * 0.35 * delta
+			vertical_speed = max(vertical_speed, -4.0)
+			velocity = current_h_vel + (up_direction * vertical_speed)
 			set_velocity(velocity)
-			set_up_direction(Vector3.UP)
+			set_up_direction(up_direction)
 			move_and_slide()
 
 			orientation.origin = Vector3()
@@ -467,7 +472,7 @@ func apply_input(delta: float) -> void:
 		if (is_shooting or not is_focusing) and not is_firing_arrow and not is_hanging_braced and not is_hanging_free and not is_climbing:
 			var camera_basis := spring_arm.global_transform.basis
 			var camera_forward := -camera_basis.z
-			camera_forward.y = 0.0
+			camera_forward = camera_forward.slide(up_direction)
 			if camera_forward.length_squared() > 0.001:
 				camera_forward = camera_forward.normalized()
 				var q_from: Quaternion = orientation.basis.get_rotation_quaternion()
@@ -501,7 +506,7 @@ func apply_input(delta: float) -> void:
 		# Use camera-relative direction for target_motion direction
 		var camera_basis := spring_arm.global_transform.basis
 		var target_dir := camera_basis * Vector3(target_motion.x, 0.0, -target_motion.y)
-		target_dir.y = 0.0
+		target_dir = target_dir.slide(up_direction)
 		if target_dir.length_squared() > 0.001 and not is_firing_arrow and not is_hanging_braced and not is_hanging_free and not is_climbing:
 			target_dir = target_dir.normalized()
 			var q_from: Quaternion = orientation.basis.get_rotation_quaternion()
@@ -512,7 +517,7 @@ func apply_input(delta: float) -> void:
 			if ledge_detection_horizontal and ledge_detection_horizontal.is_colliding():
 				var normal := ledge_detection_horizontal.get_collision_normal()
 				var wall_dir := -normal
-				wall_dir.y = 0.0
+				wall_dir = wall_dir.slide(up_direction)
 				if wall_dir.length_squared() > 0.001:
 					wall_dir = wall_dir.normalized()
 					var q_from: Quaternion = orientation.basis.get_rotation_quaternion()
@@ -554,9 +559,9 @@ func apply_input(delta: float) -> void:
 	if is_jumping or is_falling:
 		var camera_basis := spring_arm.global_transform.basis
 		var target_dir := camera_basis * Vector3(target_motion.x, 0.0, -target_motion.y)
-		target_dir.y = 0.0
+		target_dir = target_dir.slide(up_direction)
 		
-		var current_h_vel := Vector3(velocity.x, 0.0, velocity.z)
+		var current_h_vel := velocity.slide(up_direction)
 		var current_speed := current_h_vel.length()
 		var air_speed_cap := max(current_speed, 5.0)
 		var target_h_vel = target_dir * air_speed_cap
@@ -564,16 +569,16 @@ func apply_input(delta: float) -> void:
 		# Slowly lerp to target air speed to preserve momentum
 		h_velocity = current_h_vel.lerp(target_h_vel, 3.0 * delta)
 
-	velocity.x = h_velocity.x
-	velocity.z = h_velocity.z
+	var vertical_speed := velocity.dot(up_direction)
 	if is_climbing or is_climbing_on or is_climbing_hopping_left or is_climbing_hopping_right or is_climbing_hopping_up:
-		velocity.y = h_velocity.y
+		vertical_speed = h_velocity.dot(up_direction)
 	elif is_hanging_braced or is_hanging_free:
-		velocity.y = 0.0
+		vertical_speed = 0.0
 	else:
-		velocity += get_gravity() * 1.5 * delta
+		vertical_speed += get_gravity().dot(up_direction) * 1.5 * delta
+	velocity = h_velocity.slide(up_direction) + (up_direction * vertical_speed)
 	set_velocity(velocity)
-	set_up_direction(Vector3.UP)
+	set_up_direction(up_direction)
 	move_and_slide()
 
 	orientation.origin = Vector3() # Clear accumulated root motion displacement (was applied to speed).
@@ -609,7 +614,7 @@ func detect_ledge() -> bool:
 
 ## Called by the animation(s) using "Call Method Track" to execute the jump logic at the right time. 
 func execute_jump() -> void:
-	velocity.y = 5.0
+	velocity = velocity.slide(up_direction) + (up_direction * 5.0)
 	is_jump_queued = false
 	is_jumping = true
 

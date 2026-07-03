@@ -77,7 +77,7 @@ func _physics_process(delta: float) -> void:
 				var projectile_speed: float = bow.projectile_speed if "projectile_speed" in bow else 45.0
 				
 				if arrow_instance.global_transform.origin.distance_to(target_position) > 0.1:
-					arrow_instance.look_at(target_position, Vector3.UP)
+					arrow_instance.look_at(target_position, player.up_direction)
 					arrow_instance.rotate_object_local(Vector3.RIGHT, -PI / 2.0)
 				
 				arrow_instance.linear_velocity = launch_direction * projectile_speed

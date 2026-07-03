@@ -9,7 +9,7 @@ extends Node3D
 ## Called every frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(delta: float) -> void:
 	if not visible:
-		if (player.is_falling) or (player.is_jumping and not player.is_jump_queued) \
+		if ((player.is_falling) or (player.is_jumping and not player.is_jump_queued)) \
 		and Input.is_action_just_pressed("jump") \
 		and not player.paraglider_raycast.is_colliding():
 			# Stop "falling"/"jumping"
