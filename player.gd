@@ -386,7 +386,8 @@ func apply_input(delta: float) -> void:
 	and not is_climbing \
 	and not is_hanging_braced \
 	and not is_hanging_free \
-	and not is_jump_queued:
+	and not is_jump_queued \
+	and not is_sliding:
 		if target_motion.length() > 0.0:
 			if has_heavy_weapon_equipped():
 				locomotion_state.travel("GreatSwordJumpForward")
