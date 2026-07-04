@@ -19,7 +19,7 @@ func _physics_process(delta: float) -> void:
 	# Do nothing if the player is not set
 	if not player: return
 
-	# Check if the sliding animation has finished playing
+	# Check if the player is no longer sliding
 	if player.locomotion_state.get_current_node() != "RunningSlide":
 		# Stop "sliding"
 		stop()

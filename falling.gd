@@ -10,8 +10,6 @@ func _input(event: InputEvent) -> void:
 	# Do nothing if the player is not set
 	if not player: return
 
-	# ToDo: Grab climbable surface
-
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(delta: float) -> void:
@@ -25,11 +23,6 @@ func _physics_process(delta: float) -> void:
 	if player.is_on_floor():
 		# "Stop "falling"
 		stop()
-
-	# Ledge detection [Raycast]
-	var ledge_detected = player.detect_ledge()
-
-	# ToDo: Grab detected ledge
 
 
 ## Start "falling".

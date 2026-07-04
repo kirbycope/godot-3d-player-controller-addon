@@ -12,11 +12,8 @@ func _input(event: InputEvent) -> void:
 
 	# Crouch { Controller: Left Stick, Keyboard: Left Control }
 	if event.is_action_pressed("crouch"):
-		# Stop "hanging"
-		stop()
-		# Start "falling"
-		player.locomotion_state.travel("Falling")
-		player.is_falling = true
+		# Stop "hanging" and start "falling"
+		player.state_machine.travel(NodeStateMachine.States.FALLING)
 
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
@@ -31,8 +28,6 @@ func _physics_process(delta: float) -> void:
 	if player.is_on_floor():
 		# "Stop "hanging"
 		stop()
-		# Start "standing"
-		player.locomotion_state.travel("StandingLocomotion")
 
 	# Ledge detection [Raycast]
 	var ledge_detected = player.detect_ledge()

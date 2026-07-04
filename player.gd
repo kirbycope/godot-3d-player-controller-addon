@@ -451,10 +451,6 @@ func apply_input(delta: float) -> void:
 	and not is_sliding:
 		# Enable the "sliding" state in the NodeStateMachine. The AnimationTree will automatically transition to the "Falling" animation state.
 		state_machine.travel(NodeStateMachine.States.SLIDING)
-		#locomotion_state.travel("RunningSlide")
-		#is_sliding = true
-		#collision_shape.shape.height = initial_collision_shape_height * 0.5
-		#collision_shape.position = Vector3(0, collision_shape.shape.height * 0.5, 0)
 
 	# Handle movement is strafing
 	if is_shooting or is_focusing:
