@@ -243,118 +243,48 @@ func apply_input(delta: float) -> void:
 	# Smoothly interpolate the target_motion for more gradual changes in animation blending and rotation.
 	target_motion = target_motion.lerp(target_motion, motion_interpolate_speed * delta)
 
-	# While paragliding, block regular locomotion transitions and drive movement directly.
+	# While paragliding, block regular locomotion. Paragliding.gd will handle movement.
 	if is_paragliding:
-		is_attacking = false
-		is_attacking_1 = false
-		is_attacking_2 = false
-		is_attacking_3 = false
-		is_shooting = false
-		is_crouching = false
-		is_focusing = false
-		is_sprinting = false
-		is_sliding = false
-		is_climbing = false
-		is_climbing_on = false
-		is_hanging_braced = false
-		is_hanging_free = false
-		is_climbing_hopping_left = false
-		is_climbing_hopping_right = false
-		is_climbing_hopping_up = false
-		is_hopping_from_climbing = false
-		is_falling = false
-		is_jumping = false
-		is_jump_queued = false
+		return
 
-		if is_on_floor():
-			is_paragliding = false
+	# Attack { Microsoft: Ⓧ, Nintendo: Ⓨ, Sony: 🟗, Keyboard: [Alt] }
+	if Input.is_action_just_pressed("attack") \
+	and not is_attacking \
+	and can_player_attack:
+		# Enable the "attacking" state in the NodeStateMachine. The AnimationTree will automatically transition to the "Falling" animation state.
+		state_machine.travel(NodeStateMachine.States.ATTACKING)
+
+	# Climbing, Start { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
+	if not is_on_floor() \
+	and not is_climbing \
+	and not is_hanging_braced \
+	and not is_hanging_free \
+	and Input.is_action_just_pressed("jump") \
+	and ledge_detection_horizontal.is_colliding():
+		# Stop "falling", start "climbing"
+		if is_falling:
+			state_machine.travel(NodeStateMachine.States.CLIMBING, NodeStateMachine.States.FALLING)
+		# Stop "jumping", start "climbing"
+		elif is_jumping:
+			state_machine.travel(NodeStateMachine.States.CLIMBING, NodeStateMachine.States.JUMPING)
+		# Start "climbing" from any other state
 		else:
-			if locomotion_state.get_current_node() != "Paragliding":
-				locomotion_state.travel("Paragliding")
-
-			var camera_basis := spring_arm.global_transform.basis
-			var target_dir := camera_basis * Vector3(target_motion.x, 0.0, -target_motion.y)
-			target_dir = target_dir.slide(up_direction)
-			if target_dir.length_squared() > 0.001 and not is_firing_arrow:
-				target_dir = target_dir.normalized()
-				var q_from: Quaternion = orientation.basis.get_rotation_quaternion()
-				var q_to: Quaternion = Basis.looking_at(-target_dir).get_rotation_quaternion()
-				orientation.basis = Basis(q_from.slerp(q_to, delta * rotation_interpolate_speed))
-
-			var current_h_vel := velocity.slide(up_direction)
-			var glide_speed := max(current_h_vel.length(), 4.0)
-			if target_dir.length_squared() > 0.001:
-				current_h_vel = target_dir.normalized() * glide_speed
-
-			var vertical_speed := velocity.dot(up_direction)
-			vertical_speed = min(vertical_speed, 0.0)
-			vertical_speed += get_gravity().dot(up_direction) * 0.35 * delta
-			vertical_speed = max(vertical_speed, -4.0)
-			velocity = current_h_vel + (up_direction * vertical_speed)
-			set_velocity(velocity)
-			set_up_direction(up_direction)
-			move_and_slide()
-
-			orientation.origin = Vector3()
-			orientation = orientation.orthonormalized()
-			player_model.global_transform.basis = orientation.basis
-			return
-
-	# Attack { Microsoft: X, Nintendo: Y, Sony: Square, Keyboard: [Alt] }.
-	is_attacking = locomotion_state.get_current_node() in [
-		"ShieldDownwardSlash",
-		"ShieldCrossSlash",
-		"ShieldPowerSlash",
-		"GreatSwordDownwardSlash",
-		"GreatSwordLowSlash",
-		"GreatSwordPowerSlash",
-	] or (Input.is_action_pressed("attack") and can_player_attack)
-
-	# Attack { Microsoft: X, Nintendo: Y, Sony: Square, Keyboard: [Alt] }.
-	var attack_pressed := Input.is_action_just_pressed("attack") and can_player_attack
-	is_attacking_1 = attack_pressed and attack_sequence == 0
-	is_attacking_2 = attack_pressed and attack_sequence == 1
-	is_attacking_3 = attack_pressed and attack_sequence == 2
-
-	# Attack Sequence: Sword and Shield
-	if attack_pressed and has_one_handed_or_shield_equipped():
-		attack_sequence_timer.start()
-		if locomotion_state.get_current_node() == "ShieldDownwardSlash":
-			attack_sequence = 1
-		elif locomotion_state.get_current_node() == "ShieldCrossSlash":
-			attack_sequence = 2
-		elif locomotion_state.get_current_node() == "ShieldPowerSlash":
-			attack_sequence = 0
-			attack_sequence_timer.stop()
-	
-	# Attack Sequence: Greatsword
-	elif attack_pressed and has_heavy_weapon_equipped():
-		attack_sequence_timer.start()
-		if locomotion_state.get_current_node() == "GreatSwordDownwardSlash":
-			attack_sequence = 1
-		elif locomotion_state.get_current_node() == "GreatSwordLowSlash":
-			attack_sequence = 2
-		elif locomotion_state.get_current_node() == "GreatSwordPowerSlash":
-			attack_sequence = 0
-			attack_sequence_timer.stop()
-
-	# Shoot { Microsoft: 🅁T, Nintendo: 🅁L, Sony: 🅁2, Keyboard: [Left Mouse Button] } 
-	is_shooting = Input.is_action_pressed("shoot") and can_player_shoot
+			state_machine.travel(NodeStateMachine.States.CLIMBING)
 
 	# Crouch { Console: Left ⬤, Keyboard: [Control] }.
-	var was_crouching := is_crouching
-	is_crouching = Input.is_action_pressed("crouch") and is_on_floor() and not is_sliding and not is_sprinting
-	# Reset collision shape when the player stops crouching.
-	if was_crouching and not is_crouching:
-		collision_shape.shape.height = initial_collision_shape_height
-		collision_shape.position = initial_collision_shape_position
-	# Reduce collision shape height when the player starts crouching.
-	elif not was_crouching and is_crouching:
-		collision_shape.shape.height = initial_collision_shape_height * 0.8
-		collision_shape.position = Vector3(0, collision_shape.shape.height * 0.5, 0)
+	if Input.is_action_pressed("crouch") \
+	and not is_crouching \
+	and is_on_floor() \
+	and not is_sliding \
+	and not is_sprinting:
+		# Enable the "crouching" state in the NodeStateMachine. The AnimationTree will automatically transition to the "Falling" animation state.
+		state_machine.travel(NodeStateMachine.States.CROUCHING)
 
 	# Focus { Microsoft: 🄻T, Nintendo: Z🄻, Sony: 🄻2, Keyboard: [Right Mouse Button] }.
 	is_focusing = Input.is_action_pressed("focus")
+
+	# Shoot { Microsoft: 🅁T, Nintendo: 🅁L, Sony: 🅁2, Keyboard: [Left Mouse Button] } 
+	is_shooting = Input.is_action_pressed("shoot") and can_player_shoot
 
 	# Update locomotion state based on equipped items if not in special states
 	if not is_climbing and not is_hanging_braced and not is_hanging_free and not is_falling and not is_jumping and not is_sliding and not is_mining and not is_logging:
@@ -387,47 +317,10 @@ func apply_input(delta: float) -> void:
 	and not is_hanging_braced \
 	and not is_hanging_free \
 	and not is_jump_queued \
+	and not is_paragliding \
 	and not is_sliding:
-		if target_motion.length() > 0.0:
-			if has_heavy_weapon_equipped():
-				locomotion_state.travel("GreatSwordJumpForward")
-			elif has_equipment(Equipment.EquipmentType.BOW):
-				locomotion_state.travel("BowJumpForward")
-			elif has_one_handed_or_shield_equipped():
-				locomotion_state.travel("ShieldJumpForward")
-			elif has_equipment(Equipment.EquipmentType.PISTOL):
-				locomotion_state.travel("PistolJumpForward")
-			elif has_equipment(Equipment.EquipmentType.RIFLE):
-				locomotion_state.travel("RifleJumpForward")
-			else:
-				locomotion_state.travel("RunningJump")
-		else:
-			if has_heavy_weapon_equipped():
-				locomotion_state.travel("GreatSwordJump")
-			elif has_equipment(Equipment.EquipmentType.BOW):
-				locomotion_state.travel("BowJump")
-			elif has_one_handed_or_shield_equipped():
-				locomotion_state.travel("ShieldJump")
-			elif has_equipment(Equipment.EquipmentType.RIFLE):
-				locomotion_state.travel("RifleJumpUp")
-			elif has_equipment(Equipment.EquipmentType.PISTOL):
-				locomotion_state.travel("PistolJump")
-			else:
-				locomotion_state.travel("JumpingUp")
-		is_jump_queued = true
-
-	# Climbing, Start { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
-	if not is_on_floor() \
-	and not is_climbing \
-	and not is_hanging_braced \
-	and not is_hanging_free \
-	and Input.is_action_just_pressed("jump") \
-	and ledge_detection_horizontal.is_colliding():
-		# Stop "falling"/"jumping"
-		is_falling = false
-		is_jumping = false
-		# Start "climbing"
-		state_machine.travel(NodeStateMachine.States.CLIMBING)
+		# Enable the "jumping" state in the NodeStateMachine. The AnimationTree will automatically transition to the "Falling" animation state.
+		state_machine.travel(NodeStateMachine.States.JUMPING)
 
 	# Sprint { Microsoft: Ⓑ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Shift] }.
 	if is_on_floor() \

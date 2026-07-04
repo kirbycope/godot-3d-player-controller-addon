@@ -92,6 +92,9 @@ func start() -> void:
 func stop() -> void:
 	# Disable _this_ state node
 	process_mode = Node.PROCESS_MODE_DISABLED
+	# Clear the player's state (if it is currently set to _this_ state)
+	if player.current_state == NodeStateMachine.States.HANGING:
+		player.current_state = -1
 	# Flag the player as not "hanging"
 	player.is_hanging_braced = false
 	player.is_hanging_free = false

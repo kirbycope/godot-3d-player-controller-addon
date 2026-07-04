@@ -2,6 +2,10 @@
 
 [ext_resource type="Script" uid="uid://bkanfpbod6cqc" path="res://addons/3d_player_controller/debug.gd" id="1_86eym"]
 
+[sub_resource type="LabelSettings" id="LabelSettings_senyo"]
+outline_size = 6
+outline_color = Color(0, 0, 0, 1)
+
 [node name="Debug" type="CanvasLayer" unique_id=2032410064]
 script = ExtResource("1_86eym")
 
@@ -99,6 +103,42 @@ text = "is_drawing_arrow"
 layout_mode = 2
 text = "is_firing_arrow"
 
+[node name="Attacking" type="VBoxContainer" parent="." unique_id=674932079]
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -580.0
+offset_top = -368.5
+offset_right = -352.0
+offset_bottom = -239.5
+grow_horizontal = 0
+grow_vertical = 2
+
+[node name="Panel" type="Panel" parent="Attacking" unique_id=555766855]
+custom_minimum_size = Vector2(160, 24)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Attacking/Panel" unique_id=1402050015]
+layout_mode = 0
+offset_left = 4.0
+offset_right = 155.0
+offset_bottom = 23.0
+text = "ATTACKING"
+
+[node name="is_attacking_1" type="CheckBox" parent="Attacking" unique_id=843610975]
+layout_mode = 2
+text = "is_attacking_1"
+
+[node name="is_attacking_2" type="CheckBox" parent="Attacking" unique_id=1813470205]
+layout_mode = 2
+text = "is_attacking_2"
+
+[node name="is_attacking_3" type="CheckBox" parent="Attacking" unique_id=369418359]
+layout_mode = 2
+text = "is_attacking_3"
+
 [node name="Climbing" type="VBoxContainer" parent="." unique_id=2083453336]
 anchors_preset = 6
 anchor_left = 1.0
@@ -143,6 +183,42 @@ text = "is_climbing_hopping_up"
 layout_mode = 2
 text = "is_hopping_from_climbing"
 
+[node name="Hanging" type="VBoxContainer" parent="." unique_id=2123646781]
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -580.0
+offset_top = -227.5
+offset_right = -352.0
+offset_bottom = -98.5
+grow_horizontal = 0
+grow_vertical = 2
+
+[node name="Panel" type="Panel" parent="Hanging" unique_id=1915689705]
+custom_minimum_size = Vector2(160, 24)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Hanging/Panel" unique_id=1934538609]
+layout_mode = 0
+offset_left = 4.0
+offset_right = 155.0
+offset_bottom = 23.0
+text = "HANGING"
+
+[node name="is_climbing_on" type="CheckBox" parent="Hanging" unique_id=257071272]
+layout_mode = 2
+text = "is_climbing_on"
+
+[node name="is_hanging_braced" type="CheckBox" parent="Hanging" unique_id=1539292361]
+layout_mode = 2
+text = "is_hanging_braced"
+
+[node name="is_hanging_free" type="CheckBox" parent="Hanging" unique_id=870575448]
+layout_mode = 2
+text = "is_hanging_free"
+
 [node name="States" type="VBoxContainer" parent="." unique_id=332686384]
 anchors_preset = 6
 anchor_left = 1.0
@@ -183,13 +259,9 @@ text = "is_crouching"
 layout_mode = 2
 text = "is_emoting"
 
-[node name="is_hanging_braced" type="CheckBox" parent="States" unique_id=819864313]
+[node name="is_hanging" type="CheckBox" parent="States" unique_id=819864313]
 layout_mode = 2
-text = "is_hanging_braced"
-
-[node name="is_hanging_free" type="CheckBox" parent="States" unique_id=1379468290]
-layout_mode = 2
-text = "is_hanging_free"
+text = "is_hanging"
 
 [node name="is_falling" type="CheckBox" parent="States" unique_id=650160220]
 layout_mode = 2
@@ -218,3 +290,33 @@ text = "is_sliding"
 [node name="is_sprinting" type="CheckBox" parent="States" unique_id=1694819929]
 layout_mode = 2
 text = "is_sprinting"
+
+[node name="Label" type="Label" parent="." unique_id=794943457]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -102.5
+offset_top = -39.0
+offset_right = 6.5
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "Current State:"
+label_settings = SubResource("LabelSettings_senyo")
+
+[node name="CurrentState" type="Label" parent="." unique_id=27265306]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = -39.0
+offset_right = 160.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "<null>"
+label_settings = SubResource("LabelSettings_senyo")

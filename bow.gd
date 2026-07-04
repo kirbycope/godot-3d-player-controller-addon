@@ -2,6 +2,11 @@ class_name Bow
 extends Equipment
 
 
+const DRAW_ARROW_RUMBLE_DELAY_SECONDS: float = 1.0
+
+var _draw_arrow_rumble_request_id: int = 0
+
+
 ## Called once on each physics tick, and allows Nodes to synchronize their logic with physics ticks.
 func _physics_process(delta: float) -> void:
 	# Do nothing if not the authority
@@ -23,6 +28,8 @@ func _physics_process(delta: float) -> void:
 		player.is_aiming_bow = has_bow and locomotion_state_currently_playing_animation == "ArcheryLocomotion"
 		player.is_drawing_arrow = has_bow and locomotion_state_currently_playing_animation == "BowDrawArrow"
 		player.is_firing_arrow = has_bow and locomotion_state_currently_playing_animation == "BowFireArrow"
+		if not player.is_aiming_bow and not player.is_drawing_arrow:
+			_draw_arrow_rumble_request_id += 1
 		var bow: Node3D = player.get_equipment_by_type(Equipment.EquipmentType.BOW)
 
 		# Check if the player has a bow equipped
@@ -86,8 +93,14 @@ func _physics_process(delta: float) -> void:
 		if has_bow and bow:
 			if player.is_drawing_arrow and not was_drawing_arrow and bow.has_node("BowDrawArrow"):
 				bow.get_node("BowDrawArrow").play()
+				# Rumble when arrow is knocked
+				if player.controls.current_input_type not in [ player.controls.InputType.KEYBOARD_MOUSE,  player.controls.InputType.TOUCH]:
+					Input.start_joy_vibration(0, 0.0, 0.2, 0.5)
 			if player.is_firing_arrow and not was_firing_arrow and bow.has_node("BowFireArrow"):
 				bow.get_node("BowFireArrow").play()
+				# Rumble when arrow is fired
+				if player.controls.current_input_type not in [ player.controls.InputType.KEYBOARD_MOUSE,  player.controls.InputType.TOUCH]:
+					Input.start_joy_vibration(0, 0.4, 0.0, 0.5)
 				if not player.projectile_raycast.is_colliding():
 					bow.get_node("Arrow/Swish").play()
 				else:

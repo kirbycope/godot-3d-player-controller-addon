@@ -11,12 +11,17 @@ func _physics_process(delta: float) -> void:
 	if not visible:
 		if ((player.is_falling) or (player.is_jumping and not player.is_jump_queued)) \
 		and Input.is_action_just_pressed("jump") \
+		and not player.is_climbing \
 		and not player.paraglider_raycast.is_colliding():
-			# Stop "falling"/"jumping"
-			player.is_falling = false
-			player.is_jumping = false
-			# Start "paragliding"
-			player.state_machine.travel(NodeStateMachine.States.PARAGLIDING)
+			# Stop "falling", start "paragliding"
+			if player.is_falling:
+				player.state_machine.travel(NodeStateMachine.States.PARAGLIDING, NodeStateMachine.States.FALLING)
+			# Stop "jumping", start "paragliding"
+			elif player.is_jumping:
+				player.state_machine.travel(NodeStateMachine.States.PARAGLIDING, NodeStateMachine.States.JUMPING)
+			# Start "paragliding" from any other state
+			else:
+				player.state_machine.travel(NodeStateMachine.States.PARAGLIDING)
 			# Start "paragliding" audio and visuals
 			if not opening.playing:
 				opening.play()

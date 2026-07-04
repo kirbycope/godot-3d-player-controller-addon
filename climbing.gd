@@ -136,6 +136,9 @@ func start() -> void:
 func stop() -> void:
 	# Disable _this_ state node
 	process_mode = Node.PROCESS_MODE_DISABLED
+	# Clear the player's state (if it is currently set to _this_ state)
+	if player.current_state == NodeStateMachine.States.CLIMBING:
+		player.current_state = -1
 	# Flag the player as not "climbing"
 	player.is_climbing = false
 	player.is_climbing_hopping_left = false

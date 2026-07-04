@@ -13,12 +13,13 @@ func _input(event: InputEvent) -> void:
 ## Called every frame. '_delta' is the elapsed time since the previous frame.
 func _process(_delta: float) -> void:
 	if player:
+		$CurrentState.text = NodeStateMachine.get_state_name(player.current_state)
+
 		$States/is_attacking.button_pressed = player.is_attacking
 		$States/is_climbing.button_pressed = player.is_climbing
 		$States/is_crouching.button_pressed = player.is_crouching
 		$States/is_emoting.button_pressed = player.is_emoting
-		$States/is_hanging_braced.button_pressed = player.is_hanging_braced
-		$States/is_hanging_free.button_pressed = player.is_hanging_free
+		$States/is_hanging.button_pressed = (player.is_hanging_braced or player.is_hanging_free)
 		$States/is_falling.button_pressed = player.is_falling
 		$States/is_focusing.button_pressed = player.is_focusing
 		$States/is_jumping.button_pressed = (player.is_jump_queued or player.is_jumping)
@@ -41,9 +42,19 @@ func _process(_delta: float) -> void:
 		$Bow/is_drawing_arrow.button_pressed = player.is_drawing_arrow
 		$Bow/is_firing_arrow.button_pressed = player.is_firing_arrow
 
+		$Attacking.visible = player.can_player_attack
+		$Attacking/is_attacking_1.button_pressed = player.is_attacking_1
+		$Attacking/is_attacking_2.button_pressed = player.is_attacking_2
+		$Attacking/is_attacking_3.button_pressed = player.is_attacking_3
+
 		$Climbing.visible = player.is_climbing
 		$Climbing/is_climbing_on.button_pressed = player.is_climbing_on
 		$Climbing/is_climbing_hopping_left.button_pressed = player.is_climbing_hopping_left
 		$Climbing/is_climbing_hopping_right.button_pressed = player.is_climbing_hopping_right
 		$Climbing/is_climbing_hopping_up.button_pressed = player.is_climbing_hopping_up
 		$Climbing/is_hopping_from_climbing.button_pressed = player.is_hopping_from_climbing
+
+		$Hanging.visible = (player.is_hanging_braced or player.is_hanging_free)
+		$Hanging/is_climbing_on.button_pressed = player.is_climbing_on
+		$Hanging/is_hanging_braced.button_pressed = player.is_hanging_braced
+		$Hanging/is_hanging_free.button_pressed = player.is_hanging_free

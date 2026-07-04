@@ -2,11 +2,15 @@ class_name NodeStateMachine
 extends Node
 
 enum States {
+	ATTACKING,
 	CLIMBING,
+	CROUCHING,
 	FALLING,
 	HANGING,
+	JUMPING,
 	PARAGLIDING,
 	SLIDING,
+	SPRINTING,
 }
 
 @export var player: Player
@@ -17,12 +21,12 @@ func travel(to_state: States, from_state: int = -1) -> void:
 	var current_state: int = player.current_state if from_state == -1 else from_state
 
 	if current_state != -1:
-		_stop_state(current_state)
-	_start_state(to_state)
+		stop_state(current_state)
+	start_state(to_state)
 
 
-func _stop_state(state: int) -> void:
-	var state_name: StringName = _get_state_name(state)
+func stop_state(state: int) -> void:
+	var state_name: StringName = get_state_name(state)
 	var state_node: Node = get_node_or_null(NodePath(state_name))
 	if state_node == null:
 		push_error("Invalid from_state: %s" % str(state))
@@ -33,8 +37,8 @@ func _stop_state(state: int) -> void:
 	state_node.call("stop")
 
 
-func _start_state(state: States) -> void:
-	var state_name: StringName = _get_state_name(state)
+func start_state(state: States) -> void:
+	var state_name: StringName = get_state_name(state)
 	var state_node: Node = get_node_or_null(NodePath(state_name))
 	if state_node == null:
 		push_error("Invalid to_state: %s" % str(state))
@@ -45,7 +49,7 @@ func _start_state(state: States) -> void:
 	state_node.call("start")
 
 
-func _get_state_name(state: int) -> StringName:
+static func get_state_name(state: int) -> StringName:
 	var state_name: Variant = States.find_key(state)
 	if state_name == null:
 		return &""
