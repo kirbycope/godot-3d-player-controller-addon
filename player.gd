@@ -90,6 +90,9 @@ var root_motion := Transform3D()
 @onready var skeleton: Skeleton3D = $PlayerModel/Armature/GeneralSkeleton
 @onready var spring_arm: SpringArm3D = $SpringArm3D
 @onready var state_machine: NodeStateMachine = $NodeStateMachine ## Enables/Disables the scripts that run when various States are entered/exited.
+@onready var sfx_footsteps_grass: AudioStreamPlayer3D = $SFX_Footsteps_Grass
+@onready var sfx_footsteps_slide: AudioStreamPlayer3D = $SFX_Footsteps_Slide
+@onready var sfx_footsteps_wood: AudioStreamPlayer3D = $SFX_Footsteps_Wood
 
 
 ## Called when the node enters the scene tree for the first time.
@@ -498,6 +501,27 @@ func execute_jump() -> void:
 	velocity = velocity.slide(up_direction) + (up_direction * 5.0)
 	is_jump_queued = false
 	is_jumping = true
+
+
+
+## Called by the animation(s) using "Call Method Track" to play footstep sound effects at the right time.
+func sfx_footsteps_play():
+	if is_on_floor() and paraglider_raycast.is_colliding():
+		var collider := paraglider_raycast.get_collider() as Node3D
+		if collider:
+			if collider.is_in_group("GRASS"):
+				sfx_footsteps_grass.play()
+			elif collider.is_in_group("WOOD"):
+				sfx_footsteps_wood.play()
+
+
+## Called by the animation(s) using "Call Method Track" to play sliding footstep sound effects at the right time.
+func sfx_footsteps_slide_play():
+	if is_on_floor() and paraglider_raycast.is_colliding():
+		var collider := paraglider_raycast.get_collider() as Node3D
+		if collider:
+			if collider.is_in_group("GRASS"):
+				sfx_footsteps_slide.play()
 
 
 ## Reset the attack sequence when the attack sequence timer times out.

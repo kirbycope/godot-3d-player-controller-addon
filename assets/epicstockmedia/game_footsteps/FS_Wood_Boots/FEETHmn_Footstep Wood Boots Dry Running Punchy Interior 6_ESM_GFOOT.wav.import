@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://dknkk8bmjakuc"
+path="res://.godot/imported/FEETHmn_Footstep Wood Boots Dry Running Punchy Interior 6_ESM_GFOOT.wav-a4a5a322b0bd7f2da9cf065a89687d2e.sample"
+
+[deps]
+
+source_file="res://addons/3d_player_controller/assets/epicstockmedia/game_footsteps/FS_Wood_Boots/FEETHmn_Footstep Wood Boots Dry Running Punchy Interior 6_ESM_GFOOT.wav"
+dest_files=["res://.godot/imported/FEETHmn_Footstep Wood Boots Dry Running Punchy Interior 6_ESM_GFOOT.wav-a4a5a322b0bd7f2da9cf065a89687d2e.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2
