@@ -327,6 +327,7 @@ shape = SubResource("ConvexPolygonShape2D_rs4nb")
 action = "ui_up"
 
 [node name="Label" type="Label" parent="BottomLeft/JoypadButton11" unique_id=724217657]
+visible = false
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
@@ -347,6 +348,7 @@ shape = SubResource("ConvexPolygonShape2D_kwisa")
 action = "ui_down"
 
 [node name="Label" type="Label" parent="BottomLeft/JoypadButton12" unique_id=1859234343]
+visible = false
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
@@ -439,10 +441,10 @@ layout_mode = 1
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_left = 92.0
-offset_top = -243.0
-offset_right = 132.0
-offset_bottom = -203.0
+offset_left = 72.0
+offset_top = -264.0
+offset_right = 152.0
+offset_bottom = -184.0
 grow_vertical = 0
 theme_override_styles/normal_tip = SubResource("StyleBoxFlat_xf6l6")
 theme_override_styles/pressed_tip = SubResource("StyleBoxFlat_rs4nb")
@@ -459,9 +461,9 @@ anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -21.5
-offset_top = 33.0
+offset_top = 17.0
 offset_right = 21.5
-offset_bottom = 56.0
+offset_bottom = 40.0
 grow_horizontal = 2
 grow_vertical = 0
 text = "Move"
@@ -520,6 +522,7 @@ texture_pressed = ExtResource("69_c88j6")
 shape = SubResource("RectangleShape2D_sp4yc")
 
 [node name="Label" type="Label" parent="BottomLeft/KeyI" unique_id=1517276430]
+visible = false
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
@@ -538,6 +541,7 @@ texture_pressed = ExtResource("71_fqvfc")
 shape = SubResource("RectangleShape2D_sp4yc")
 
 [node name="Label" type="Label" parent="BottomLeft/KeyJ" unique_id=1359570107]
+visible = false
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
@@ -710,10 +714,10 @@ texture = ExtResource("59_mdrx2")
 
 [node name="RightJoystick" type="VirtualJoystick" parent="BottomRight" unique_id=310679774]
 layout_mode = 0
-offset_left = 76.0
-offset_top = 204.0
-offset_right = 116.0
-offset_bottom = 244.0
+offset_left = 57.0
+offset_top = 185.0
+offset_right = 137.0
+offset_bottom = 265.0
 theme_override_styles/normal_tip = SubResource("StyleBoxFlat_xf6l6")
 theme_override_styles/pressed_tip = SubResource("StyleBoxFlat_rs4nb")
 action_left = &"look_left"
@@ -729,9 +733,9 @@ anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -30.5
-offset_top = 33.0
+offset_top = 17.0
 offset_right = 30.5
-offset_bottom = 56.0
+offset_bottom = 40.0
 grow_horizontal = 2
 grow_vertical = 0
 text = "Camera"
@@ -793,7 +797,7 @@ texture_normal = ExtResource("86_6rw3k")
 texture_pressed = ExtResource("87_h8pou")
 shape = SubResource("CircleShape2D_rs4nb")
 passby_press = true
-action = "use"
+action = "ability"
 
 [node name="Label" type="Label" parent="TopLeft/JoypadButton9" unique_id=1394231043]
 anchors_preset = 6
@@ -801,13 +805,12 @@ anchor_left = 1.0
 anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
-offset_left = 2.0
 offset_top = -11.5
-offset_right = 31.0
+offset_right = 49.0
 offset_bottom = 11.5
 grow_horizontal = 0
 grow_vertical = 2
-text = "Use"
+text = "Ability"
 
 [node name="JoypadAxis4Plus" type="TouchScreenButton" parent="TopLeft" unique_id=1424345727]
 position = Vector2(0, 64)
@@ -845,17 +848,17 @@ grow_horizontal = 2
 texture_normal = ExtResource("90_y4q6c")
 texture_pressed = ExtResource("91_d88iv")
 shape = SubResource("CircleShape2D_rs4nb")
-action = "select"
+action = "perspective"
 
 [node name="Label" type="Label" parent="TopCenter/JoypadButton4" unique_id=576494979]
 anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
-offset_left = -80.0
+offset_left = -90.0
 offset_top = -11.5
 offset_bottom = 11.5
 grow_vertical = 2
-text = "Purah Pad"
+text = "Perspective"
 
 [node name="JoypadButton15" type="TouchScreenButton" parent="TopCenter" unique_id=722696144]
 position = Vector2(64, 0)

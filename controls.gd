@@ -401,18 +401,18 @@ func _ready() -> void:
 		mouse_event.button_index = MOUSE_BUTTON_LEFT
 		InputMap.action_add_event("shoot", mouse_event)
 
-	# "use" { Microsoft: 🄻B, Nintendo: L, Sony: L1, Keyboard: [Q] }
-	if not InputMap.has_action("use"):
-		# Add the [use] action to the Input Map
-		InputMap.add_action("use")
+	# "ability" { Microsoft: 🄻B, Nintendo: L, Sony: L1, Keyboard: [Q] }
+	if not InputMap.has_action("ability"):
+		# Add the [ability] action to the Input Map
+		InputMap.add_action("ability")
 		# Microsoft 🄻B, Nintendo L, Sony L1
 		var joystick_event = InputEventJoypadButton.new()
 		joystick_event.button_index = JOY_BUTTON_LEFT_SHOULDER
-		InputMap.action_add_event("use", joystick_event)
+		InputMap.action_add_event("ability", joystick_event)
 		# Keyboard [Q]
 		var key_event = InputEventKey.new()
 		key_event.physical_keycode = KEY_Q
-		InputMap.action_add_event("use", key_event)
+		InputMap.action_add_event("ability", key_event)
 
 	# "throw" { Microsoft: 🅁B, Nintendo: R, Sony: R1, Keyboard: [T] }
 	if not InputMap.has_action("throw"):
@@ -427,18 +427,18 @@ func _ready() -> void:
 		key_event.physical_keycode = KEY_T
 		InputMap.action_add_event("throw", key_event)
 
-	# "purah_pad" { Microsoft: ⧉, Nintendo: ⊝, Sony: ⦀, Keyboard: [F5] }
-	if not InputMap.has_action("select"):
-		# Add the [purah_pad] action to the Input Map
-		InputMap.add_action("select")
+	# "perspective" { Microsoft: ⧉, Nintendo: ⊝, Sony: ⦀, Keyboard: [F5] }
+	if not InputMap.has_action("perspective"):
+		# Add the [perspective] action to the Input Map
+		InputMap.add_action("perspective")
 		# Microsoft ⧉, Nintendo ⊝, Sony ⦀
 		var joystick_event = InputEventJoypadButton.new()
 		joystick_event.button_index = JOY_BUTTON_BACK
-		InputMap.action_add_event("select", joystick_event)
+		InputMap.action_add_event("perspective", joystick_event)
 		# Keyboard [F5]
 		var key_event = InputEventKey.new()
 		key_event.physical_keycode = KEY_F5
-		InputMap.action_add_event("select", key_event)
+		InputMap.action_add_event("perspective", key_event)
 
 	# "share" { Microsoft: ⧉, Nintendo: ⧇, Sony: ?, Keyboard: [PrtScn] }
 	if not InputMap.has_action("share"):
