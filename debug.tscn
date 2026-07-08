@@ -291,6 +291,10 @@ text = "is_sliding"
 layout_mode = 2
 text = "is_sprinting"
 
+[node name="is_swimming" type="CheckBox" parent="States" unique_id=3126982]
+layout_mode = 2
+text = "is_swimming"
+
 [node name="Label" type="Label" parent="." unique_id=794943457]
 anchors_preset = 7
 anchor_left = 0.5

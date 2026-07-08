@@ -66,7 +66,7 @@ var is_paragliding: bool = false ## Is the Player currently paragliding?
 var is_shooting: bool = false ## Is the Player currently shooting?
 var is_sliding: bool = false ## Is the Player currently sliding?
 var is_sprinting: bool = false ## Is the Player currently sprinting?
-
+var is_swimming: bool = false ## Is the Player currently swimming?
 var initial_collision_shape_height: float
 var initial_collision_shape_position: Vector3
 var orientation := Transform3D()

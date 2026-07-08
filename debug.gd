@@ -27,6 +27,7 @@ func _process(_delta: float) -> void:
 		$States/is_shooting.button_pressed = player.is_shooting
 		$States/is_sliding.button_pressed = player.is_sliding
 		$States/is_sprinting.button_pressed = player.is_sprinting
+		$States/is_swimming.button_pressed = player.is_swimming
 
 		$Equipment/equipped_axe_1h.button_pressed = player.has_equipment(Equipment.EquipmentType.AXE_1H)
 		$Equipment/equipped_axe_2h.button_pressed = player.has_equipment(Equipment.EquipmentType.AXE_2H)
