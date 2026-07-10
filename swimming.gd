@@ -26,9 +26,23 @@ func _physics_process(delta: float) -> void:
 		stop()
 		return
 
+	# Swimming, To Edge { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
+	if player.is_on_wall() \
+	and Input.is_action_just_pressed("jump"):
+		if player.detect_ledge():
+			print("Swimming to edge") # --- DEBUGGING ---
+
+	# TODO: Swim to edge if the player is swimming and the bracedclimbing raycast is colliding
+	#player.locomotion_state.travel("SwimmingToEdge")
+
 	# Swimming, Up { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
+	if not player.is_on_wall() \
+	and Input.is_action_just_pressed("jump"):
+		print("Swimming up") # --- DEBUGGING ---
 
 	# Swimming, Down { Controller: Left Stick, Keyboard: Left Control }
+	if Input.is_action_just_pressed("crouch"):
+		print("Swimming down") # --- DEBUGGING ---
 
 	# Swimming, Speed Up [Input] { Microsoft: Ⓑ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Shift] }.
 	if player.is_swimming \
@@ -124,6 +138,9 @@ func start() -> void:
 	player.current_state = NodeStateMachine.States.SWIMMING
 	# Flag the player as "swimming"
 	player.is_swimming = true
+	# Flag the player as not falling/jumping
+	player.is_falling = false
+	player.is_jumping = false
 	# Travel to "SwimmingLocomotion" state in the player's state machine
 	player.locomotion_state.travel("SwimmingLocomotion")
 
