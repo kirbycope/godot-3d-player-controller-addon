@@ -257,7 +257,7 @@ func apply_input(delta: float) -> void:
 	if is_swimming:
 		if locomotion_state.get_current_node() != "SwimmingLocomotion":
 			locomotion_state.travel("SwimmingLocomotion")
-		if is_shooting or is_focusing:
+		if is_focusing: # or is_shooting:
 			animation_tree.set(SWIMMING_LOCOMOTION_BLEND_POSITION_PATH, target_motion.y)
 		else:
 			animation_tree.set(SWIMMING_LOCOMOTION_BLEND_POSITION_PATH, target_motion.length())
