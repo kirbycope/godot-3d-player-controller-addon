@@ -1,6 +1,8 @@
 class_name Swimming
 extends NodeStateMachine
 
+const WATER_SURFACE_SNAP_RATIO := 0.75
+
 
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:
@@ -22,16 +24,108 @@ func _physics_process(delta: float) -> void:
 	# Stop "swimming" if the player has been flagged as not "swimming" (e.g. by exiting the pool)
 	if not player.is_swimming:
 		stop()
+		return
+
+	# Swimming, Up { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
+
+	# Swimming, Down { Controller: Left Stick, Keyboard: Left Control }
+
+	# Swimming, Speed Up [Input] { Microsoft: Ⓑ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Shift] }.
+	if player.is_swimming \
+	and Input.is_action_pressed("sprint"):
+		player.animation_tree.set("parameters/LocomotionTimeScale/scale", 1.5)
+		player.swimming_root_motion_multiplier = 3
+		player.is_sprinting = true
+	else:
+		player.animation_tree.set("parameters/LocomotionTimeScale/scale", 1.0)
+		player.swimming_root_motion_multiplier = 2
+		player.is_sprinting = false
+
+
+func _get_player_shoulder_offset() -> float:
+	if not player or not player.collision_shape:
+		return 0.0
+
+	var shape: Shape3D = player.collision_shape.shape
+	if not shape:
+		return 0.0
+
+	if shape is CapsuleShape3D:
+		var capsule_shape := shape as CapsuleShape3D
+		return capsule_shape.height * WATER_SURFACE_SNAP_RATIO
+
+	if shape is BoxShape3D:
+		var box_shape := shape as BoxShape3D
+		return box_shape.size.y * WATER_SURFACE_SNAP_RATIO
+
+	return 0.0
+
+
+func _get_water_surface_along_up(up_direction: Vector3) -> float:
+	var has_surface := false
+	var highest_surface_along_up := 0.0
+	
+	var water_nodes := get_tree().get_nodes_in_group("WATER")
+
+	for node in water_nodes:
+		var water_area := node as Area3D
+		if not water_area:
+			continue
+		
+		# Check overlap or proximity
+		var overlapping := water_area.overlaps_body(player)
+		if not overlapping:
+			continue
+
+		var collision_shape := water_area.get_node_or_null("CollisionShape3D") as CollisionShape3D
+		if not collision_shape:
+			continue
+
+		var box_shape := collision_shape.shape as BoxShape3D
+		if not box_shape:
+			continue
+
+		var up_in_local: Vector3 = collision_shape.global_basis.inverse() * up_direction
+		var half_size: Vector3 = box_shape.size * 0.5
+		var half_extent_along_up: float = abs(up_in_local.x) * half_size.x \
+			+ abs(up_in_local.y) * half_size.y \
+			+ abs(up_in_local.z) * half_size.z
+
+		var local_surface: Vector3 = up_in_local.normalized() * half_extent_along_up
+		var world_surface: Vector3 = collision_shape.to_global(local_surface)
+		var surface_along_up: float = up_direction.dot(world_surface)
+
+		if not has_surface or surface_along_up > highest_surface_along_up:
+			has_surface = true
+			highest_surface_along_up = surface_along_up
+
+	if not has_surface:
+		return NAN
+
+	return highest_surface_along_up
 
 
 ## Start "swimming".
 func start() -> void:
 	# Enable _this_ state node
 	process_mode = Node.PROCESS_MODE_INHERIT
+	
+	var up_direction: Vector3 = player.up_direction.normalized()
+	var water_surface_along_up: float = _get_water_surface_along_up(up_direction)
+	if not is_nan(water_surface_along_up):
+		var shoulder_offset := _get_player_shoulder_offset()
+		var target_position_along_up := water_surface_along_up - shoulder_offset
+		var current_position_along_up := up_direction.dot(player.global_position)
+		
+		# Unconditionally snap player to floating level upon starting swim state
+		player.global_position += up_direction * (target_position_along_up - current_position_along_up)
+			
 	# Set the player's new state
 	player.current_state = NodeStateMachine.States.SWIMMING
 	# Flag the player as "swimming"
 	player.is_swimming = true
+	# Travel to "SwimmingLocomotion" state in the player's state machine
+	player.locomotion_state.travel("SwimmingLocomotion")
 
 
 ## Stop "swimming".

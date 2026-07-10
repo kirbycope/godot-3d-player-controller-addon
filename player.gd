@@ -14,11 +14,13 @@ const PISTOL_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStat
 const RIFLE_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/RifleLocomotion/blend_position"
 const SHIELD_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/ShieldLocomotion/blend_position"
 const STANDING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/StandingLocomotion/blend_position"
+const SWIMMING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/SwimmingLocomotion/blend_position"
 
 @export var animation_tree: AnimationTree
 @export var current_animation: int
 @export var motion_interpolate_speed: float = 10.0
 @export var rotation_interpolate_speed: float = 10.0
+@export var swimming_root_motion_multiplier: float = 2.0
 
 var current_state: int = -1 ## The current state of the Player (from the Node/Code [NodeStateMachine], not the AnimationTree NodeStateMachine).
 var locomotion_state: ## Gets the [NodeStateMachine] "LocomotionStateMachine"
@@ -145,7 +147,8 @@ func _physics_process(delta: float) -> void:
 	and not is_climbing and not is_climbing_on \
 	and not is_hanging_braced and not is_hanging_free \
 	and not is_jumping and not is_jump_queued \
-	and not is_paragliding:
+	and not is_paragliding \
+	and not is_swimming:
 		# Enable the "falling" state in the NodeStateMachine. The AnimationTree will automatically transition to the "Falling" animation state.
 		state_machine.travel(NodeStateMachine.States.FALLING)
 
@@ -250,6 +253,15 @@ func apply_input(delta: float) -> void:
 	if is_paragliding:
 		return
 
+	# While swimming, keep SwimmingLocomotion active and feed its BlendSpace1D.
+	if is_swimming:
+		if locomotion_state.get_current_node() != "SwimmingLocomotion":
+			locomotion_state.travel("SwimmingLocomotion")
+		if is_shooting or is_focusing:
+			animation_tree.set(SWIMMING_LOCOMOTION_BLEND_POSITION_PATH, target_motion.y)
+		else:
+			animation_tree.set(SWIMMING_LOCOMOTION_BLEND_POSITION_PATH, target_motion.length())
+
 	# Attack { Microsoft: Ⓧ, Nintendo: Ⓨ, Sony: 🟗, Keyboard: [Alt] }
 	if Input.is_action_just_pressed("attack") \
 	and not is_attacking \
@@ -290,7 +302,7 @@ func apply_input(delta: float) -> void:
 	is_shooting = Input.is_action_pressed("shoot") and can_player_shoot
 
 	# Update locomotion state based on equipped items if not in special states
-	if not is_climbing and not is_hanging_braced and not is_hanging_free and not is_falling and not is_jumping and not is_sliding and not is_mining and not is_logging:
+	if not is_swimming and not is_climbing and not is_hanging_braced and not is_hanging_free and not is_falling and not is_jumping and not is_sliding and not is_mining and not is_logging:
 		var current_state = locomotion_state.get_current_node()
 		var target_state = "StandingLocomotion"
 		var is_shield_attack_state: bool = current_state == "ShieldDownwardSlash" or current_state == "ShieldCrossSlash" or current_state == "ShieldPowerSlash"
@@ -433,7 +445,11 @@ func apply_input(delta: float) -> void:
 			else:
 				animation_tree.set(STANDING_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
 
-	root_motion = Transform3D(animation_tree.get_root_motion_rotation(), animation_tree.get_root_motion_position())
+	var root_motion_position := animation_tree.get_root_motion_position()
+	if is_swimming:
+		root_motion_position *= swimming_root_motion_multiplier
+
+	root_motion = Transform3D(animation_tree.get_root_motion_rotation(), root_motion_position)
 
 	orientation *= root_motion
 
@@ -458,6 +474,9 @@ func apply_input(delta: float) -> void:
 		vertical_speed = h_velocity.dot(up_direction)
 	elif is_hanging_braced or is_hanging_free:
 		vertical_speed = 0.0
+	elif is_swimming:
+		# While swimming, vertical movement is driven by root motion/input, not gravity.
+		vertical_speed = h_velocity.dot(up_direction)
 	else:
 		vertical_speed += get_gravity().dot(up_direction) * 1.5 * delta
 	velocity = h_velocity.slide(up_direction) + (up_direction * vertical_speed)
