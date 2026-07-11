@@ -12,6 +12,11 @@ func _input(event: InputEvent) -> void:
 	# Do nothing if the player is not set
 	if not player: return
 
+	# Swimming, Climb Out { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
+	if player.locomotion_state.get_current_node() == "SwimmingAtEdge" \
+	and Input.is_action_just_pressed("jump"):
+		player.locomotion_state.travel("BracedHangClimbingOn")
+
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(delta: float) -> void:
@@ -26,25 +31,26 @@ func _physics_process(delta: float) -> void:
 		stop()
 		return
 
-	# Swimming, To Edge { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
-	if player.is_on_wall() \
-	and Input.is_action_just_pressed("jump"):
-		if player.detect_ledge():
-			print("Swimming to edge") # --- DEBUGGING ---
+	# Stop "swimming to edge" if the player is no longer colliding with the wall
+	if player.locomotion_state.get_current_node() in ["SwimmingAtEdge","SwimmingToEdge"] \
+	and not player.hanging_braced_detection.is_colliding():
+		player.locomotion_state.travel("SwimmingLocomotion")
 
-	# TODO: Swim to edge if the player is swimming and the bracedclimbing raycast is colliding
-	#player.locomotion_state.travel("SwimmingToEdge")
+	# Swimming, To Edge (Raycast)
+	if not player.locomotion_state.get_current_node() in ["SwimmingAtEdge","SwimmingToEdge"] \
+	and player.hanging_braced_detection.is_colliding():
+		player.locomotion_state.travel("SwimmingToEdge")
 
 	# Swimming, Up { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
 	if not player.is_on_wall() \
 	and Input.is_action_just_pressed("jump"):
-		print("Swimming up") # --- DEBUGGING ---
+		pass
 
 	# Swimming, Down { Controller: Left Stick, Keyboard: Left Control }
 	if Input.is_action_just_pressed("crouch"):
-		print("Swimming down") # --- DEBUGGING ---
+		pass
 
-	# Swimming, Speed Up [Input] { Microsoft: Ⓑ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Shift] }.
+	# Swimming, Speed [Input] { Microsoft: Ⓑ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Shift] }.
 	if player.is_swimming \
 	and Input.is_action_pressed("sprint"):
 		player.animation_tree.set("parameters/LocomotionTimeScale/scale", 1.5)

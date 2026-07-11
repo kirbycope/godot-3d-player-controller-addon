@@ -3,13 +3,13 @@
 importer="animation_library"
 importer_version=1
 type="AnimationLibrary"
-uid="uid://bopj8jpupkxm0"
-path="res://.godot/imported/Swimming To Edge.glb-78dbda10fbff7f25b08587432bdd88a5.res"
+uid="uid://dhtb5ixwgsm0s"
+path="res://.godot/imported/Swimming At Edge.glb-92ced55cf5ebb65d9654068ae35fb7b4.res"
 
 [deps]
 
-source_file="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Swimming To Edge.glb"
-dest_files=["res://.godot/imported/Swimming To Edge.glb-78dbda10fbff7f25b08587432bdd88a5.res"]
+source_file="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Swimming At Edge.glb"
+dest_files=["res://.godot/imported/Swimming At Edge.glb-92ced55cf5ebb65d9654068ae35fb7b4.res"]
 
 [params]
 
@@ -43,10 +43,10 @@ _subresources={
 "animations": {
 "mixamo_com": {
 "save_to_file/enabled": true,
-"save_to_file/fallback_path": "res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Swimming To Edge.tres",
+"save_to_file/fallback_path": "res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Swimming At Edge.tres",
 "save_to_file/keep_custom_tracks": true,
-"save_to_file/path": "uid://bwycnr0yr3mcp",
-"settings/loop_mode": 0,
+"save_to_file/path": "uid://ln6g1t3kuy55",
+"settings/loop_mode": 2,
 "slice_1/end_frame": 0,
 "slice_1/loop_mode": 0,
 "slice_1/name": "",

@@ -258,12 +258,18 @@ func apply_input(delta: float) -> void:
 
 	# While swimming, keep SwimmingLocomotion active and feed its BlendSpace1D.
 	if is_swimming:
-		if locomotion_state.get_current_node() != "SwimmingLocomotion":
+		var current_swimming_node = locomotion_state.get_current_node()
+		# Do not force SwimmingLocomotion while swimming to/at an edge or mantling out.
+		if not current_swimming_node in ["BracedHangClimbingOn", "SwimmingAtEdge", "SwimmingToEdge"] \
+		and current_swimming_node != "SwimmingLocomotion" \
+		and not is_climbing_on:
 			locomotion_state.travel("SwimmingLocomotion")
-		if is_focusing: # or is_shooting:
-			animation_tree.set(SWIMMING_LOCOMOTION_BLEND_POSITION_PATH, target_motion.y)
-		else:
-			animation_tree.set(SWIMMING_LOCOMOTION_BLEND_POSITION_PATH, target_motion.length())
+		# Feed the BlendSpace1D only while in normal swimming locomotion.
+		if current_swimming_node == "SwimmingLocomotion":
+			if is_focusing: # or is_shooting:
+				animation_tree.set(SWIMMING_LOCOMOTION_BLEND_POSITION_PATH, target_motion.y)
+			else:
+				animation_tree.set(SWIMMING_LOCOMOTION_BLEND_POSITION_PATH, target_motion.length())
 
 	# Attack { Microsoft: Ⓧ, Nintendo: Ⓨ, Sony: 🟗, Keyboard: [Alt] }
 	if Input.is_action_just_pressed("attack") \
@@ -449,7 +455,7 @@ func apply_input(delta: float) -> void:
 				animation_tree.set(STANDING_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
 
 	var root_motion_position := animation_tree.get_root_motion_position()
-	if is_swimming:
+	if is_swimming and not is_climbing_on:
 		root_motion_position *= swimming_root_motion_multiplier
 
 	root_motion = Transform3D(animation_tree.get_root_motion_rotation(), root_motion_position)
