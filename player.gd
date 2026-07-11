@@ -56,6 +56,7 @@ var is_hanging_braced: bool = false ## Is the Player currently hanging (braced)?
 var is_hanging_free: bool = false ## Is the Player currently hanging (free)?
 
 var is_crouching: bool = false ## Is the Player currently crouching?
+var is_driving: bool = false ## Is the Player currently driving?
 var is_emoting: bool = false ## Is the Player currently emoting?
 var is_exhausted: bool = false ## Is the Player currently exhausted?
 var is_falling: bool = false ## Is the Player currently falling?
@@ -66,6 +67,7 @@ var is_mining: bool = false ## Is the Player currently mining?
 var is_logging: bool = false ## Is the Player currently logging?
 var is_paragliding: bool = false ## Is the Player currently paragliding?
 var is_shooting: bool = false ## Is the Player currently shooting?
+var is_skateboarding: bool = false ## Is the Player currently skateboarding?
 var is_sliding: bool = false ## Is the Player currently sliding?
 var is_sprinting: bool = false ## Is the Player currently sprinting?
 var is_swimming: bool = false ## Is the Player currently swimming?
@@ -249,8 +251,9 @@ func apply_input(delta: float) -> void:
 	# Smoothly interpolate the target_motion for more gradual changes in animation blending and rotation.
 	target_motion = target_motion.lerp(target_motion, motion_interpolate_speed * delta)
 
-	# While paragliding, block regular locomotion. Paragliding.gd will handle movement.
-	if is_paragliding:
+	# While paragliding or skateboarding, block regular locomotion.
+	# Paragliding.gd / Skateboarding.gd will handle movement.
+	if is_paragliding or is_skateboarding:
 		return
 
 	# While swimming, keep SwimmingLocomotion active and feed its BlendSpace1D.

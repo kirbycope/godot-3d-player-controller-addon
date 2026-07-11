@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://drmvyehu4dq43"]
+
+[ext_resource type="PackedScene" uid="uid://dqmuukjxtalt4" path="res://addons/3d_player_controller/assets/sketchfab/skateboard/scene.gltf" id="1_gnj44"]
+
+[node name="Skateboard" type="Node3D" unique_id=1958283666]
+
+[node name="Sketchfab_Scene" parent="." unique_id=421412839 instance=ExtResource("1_gnj44")]
+transform = Transform3D(0.4575082, 0.06222986, -0.65331, 0.65619314, -0.031425726, 0.4565339, 0.00984912, -0.7969564, -0.069015406, -0.18209313, -0.23128593, 0.2)
