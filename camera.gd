@@ -37,6 +37,16 @@ func _input(event: InputEvent) -> void:
 		looking_at.equip(player)
 		looking_at = null
 
+	# If Mouse scroll wheel up
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_WHEEL_UP:
+		# Shorten the camera spring arm, min 1.0
+		camera_spring_arm.spring_length = max(camera_spring_arm.spring_length - 0.1, 1.0)
+	
+	# If Mouse scroll wheel down
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+		# Lengthen the camera spring arm, max 6.0
+		camera_spring_arm.spring_length = min(camera_spring_arm.spring_length + 0.1, 6.0)
+
 
 ## Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
