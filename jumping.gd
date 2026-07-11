@@ -33,6 +33,8 @@ func start() -> void:
 	player.current_state = NodeStateMachine.States.JUMPING
 	# Flag the player as "falling"
 	player.is_jumping = true
+	# Flag the player as having a "jump queued"
+	player.is_jump_queued = true
 	# Perform a forward jump if there is motion input
 	if player.player_input.motion.length() > 0.0:
 		if player.has_heavy_weapon_equipped():
@@ -61,8 +63,6 @@ func start() -> void:
 			player.locomotion_state.travel("RifleJumpUp")
 		else:
 			player.locomotion_state.travel("JumpingUp")
-	# Flag the player as having a "jump queued"
-	player.is_jump_queued = true
 
 
 ## Stop "jumping".

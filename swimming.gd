@@ -12,10 +12,12 @@ func _input(event: InputEvent) -> void:
 	# Do nothing if the player is not set
 	if not player: return
 
-	# Swimming, Climb Out { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
+	# Swimming, Climbing-On [Input] { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
 	if player.locomotion_state.get_current_node() == "SwimmingAtEdge" \
-	and Input.is_action_just_pressed("jump"):
+	and Input.is_action_just_pressed("jump") \
+	and not player.is_climbing_on:
 		player.locomotion_state.travel("BracedHangClimbingOn")
+		player.is_climbing_on = true
 
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
@@ -26,19 +28,39 @@ func _physics_process(delta: float) -> void:
 	# Do nothing if the player is not set
 	if not player: return
 
+	# Swimming, Climbing On [Status]
+	if player.is_climbing_on:
+		var was_climbing_on := player.is_climbing_on
+		player.is_climbing_on = player.animation_tree.get(player.LOCOMOTION_STATE_PLAYBACK_PATH).get_current_node() in ["BracedHangClimbingOn", "FreeHangingClimbingOn"]
+		if was_climbing_on and not player.is_climbing_on:
+			player.global_position = player.climbing_on_target
+			# Hide ledge detection gizmos
+			player.ledge_detection_vertical.position = Vector3(0.0, 0.0, -1.0)
+			player.ledge_detection_horizontal.hide()
+			player.ledge_detection_marker.hide()
+			# Stop "swimming"
+			stop()
+			# Start "standing"
+			player.locomotion_state.travel("StandingLocomotion")
+		return
+
 	# Stop "swimming" if the player has been flagged as not "swimming" (e.g. by exiting the pool)
-	if not player.is_swimming:
+	if not player.is_swimming \
+	and player.locomotion_state.get_current_node() != "BracedHangClimbingOn":
 		stop()
 		return
 
+	# Ledge detection [Raycast]
+	var ledge_detected = player.detect_ledge()
+
 	# Stop "swimming to edge" if the player is no longer colliding with the wall
 	if player.locomotion_state.get_current_node() in ["SwimmingAtEdge","SwimmingToEdge"] \
-	and not player.hanging_braced_detection.is_colliding():
+	and not ledge_detected:
 		player.locomotion_state.travel("SwimmingLocomotion")
 
 	# Swimming, To Edge (Raycast)
 	if not player.locomotion_state.get_current_node() in ["SwimmingAtEdge","SwimmingToEdge"] \
-	and player.hanging_braced_detection.is_colliding():
+	and ledge_detected:
 		player.locomotion_state.travel("SwimmingToEdge")
 
 	# Swimming, Up { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
@@ -147,8 +169,6 @@ func start() -> void:
 	# Flag the player as not falling/jumping
 	player.is_falling = false
 	player.is_jumping = false
-	# Travel to "SwimmingLocomotion" state in the player's state machine
-	player.locomotion_state.travel("SwimmingLocomotion")
 
 
 ## Stop "swimming".

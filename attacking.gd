@@ -72,7 +72,7 @@ func start() -> void:
 	player.is_attacking = true
 	# Start the attack sequence timer
 	player.attack_sequence_timer.start()
-	# Reset the state variables
+	# Reset the attack state variables
 	player.attack_sequence = 0
 	player.is_attacking_1 = false
 	player.is_attacking_2 = false

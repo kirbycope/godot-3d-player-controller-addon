@@ -18,6 +18,7 @@ func _process(_delta: float) -> void:
 		$States/is_attacking.button_pressed = player.is_attacking
 		$States/is_climbing.button_pressed = player.is_climbing
 		$States/is_crouching.button_pressed = player.is_crouching
+		$States/is_driving.button_pressed = player.is_driving
 		$States/is_emoting.button_pressed = player.is_emoting
 		$States/is_hanging.button_pressed = (player.is_hanging_braced or player.is_hanging_free)
 		$States/is_falling.button_pressed = player.is_falling
@@ -25,8 +26,10 @@ func _process(_delta: float) -> void:
 		$States/is_jumping.button_pressed = (player.is_jump_queued or player.is_jumping)
 		$States/is_paragliding.button_pressed = player.is_paragliding
 		$States/is_shooting.button_pressed = player.is_shooting
+		$States/is_skateboarding.button_pressed = player.is_skateboarding
 		$States/is_sliding.button_pressed = player.is_sliding
 		$States/is_sprinting.button_pressed = player.is_sprinting
+		$States/is_standing.button_pressed = player.is_standing
 		$States/is_swimming.button_pressed = player.is_swimming
 
 		$Equipment/equipped_axe_1h.button_pressed = player.has_equipment(Equipment.EquipmentType.AXE_1H)

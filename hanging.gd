@@ -28,9 +28,7 @@ func _physics_process(delta: float) -> void:
 	if player.is_on_floor():
 		# "Stop "hanging"
 		stop()
-
-	# Ledge detection [Raycast]
-	var ledge_detected = player.detect_ledge()
+		return
 
 	# Update footing status if not climbing onto a ledge
 	if not player.is_climbing_on:

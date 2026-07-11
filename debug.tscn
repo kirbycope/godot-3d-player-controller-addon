@@ -110,9 +110,9 @@ anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
 offset_left = -580.0
-offset_top = -368.5
+offset_top = -365.5
 offset_right = -352.0
-offset_bottom = -239.5
+offset_bottom = -236.5
 grow_horizontal = 0
 grow_vertical = 2
 
@@ -146,9 +146,9 @@ anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
 offset_left = -580.0
-offset_top = -334.5
+offset_top = -331.5
 offset_right = -352.0
-offset_bottom = -135.5
+offset_bottom = -132.5
 grow_horizontal = 0
 grow_vertical = 2
 
@@ -190,9 +190,9 @@ anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
 offset_left = -580.0
-offset_top = -227.5
+offset_top = -192.5
 offset_right = -352.0
-offset_bottom = -98.5
+offset_bottom = -63.5
 grow_horizontal = 0
 grow_vertical = 2
 
@@ -226,9 +226,9 @@ anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
 offset_left = -346.0
-offset_top = -399.5
+offset_top = -396.0
 offset_right = -176.0
-offset_bottom = 79.5
+offset_bottom = 188.0
 grow_horizontal = 0
 grow_vertical = 2
 
@@ -259,6 +259,10 @@ text = "is_crouching"
 layout_mode = 2
 text = "is_emoting"
 
+[node name="is_driving" type="CheckBox" parent="States" unique_id=737133500]
+layout_mode = 2
+text = "is_driving"
+
 [node name="is_hanging" type="CheckBox" parent="States" unique_id=819864313]
 layout_mode = 2
 text = "is_hanging"
@@ -283,6 +287,10 @@ text = "is_paragliding"
 layout_mode = 2
 text = "is_shooting"
 
+[node name="is_skateboarding" type="CheckBox" parent="States" unique_id=962007147]
+layout_mode = 2
+text = "is_skateboarding"
+
 [node name="is_sliding" type="CheckBox" parent="States" unique_id=1734099729]
 layout_mode = 2
 text = "is_sliding"
@@ -290,6 +298,10 @@ text = "is_sliding"
 [node name="is_sprinting" type="CheckBox" parent="States" unique_id=1694819929]
 layout_mode = 2
 text = "is_sprinting"
+
+[node name="is_standing" type="CheckBox" parent="States" unique_id=2071856880]
+layout_mode = 2
+text = "is_standing"
 
 [node name="is_swimming" type="CheckBox" parent="States" unique_id=3126982]
 layout_mode = 2

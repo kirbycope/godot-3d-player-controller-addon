@@ -70,6 +70,7 @@ var is_shooting: bool = false ## Is the Player currently shooting?
 var is_skateboarding: bool = false ## Is the Player currently skateboarding?
 var is_sliding: bool = false ## Is the Player currently sliding?
 var is_sprinting: bool = false ## Is the Player currently sprinting?
+var is_standing: bool = false ## Is the Player currently standing?
 var is_swimming: bool = false ## Is the Player currently swimming?
 var initial_collision_shape_height: float
 var initial_collision_shape_position: Vector3
@@ -120,6 +121,9 @@ func _ready() -> void:
 
 	# Ensure the projectile RayCast3D doesn't collide with the player
 	projectile_raycast.add_exception(self)
+
+	# Set the Player's iniitial state
+	current_state = NodeStateMachine.States.STANDING
 
 
 ## Called when there is an input event.
@@ -283,6 +287,7 @@ func apply_input(delta: float) -> void:
 	and not is_climbing \
 	and not is_hanging_braced \
 	and not is_hanging_free \
+	and not is_swimming \
 	and Input.is_action_just_pressed("jump") \
 	and ledge_detection_horizontal.is_colliding():
 		# Stop "falling", start "climbing"
