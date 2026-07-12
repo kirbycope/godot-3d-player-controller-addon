@@ -13,15 +13,8 @@ func _physics_process(delta: float) -> void:
 		and Input.is_action_just_pressed("jump") \
 		and not player.is_climbing \
 		and not player.paraglider_raycast.is_colliding():
-			# Stop "falling", start "paragliding"
-			if player.is_falling:
-				player.state_machine.travel(NodeStateMachine.States.PARAGLIDING, NodeStateMachine.States.FALLING)
-			# Stop "jumping", start "paragliding"
-			elif player.is_jumping:
-				player.state_machine.travel(NodeStateMachine.States.PARAGLIDING, NodeStateMachine.States.JUMPING)
-			# Start "paragliding" from any other state
-			else:
-				player.state_machine.travel(NodeStateMachine.States.PARAGLIDING)
+			# Start "paragliding"
+			player.state_machine.travel(player.current_state, NodeStateMachine.States.PARAGLIDING)
 			# Start "paragliding" audio and visuals
 			if not opening.playing:
 				opening.play()

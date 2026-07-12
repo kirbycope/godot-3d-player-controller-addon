@@ -1,6 +1,8 @@
 class_name Driving
 extends NodeStateMachine
 
+var _this_state := NodeStateMachine.States.DRIVING
+
 
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:
@@ -26,7 +28,7 @@ func start() -> void:
 	# Enable _this_ state node
 	process_mode = Node.PROCESS_MODE_INHERIT
 	# Set the player's new state
-	player.current_state = NodeStateMachine.States.DRIVING
+	player.current_state = _this_state
 	# Flag the player as "driving"
 	player.is_driving = true
 
@@ -36,7 +38,7 @@ func stop() -> void:
 	# Disable _this_ state node
 	process_mode = Node.PROCESS_MODE_DISABLED
 	# Clear the player's state (if it is currently set to _this_ state)
-	if player.current_state == NodeStateMachine.States.DRIVING:
+	if player.current_state == _this_state:
 		player.current_state = -1
 	# Flag the player as not "driving"
 	player.is_driving = false

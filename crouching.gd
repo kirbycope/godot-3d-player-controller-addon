@@ -1,6 +1,8 @@
 class_name Crouching
 extends NodeStateMachine
 
+var _this_state := NodeStateMachine.States.CROUCHING
+
 
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:
@@ -12,8 +14,9 @@ func _input(event: InputEvent) -> void:
 
 	# Crouch { Controller: Left Stick, Keyboard: Left Control }
 	if event.is_action_released("crouch"):
-		# Stop "crouching"
-		stop()
+		# Start "standing"
+		player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
+		return
 
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
@@ -30,7 +33,7 @@ func start() -> void:
 	# Enable _this_ state node
 	process_mode = Node.PROCESS_MODE_INHERIT
 	# Set the player's new state
-	player.current_state = NodeStateMachine.States.CROUCHING
+	player.current_state = _this_state
 	# Flag the player as "crouching"
 	player.is_crouching = true
 	# Reduce the player's collision shape height and adjust its position to match the sliding posture
@@ -43,7 +46,7 @@ func stop() -> void:
 	# Disable _this_ state node
 	process_mode = Node.PROCESS_MODE_DISABLED
 	# Clear the player's state (if it is currently set to _this_ state)
-	if player.current_state == NodeStateMachine.States.CROUCHING:
+	if player.current_state == _this_state:
 		player.current_state = -1
 	# Flag the player as not "crouching"
 	player.is_crouching = false

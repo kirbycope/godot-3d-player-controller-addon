@@ -1,6 +1,8 @@
 class_name Sliding
 extends NodeStateMachine
 
+var _this_state := NodeStateMachine.States.SLIDING
+
 
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:
@@ -21,8 +23,9 @@ func _physics_process(delta: float) -> void:
 
 	# Check if the player is no longer sliding
 	if player.locomotion_state.get_current_node() != "RunningSlide":
-		# Stop "sliding"
-		stop()
+		# Start "standing"
+		player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
+		return
 
 
 ## Start "sliding".
@@ -30,7 +33,7 @@ func start() -> void:
 	# Enable _this_ state node
 	process_mode = Node.PROCESS_MODE_INHERIT
 	# Set the player's new state
-	player.current_state = NodeStateMachine.States.SLIDING
+	player.current_state = _this_state
 	# Flag the player as "sliding"
 	player.is_sliding = true
 	# Reduce the player's collision shape height and adjust its position to match the sliding posture
@@ -43,7 +46,7 @@ func stop() -> void:
 	# Disable _this_ state node
 	process_mode = Node.PROCESS_MODE_DISABLED
 	# Clear the player's state (if it is currently set to _this_ state)
-	if player.current_state == NodeStateMachine.States.SLIDING:
+	if player.current_state == _this_state:
 		player.current_state = -1
 	# Flag the player as not "sliding"
 	player.is_sliding = false

@@ -156,7 +156,7 @@ func _physics_process(delta: float) -> void:
 	and not is_paragliding \
 	and not is_swimming:
 		# Enable the "falling" state in the NodeStateMachine. The AnimationTree will automatically transition to the "Falling" animation state.
-		state_machine.travel(NodeStateMachine.States.FALLING)
+		state_machine.travel(current_state, NodeStateMachine.States.FALLING)
 
 	# Apply player input to control the character and update the animation state.
 	apply_input(delta)
@@ -280,7 +280,7 @@ func apply_input(delta: float) -> void:
 	and not is_attacking \
 	and can_player_attack:
 		# Enable the "attacking" state in the NodeStateMachine. The AnimationTree will automatically transition to the "Falling" animation state.
-		state_machine.travel(NodeStateMachine.States.ATTACKING)
+		state_machine.travel(current_state, NodeStateMachine.States.ATTACKING)
 
 	# Climbing, Start { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
 	if not is_on_floor() \
@@ -292,13 +292,16 @@ func apply_input(delta: float) -> void:
 	and ledge_detection_horizontal.is_colliding():
 		# Stop "falling", start "climbing"
 		if is_falling:
-			state_machine.travel(NodeStateMachine.States.CLIMBING, NodeStateMachine.States.FALLING)
+			state_machine.travel(NodeStateMachine.States.FALLING, NodeStateMachine.States.CLIMBING)
+			return
 		# Stop "jumping", start "climbing"
 		elif is_jumping:
-			state_machine.travel(NodeStateMachine.States.CLIMBING, NodeStateMachine.States.JUMPING)
+			state_machine.travel(NodeStateMachine.States.JUMPING, NodeStateMachine.States.CLIMBING)
+			return
 		# Start "climbing" from any other state
 		else:
-			state_machine.travel(NodeStateMachine.States.CLIMBING)
+			state_machine.travel(current_state, NodeStateMachine.States.CLIMBING)
+			return
 
 	# Crouch { Console: Left ⬤, Keyboard: [Control] }.
 	if Input.is_action_pressed("crouch") \
@@ -306,8 +309,9 @@ func apply_input(delta: float) -> void:
 	and is_on_floor() \
 	and not is_sliding \
 	and not is_sprinting:
-		# Enable the "crouching" state in the NodeStateMachine. The AnimationTree will automatically transition to the "Falling" animation state.
-		state_machine.travel(NodeStateMachine.States.CROUCHING)
+		# Start "crouching"
+		state_machine.travel(current_state, NodeStateMachine.States.CROUCHING)
+		return
 
 	# Focus { Microsoft: 🄻T, Nintendo: Z🄻, Sony: 🄻2, Keyboard: [Right Mouse Button] }.
 	is_focusing = Input.is_action_pressed("focus")
@@ -349,7 +353,7 @@ func apply_input(delta: float) -> void:
 	and not is_paragliding \
 	and not is_sliding:
 		# Enable the "jumping" state in the NodeStateMachine. The AnimationTree will automatically transition to the "Falling" animation state.
-		state_machine.travel(NodeStateMachine.States.JUMPING)
+		state_machine.travel(current_state, NodeStateMachine.States.JUMPING)
 
 	# Sprint { Microsoft: Ⓑ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Shift] }.
 	if is_on_floor() \
@@ -373,7 +377,7 @@ func apply_input(delta: float) -> void:
 	and Input.is_action_just_pressed("crouch") \
 	and not is_sliding:
 		# Enable the "sliding" state in the NodeStateMachine. The AnimationTree will automatically transition to the "Falling" animation state.
-		state_machine.travel(NodeStateMachine.States.SLIDING)
+		state_machine.travel(current_state, NodeStateMachine.States.SLIDING)
 
 	# Handle movement is strafing
 	if is_shooting or is_focusing:

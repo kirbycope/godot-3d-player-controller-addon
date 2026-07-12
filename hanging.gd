@@ -1,6 +1,8 @@
 class_name Hanging
 extends NodeStateMachine
 
+var _this_state := NodeStateMachine.States.HANGING
+
 
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:
@@ -13,7 +15,7 @@ func _input(event: InputEvent) -> void:
 	# Crouch { Controller: Left Stick, Keyboard: Left Control }
 	if event.is_action_pressed("crouch"):
 		# Stop "hanging" and start "falling"
-		player.state_machine.travel(NodeStateMachine.States.FALLING)
+		player.state_machine.travel(_this_state, NodeStateMachine.States.FALLING)
 
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
@@ -26,8 +28,8 @@ func _physics_process(delta: float) -> void:
 
 	# Check if the player has reached the floor
 	if player.is_on_floor():
-		# "Stop "hanging"
-		stop()
+		# Start "standing"
+		player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
 		return
 
 	# Update footing status if not climbing onto a ledge
@@ -53,10 +55,9 @@ func _physics_process(delta: float) -> void:
 		player.is_climbing_on = player.animation_tree.get(player.LOCOMOTION_STATE_PLAYBACK_PATH).get_current_node() in ["BracedHangClimbingOn", "FreeHangingClimbingOn"]
 		if was_climbing_on and not player.is_climbing_on:
 			player.global_position = player.climbing_on_target
-			# Stop "hanging"
-			stop()
 			# Start "standing"
-			player.locomotion_state.travel("StandingLocomotion")
+			player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
+			return
 
 	# Hanging, Climbing-On [Input] { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
 	if Input.is_action_just_pressed("jump"):
@@ -72,7 +73,7 @@ func start() -> void:
 	# Enable _this_ state node
 	process_mode = Node.PROCESS_MODE_INHERIT
 	# Set the player's new state
-	player.current_state = NodeStateMachine.States.HANGING
+	player.current_state = _this_state
 	# Determine if the player can hang braced
 	if player.hanging_braced_detection.is_colliding():
 		# Travel to the "hanging" (braced) locomotion state
@@ -91,7 +92,7 @@ func stop() -> void:
 	# Disable _this_ state node
 	process_mode = Node.PROCESS_MODE_DISABLED
 	# Clear the player's state (if it is currently set to _this_ state)
-	if player.current_state == NodeStateMachine.States.HANGING:
+	if player.current_state == _this_state:
 		player.current_state = -1
 	# Flag the player as not "hanging"
 	player.is_hanging_braced = false

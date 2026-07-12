@@ -1,6 +1,8 @@
 class_name Swimming
 extends NodeStateMachine
 
+var _this_state := NodeStateMachine.States.SWIMMING
+
 const WATER_SURFACE_SNAP_RATIO := 0.75
 
 
@@ -38,16 +40,15 @@ func _physics_process(delta: float) -> void:
 			player.ledge_detection_vertical.position = Vector3(0.0, 0.0, -1.0)
 			player.ledge_detection_horizontal.hide()
 			player.ledge_detection_marker.hide()
-			# Stop "swimming"
-			stop()
 			# Start "standing"
-			player.locomotion_state.travel("StandingLocomotion")
-		return
+			player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
+			return
 
 	# Stop "swimming" if the player has been flagged as not "swimming" (e.g. by exiting the pool)
 	if not player.is_swimming \
 	and player.locomotion_state.get_current_node() != "BracedHangClimbingOn":
-		stop()
+		# Start "standing"
+		player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
 		return
 
 	# Ledge detection [Raycast]
@@ -163,7 +164,7 @@ func start() -> void:
 		player.global_position += up_direction * (target_position_along_up - current_position_along_up)
 			
 	# Set the player's new state
-	player.current_state = NodeStateMachine.States.SWIMMING
+	player.current_state = _this_state
 	# Flag the player as "swimming"
 	player.is_swimming = true
 	# Flag the player as not falling/jumping
@@ -176,7 +177,7 @@ func stop() -> void:
 	# Disable _this_ state node
 	process_mode = Node.PROCESS_MODE_DISABLED
 	# Clear the player's state (if it is currently set to _this_ state)
-	if player.current_state == NodeStateMachine.States.SWIMMING:
+	if player.current_state == _this_state:
 		player.current_state = -1
 	# Flag the player as not "swimming"
 	player.is_swimming = false
