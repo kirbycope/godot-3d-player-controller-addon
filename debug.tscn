@@ -307,7 +307,7 @@ text = "is_standing"
 layout_mode = 2
 text = "is_swimming"
 
-[node name="Label" type="Label" parent="." unique_id=794943457]
+[node name="CurrentStateLabel" type="Label" parent="." unique_id=794943457]
 anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0
@@ -332,6 +332,36 @@ offset_left = 24.0
 offset_top = -39.0
 offset_right = 160.0
 offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "<null>"
+label_settings = SubResource("LabelSettings_senyo")
+
+[node name="CurrentPerspectiveLabel" type="Label" parent="." unique_id=1083950622]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -151.0
+offset_top = -63.0
+offset_right = 7.0
+offset_bottom = -40.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "Current Perspective:"
+label_settings = SubResource("LabelSettings_senyo")
+
+[node name="CurrentPerspective" type="Label" parent="." unique_id=1549973036]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = -63.0
+offset_right = 160.0
+offset_bottom = -40.0
 grow_horizontal = 2
 grow_vertical = 0
 text = "<null>"

@@ -32,7 +32,7 @@ func _physics_process(delta: float) -> void:
 	target_dir = target_dir.slide(player.up_direction)
 	if target_dir.length_squared() <= 0.001 and player.player_input.motion.y > 0.0:
 		# Fallback: make move_up always push forward even if camera-forward projects poorly.
-		target_dir = -player.orientation.basis.z.slide(player.up_direction)
+		target_dir = player.get_facing_direction()
 
 	if target_dir.length_squared() > 0.001 and not player.is_firing_arrow:
 		target_dir = target_dir.normalized()

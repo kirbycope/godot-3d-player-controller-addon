@@ -94,6 +94,7 @@ var root_motion := Transform3D()
 @onready var projectile_raycast: RayCast3D = $SpringArm3D/ProjectileRaycast
 @onready var skeleton: Skeleton3D = $PlayerModel/Armature/GeneralSkeleton
 @onready var spring_arm: SpringArm3D = $SpringArm3D
+@onready var camera: Camera3D = $SpringArm3D/Camera3D
 @onready var state_machine: NodeStateMachine = $NodeStateMachine ## Enables/Disables the scripts that run when various States are entered/exited.
 @onready var sfx_footsteps_grass: AudioStreamPlayer3D = $SFX_Footsteps_Grass
 @onready var sfx_footsteps_slide: AudioStreamPlayer3D = $SFX_Footsteps_Slide
@@ -379,11 +380,12 @@ func apply_input(delta: float) -> void:
 		# Enable the "sliding" state in the NodeStateMachine. The AnimationTree will automatically transition to the "Falling" animation state.
 		state_machine.travel(current_state, NodeStateMachine.States.SLIDING)
 
+	var is_first_person: bool = camera is Camera and (camera as Camera).perspective == Camera.Perspective.FIRST_PERSON
 	# Handle movement is strafing
-	if is_shooting or is_focusing:
+	if is_shooting or is_focusing or is_first_person:
 
-		# Rotate to face the camera direction when focusing or shooting (unless is_focusing and not is_shooting)
-		if (is_shooting or not is_focusing) and not is_firing_arrow and not is_hanging_braced and not is_hanging_free and not is_climbing:
+		# Rotate to face the camera direction when focusing, shooting, or in first person
+		if (is_shooting or not is_focusing or is_first_person) and not is_firing_arrow and not is_hanging_braced and not is_hanging_free and not is_climbing:
 			var camera_basis := spring_arm.global_transform.basis
 			var camera_forward := -camera_basis.z
 			camera_forward = camera_forward.slide(up_direction)
@@ -508,6 +510,7 @@ func apply_input(delta: float) -> void:
 	player_model.global_transform.basis = orientation.basis
 
 
+
 ## Detect if the player is in front of a ledge and can hang from it and/or climb on to it.
 func detect_ledge() -> bool:
 	# Ledge detection [Raycast]
@@ -539,6 +542,14 @@ func execute_jump() -> void:
 	is_jump_queued = false
 	is_jumping = true
 
+
+## Gets the player's forward direction projected onto the movement plane.
+func get_facing_direction() -> Vector3:
+	var facing_direction := -player_model.global_transform.basis.z
+	facing_direction = facing_direction.slide(up_direction)
+	if facing_direction.length_squared() <= 0.001:
+		return Vector3.ZERO
+	return facing_direction.normalized()
 
 
 ## Called by the animation(s) using "Call Method Track" to play footstep sound effects at the right time.
