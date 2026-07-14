@@ -57,6 +57,7 @@ var is_hanging_free: bool = false ## Is the Player currently hanging (free)?
 
 var is_crouching: bool = false ## Is the Player currently crouching?
 var is_driving: bool = false ## Is the Player currently driving?
+var is_driving_in: Node3D = null ## The VehicleBody3D the Player is currently driving, if any.
 var is_emoting: bool = false ## Is the Player currently emoting?
 var is_exhausted: bool = false ## Is the Player currently exhausted?
 var is_falling: bool = false ## Is the Player currently falling?
@@ -152,6 +153,7 @@ func _physics_process(delta: float) -> void:
 	# Start falling if the player is not on the floor and not already falling.
 	if not is_on_floor() and not is_falling \
 	and not is_climbing and not is_climbing_on \
+	and not is_driving \
 	and not is_hanging_braced and not is_hanging_free \
 	and not is_jumping and not is_jump_queued \
 	and not is_paragliding \
@@ -262,7 +264,7 @@ func apply_input(delta: float) -> void:
 		return
 
 	# While swimming, keep SwimmingLocomotion active and feed its BlendSpace1D.
-	if is_swimming:
+	if is_swimming and not is_driving:
 		var current_swimming_node = locomotion_state.get_current_node()
 		# Do not force SwimmingLocomotion while swimming to/at an edge or mantling out.
 		if not current_swimming_node in ["BracedHangClimbingOn", "SwimmingAtEdge", "SwimmingToEdge"] \
@@ -277,14 +279,16 @@ func apply_input(delta: float) -> void:
 				animation_tree.set(SWIMMING_LOCOMOTION_BLEND_POSITION_PATH, target_motion.length())
 
 	# Attack { Microsoft: Ⓧ, Nintendo: Ⓨ, Sony: 🟗, Keyboard: [Alt] }
-	if Input.is_action_just_pressed("attack") \
+	if not is_driving \
+	and Input.is_action_just_pressed("attack") \
 	and not is_attacking \
 	and can_player_attack:
 		# Enable the "attacking" state in the NodeStateMachine. The AnimationTree will automatically transition to the "Falling" animation state.
 		state_machine.travel(current_state, NodeStateMachine.States.ATTACKING)
 
 	# Climbing, Start { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
-	if not is_on_floor() \
+	if not is_driving \
+	and not is_on_floor() \
 	and not is_climbing \
 	and not is_hanging_braced \
 	and not is_hanging_free \
@@ -305,7 +309,8 @@ func apply_input(delta: float) -> void:
 			return
 
 	# Crouch { Console: Left ⬤, Keyboard: [Control] }.
-	if Input.is_action_pressed("crouch") \
+	if not is_driving \
+	and Input.is_action_pressed("crouch") \
 	and not is_crouching \
 	and is_on_floor() \
 	and not is_sliding \
@@ -315,13 +320,16 @@ func apply_input(delta: float) -> void:
 		return
 
 	# Focus { Microsoft: 🄻T, Nintendo: Z🄻, Sony: 🄻2, Keyboard: [Right Mouse Button] }.
-	is_focusing = Input.is_action_pressed("focus")
-
-	# Shoot { Microsoft: 🅁T, Nintendo: 🅁L, Sony: 🅁2, Keyboard: [Left Mouse Button] } 
-	is_shooting = Input.is_action_pressed("shoot") and can_player_shoot
+	# Shoot { Microsoft: 🅁T, Nintendo: 🅁L, Sony: 🅁2, Keyboard: [Left Mouse Button] }
+	if is_driving:
+		is_focusing = false
+		is_shooting = false
+	else:
+		is_focusing = Input.is_action_pressed("focus")
+		is_shooting = Input.is_action_pressed("shoot") and can_player_shoot
 
 	# Update locomotion state based on equipped items if not in special states
-	if not is_swimming and not is_climbing and not is_hanging_braced and not is_hanging_free and not is_falling and not is_jumping and not is_sliding and not is_mining and not is_logging:
+	if not is_driving and not is_swimming and not is_climbing and not is_hanging_braced and not is_hanging_free and not is_falling and not is_jumping and not is_sliding and not is_mining and not is_logging:
 		var current_state = locomotion_state.get_current_node()
 		var target_state = "StandingLocomotion"
 		var is_shield_attack_state: bool = current_state == "ShieldDownwardSlash" or current_state == "ShieldCrossSlash" or current_state == "ShieldPowerSlash"
@@ -345,7 +353,8 @@ func apply_input(delta: float) -> void:
 				locomotion_state.travel(target_state)
 
 	# Jump { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
-	if is_on_floor() \
+	if not is_driving \
+	and is_on_floor() \
 	and Input.is_action_just_pressed("jump") \
 	and not is_climbing \
 	and not is_hanging_braced \
@@ -357,7 +366,8 @@ func apply_input(delta: float) -> void:
 		state_machine.travel(current_state, NodeStateMachine.States.JUMPING)
 
 	# Sprint { Microsoft: Ⓑ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Shift] }.
-	if is_on_floor() \
+	if not is_driving \
+	and is_on_floor() \
 	and Input.is_action_pressed("sprint") \
 	and not is_crouching \
 	and not is_jump_queued \
@@ -374,7 +384,8 @@ func apply_input(delta: float) -> void:
 		is_sprinting = false
 
 	# Slide (Crouch while Sprinting)
-	if is_sprinting \
+	if not is_driving \
+	and is_sprinting \
 	and Input.is_action_just_pressed("crouch") \
 	and not is_sliding:
 		# Enable the "sliding" state in the NodeStateMachine. The AnimationTree will automatically transition to the "Falling" animation state.
@@ -382,7 +393,7 @@ func apply_input(delta: float) -> void:
 
 	var is_first_person: bool = camera is Camera and (camera as Camera).perspective == Camera.Perspective.FIRST_PERSON
 	# Handle movement is strafing
-	if is_shooting or is_focusing or is_first_person:
+	if not is_driving and (is_shooting or is_focusing or is_first_person):
 
 		# Rotate to face the camera direction when focusing, shooting, or in first person
 		if (is_shooting or not is_focusing or is_first_person) and not is_firing_arrow and not is_hanging_braced and not is_hanging_free and not is_climbing:
@@ -418,7 +429,7 @@ func apply_input(delta: float) -> void:
 				animation_tree.set(STANDING_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 
 	# Handle movement when not strafing
-	else:
+	elif not is_driving:
 		# Use camera-relative direction for target_motion direction
 		var camera_basis := spring_arm.global_transform.basis
 		var target_dir := camera_basis * Vector3(target_motion.x, 0.0, -target_motion.y)
@@ -494,6 +505,9 @@ func apply_input(delta: float) -> void:
 		vertical_speed = h_velocity.dot(up_direction)
 	elif is_hanging_braced or is_hanging_free:
 		vertical_speed = 0.0
+	elif is_driving:
+		# While driving, vertical movement is driven by root motion/input, not gravity.
+		vertical_speed = h_velocity.dot(up_direction)
 	elif is_swimming:
 		# While swimming, vertical movement is driven by root motion/input, not gravity.
 		vertical_speed = h_velocity.dot(up_direction)
@@ -508,7 +522,6 @@ func apply_input(delta: float) -> void:
 	orientation = orientation.orthonormalized() # Orthonormalize orientation.
 
 	player_model.global_transform.basis = orientation.basis
-
 
 
 ## Detect if the player is in front of a ledge and can hang from it and/or climb on to it.
