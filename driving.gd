@@ -36,10 +36,10 @@ func _physics_process(delta: float) -> void:
 		# Move player to Driver's seat
 		var driver_seat = player.is_driving_in.get_node("DriverSeat")
 		if driver_seat:
-			player.global_transform = driver_seat.global_transform
+			player.global_position = driver_seat.global_position
+			player.orientation = driver_seat.global_transform
+			player.orientation.origin = Vector3.ZERO
 			player.player_model.global_transform = driver_seat.global_transform
-			print("Ass planted")
-
 
 	# Check if "ExitCar" animation has finished
 	var was_exiting_vehicle = player.is_exiting_vehicle
