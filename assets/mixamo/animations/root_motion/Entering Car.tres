@@ -403,5 +403,5 @@ tracks/56/interp = 1
 tracks/56/loop_wrap = true
 tracks/56/keys = {
 "clips": PackedStringArray("open", "close"),
-"times": PackedFloat32Array(1.1333333, 3.7333333)
+"times": PackedFloat32Array(1.1333, 3.7333333)
 }

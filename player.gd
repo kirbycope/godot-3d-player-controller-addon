@@ -51,13 +51,16 @@ var is_climbing_hopping_left: bool = false ## Is the Player currently hopping le
 var is_climbing_hopping_right: bool = false ## Is the Player currently hopping right while climbing?
 var is_climbing_hopping_up: bool = false ## Is the Player currently hopping up while climbing?
 var is_hopping_from_climbing: bool = false ## Is the Player currently hopping while climbing?
+# Driving
+var is_driving: bool = false ## Is the Player currently driving?
+var is_driving_in: Node3D = null ## The VehicleBody3D the Player is currently driving, if any.
+var is_entering_vehicle: bool = false ## Is the Player currently entering a vehicle?
+var is_exiting_vehicle: bool = false ## Is the Player currently exiting a vehicle?
 # Hanging
 var is_hanging_braced: bool = false ## Is the Player currently hanging (braced)?
 var is_hanging_free: bool = false ## Is the Player currently hanging (free)?
 
 var is_crouching: bool = false ## Is the Player currently crouching?
-var is_driving: bool = false ## Is the Player currently driving?
-var is_driving_in: Node3D = null ## The VehicleBody3D the Player is currently driving, if any.
 var is_emoting: bool = false ## Is the Player currently emoting?
 var is_exhausted: bool = false ## Is the Player currently exhausted?
 var is_falling: bool = false ## Is the Player currently falling?
@@ -521,7 +524,9 @@ func apply_input(delta: float) -> void:
 	orientation.origin = Vector3() # Clear accumulated root motion displacement (was applied to speed).
 	orientation = orientation.orthonormalized() # Orthonormalize orientation.
 
-	player_model.global_transform.basis = orientation.basis
+	# Rotate the Player Model (unless entering/exiting a vehicle)
+	if not (is_driving and (is_entering_vehicle or is_exiting_vehicle)):
+		player_model.global_transform.basis = orientation.basis
 
 
 ## Detect if the player is in front of a ledge and can hang from it and/or climb on to it.

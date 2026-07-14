@@ -59,6 +59,10 @@ func _process(_delta: float) -> void:
 		$Climbing/is_climbing_hopping_up.button_pressed = player.is_climbing_hopping_up
 		$Climbing/is_hopping_from_climbing.button_pressed = player.is_hopping_from_climbing
 
+		$Driving.visible = player.is_driving
+		$Driving/is_entering_vehicle.button_pressed = player.is_entering_vehicle
+		$Driving/is_exiting_vehicle.button_pressed = player.is_exiting_vehicle
+
 		$Hanging.visible = (player.is_hanging_braced or player.is_hanging_free)
 		$Hanging/is_climbing_on.button_pressed = player.is_climbing_on
 		$Hanging/is_hanging_braced.button_pressed = player.is_hanging_braced
