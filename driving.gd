@@ -40,6 +40,7 @@ func _physics_process(delta: float) -> void:
 			player.orientation = driver_seat.global_transform
 			player.orientation.origin = Vector3.ZERO
 			player.player_model.global_transform = driver_seat.global_transform
+			player.reparent(driver_seat)
 
 	# Check if "ExitCar" animation has finished
 	var was_exiting_vehicle = player.is_exiting_vehicle
@@ -48,6 +49,35 @@ func _physics_process(delta: float) -> void:
 	and not player.is_exiting_vehicle:
 		# Stop "driving" and start "standing"
 		player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
+
+	# Accelerate { Microsoft: Ⓑ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Shift] }
+	if Input.is_action_pressed("sprint") \
+	and player.is_driving_in != null \
+	and not player.is_entering_vehicle \
+	and not player.is_exiting_vehicle:
+		player.is_driving_in.engine_force = 100.0
+	else:
+		if player.is_driving_in != null:
+			player.is_driving_in.engine_force = 0.0
+
+	# Brake { Microsoft: Ⓐ, Nintendo: Ⓑ, Sony: Ⓧ, Keyboard: [E] }
+	if Input.is_action_pressed("action") \
+	and player.is_driving_in != null \
+	and not player.is_entering_vehicle \
+	and not player.is_exiting_vehicle:
+		# TODO: If player is moving forward, apply brake. If player is moving backward, apply engine_force.
+		player.is_driving_in.brake = 100.0
+		player.is_driving_in.engine_force = -100.0
+	else:
+		if player.is_driving_in != null:
+			player.is_driving_in.brake = 0.0
+
+	# Steering { Controller: Left-Stick, Keyboard: [A] / [D] }
+	if player.is_driving_in != null \
+	and not player.is_entering_vehicle \
+	and not player.is_exiting_vehicle:
+		var steer_input := Input.get_axis("move_right", "move_left")
+		player.is_driving_in.steering = steer_input * deg_to_rad(30.0)
 
 
 ## Start "driving".
@@ -80,6 +110,9 @@ func stop() -> void:
 	player.is_exiting_vehicle = false
 	# [Re]Enable player collision
 	player.collision_shape.disabled = false
+	# Reparent the player back to its initial parent
+	player.reparent(player.initial_parent)
+
 
 func _open_and_close_drivers_door() -> void:
 	var animation_player = player.is_driving_in.get_node("AnimationPlayer")

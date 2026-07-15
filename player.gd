@@ -78,6 +78,7 @@ var is_standing: bool = false ## Is the Player currently standing?
 var is_swimming: bool = false ## Is the Player currently swimming?
 var initial_collision_shape_height: float
 var initial_collision_shape_position: Vector3
+var initial_parent: Node3D
 var orientation := Transform3D()
 var root_motion := Transform3D()
 
@@ -118,10 +119,13 @@ func _ready() -> void:
 	initial_collision_shape_height = collision_shape.shape.height
 	initial_collision_shape_position = collision_shape.position
 
+	# Record the initial parent for re-parenting after driving.
+	initial_parent = get_parent()
+
 	# Ensure the AnimationTree is active so that root motion is applied in the first frame.
 	animation_tree.active = true
 
-	# Keep animation sampling in physics domain to match root-motion consumption in _physics_process.
+	# Keep animation sampling in physics domainD to match root-motion consumption in _physics_process.
 	animation_tree.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_PHYSICS
 
 	# Ensure the projectile RayCast3D doesn't collide with the player
@@ -261,9 +265,9 @@ func apply_input(delta: float) -> void:
 	# Smoothly interpolate the target_motion for more gradual changes in animation blending and rotation.
 	target_motion = target_motion.lerp(target_motion, motion_interpolate_speed * delta)
 
-	# While paragliding or skateboarding, block regular locomotion.
-	# Paragliding.gd / Skateboarding.gd will handle movement.
-	if is_paragliding or is_skateboarding:
+	# While driving, paragliding or skateboarding, block regular locomotion.
+	# Driving.gd / Paragliding.gd / Skateboarding.gd will handle movement.
+	if (is_driving and not is_entering_vehicle and not is_exiting_vehicle) or is_paragliding or is_skateboarding:
 		return
 
 	# While swimming, keep SwimmingLocomotion active and feed its BlendSpace1D.
