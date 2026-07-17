@@ -4,6 +4,9 @@
 
 [sub_resource type="LabelSettings" id="LabelSettings_7mqg8"]
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_senyo"]
+size = Vector2(72, 30)
+
 [node name="Pause" type="CanvasLayer" unique_id=498429169]
 script = ExtResource("1_7mqg8")
 
@@ -14,9 +17,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -100.0
-offset_top = -85.5
+offset_top = -88.0
 offset_right = 100.0
-offset_bottom = 85.5
+offset_bottom = 88.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -28,9 +31,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -100.0
-offset_top = -71.0
+offset_top = -87.5
 offset_right = 100.0
-offset_bottom = 71.0
+offset_bottom = 88.5
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -65,12 +68,20 @@ size_flags_horizontal = 4
 size_flags_vertical = 4
 text = "Quit"
 
+[node name="QuitTouchScreenButton" type="TouchScreenButton" parent="Panel/VBoxContainer/Quit" unique_id=1888097830]
+position = Vector2(36, 15)
+shape = SubResource("RectangleShape2D_senyo")
+
 [node name="Restart" type="Button" parent="Panel/VBoxContainer" unique_id=614997510]
 custom_minimum_size = Vector2(72, 0)
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 text = "Restart"
+
+[node name="RestartTouchScreenButton" type="TouchScreenButton" parent="Panel/VBoxContainer/Restart" unique_id=547191703]
+position = Vector2(36, 15)
+shape = SubResource("RectangleShape2D_senyo")
 
 [node name="Settings" type="Button" parent="Panel/VBoxContainer" unique_id=1996358811]
 custom_minimum_size = Vector2(72, 0)
@@ -79,13 +90,25 @@ size_flags_horizontal = 4
 size_flags_vertical = 4
 text = "Settings"
 
+[node name="SettingsTouchScreenButton" type="TouchScreenButton" parent="Panel/VBoxContainer/Settings" unique_id=1531214218]
+position = Vector2(36, 15)
+shape = SubResource("RectangleShape2D_senyo")
+
 [node name="Unstuck" type="Button" parent="Panel/VBoxContainer" unique_id=1972774432]
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 text = "Unstuck"
 
+[node name="UnstuckTouchScreenButton" type="TouchScreenButton" parent="Panel/VBoxContainer/Unstuck" unique_id=769719927]
+position = Vector2(36, 15)
+shape = SubResource("RectangleShape2D_senyo")
+
 [connection signal="pressed" from="Panel/VBoxContainer/Quit" to="." method="_on_quit_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Quit/QuitTouchScreenButton" to="." method="_on_quit_touch_screen_button_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/Restart" to="." method="_on_restart_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Restart/RestartTouchScreenButton" to="." method="_on_restart_touch_screen_button_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/Settings" to="." method="_on_settings_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Settings/SettingsTouchScreenButton" to="." method="_on_settings_touch_screen_button_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/Unstuck" to="." method="_on_unstuck_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Unstuck/UnstuckTouchScreenButton" to="." method="_on_unstuck_touch_screen_button_pressed"]

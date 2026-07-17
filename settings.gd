@@ -1,8 +1,7 @@
 extends CanvasLayer
-## Manages graphics settings UI including VSYNC, MSAA, SSAA, FXAA, TAA, and FSR options
 
+@export var player: Player
 
-@onready var player: CharacterBody3D = get_parent()
 @onready var panel: Panel = $Panel
 @onready var vsync_button: CheckButton = panel.get_node("VBoxContainer/VSYNC")
 @onready var msaa_button: OptionButton = panel.get_node("VBoxContainer/MSAA")
@@ -56,6 +55,7 @@ func _ready() -> void:
 		# AMD FidelityFX Super Resolution 2.2 (FSR2) - This is only available in the Forward+ renderer, not the Mobile or Compatibility renderers.
 		fsr_button.visible = true
 		fsr_button.selected = project_fsr
+
 
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:
