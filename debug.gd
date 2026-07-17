@@ -13,6 +13,8 @@ func _input(event: InputEvent) -> void:
 ## Called every frame. '_delta' is the elapsed time since the previous frame.
 func _process(_delta: float) -> void:
 	if player:
+		$FPS.text = str(int(Engine.get_frames_per_second()))
+
 		$CurrentPerspective.text = "First-person" if player.camera.perspective == Camera.Perspective.FIRST_PERSON else "Third-person"
 		$CurrentState.text = NodeStateMachine.get_state_name(player.current_state)
 
