@@ -1,0 +1,91 @@
+[gd_scene format=3 uid="uid://dgslo5b1yxrd0"]
+
+[ext_resource type="Script" uid="uid://xsm265x8qs6f" path="res://addons/3d_player_controller/pause.gd" id="1_7mqg8"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_7mqg8"]
+
+[node name="Pause" type="CanvasLayer" unique_id=498429169]
+script = ExtResource("1_7mqg8")
+
+[node name="Panel" type="Panel" parent="." unique_id=1926347412]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -100.0
+offset_top = -85.5
+offset_right = 100.0
+offset_bottom = 85.5
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel" unique_id=686828886]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -100.0
+offset_top = -71.0
+offset_right = 100.0
+offset_bottom = 71.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="Panel" parent="Panel/VBoxContainer" unique_id=1366554488]
+custom_minimum_size = Vector2(200, 31)
+layout_mode = 2
+size_flags_vertical = 0
+
+[node name="Label" type="Label" parent="Panel/VBoxContainer/Panel" unique_id=31065253]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -100.0
+offset_top = -15.5
+offset_right = 100.0
+offset_bottom = 15.5
+grow_horizontal = 2
+grow_vertical = 2
+text = "Pause"
+label_settings = SubResource("LabelSettings_7mqg8")
+horizontal_alignment = 1
+vertical_alignment = 1
+uppercase = true
+
+[node name="Quit" type="Button" parent="Panel/VBoxContainer" unique_id=789258090]
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+text = "Quit"
+
+[node name="Restart" type="Button" parent="Panel/VBoxContainer" unique_id=614997510]
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+text = "Restart"
+
+[node name="Settings" type="Button" parent="Panel/VBoxContainer" unique_id=1996358811]
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+text = "Settings"
+
+[node name="Unstuck" type="Button" parent="Panel/VBoxContainer" unique_id=1972774432]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+text = "Unstuck"
+
+[connection signal="pressed" from="Panel/VBoxContainer/Quit" to="." method="_on_quit_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Restart" to="." method="_on_restart_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Settings" to="." method="_on_settings_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Unstuck" to="." method="_on_unstuck_pressed"]

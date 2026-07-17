@@ -184,6 +184,8 @@
 [ext_resource type="AudioStream" uid="uid://dacjxelc3ekv4" path="res://addons/3d_player_controller/assets/epicstockmedia/game_footsteps/FS_Astro_Turf_Boots/FEETHmn_Footstep Astro Turf Boots Dry Interior 5_ESM_GFOOT.wav" id="156_pij8a"]
 [ext_resource type="AudioStream" uid="uid://bo7w4kt3h4fve" path="res://addons/3d_player_controller/assets/epicstockmedia/game_footsteps/FS_Wood_Boots/FEETHmn_Footstep Wood Boots Dry Running Punchy Interior 10_ESM_GFOOT.wav" id="157_2bgnt"]
 [ext_resource type="AudioStream" uid="uid://b27a202a6jywd" path="res://addons/3d_player_controller/assets/epicstockmedia/game_footsteps/FS_Astro_Turf_Boots/FEETHmn_Footstep Astro Turf Boots Dry Interior 6_ESM_GFOOT.wav" id="157_osk5u"]
+[ext_resource type="PackedScene" uid="uid://dgslo5b1yxrd0" path="res://addons/3d_player_controller/pause.tscn" id="173_errws"]
+[ext_resource type="PackedScene" uid="uid://x2jx6qr0wgk1" path="res://addons/3d_player_controller/settings.tscn" id="174_xwibx"]
 [ext_resource type="Script" uid="uid://cm78iyhyfxf3b" path="res://addons/3d_player_controller/driving.gd" id="177_gfa47"]
 [ext_resource type="Script" uid="uid://r6smcoty1yhi" path="res://addons/3d_player_controller/skateboarding.gd" id="182_3eyle"]
 [ext_resource type="Script" uid="uid://cq5xkylmgvf27" path="res://addons/3d_player_controller/swimming.gd" id="185_sp0uh"]
@@ -1518,7 +1520,6 @@ graph_offset = Vector2(-20.28949, 47.874695)
 [sub_resource type="AnimationNodeTimeScale" id="AnimationNodeTimeScale_45pxl"]
 
 [sub_resource type="AnimationNodeBlendTree" id="AnimationNodeBlendTree_senyo"]
-graph_offset = Vector2(-478, 43)
 nodes/output/position = Vector2(506.66666, 133.33333)
 nodes/LocomotionStateMachine/node = SubResource("AnimationNodeStateMachine_ikfak")
 nodes/LocomotionStateMachine/position = Vector2(-226.66667, 120)
@@ -1577,16 +1578,16 @@ transform = Transform3D(-1, 0, -1.509958e-07, 0, 1, 0, 1.509958e-07, 0, -1, 0, 0
 [node name="GeneralSkeleton" parent="PlayerModel/Armature" parent_id_path=PackedInt32Array(1771073607, 1028936029) index="0" unique_id=446702789]
 bones/0/position = Vector3(-0.0059697176, 0, -0.0027810785)
 bones/1/position = Vector3(6.945423e-07, 0.9899598, -4.8260063e-11)
-bones/1/rotation = Quaternion(-0.035746694, -0.04455605, -0.023370981, 0.9980936)
-bones/2/rotation = Quaternion(0.024878724, 0.014664931, 0.023764366, 0.9993005)
-bones/3/rotation = Quaternion(0.009360575, 0.0037886046, 0.014286023, 0.99984705)
-bones/4/rotation = Quaternion(0.008720291, 0.0038146256, 0.014284881, 0.9998528)
-bones/5/rotation = Quaternion(0.04531331, -0.001794375, 0.0052065933, 0.9989577)
-bones/6/rotation = Quaternion(-0.06438236, 0.011006239, -0.0025246693, 0.9978615)
-bones/8/rotation = Quaternion(0.458539, 0.50022304, 0.62709415, -0.382455)
-bones/9/rotation = Quaternion(0.123483226, 0.7976444, -0.5766498, -0.12645334)
+bones/1/rotation = Quaternion(-0.035469394, -0.044580568, -0.023715971, 0.9980942)
+bones/2/rotation = Quaternion(0.024303965, 0.014523686, 0.023438342, 0.99932426)
+bones/3/rotation = Quaternion(0.009489111, 0.0037781543, 0.014274547, 0.999846)
+bones/4/rotation = Quaternion(0.008872976, 0.003759374, 0.014250104, 0.99985206)
+bones/5/rotation = Quaternion(0.04473122, -0.0017476756, 0.005158417, 0.9989842)
+bones/6/rotation = Quaternion(-0.064949065, 0.011136702, -0.0024353075, 0.99782354)
+bones/8/rotation = Quaternion(0.45878196, 0.4999981, 0.6270025, -0.38260818)
+bones/9/rotation = Quaternion(0.122606374, 0.79745793, -0.57690936, -0.12729523)
 bones/10/rotation = Quaternion(0.009004968, -0.7070495, 0.009005011, 0.7070495)
-bones/11/rotation = Quaternion(0.055358514, 0.48221904, -0.0209689, 0.8740485)
+bones/11/rotation = Quaternion(0.055250593, 0.4827134, -0.021250568, 0.8737755)
 bones/12/rotation = Quaternion(-0.23049825, 0.68289214, 0.17169982, 0.67160124)
 bones/13/rotation = Quaternion(0.20149457, 0.20389189, -0.059591617, 0.9561783)
 bones/14/rotation = Quaternion(0.04001307, -0.052876003, -0.12858759, 0.9894789)
@@ -1603,10 +1604,10 @@ bones/26/rotation = Quaternion(0.15521277, -1.9371507e-07, -0.015905587, 0.98775
 bones/28/rotation = Quaternion(0.23386711, -0.0035057068, -0.049008608, 0.97102636)
 bones/29/rotation = Quaternion(0.15125789, -1.3411045e-07, -0.015500367, 0.98837286)
 bones/30/rotation = Quaternion(0.14349763, -8.940697e-08, -0.014705032, 0.9895415)
-bones/32/rotation = Quaternion(0.4773936, -0.47827548, -0.6329853, -0.3777268)
-bones/33/rotation = Quaternion(-0.15170777, 0.82831514, -0.4942405, 0.21588236)
-bones/34/rotation = Quaternion(0.040640738, 0.7059381, -0.040640663, 0.70593786)
-bones/35/rotation = Quaternion(0.041384805, -0.5721477, 0.035882175, 0.8183195)
+bones/32/rotation = Quaternion(0.47805482, -0.477638, -0.63272375, -0.37813532)
+bones/33/rotation = Quaternion(-0.15129557, 0.82848275, -0.49371016, 0.21674024)
+bones/34/rotation = Quaternion(0.040720306, 0.70593345, -0.040720247, 0.70593333)
+bones/35/rotation = Quaternion(0.041628078, -0.57194245, 0.035988938, 0.8184459)
 bones/36/rotation = Quaternion(-0.24051937, -0.6719299, -0.18474628, 0.6756696)
 bones/37/rotation = Quaternion(0.2382267, -0.20985532, 0.051183697, 0.94688386)
 bones/38/rotation = Quaternion(0.045545463, 0.04607943, 0.16169317, 0.984712)
@@ -1623,17 +1624,17 @@ bones/50/rotation = Quaternion(0.15551049, 5.9604645e-08, 0.012668192, 0.9877530
 bones/52/rotation = Quaternion(0.2284934, 0.0034029484, 0.04298061, 0.9725903)
 bones/53/rotation = Quaternion(0.15154798, 7.4505806e-08, 0.012345433, 0.9883728)
 bones/54/rotation = Quaternion(0.14377289, 8.940697e-08, 0.011711985, 0.9895414)
-bones/56/rotation = Quaternion(0.13466945, 0.070158124, 0.98577, -0.07210821)
-bones/57/rotation = Quaternion(-0.038850524, 0.99391764, -0.102232516, 0.012918016)
-bones/58/rotation = Quaternion(-0.042410422, 0.7130553, -0.69803613, 0.049991116)
+bones/56/rotation = Quaternion(0.13442157, 0.07040537, 0.98578, -0.07219242)
+bones/57/rotation = Quaternion(-0.038989224, 0.99390435, -0.10224136, 0.013442957)
+bones/58/rotation = Quaternion(-0.042452537, 0.71289384, -0.6981944, 0.050047807)
 bones/59/rotation = Quaternion(-9.186695e-08, 0.9990753, 0.042996287, -1.6792885e-08)
-bones/61/rotation = Quaternion(-0.09340548, -0.017345266, 0.9951708, -0.02469185)
-bones/62/rotation = Quaternion(0.033506505, 0.99423456, -0.058519613, -0.0833698)
-bones/63/rotation = Quaternion(0.009969907, 0.6806315, -0.7320045, -0.028471425)
-bones/64/rotation = Quaternion(-3.1686938e-08, 0.9981723, 0.060433134, -3.251053e-08)
+bones/61/rotation = Quaternion(-0.09357987, -0.01853902, 0.9951341, -0.024641972)
+bones/62/rotation = Quaternion(0.033131808, 0.99437654, -0.056175884, -0.083437495)
+bones/63/rotation = Quaternion(0.010226406, 0.68153536, -0.73117614, -0.02804314)
+bones/64/rotation = Quaternion(-3.5870404e-08, 0.9981658, 0.06054033, -3.0139905e-08)
 
 [node name="FirstPersonCameraBoneAttachment" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton" index="2" unique_id=1896825249]
-transform = Transform3D(0.99641705, -0.074276604, -0.040447425, 0.06978163, 0.9922268, -0.10303795, 0.047786307, 0.09984627, 0.9938547, -0.011936836, 1.487432, -0.046403997)
+transform = Transform3D(0.99650484, -0.07274192, -0.041073345, 0.06824766, 0.99245447, -0.10186477, 0.04817327, 0.09870556, 0.99394995, -0.0112978555, 1.487442, -0.046440393)
 bone_name = "Neck"
 bone_idx = 5
 
@@ -1653,7 +1654,7 @@ secondary_limit_angle = 1.9198622
 secondary_damp_threshold = 1.0
 
 [node name="ParagliderBoneAttachment" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton" index="4" unique_id=1910251258]
-transform = Transform3D(0.40684775, 0.019737246, 0.91328263, 0.08486229, -0.9962599, -0.01627371, 0.90954566, 0.08412419, -0.40700114, -0.2544484, 0.83964825, 0.002541747)
+transform = Transform3D(0.4052269, 0.017644832, 0.91404593, 0.08263357, -0.9964281, -0.017398931, 0.9104738, 0.08258152, -0.40523738, -0.25541982, 0.8399403, 0.0012055077)
 bone_name = "RightHand"
 bone_idx = 35
 
@@ -1662,7 +1663,7 @@ visible = false
 player = NodePath("../../../../..")
 
 [node name="SkateboardBoneAttachment" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton" index="5" unique_id=205451150]
-transform = Transform3D(0.9707367, 0.23893988, 0.02405263, 0.0045056213, 0.08201896, -0.99662066, -0.24010518, 0.9675643, 0.0785423, 0.21120317, 0.03322477, 0.19414496)
+transform = Transform3D(0.9706177, 0.23944382, 0.023829909, 0.004150831, 0.08235706, -0.99659425, -0.24059094, 0.967411, 0.07894331, 0.21089117, 0.033170216, 0.19405396)
 visible = false
 bone_name = "LeftToes"
 bone_idx = 59
@@ -1912,6 +1913,13 @@ one_shot = true
 [node name="Debug" parent="." unique_id=2032410064 node_paths=PackedStringArray("player") instance=ExtResource("20_07327")]
 visible = false
 player = NodePath("..")
+
+[node name="Pause" parent="." unique_id=498429169 node_paths=PackedStringArray("player") instance=ExtResource("173_errws")]
+visible = false
+player = NodePath("..")
+
+[node name="Settings" parent="." unique_id=955686872 instance=ExtResource("174_xwibx")]
+visible = false
 
 [node name="Crosshair" type="TextureRect" parent="." unique_id=1819190414]
 anchors_preset = 8

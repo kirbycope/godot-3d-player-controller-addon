@@ -70,6 +70,7 @@ var is_jump_queued: bool = false ## Is the Player currently queued to jump?
 var is_mining: bool = false ## Is the Player currently mining?
 var is_logging: bool = false ## Is the Player currently logging?
 var is_paragliding: bool = false ## Is the Player currently paragliding?
+var is_paused: bool = false ## Is the Player currently paused?
 var is_shooting: bool = false ## Is the Player currently shooting?
 var is_skateboarding: bool = false ## Is the Player currently skateboarding?
 var is_sliding: bool = false ## Is the Player currently sliding?
@@ -86,6 +87,8 @@ var root_motion := Transform3D()
 @onready var collision_shape: CollisionShape3D = $CollisionShape3D
 @onready var controls: CanvasLayer = $Controls
 @onready var debug: CanvasLayer = $Debug
+@onready var pause: CanvasLayer = $Pause
+@onready var settings: CanvasLayer = $Settings
 @onready var initial_position: Vector3 = transform.origin
 @onready var hanging_braced_detection: RayCast3D = $PlayerModel/HangingBracedDetection
 @onready var ledge_detection_horizontal: RayCast3D = $PlayerModel/LedgeDetectionHorizontal
@@ -135,13 +138,13 @@ func _ready() -> void:
 	current_state = NodeStateMachine.States.STANDING
 
 
-## Called when there is an input event.
-func _input(event: InputEvent) -> void:
+## Called when there is an unhandled input event.
+func _unhandled_input(event: InputEvent) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
 
 	# Toggle mouse capture
-	if event.is_action_pressed("ui_cancel"):
+	if event.is_action_pressed("ui_cancel") and not pause.visible and not settings.visible:
 		# Check if the mouse is currently captured
 		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 			# Set the mouse mode to visible to show the mouse cursor
