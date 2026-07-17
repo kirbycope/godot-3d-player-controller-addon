@@ -100,6 +100,7 @@ var root_motion := Transform3D()
 @onready var player_model: Node3D = $PlayerModel
 @onready var paraglider_raycast: RayCast3D = $ParagliderRaycast
 @onready var projectile_raycast: RayCast3D = $SpringArm3D/ProjectileRaycast
+@onready var skateboard: StaticBody3D = $PlayerModel/Armature/GeneralSkeleton/SkateboardBoneAttachment/Skateboard
 @onready var skeleton: Skeleton3D = $PlayerModel/Armature/GeneralSkeleton
 @onready var spring_arm: SpringArm3D = $SpringArm3D
 @onready var camera: Camera3D = $SpringArm3D/Camera3D
