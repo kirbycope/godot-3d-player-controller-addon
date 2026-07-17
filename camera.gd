@@ -51,11 +51,10 @@ func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("perspective"):
 		if perspective == Perspective.FIRST_PERSON:
 			perspective = Perspective.THIRD_PERSON
-			camera_ray_cast.position = camera_ray_cast_initial_position
 			transform = camera_initial_transform
 		else:
 			perspective = Perspective.FIRST_PERSON
-			camera_ray_cast.position = Vector3.ZERO
+		_update_raycast()
 
 	# Rotate the [Camera3D]'s [SpringArm3D] using the mouse motion input event
 	if event is InputEventMouseMotion \
@@ -70,11 +69,13 @@ func _input(event: InputEvent) -> void:
 			# Shorten the camera spring arm, min 1.0
 			camera_spring_arm.spring_length = max(camera_spring_arm.spring_length - 0.1, 1.0)
 			# TODO: If the player tries to zoom in further, switch to first-person perspective instead?
+			_update_raycast()
 
 		# If Mouse scroll wheel down
 		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			# Lengthen the camera spring arm, max 6.0
 			camera_spring_arm.spring_length = min(camera_spring_arm.spring_length + 0.1, 6.0)
+			_update_raycast()
 
 
 ## Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -171,3 +172,19 @@ func move_camera_to_player_head() -> void:
 	global_position += global_transform.basis.z * first_person_offset.z
 	global_position += global_transform.basis.y * first_person_offset.y
 	global_position += global_transform.basis.x * first_person_offset.x
+
+
+## Updates the [RayCast3D] position and target_position based on current perspective/depth.
+func _update_raycast() -> void:
+	if not is_instance_valid(camera_ray_cast):
+		return
+
+	if perspective == Perspective.FIRST_PERSON:
+		camera_ray_cast.position = Vector3.ZERO
+		camera_ray_cast.target_position = Vector3(0, 0, -3.0)
+	else:
+		camera_ray_cast.position = Vector3(0, 0, -1.0)
+		var length := 2.0
+		if is_instance_valid(camera_spring_arm):
+			length = camera_spring_arm.spring_length
+		camera_ray_cast.target_position = Vector3(0, 0, -(length + 1.0))
