@@ -83,6 +83,7 @@ var initial_collision_shape_position: Vector3
 var initial_parent: Node3D
 var orientation := Transform3D()
 var root_motion := Transform3D()
+var smoothed_motion: Vector2 = Vector2.ZERO
 
 @onready var attack_sequence_timer: Timer = $AttackSequenceTimer
 @onready var collision_shape: CollisionShape3D = $CollisionShape3D
@@ -270,7 +271,9 @@ func apply_input(delta: float) -> void:
 		target_motion = Vector2.ZERO
 
 	# Smoothly interpolate the target_motion for more gradual changes in animation blending and rotation.
-	target_motion = target_motion.lerp(target_motion, motion_interpolate_speed * delta)
+	var motion_weight: float = clampf(motion_interpolate_speed * delta, 0.0, 1.0)
+	smoothed_motion = smoothed_motion.lerp(target_motion, motion_weight)
+	target_motion = smoothed_motion
 
 	# While driving, paragliding or skateboarding, block regular locomotion.
 	# Driving.gd / Paragliding.gd / Skateboarding.gd will handle movement.
