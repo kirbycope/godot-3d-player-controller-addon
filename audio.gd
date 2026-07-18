@@ -25,8 +25,11 @@ func _ready() -> void:
 	pass # Replace with function body.
 
 
-## Called every frame. '_delta' is the elapsed time since the previous frame.
+## Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
+	# Do nothing if not the authority
+	if not is_multiplayer_authority(): return
+
 	if player.is_exhausted:
 		if abs(player.velocity.length()) > 0.2:
 			if not voice_male_breathing_run.playing:

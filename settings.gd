@@ -65,10 +65,21 @@ func _input(event: InputEvent) -> void:
 	# Close settings menu
 	if event.is_action_pressed("start") \
 	and visible:
-		hide()
-		player.is_paused = false
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		hide_settings()
 		get_viewport().set_input_as_handled()
+
+
+func show_settings() -> void:
+	show()
+	player.is_paused = true
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	$Panel/VBoxContainer/BACK.grab_focus()
+
+
+func hide_settings() -> void:
+	hide()
+	player.is_paused = false
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
 ## Change the VSYNC value.
@@ -189,7 +200,7 @@ func _on_fsr_touch_screen_button_pressed() -> void:
 ## Return to the pause menu.
 func _on_back_pressed() -> void:
 	hide()
-	player.pause.show()
+	player.pause.show_menu()
 
 
 func _on_back_touch_screen_button_pressed() -> void:

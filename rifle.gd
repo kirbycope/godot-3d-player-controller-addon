@@ -5,7 +5,7 @@ extends Equipment
 var was_shooting: bool = false
 
 
-## Called once on each physics tick, and allows Nodes to synchronize their logic with physics ticks.
+## Called every physics frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(delta: float) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return

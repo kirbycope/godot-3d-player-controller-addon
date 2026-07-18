@@ -5,13 +5,19 @@ extends CanvasLayer
 
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:
+	# Do nothing if not the authority
+	if not is_multiplayer_authority(): return
+
 	if player:
 		if event.is_action_pressed("debug"):
 			visible = !visible
 
 
-## Called every frame. '_delta' is the elapsed time since the previous frame.
+## Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta: float) -> void:
+	# Do nothing if not the authority
+	if not is_multiplayer_authority(): return
+
 	if player:
 		$FPS.text = str(int(Engine.get_frames_per_second()))
 

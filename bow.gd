@@ -7,7 +7,7 @@ const DRAW_ARROW_RUMBLE_DELAY_SECONDS: float = 1.0
 var _draw_arrow_rumble_request_id: int = 0
 
 
-## Called once on each physics tick, and allows Nodes to synchronize their logic with physics ticks.
+## Called every physics frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(delta: float) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return

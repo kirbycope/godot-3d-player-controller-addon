@@ -35,12 +35,16 @@ var lifePoints = []
 
 var oldPos
 
+## Called when the node enters the scene tree for the first time.
 func _ready():
 	oldPos = get_global_transform().origin
 	mesh = ImmediateMesh.new()
 
+## Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
-	
+	# Do nothing if not the authority
+	if not is_multiplayer_authority(): return
+
 	if (oldPos - get_global_transform().origin).length() > motionDelta and trailEnabled:
 		appendPoint()
 		oldPos = get_global_transform().origin

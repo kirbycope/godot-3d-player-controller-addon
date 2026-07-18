@@ -18,6 +18,9 @@ func _ready() -> void:
 
 ## Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
+	# Do nothing if not the authority
+	if not is_multiplayer_authority(): return
+
 	# Check if the player is sprinting or actively moving while climbing
 	var climbing_moving := player.is_climbing and player.velocity.length() > 0.1
 	var climbing_sprint := climbing_moving and Input.is_action_pressed("sprint")

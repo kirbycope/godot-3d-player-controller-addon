@@ -24,11 +24,16 @@ var _last_side: Vector3 = Vector3.RIGHT
 var _left_wing: Node3D
 var _right_wing: Node3D
 
+## Called when the node enters the scene tree for the first time.
 func _ready():
 	mesh = ImmediateMesh.new()
 	_resolve_wings()
 
+## Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float):
+	# Do nothing if not the authority
+	if not is_multiplayer_authority(): return
+
 	var i = 0
 	while i < _ages.size():
 		_ages[i] += delta

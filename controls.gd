@@ -567,7 +567,6 @@ func _process(delta: float) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
 
-
 func update_input_ui(input_type: InputType) -> void:
 	if input_type == InputType.KEYBOARD_MOUSE:
 		joypad_button_0.texture_normal = keyboard_mouse_button_0_normal

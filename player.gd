@@ -13,6 +13,7 @@ const GREATSWORD_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/Locomotion
 const PISTOL_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/PistolLocomotion/blend_position"
 const RIFLE_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/RifleLocomotion/blend_position"
 const SHIELD_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/ShieldLocomotion/blend_position"
+const SKATEBOARDING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/SkateboardingLocomotion/blend_position"
 const STANDING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/StandingLocomotion/blend_position"
 const SWIMMING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/SwimmingLocomotion/blend_position"
 
@@ -100,7 +101,7 @@ var root_motion := Transform3D()
 @onready var player_model: Node3D = $PlayerModel
 @onready var paraglider_raycast: RayCast3D = $ParagliderRaycast
 @onready var projectile_raycast: RayCast3D = $SpringArm3D/ProjectileRaycast
-@onready var skateboard: StaticBody3D = $PlayerModel/Armature/GeneralSkeleton/SkateboardBoneAttachment/Skateboard
+@onready var skateboard: StaticBody3D = $PlayerModel/Skateboard
 @onready var skeleton: Skeleton3D = $PlayerModel/Armature/GeneralSkeleton
 @onready var spring_arm: SpringArm3D = $SpringArm3D
 @onready var camera: Camera3D = $SpringArm3D/Camera3D
@@ -157,6 +158,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 # https://github.com/godotengine/tps-demo/blob/master/player/gd#L54
+## Called every physics frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(delta: float) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
@@ -168,6 +170,7 @@ func _physics_process(delta: float) -> void:
 	and not is_hanging_braced and not is_hanging_free \
 	and not is_jumping and not is_jump_queued \
 	and not is_paragliding \
+	and not is_skateboarding \
 	and not is_swimming:
 		# Enable the "falling" state in the NodeStateMachine. The AnimationTree will automatically transition to the "Falling" animation state.
 		state_machine.travel(current_state, NodeStateMachine.States.FALLING)
@@ -303,6 +306,7 @@ func apply_input(delta: float) -> void:
 	and not is_climbing \
 	and not is_hanging_braced \
 	and not is_hanging_free \
+	and not is_skateboarding \
 	and not is_swimming \
 	and Input.is_action_just_pressed("jump") \
 	and ledge_detection_horizontal.is_colliding():

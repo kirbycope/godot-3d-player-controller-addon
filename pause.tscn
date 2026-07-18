@@ -61,17 +61,6 @@ horizontal_alignment = 1
 vertical_alignment = 1
 uppercase = true
 
-[node name="Quit" type="Button" parent="Panel/VBoxContainer" unique_id=789258090]
-custom_minimum_size = Vector2(72, 0)
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 4
-text = "Quit"
-
-[node name="QuitTouchScreenButton" type="TouchScreenButton" parent="Panel/VBoxContainer/Quit" unique_id=1888097830]
-position = Vector2(36, 15)
-shape = SubResource("RectangleShape2D_senyo")
-
 [node name="Restart" type="Button" parent="Panel/VBoxContainer" unique_id=614997510]
 custom_minimum_size = Vector2(72, 0)
 layout_mode = 2
@@ -80,6 +69,16 @@ size_flags_vertical = 4
 text = "Restart"
 
 [node name="RestartTouchScreenButton" type="TouchScreenButton" parent="Panel/VBoxContainer/Restart" unique_id=547191703]
+position = Vector2(36, 15)
+shape = SubResource("RectangleShape2D_senyo")
+
+[node name="Unstuck" type="Button" parent="Panel/VBoxContainer" unique_id=1972774432]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+text = "Unstuck"
+
+[node name="UnstuckTouchScreenButton" type="TouchScreenButton" parent="Panel/VBoxContainer/Unstuck" unique_id=769719927]
 position = Vector2(36, 15)
 shape = SubResource("RectangleShape2D_senyo")
 
@@ -94,21 +93,22 @@ text = "Settings"
 position = Vector2(36, 15)
 shape = SubResource("RectangleShape2D_senyo")
 
-[node name="Unstuck" type="Button" parent="Panel/VBoxContainer" unique_id=1972774432]
+[node name="Quit" type="Button" parent="Panel/VBoxContainer" unique_id=789258090]
+custom_minimum_size = Vector2(72, 0)
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
-text = "Unstuck"
+text = "Quit"
 
-[node name="UnstuckTouchScreenButton" type="TouchScreenButton" parent="Panel/VBoxContainer/Unstuck" unique_id=769719927]
+[node name="QuitTouchScreenButton" type="TouchScreenButton" parent="Panel/VBoxContainer/Quit" unique_id=1888097830]
 position = Vector2(36, 15)
 shape = SubResource("RectangleShape2D_senyo")
 
-[connection signal="pressed" from="Panel/VBoxContainer/Quit" to="." method="_on_quit_pressed"]
-[connection signal="pressed" from="Panel/VBoxContainer/Quit/QuitTouchScreenButton" to="." method="_on_quit_touch_screen_button_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/Restart" to="." method="_on_restart_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/Restart/RestartTouchScreenButton" to="." method="_on_restart_touch_screen_button_pressed"]
-[connection signal="pressed" from="Panel/VBoxContainer/Settings" to="." method="_on_settings_pressed"]
-[connection signal="pressed" from="Panel/VBoxContainer/Settings/SettingsTouchScreenButton" to="." method="_on_settings_touch_screen_button_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/Unstuck" to="." method="_on_unstuck_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/Unstuck/UnstuckTouchScreenButton" to="." method="_on_unstuck_touch_screen_button_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Settings" to="." method="_on_settings_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Settings/SettingsTouchScreenButton" to="." method="_on_settings_touch_screen_button_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Quit" to="." method="_on_quit_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Quit/QuitTouchScreenButton" to="." method="_on_quit_touch_screen_button_pressed"]
