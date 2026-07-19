@@ -94,6 +94,15 @@ func start() -> void:
 	player.collision_shape.disabled = true
 	# Open (and then close) the driver's car door
 	await _open_and_close_drivers_door()
+	# Update the labels in the UI to reflect the driving state controls
+	if player.controls:
+		player.controls.set_labels({
+			player.controls.joypad_button_0_label: "Brake",
+			player.controls.joypad_button_1_label: "Accelerate",
+			player.controls.joypad_button_2_label: "Exit",
+			player.controls.left_joystick_label: "Steer",
+			player.controls.right_joystick_label: "Camera",
+		})
 
 
 ## Stop "driving".
@@ -112,6 +121,9 @@ func stop() -> void:
 	player.collision_shape.disabled = false
 	# Reparent the player back to its initial parent
 	player.reparent(player.initial_parent)
+	# Reset the labels in the UI to reflect the original control labels
+	if player.controls:
+		player.controls.reset_labels()
 
 
 func _open_and_close_drivers_door() -> void:

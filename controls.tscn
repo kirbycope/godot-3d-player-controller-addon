@@ -477,15 +477,16 @@ shape = SubResource("RectangleShape2D_sp4yc")
 action = "move_up"
 
 [node name="Label" type="Label" parent="BottomLeft/KeyW" unique_id=1116212167]
+visible = false
 anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -21.5
-offset_top = 46.0
+offset_top = -79.0
 offset_right = 21.5
-offset_bottom = 69.0
+offset_bottom = -56.0
 grow_horizontal = 2
 grow_vertical = 0
 text = "Move"
@@ -498,6 +499,18 @@ texture_pressed = ExtResource("63_10i3g")
 shape = SubResource("RectangleShape2D_sp4yc")
 action = "move_left"
 
+[node name="Label" type="Label" parent="BottomLeft/KeyA" unique_id=1788475514]
+visible = false
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = -37.0
+offset_top = -11.5
+offset_right = 6.0
+offset_bottom = 11.5
+grow_vertical = 2
+text = "Move"
+
 [node name="KeyS" type="TouchScreenButton" parent="BottomLeft" unique_id=697488247]
 visible = false
 position = Vector2(80, 88)
@@ -506,6 +519,20 @@ texture_pressed = ExtResource("65_tqkpd")
 shape = SubResource("RectangleShape2D_sp4yc")
 action = "move_down"
 
+[node name="Label" type="Label" parent="BottomLeft/KeyS" unique_id=1378395330]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -21.5
+offset_top = -8.0
+offset_right = 21.5
+offset_bottom = 15.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "Move"
+
 [node name="KeyD" type="TouchScreenButton" parent="BottomLeft" unique_id=992157285]
 visible = false
 position = Vector2(128, 88)
@@ -513,6 +540,21 @@ texture_normal = ExtResource("66_sttyu")
 texture_pressed = ExtResource("67_kc587")
 shape = SubResource("RectangleShape2D_sp4yc")
 action = "move_right"
+
+[node name="Label" type="Label" parent="BottomLeft/KeyD" unique_id=864247759]
+visible = false
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -6.0
+offset_top = -11.5
+offset_right = 37.0
+offset_bottom = 11.5
+grow_horizontal = 0
+grow_vertical = 2
+text = "Move"
 
 [node name="KeyI" type="TouchScreenButton" parent="BottomLeft" unique_id=392059391]
 visible = false
@@ -749,15 +791,16 @@ shape = SubResource("RectangleShape2D_sp4yc")
 action = "look_up"
 
 [node name="Label" type="Label" parent="BottomRight/KeyUp" unique_id=1644234347]
+visible = false
 anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -30.5
-offset_top = 44.0
+offset_top = -79.0
 offset_right = 30.5
-offset_bottom = 67.0
+offset_bottom = -56.0
 grow_horizontal = 2
 grow_vertical = 0
 text = "Camera"
@@ -770,6 +813,21 @@ texture_pressed = ExtResource("81_k80tt")
 shape = SubResource("RectangleShape2D_sp4yc")
 action = "look_left"
 
+[node name="Label" type="Label" parent="BottomRight/KeyLeft" unique_id=156485861]
+visible = false
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -88.5
+offset_top = -44.0
+offset_right = -27.5
+offset_bottom = -21.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "Camera"
+
 [node name="KeyDown" type="TouchScreenButton" parent="BottomRight" unique_id=10944827]
 visible = false
 position = Vector2(64, 216)
@@ -778,6 +836,20 @@ texture_pressed = ExtResource("83_ay47k")
 shape = SubResource("RectangleShape2D_sp4yc")
 action = "look_down"
 
+[node name="Label" type="Label" parent="BottomRight/KeyDown" unique_id=842180098]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -30.5
+offset_top = -8.0
+offset_right = 30.5
+offset_bottom = 15.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "Camera"
+
 [node name="KeyRight" type="TouchScreenButton" parent="BottomRight" unique_id=1891117815]
 visible = false
 position = Vector2(112, 216)
@@ -785,6 +857,21 @@ texture_normal = ExtResource("84_o5u1y")
 texture_pressed = ExtResource("85_osf25")
 shape = SubResource("RectangleShape2D_sp4yc")
 action = "look_right"
+
+[node name="Label" type="Label" parent="BottomRight/KeyRight" unique_id=1670398670]
+visible = false
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = 27.5
+offset_top = -44.0
+offset_right = 88.5
+offset_bottom = -21.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "Camera"
 
 [node name="TopLeft" type="Control" parent="." unique_id=1772685832]
 layout_mode = 3

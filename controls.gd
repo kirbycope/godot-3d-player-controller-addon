@@ -121,36 +121,67 @@ enum InputType {
 @export var sony_axis_5_plus_pressed: Texture2D ## Sony R2 (Pressed)
 
 @onready var joypad_button_0: TouchScreenButton = $BottomRight/JoypadButton0 ## Joypad Button 0 (Bottom Action, Sony Cross, XBox A, Nintendo B)
+@onready var joypad_button_0_label: Label = $BottomRight/JoypadButton0/Label
 @onready var joypad_button_1: TouchScreenButton = $BottomRight/JoypadButton1 ## Joypad Button 1 (Right Action, Sony Circle, XBox B, Nintendo A)
+@onready var joypad_button_1_label: Label = $BottomRight/JoypadButton1/Label
 @onready var joypad_button_2: TouchScreenButton = $BottomRight/JoypadButton2 ## Joypad Button 2 (Left Action, Sony Square, XBox X, Nintendo Y)
+@onready var joypad_button_2_label: Label = $BottomRight/JoypadButton2/Label
 @onready var joypad_button_3: TouchScreenButton = $BottomRight/JoypadButton3 ## Joypad Button 3 (Top Action, Sony Triangle, XBox Y, Nintendo X)
+@onready var joypad_button_3_label: Label = $BottomRight/JoypadButton3/Label
 @onready var joypad_button_4: TouchScreenButton = $TopCenter/JoypadButton4 ## Joypad Button 4 (Back, Sony Select, XBox Back, Nintendo -)
+@onready var joypad_button_4_label: Label = $TopCenter/JoypadButton4/Label
 @onready var joypad_button_15: TouchScreenButton = $TopCenter/JoypadButton15 ## Joypad Button 15 (Share Action, Sony Share, XBox Share, Nintendo Share)
+@onready var joypad_button_15_label: Label = $TopCenter/JoypadButton15/Label
 @onready var joypad_button_6: TouchScreenButton = $TopCenter/JoypadButton6 ## Joypad Button 6 (Start, Sony Options, XBox Menu, Nintendo Plus)
+@onready var joypad_button_6_label: Label = $TopCenter/JoypadButton6/Label
 @onready var joypad_button_7: TouchScreenButton = $BottomLeft/JoypadButton7 ## Joypad Button 7 (Left Stick, Sony L3, XBox Left Stick, Nintendo Left Stick)
+@onready var joypad_button_7_label: Label = $BottomLeft/JoypadButton7/Label
 @onready var joypad_button_8: TouchScreenButton = $BottomRight/JoypadButton8 ## Joypad Button 8 (Right Stick, Sony R3, XBox Right Stick, Nintendo Right Stick)
+@onready var joypad_button_8_label: Label = $BottomRight/JoypadButton8/Label
 @onready var joypad_button_9: TouchScreenButton = $TopLeft/JoypadButton9 ## Joypad Button 9 (Left Shoulder, Sony L1, XBox L, Nintendo L)
+@onready var joypad_button_9_label: Label = $TopLeft/JoypadButton9/Label
 @onready var joypad_button_10: TouchScreenButton = $TopRight/JoypadButton10 ## Joypad Button 10 (Right Shoulder, Sony R1, XBox RB, Nintendo R)
+@onready var joypad_button_10_label: Label = $TopRight/JoypadButton10/Label
 @onready var joypad_axis_4_plus: TouchScreenButton = $TopLeft/JoypadAxis4Plus ## Joypad Axis 4 + (Left Trigger, Sony L2, XBox LT, Nintendo ZL)
+@onready var joypad_axis_4_plus_label: Label = $TopLeft/JoypadAxis4Plus/Label
 @onready var joypad_axis_5_plus: TouchScreenButton = $TopRight/JoypadAxis5Plus ## Joypad Axis 5 + (Right Trigger, Sony R2, XBox RT, Nintendo ZR)
+@onready var joypad_axis_5_plus_label: Label = $TopRight/JoypadAxis5Plus/Label
 @onready var joypad_button_11: TouchScreenButton = $BottomLeft/JoypadButton11 ## Joypad Button 11 (DPad Up)
+@onready var joypad_button_11_label: Label = $BottomLeft/JoypadButton11/Label
 @onready var joypad_button_12: TouchScreenButton = $BottomLeft/JoypadButton12 ## Joypad Button 12 (DPad Down)
+@onready var joypad_button_12_label: Label = $BottomLeft/JoypadButton12/Label
 @onready var joypad_button_13: TouchScreenButton = $BottomLeft/JoypadButton13 ## Joypad Button 13 (DPad Left)
+@onready var joypad_button_13_label: Label = $BottomLeft/JoypadButton13/Label
 @onready var joypad_button_14: TouchScreenButton = $BottomLeft/JoypadButton14 ## Joypad Button 14 (DPad Right)
+@onready var joypad_button_14_label: Label = $BottomLeft/JoypadButton14/Label
 @onready var key_w: TouchScreenButton = $BottomLeft/KeyW ## Keyboard [W] key
+@onready var key_w_label: Label = $BottomLeft/KeyW/Label
 @onready var key_a: TouchScreenButton = $BottomLeft/KeyA ## Keyboard [A] key
+@onready var key_a_label: Label = $BottomLeft/KeyA/Label
 @onready var key_s: TouchScreenButton = $BottomLeft/KeyS ## Keyboard [S] key
+@onready var key_s_label: Label = $BottomLeft/KeyS/Label
 @onready var key_d: TouchScreenButton = $BottomLeft/KeyD ## Keyboard [D] key
+@onready var key_d_label: Label = $BottomLeft/KeyD/Label
 @onready var key_i: TouchScreenButton = $BottomLeft/KeyI ## Keyboard [I] key
+@onready var key_i_label: Label = $BottomLeft/KeyI/Label
 @onready var key_j: TouchScreenButton = $BottomLeft/KeyJ ## Keyboard [J] key
+@onready var key_j_label: Label = $BottomLeft/KeyJ/Label
 @onready var key_k: TouchScreenButton = $BottomLeft/KeyK ## Keyboard [K] key
+@onready var key_k_label: Label = $BottomLeft/KeyK/Label
 @onready var key_l: TouchScreenButton = $BottomLeft/KeyL ## Keyboard [L] key
+@onready var key_l_label: Label = $BottomLeft/KeyL/Label
 @onready var left_joystick: VirtualJoystick = $BottomLeft/LeftJoystick ## Virtual Joystick (introduced in Godot 4.7) for player movement
+@onready var left_joystick_label: Label = $BottomLeft/LeftJoystick/Label
 @onready var right_joystick: VirtualJoystick = $BottomRight/RightJoystick ## Virtual Joystick (introduced in Godot 4.7) for camera movement
+@onready var right_joystick_label: Label = $BottomRight/RightJoystick/Label
 @onready var key_up: TouchScreenButton = $BottomRight/KeyUp ## Keyboard [Up] key
+@onready var key_up_label: Label = $BottomRight/KeyUp/Label
 @onready var key_left: TouchScreenButton = $BottomRight/KeyLeft ## Keyboard [Left] key
+@onready var key_left_label: Label = $BottomRight/KeyLeft/Label
 @onready var key_down: TouchScreenButton = $BottomRight/KeyDown ## Keyboard [Down] key
+@onready var key_down_label: Label = $BottomRight/KeyDown/Label
 @onready var key_right: TouchScreenButton = $BottomRight/KeyRight ## Keyboard [Right] key
+@onready var key_right_label: Label = $BottomRight/KeyRight/Label
 
 
 var current_input_type: InputType = InputType.TOUCH:
@@ -161,6 +192,7 @@ var current_input_type: InputType = InputType.TOUCH:
 
 
 var all_buttons: Array[TouchScreenButton] = []
+var _label_texts: Dictionary = {}
 var _normal_textures: Dictionary = {}
 
 
@@ -178,8 +210,16 @@ func _ready() -> void:
 		joypad_button_8, joypad_button_9, joypad_button_10, joypad_axis_4_plus,
 		joypad_axis_5_plus, joypad_button_11, joypad_button_12, joypad_button_13,
 		joypad_button_14, key_w, key_a, key_s, key_d, key_i, key_j, key_k,
-		key_l, key_up, key_left, key_down, key_right
+		key_l, key_up, key_left, key_down, key_right,
 	]
+
+	# Cache the [Label] initial `.text` values
+	for button in all_buttons:
+		if button.has_node("Label"):
+			var label = button.get_node("Label") as Label
+			_label_texts[label] = label.text
+	_label_texts[left_joystick_label] = left_joystick_label.text
+	_label_texts[right_joystick_label] = right_joystick_label.text
 
 	update_input_ui(current_input_type)
 
@@ -566,6 +606,30 @@ func _input(event: InputEvent) -> void:
 func _process(delta: float) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
+
+
+func reset_labels() -> void:
+	for label: Variant in _label_texts.keys():
+		if label:
+			label.text = _label_texts[label]
+
+
+func set_labels(label_texts: Dictionary) -> void:
+	var final_texts: Dictionary = label_texts.duplicate()
+	if left_joystick_label in final_texts and not key_s_label in final_texts:
+		final_texts[key_s_label] = final_texts[left_joystick_label]
+	if right_joystick_label in final_texts and not key_down_label in final_texts:
+		final_texts[key_down_label] = final_texts[right_joystick_label]
+
+	for label: Variant in _label_texts.keys():
+		if label:
+			if label in final_texts:
+				label.text = final_texts[label]
+			else:
+				# Don't clear joystick labels if they are not explicitly specified
+				if label != left_joystick_label and label != right_joystick_label:
+					label.text = ""
+
 
 func update_input_ui(input_type: InputType) -> void:
 	if input_type == InputType.KEYBOARD_MOUSE:
