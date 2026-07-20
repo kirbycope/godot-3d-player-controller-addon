@@ -57,6 +57,21 @@ var equipped_sword_1h: bool:
 var equipped_sword_2h: bool:
 	get:
 		return inventory != null and inventory.has_equipment(Equipment.EquipmentType.SWORD_2H)
+var has_move_input: bool:
+	get:
+		return player_input != null and player_input.motion.length_squared() > 0.0
+var uses_equipment_jump_variants: bool:
+	get:
+		return equipped_axe_1h \
+			or equipped_axe_2h \
+			or equipped_bow \
+			or equipped_dagger \
+			or equipped_pistol \
+			or equipped_rifle \
+			or equipped_shield \
+			or equipped_staff \
+			or equipped_sword_1h \
+			or equipped_sword_2h
 var is_hanging: bool:
 	get:
 		return is_hanging_braced or is_hanging_free
@@ -532,9 +547,30 @@ func detect_ledge() -> bool:
 
 ## Called by the animation(s) using "Call Method Track" to execute the jump logic at the right time. 
 func execute_jump() -> void:
+	if not is_jump_queued:
+		return
 	velocity = velocity.slide(up_direction) + (up_direction * 5.0)
 	is_jump_queued = false
 	is_jumping = true
+
+
+## Gets the grounded locomotion state that matches the current equipment and intent.
+func get_grounded_locomotion_state() -> StringName:
+	if is_crouching:
+		return &"CrouchingLocomotion"
+	if equipped_axe_2h or equipped_staff or equipped_sword_2h:
+		return &"GreatSwordLocomotion"
+	if equipped_bow:
+		if is_shooting:
+			return &"ArcheryLocomotion"
+		return &"BowLocomotion"
+	if equipped_axe_1h or equipped_dagger or equipped_shield or equipped_sword_1h:
+		return &"ShieldLocomotion"
+	if equipped_pistol:
+		return &"PistolLocomotion"
+	if equipped_rifle:
+		return &"RifleLocomotion"
+	return &"StandingLocomotion"
 
 
 ## Gets the player's forward direction projected onto the movement plane.

@@ -38,34 +38,6 @@ func start() -> void:
 	player.is_jumping = true
 	# Flag the player as having a "jump queued"
 	player.is_jump_queued = true
-	# Perform a forward jump if there is motion input
-	if player.player_input.motion.length() > 0.0:
-		if player.inventory.has_heavy_weapon_equipped():
-			player.locomotion_state.travel("GreatSwordJumpForward")
-		elif player.inventory.has_equipment(Equipment.EquipmentType.BOW):
-			player.locomotion_state.travel("BowJumpForward")
-		elif player.inventory.has_one_handed_or_shield_equipped():
-			player.locomotion_state.travel("ShieldJumpForward")
-		elif player.inventory.has_equipment(Equipment.EquipmentType.PISTOL):
-			player.locomotion_state.travel("PistolJumpForward")
-		elif player.inventory.has_equipment(Equipment.EquipmentType.RIFLE):
-			player.locomotion_state.travel("RifleJumpForward")
-		else:
-			player.locomotion_state.travel("RunningJump")
-	# Otherwise perform a vertical jump
-	else:
-		if player.inventory.has_heavy_weapon_equipped():
-			player.locomotion_state.travel("GreatSwordJump")
-		elif player.inventory.has_equipment(Equipment.EquipmentType.BOW):
-			player.locomotion_state.travel("BowJump")
-		elif player.inventory.has_one_handed_or_shield_equipped():
-			player.locomotion_state.travel("ShieldJump")
-		elif player.inventory.has_equipment(Equipment.EquipmentType.PISTOL):
-			player.locomotion_state.travel("PistolJump")
-		elif player.inventory.has_equipment(Equipment.EquipmentType.RIFLE):
-			player.locomotion_state.travel("RifleJumpUp")
-		else:
-			player.locomotion_state.travel("JumpingUp")
 
 
 ## Stop "jumping".

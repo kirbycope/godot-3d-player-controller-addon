@@ -36,8 +36,8 @@ func start() -> void:
 	player.current_state = _this_state
 	# Flag the player as "standing"
 	player.is_standing = true
-	# Transition the locomotion state to Standing
-	player.locomotion_state.travel("StandingLocomotion")
+	# Transition directly to the grounded locomotion that matches the equipped state.
+	player.locomotion_state.travel(String(player.get_grounded_locomotion_state()))
 
 
 ## Stop "standing".
