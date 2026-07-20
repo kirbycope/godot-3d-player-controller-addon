@@ -1103,7 +1103,7 @@ advance_expression = "is_hanging_braced"
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_dtq52"]
 xfade_time = 0.2
 advance_mode = 2
-advance_expression = "! is_hanging and is_falling"
+advance_expression = "(!is_hanging_braced and !is_hanging_free) and is_falling"
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_barxw"]
 xfade_time = 0.2
