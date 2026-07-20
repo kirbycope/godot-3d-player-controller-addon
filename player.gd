@@ -27,6 +27,39 @@ var current_state: int = -1 ## The current state of the Player (from the Node/Co
 var locomotion_state: ## Gets the [NodeStateMachine] "LocomotionStateMachine"
 	get:
 		return animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH)
+var equipped_axe_1h: bool:
+	get:
+		return inventory != null and inventory.has_equipment(Equipment.EquipmentType.AXE_1H)
+var equipped_axe_2h: bool:
+	get:
+		return inventory != null and inventory.has_equipment(Equipment.EquipmentType.AXE_2H)
+var equipped_bow: bool:
+	get:
+		return inventory != null and inventory.has_equipment(Equipment.EquipmentType.BOW)
+var equipped_dagger: bool:
+	get:
+		return inventory != null and inventory.has_equipment(Equipment.EquipmentType.DAGGER)
+var equipped_pistol: bool:
+	get:
+		return inventory != null and inventory.has_equipment(Equipment.EquipmentType.PISTOL)
+var equipped_rifle: bool:
+	get:
+		return inventory != null and inventory.has_equipment(Equipment.EquipmentType.RIFLE)
+var equipped_shield: bool:
+	get:
+		return inventory != null and inventory.has_equipment(Equipment.EquipmentType.SWORD_AND_SHIELD)
+var equipped_staff: bool:
+	get:
+		return inventory != null and inventory.has_equipment(Equipment.EquipmentType.STAFF)
+var equipped_sword_1h: bool:
+	get:
+		return inventory != null and inventory.has_equipment(Equipment.EquipmentType.SWORD_1H)
+var equipped_sword_2h: bool:
+	get:
+		return inventory != null and inventory.has_equipment(Equipment.EquipmentType.SWORD_2H)
+var is_hanging: bool:
+	get:
+		return is_hanging_braced or is_hanging_free
 
 # Attack Sequence (while holding equipment)
 var attack_sequence: int = 0
@@ -297,30 +330,6 @@ func apply_input(delta: float) -> void:
 	else:
 		is_focusing = Input.is_action_pressed("focus")
 		is_shooting = Input.is_action_pressed("shoot") and inventory.can_player_shoot
-
-	# Update locomotion state based on equipped items if not in special states
-	if not is_driving and not is_swimming and not is_climbing and not is_hanging_braced and not is_hanging_free and not is_falling and not is_jumping and not is_sliding and not is_mining and not is_logging:
-		var current_state = locomotion_state.get_current_node()
-		var target_state = "StandingLocomotion"
-		var is_shield_attack_state: bool = current_state == "ShieldDownwardSlash" or current_state == "ShieldCrossSlash" or current_state == "ShieldPowerSlash"
-
-		if is_crouching:
-			target_state = "CrouchingLocomotion"
-		elif inventory.has_heavy_weapon_equipped():
-			target_state = "GreatSwordLocomotion"
-		elif inventory.has_equipment(Equipment.EquipmentType.BOW):
-			target_state = "BowLocomotion" if not is_shooting else "ArcheryLocomotion"
-		elif inventory.has_one_handed_or_shield_equipped():
-			target_state = "ShieldLocomotion"
-		elif inventory.has_equipment(Equipment.EquipmentType.PISTOL):
-			target_state = "PistolLocomotion"
-		elif inventory.has_equipment(Equipment.EquipmentType.RIFLE):
-			target_state = "RifleLocomotion"
-
-		# Transition if target differs from current (skip Jump states but allow transition from any normal state)
-		if current_state != target_state:
-			if not current_state.contains("Jump") and not is_shield_attack_state and current_state != "Mining" and current_state != "Logging":
-				locomotion_state.travel(target_state)
 
 	# Jump { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
 	if not is_driving \
