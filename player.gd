@@ -142,7 +142,7 @@ func _ready() -> void:
 
 
 ## Called when there is an unhandled input event.
-func _unhandled_input(event: InputEvent) -> void:
+func _input(event: InputEvent) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
 
