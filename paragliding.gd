@@ -74,6 +74,10 @@ func start() -> void:
 	player.current_state = _this_state
 	# Flag the player as "paragliding"
 	player.is_paragliding = true
+	# Hide equipped item visuals while gliding to avoid clipping into the paraglider.
+	player.set_equipment_visibility(false)
+	# Teleport locomotion playback into the Paragliding animation state. Normally the is_paragliding flag would work but then it would need each transition added to the AnimationTree graph.
+	player.locomotion_state.start("Paragliding")
 	# Limit the player's downward velocity
 	var vertical_speed := player.velocity.dot(player.up_direction)
 	vertical_speed = min(vertical_speed, 0.0)
@@ -89,3 +93,5 @@ func stop() -> void:
 		player.current_state = -1
 	# Flag the player as not "paragliding"
 	player.is_paragliding = false
+	# Restore equipped item visuals when exiting glide.
+	player.set_equipment_visibility(true)

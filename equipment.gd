@@ -87,11 +87,19 @@ func equip(player: Player) -> void:
 	# 2. Handle existing and conflicting attachments
 	for child in skeleton.get_children():
 		if child is BoneAttachment3D:
-			var is_exclusive_attachment := false
+			var is_equipment_attachment: bool = false
+			var is_exclusive_attachment: bool = false
 			for sub_child in child.get_children():
+				if "equipment_type" in sub_child:
+					is_equipment_attachment = true
 				if "is_exclusive" in sub_child and sub_child.is_exclusive:
 					is_exclusive_attachment = true
 					break
+
+			# Ignore built-in bone attachments (e.g. paraglider/camera anchors)
+			# that do not currently hold equipped items.
+			if not is_equipment_attachment:
+				continue
 
 			# Remove any existing attachment on this specific bone,
 			# OR unequip all other equipment types if equipping an exclusive/two-handed weapon,

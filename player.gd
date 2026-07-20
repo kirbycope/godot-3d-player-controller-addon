@@ -207,7 +207,13 @@ func debug_unequip_all() -> void:
 	can_player_shoot = false
 	for child in skeleton.get_children():
 		if child is BoneAttachment3D:
-			child.queue_free()
+			var has_equipment_child: bool = false
+			for sub_child in child.get_children():
+				if "equipment_type" in sub_child:
+					has_equipment_child = true
+					break
+			if has_equipment_child:
+				child.queue_free()
 	locomotion_state.travel("StandingLocomotion")
 
 
@@ -224,6 +230,18 @@ func rebuild_equipment_cache() -> void:
 			can_player_attack = true
 		if "can_shoot" in item and item.can_shoot:
 			can_player_shoot = true
+
+
+func set_equipment_visibility(is_visible: bool) -> void:
+	for item in equipment:
+		if item == null:
+			continue
+		if not is_instance_valid(item):
+			continue
+		if is_visible:
+			item.show()
+		else:
+			item.hide()
 
 
 func get_equipment_by_type(type: int) -> Node3D:
@@ -325,6 +343,21 @@ func apply_input(delta: float) -> void:
 		else:
 			state_machine.travel(current_state, NodeStateMachine.States.CLIMBING)
 			return
+
+	# Paragliding, Start { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
+	if not is_driving \
+	and not is_on_floor() \
+	and Input.is_action_just_pressed("jump") \
+	and (is_falling or is_jumping) \
+	and not is_climbing \
+	and not is_hanging_braced \
+	and not is_hanging_free \
+	and not is_paragliding \
+	and not is_skateboarding \
+	and not is_swimming \
+	and not paraglider_raycast.is_colliding():
+		state_machine.travel(current_state, NodeStateMachine.States.PARAGLIDING)
+		return
 
 	# Crouch { Console: Left ⬤, Keyboard: [Control] }.
 	if not is_driving \
