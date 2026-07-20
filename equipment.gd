@@ -77,6 +77,9 @@ func equip(player: Player) -> void:
 
 	if not bone_attachment_bone_name or not player:
 		return
+	if not player.inventory:
+		push_error("Inventory not found on player!")
+		return
 
 	# 1. Find the Skeleton3D on the player (adjust the node path if needed)
 	var skeleton: Skeleton3D = player.get_node_or_null("PlayerModel/Armature/GeneralSkeleton") 
@@ -106,8 +109,8 @@ func equip(player: Player) -> void:
 			# OR unequip exclusive/two-handed weapons if equipping any new item.
 			if child.bone_name == bone_attachment_bone_name or is_exclusive or is_exclusive_attachment:
 				for sub_child in child.get_children():
-					if "equipment_type" in sub_child and player.equipment.has(sub_child):
-						player.equipment.erase(sub_child)
+					if "equipment_type" in sub_child:
+						player.inventory.remove_equipment(sub_child)
 				skeleton.remove_child(child)
 				child.queue_free() # Clean it up from memory
 
@@ -125,11 +128,7 @@ func equip(player: Player) -> void:
 	_configure_animation_trees(equipment_instance, equipment_instance)
 
 	# 5. Add a reference to this equipment to the player
-	if not player.equipment.has(equipment_instance):
-		player.equipment.append(equipment_instance)
-
-	# 6. Rebuild quick lookup/cache so input logic does O(1) reads per frame.
-	player.rebuild_equipment_cache()
+	player.inventory.add_equipment(equipment_instance)
 
 
 func _disable_collisions(node: Node) -> void:

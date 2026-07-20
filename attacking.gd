@@ -28,12 +28,12 @@ func _physics_process(delta: float) -> void:
 	player.is_attacking_3 = current_node in ["GreatSwordPowerSlash", "ShieldPowerSlash"] # Attack 3 of 3
 
 	# Attack { Microsoft: Ⓧ, Nintendo: Ⓨ, Sony: 🟗, Keyboard: [Alt] }
-	if Input.is_action_just_pressed("attack") and player.can_player_attack:
+	if Input.is_action_just_pressed("attack") and player.inventory.can_player_attack:
 		# Start the attack sequence timer
 		player.attack_sequence_timer.start()
 
 		# Attack Sequence: 1-Handed Weapon and Shield
-		if player.has_one_handed_or_shield_equipped():
+		if player.inventory.has_one_handed_or_shield_equipped():
 			# Queue the next attack in the sequence (changing the variable causes the AnimationTree to travel)
 			if current_node == "ShieldDownwardSlash": ## Sword and Shield, Attack 1 of 3
 				player.attack_sequence = 1
@@ -43,7 +43,7 @@ func _physics_process(delta: float) -> void:
 				player.attack_sequence = 3
 
 		# Attack Sequence: 2-Handed Weapon
-		elif player.has_heavy_weapon_equipped():
+		elif player.inventory.has_heavy_weapon_equipped():
 			if current_node == "GreatSwordDownwardSlash": ## 2-Handed Weapon, Attack 1 of 3
 				player.attack_sequence = 1
 			elif current_node == "GreatSwordLowSlash": ## 2-Handed Weapon, Attack 2 of 3

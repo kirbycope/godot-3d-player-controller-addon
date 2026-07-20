@@ -28,12 +28,6 @@ var locomotion_state: ## Gets the [NodeStateMachine] "LocomotionStateMachine"
 	get:
 		return animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH)
 
-# Equipment
-var equipment: Array = []
-var equipment_by_type: Dictionary = {}
-var can_player_attack: bool = false ## Does the currently equipped item allow the Player to attack?
-var can_player_shoot: bool = false ## Does the currently equipped item allow the Player to shoot?
-
 # Attack Sequence (while holding equipment)
 var attack_sequence: int = 0
 var is_attacking: bool = false
@@ -89,6 +83,7 @@ var smoothed_motion: Vector2 = Vector2.ZERO
 @onready var collision_shape: CollisionShape3D = $CollisionShape3D
 @onready var controls: CanvasLayer = $Controls
 @onready var debug: CanvasLayer = $Debug
+@onready var inventory: Inventory = $Inventory
 @onready var pause: CanvasLayer = $Pause
 @onready var settings: CanvasLayer = $Settings
 @onready var initial_position: Vector3 = transform.origin
@@ -197,83 +192,7 @@ func _physics_process(delta: float) -> void:
 
 	## DEBUG: Remove all equipment for testing purposes.
 	if Input.is_action_just_pressed("unequip"):
-		debug_unequip_all()
-
-
-func debug_unequip_all() -> void:
-	equipment.clear()
-	equipment_by_type.clear()
-	can_player_attack = false
-	can_player_shoot = false
-	for child in skeleton.get_children():
-		if child is BoneAttachment3D:
-			var has_equipment_child: bool = false
-			for sub_child in child.get_children():
-				if "equipment_type" in sub_child:
-					has_equipment_child = true
-					break
-			if has_equipment_child:
-				child.queue_free()
-	locomotion_state.travel("StandingLocomotion")
-
-
-func rebuild_equipment_cache() -> void:
-	equipment_by_type.clear()
-	can_player_attack = false
-	can_player_shoot = false
-	for item in equipment:
-		if item == null:
-			continue
-		if "equipment_type" in item:
-			equipment_by_type[item.equipment_type] = item
-		if "can_attack" in item and item.can_attack:
-			can_player_attack = true
-		if "can_shoot" in item and item.can_shoot:
-			can_player_shoot = true
-
-
-func set_equipment_visibility(is_visible: bool) -> void:
-	for item in equipment:
-		if item == null:
-			continue
-		if not is_instance_valid(item):
-			continue
-		if is_visible:
-			item.show()
-		else:
-			item.hide()
-
-
-func get_equipment_by_type(type: int) -> Node3D:
-	return equipment_by_type.get(type, null)
-
-
-func has_equipment(type: int) -> bool:
-	return equipment_by_type.has(type)
-
-
-func has_any_equipment(types: Array) -> bool:
-	for type in types:
-		if equipment_by_type.has(type):
-			return true
-	return false
-
-
-func has_heavy_weapon_equipped() -> bool:
-	return has_any_equipment([
-		Equipment.EquipmentType.AXE_2H,
-		Equipment.EquipmentType.STAFF,
-		Equipment.EquipmentType.SWORD_2H,
-	])
-
-
-func has_one_handed_or_shield_equipped() -> bool:
-	return has_any_equipment([
-		Equipment.EquipmentType.AXE_1H,
-		Equipment.EquipmentType.DAGGER,
-		Equipment.EquipmentType.SWORD_1H,
-		Equipment.EquipmentType.SWORD_AND_SHIELD,
-	])
+		inventory.debug_unequip_all()
 
 
 # https://github.com/godotengine/tps-demo/blob/master/player/gd#L86
@@ -317,7 +236,7 @@ func apply_input(delta: float) -> void:
 	if not is_driving \
 	and Input.is_action_just_pressed("attack") \
 	and not is_attacking \
-	and can_player_attack:
+	and inventory.can_player_attack:
 		# Enable the "attacking" state in the NodeStateMachine. The AnimationTree will automatically transition to the "Falling" animation state.
 		state_machine.travel(current_state, NodeStateMachine.States.ATTACKING)
 
@@ -377,7 +296,7 @@ func apply_input(delta: float) -> void:
 		is_shooting = false
 	else:
 		is_focusing = Input.is_action_pressed("focus")
-		is_shooting = Input.is_action_pressed("shoot") and can_player_shoot
+		is_shooting = Input.is_action_pressed("shoot") and inventory.can_player_shoot
 
 	# Update locomotion state based on equipped items if not in special states
 	if not is_driving and not is_swimming and not is_climbing and not is_hanging_braced and not is_hanging_free and not is_falling and not is_jumping and not is_sliding and not is_mining and not is_logging:
@@ -387,15 +306,15 @@ func apply_input(delta: float) -> void:
 
 		if is_crouching:
 			target_state = "CrouchingLocomotion"
-		elif has_heavy_weapon_equipped():
+		elif inventory.has_heavy_weapon_equipped():
 			target_state = "GreatSwordLocomotion"
-		elif has_equipment(Equipment.EquipmentType.BOW):
+		elif inventory.has_equipment(Equipment.EquipmentType.BOW):
 			target_state = "BowLocomotion" if not is_shooting else "ArcheryLocomotion"
-		elif has_one_handed_or_shield_equipped():
+		elif inventory.has_one_handed_or_shield_equipped():
 			target_state = "ShieldLocomotion"
-		elif has_equipment(Equipment.EquipmentType.PISTOL):
+		elif inventory.has_equipment(Equipment.EquipmentType.PISTOL):
 			target_state = "PistolLocomotion"
-		elif has_equipment(Equipment.EquipmentType.RIFLE):
+		elif inventory.has_equipment(Equipment.EquipmentType.RIFLE):
 			target_state = "RifleLocomotion"
 
 		# Transition if target differs from current (skip Jump states but allow transition from any normal state)
@@ -459,22 +378,22 @@ func apply_input(delta: float) -> void:
 		if is_crouching:
 			animation_tree.set(CROUCHING_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 		else:
-			if has_equipment(Equipment.EquipmentType.BOW):
+			if inventory.has_equipment(Equipment.EquipmentType.BOW):
 				if is_shooting:
 					animation_tree.set(ARCHERY_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 				else:
 					animation_tree.set(BOW_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
-			elif has_any_equipment([
+			elif inventory.has_any_equipment([
 				Equipment.EquipmentType.AXE_1H,
 				Equipment.EquipmentType.DAGGER,
 				Equipment.EquipmentType.SWORD_1H,
 			]):
 				animation_tree.set(SHIELD_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
-			elif has_heavy_weapon_equipped():
+			elif inventory.has_heavy_weapon_equipped():
 				animation_tree.set(GREATSWORD_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
-			elif has_equipment(Equipment.EquipmentType.PISTOL):
+			elif inventory.has_equipment(Equipment.EquipmentType.PISTOL):
 				animation_tree.set(PISTOL_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
-			elif has_equipment(Equipment.EquipmentType.RIFLE):
+			elif inventory.has_equipment(Equipment.EquipmentType.RIFLE):
 				animation_tree.set(RIFLE_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 			else:
 				animation_tree.set(STANDING_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
@@ -511,18 +430,18 @@ func apply_input(delta: float) -> void:
 			var anim_blend := Vector2(0.0, target_motion.length())
 			if is_crouching:
 				animation_tree.set(CROUCHING_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
-			if has_equipment(Equipment.EquipmentType.BOW):
+			if inventory.has_equipment(Equipment.EquipmentType.BOW):
 				if is_shooting:
 					animation_tree.set(ARCHERY_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
 				else:
 					animation_tree.set(BOW_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
-			elif has_one_handed_or_shield_equipped():
+			elif inventory.has_one_handed_or_shield_equipped():
 				animation_tree.set(SHIELD_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
-			elif has_heavy_weapon_equipped():
+			elif inventory.has_heavy_weapon_equipped():
 				animation_tree.set(GREATSWORD_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
-			elif has_equipment(Equipment.EquipmentType.PISTOL):
+			elif inventory.has_equipment(Equipment.EquipmentType.PISTOL):
 				animation_tree.set(PISTOL_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
-			elif has_equipment(Equipment.EquipmentType.RIFLE):
+			elif inventory.has_equipment(Equipment.EquipmentType.RIFLE):
 				animation_tree.set(RIFLE_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
 			else:
 				animation_tree.set(STANDING_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)

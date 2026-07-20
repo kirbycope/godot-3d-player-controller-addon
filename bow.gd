@@ -24,13 +24,13 @@ func _physics_process(delta: float) -> void:
 		var was_firing_arrow := player.is_firing_arrow
 
 		# Update archery flags on the player based on the currently playing animation in the locomotion state machine
-		var has_bow := player.has_equipment(Equipment.EquipmentType.BOW)
+		var has_bow: bool = player.inventory.has_equipment(Equipment.EquipmentType.BOW)
 		player.is_aiming_bow = has_bow and locomotion_state_currently_playing_animation == "ArcheryLocomotion"
 		player.is_drawing_arrow = has_bow and locomotion_state_currently_playing_animation == "BowDrawArrow"
 		player.is_firing_arrow = has_bow and locomotion_state_currently_playing_animation == "BowFireArrow"
 		if not player.is_aiming_bow and not player.is_drawing_arrow:
 			_draw_arrow_rumble_request_id += 1
-		var bow: Node3D = player.get_equipment_by_type(Equipment.EquipmentType.BOW)
+		var bow: Node3D = player.inventory.get_equipment_by_type(Equipment.EquipmentType.BOW)
 
 		# Check if the player has a bow equipped
 		if has_bow and bow:

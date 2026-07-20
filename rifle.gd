@@ -13,7 +13,7 @@ func _physics_process(delta: float) -> void:
 	# Proceed once the player has been initialized
 	if player:
 		# Check if the player has a rifle equipped
-		var has_rifle := player.has_equipment(Equipment.EquipmentType.RIFLE)
+		var has_rifle: bool = player.inventory.has_equipment(Equipment.EquipmentType.RIFLE)
 		# Return early if the player does not have a rifle equipped
 		if not has_rifle:
 			return

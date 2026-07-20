@@ -40,29 +40,29 @@ func start() -> void:
 	player.is_jump_queued = true
 	# Perform a forward jump if there is motion input
 	if player.player_input.motion.length() > 0.0:
-		if player.has_heavy_weapon_equipped():
+		if player.inventory.has_heavy_weapon_equipped():
 			player.locomotion_state.travel("GreatSwordJumpForward")
-		elif player.has_equipment(Equipment.EquipmentType.BOW):
+		elif player.inventory.has_equipment(Equipment.EquipmentType.BOW):
 			player.locomotion_state.travel("BowJumpForward")
-		elif player.has_one_handed_or_shield_equipped():
+		elif player.inventory.has_one_handed_or_shield_equipped():
 			player.locomotion_state.travel("ShieldJumpForward")
-		elif player.has_equipment(Equipment.EquipmentType.PISTOL):
+		elif player.inventory.has_equipment(Equipment.EquipmentType.PISTOL):
 			player.locomotion_state.travel("PistolJumpForward")
-		elif player.has_equipment(Equipment.EquipmentType.RIFLE):
+		elif player.inventory.has_equipment(Equipment.EquipmentType.RIFLE):
 			player.locomotion_state.travel("RifleJumpForward")
 		else:
 			player.locomotion_state.travel("RunningJump")
 	# Otherwise perform a vertical jump
 	else:
-		if player.has_heavy_weapon_equipped():
+		if player.inventory.has_heavy_weapon_equipped():
 			player.locomotion_state.travel("GreatSwordJump")
-		elif player.has_equipment(Equipment.EquipmentType.BOW):
+		elif player.inventory.has_equipment(Equipment.EquipmentType.BOW):
 			player.locomotion_state.travel("BowJump")
-		elif player.has_one_handed_or_shield_equipped():
+		elif player.inventory.has_one_handed_or_shield_equipped():
 			player.locomotion_state.travel("ShieldJump")
-		elif player.has_equipment(Equipment.EquipmentType.PISTOL):
+		elif player.inventory.has_equipment(Equipment.EquipmentType.PISTOL):
 			player.locomotion_state.travel("PistolJump")
-		elif player.has_equipment(Equipment.EquipmentType.RIFLE):
+		elif player.inventory.has_equipment(Equipment.EquipmentType.RIFLE):
 			player.locomotion_state.travel("RifleJumpUp")
 		else:
 			player.locomotion_state.travel("JumpingUp")

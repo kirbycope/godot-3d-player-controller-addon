@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://d3807jlpj5vsl"]
+
+[ext_resource type="Script" uid="uid://chqp2ljg754vp" path="res://addons/3d_player_controller/inventory.gd" id="1_nsbb7"]
+
+[node name="Inventory" type="CanvasLayer" unique_id=509190037]
+script = ExtResource("1_nsbb7")

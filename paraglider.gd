@@ -11,9 +11,6 @@ func _physics_process(delta: float) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
 
-	# Check authority against the player node. Child node authority can differ in multiplayer.
-	if not player.is_multiplayer_authority(): return
-
 	if player.is_paragliding and not visible:
 		# Show visual immediately once paragliding starts, then play effects if needed.
 		show()

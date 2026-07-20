@@ -42,21 +42,21 @@ func _process(_delta: float) -> void:
 		$States/is_standing.button_pressed = player.is_standing
 		$States/is_swimming.button_pressed = player.is_swimming
 
-		$Equipment/equipped_axe_1h.button_pressed = player.has_equipment(Equipment.EquipmentType.AXE_1H)
-		$Equipment/equipped_axe_2h.button_pressed = player.has_equipment(Equipment.EquipmentType.AXE_2H)
-		$Equipment/equipped_bow.button_pressed = player.has_equipment(Equipment.EquipmentType.BOW)
-		$Equipment/equipped_dagger.button_pressed = player.has_equipment(Equipment.EquipmentType.DAGGER)
-		$Equipment/equipped_shield.button_pressed = player.has_equipment(Equipment.EquipmentType.SWORD_AND_SHIELD)
-		$Equipment/equipped_staff.button_pressed = player.has_equipment(Equipment.EquipmentType.STAFF)
-		$Equipment/equipped_sword_1h.button_pressed = player.has_equipment(Equipment.EquipmentType.SWORD_1H)
-		$Equipment/equipped_sword_2h.button_pressed = player.has_equipment(Equipment.EquipmentType.SWORD_2H)
+		$Equipment/equipped_axe_1h.button_pressed = player.inventory.has_equipment(Equipment.EquipmentType.AXE_1H)
+		$Equipment/equipped_axe_2h.button_pressed = player.inventory.has_equipment(Equipment.EquipmentType.AXE_2H)
+		$Equipment/equipped_bow.button_pressed = player.inventory.has_equipment(Equipment.EquipmentType.BOW)
+		$Equipment/equipped_dagger.button_pressed = player.inventory.has_equipment(Equipment.EquipmentType.DAGGER)
+		$Equipment/equipped_shield.button_pressed = player.inventory.has_equipment(Equipment.EquipmentType.SWORD_AND_SHIELD)
+		$Equipment/equipped_staff.button_pressed = player.inventory.has_equipment(Equipment.EquipmentType.STAFF)
+		$Equipment/equipped_sword_1h.button_pressed = player.inventory.has_equipment(Equipment.EquipmentType.SWORD_1H)
+		$Equipment/equipped_sword_2h.button_pressed = player.inventory.has_equipment(Equipment.EquipmentType.SWORD_2H)
 
-		$Bow.visible = player.has_equipment(Equipment.EquipmentType.BOW)
+		$Bow.visible = player.inventory.has_equipment(Equipment.EquipmentType.BOW)
 		$Bow/is_aiming_bow.button_pressed = player.is_aiming_bow
 		$Bow/is_drawing_arrow.button_pressed = player.is_drawing_arrow
 		$Bow/is_firing_arrow.button_pressed = player.is_firing_arrow
 
-		$Attacking.visible = player.can_player_attack
+		$Attacking.visible = player.inventory.can_player_attack
 		$Attacking/is_attacking_1.button_pressed = player.is_attacking_1
 		$Attacking/is_attacking_2.button_pressed = player.is_attacking_2
 		$Attacking/is_attacking_3.button_pressed = player.is_attacking_3

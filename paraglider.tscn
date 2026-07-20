@@ -1,6 +1,6 @@
-[gd_scene format=3 uid="uid://p8gc2np8d4ej"]
+[gd_scene format=3 uid="uid://bra3khigbuanl"]
 
-[ext_resource type="Script" uid="uid://bbtrlr2iw4qic" path="res://addons/3d_player_controller/assets/quaternius/paraglider/paraglider.gd" id="1_1x2d5"]
+[ext_resource type="Script" uid="uid://bbtrlr2iw4qic" path="res://addons/3d_player_controller/paraglider.gd" id="1_h0jve"]
 [ext_resource type="PackedScene" uid="uid://28w5vav5xicg" path="res://addons/3d_player_controller/assets/quaternius/paraglider/Paraglider.glb" id="1_pqews"]
 [ext_resource type="AudioStream" uid="uid://b6p3jfykr2tns" path="res://addons/3d_player_controller/assets/freesound/72853__benboncan__parachute.wav" id="3_b4i8u"]
 [ext_resource type="Script" uid="uid://8gsyqt385owa" path="res://addons/3d_player_controller/assets/le_lu/contrail.gd" id="3_i248c"]
@@ -11,7 +11,7 @@
 [sub_resource type="PlaceholderMesh" id="PlaceholderMesh_4w7gj"]
 
 [node name="Paraglider" type="Node3D" unique_id=986503034]
-script = ExtResource("1_1x2d5")
+script = ExtResource("1_h0jve")
 
 [node name="Paraglider2" parent="." unique_id=169648825 instance=ExtResource("1_pqews")]
 transform = Transform3D(0.9961947, -0.08715578, 0, 0.043577865, 0.49809757, -0.86602587, 0.07547908, 0.8627304, 0.5000002, 0.245, 0.165, -0.33)
