@@ -185,6 +185,7 @@ var smoothed_motion: Vector2 = Vector2.ZERO
 @onready var pause: CanvasLayer = $Pause
 @onready var settings: CanvasLayer = $Settings
 @onready var initial_position: Vector3 = transform.origin
+@onready var falling_raycast: RayCast3D = $FallingRaycast
 @onready var hanging_braced_detection: RayCast3D = $PlayerModel/HangingBracedDetection
 @onready var ledge_detection_horizontal: RayCast3D = $PlayerModel/LedgeDetectionHorizontal
 @onready var ledge_detection_vertical: RayCast3D = $PlayerModel/LedgeDetectionHorizontal/LedgeDetectionVertical
@@ -259,6 +260,7 @@ func _physics_process(delta: float) -> void:
 
 	# Start falling if the player is not on the floor and not already falling.
 	if not is_on_floor() and not is_falling \
+	and not falling_raycast.is_colliding() \
 	and not is_climbing and not is_climbing_on \
 	and not is_driving \
 	and not is_hanging_braced and not is_hanging_free \
@@ -590,7 +592,6 @@ func execute_jump() -> void:
 	velocity = velocity.slide(up_direction) + (up_direction * 5.0)
 	is_jump_queued = false
 	is_jumping = true
-
 
 ## Gets the grounded locomotion state that matches the current equipment and intent.
 func get_grounded_locomotion_state() -> StringName:

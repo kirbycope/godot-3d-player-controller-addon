@@ -22,7 +22,7 @@ func _physics_process(delta: float) -> void:
 	if not player: return
 
 	# Check if the player is no longer on the floor
-	if not player.is_on_floor():
+	if not player.is_on_floor() and not player.falling_raycast.is_colliding():
 		# Start "falling"
 		player.state_machine.travel(_this_state, NodeStateMachine.States.FALLING)
 		return
