@@ -144,6 +144,8 @@ func stop() -> void:
 	player.is_climbing_hopping_right = false
 	player.is_climbing_hopping_up = false
 	player.is_climbing_on = false
+	# Reset timescale in case "sprint" action is still pressed
+	player.animation_tree.set("parameters/LocomotionTimeScale/scale", 1.0)
 	player.is_hopping_from_climbing = false
 	# Clear ledge detection visuals
 	player.ledge_detection_vertical.position = Vector3(0, 0, -1) # Reset to default
