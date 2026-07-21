@@ -79,13 +79,43 @@ var is_hanging: bool:
 # Attack Sequence (while holding equipment)
 var attack_sequence: int = 0
 var is_attacking: bool = false
-var is_attacking_1: bool = false # Attack Sequence: 1 of n
-var is_attacking_2: bool = false # Attack Sequence: 2 of n
-var is_attacking_3: bool = false # Attack Sequence: 3 of n
+var is_attacking_1: bool: # Attack Sequence: 1 of n
+	get:
+		if not is_multiplayer_authority() or animation_tree == null:
+			return false
+		var current_node: String = String(locomotion_state.get_current_node())
+		return current_node == "GreatSwordDownwardSlash" or current_node == "ShieldDownwardSlash"
+var is_attacking_2: bool: # Attack Sequence: 2 of n
+	get:
+		if not is_multiplayer_authority() or animation_tree == null:
+			return false
+		var current_node: String = String(locomotion_state.get_current_node())
+		return current_node == "GreatSwordLowSlash" or current_node == "ShieldCrossSlash"
+var is_attacking_3: bool: # Attack Sequence: 3 of n
+	get:
+		if not is_multiplayer_authority() or animation_tree == null:
+			return false
+		var current_node: String = String(locomotion_state.get_current_node())
+		return current_node == "GreatSwordPowerSlash" or current_node == "ShieldPowerSlash"
 # Bow and Arrow
-var is_aiming_bow: bool = false
-var is_drawing_arrow: bool = false
-var is_firing_arrow: bool = false
+var is_aiming_bow: bool:
+	get:
+		if not is_multiplayer_authority() or not equipped_bow:
+			return false
+		var current_node: String = String(locomotion_state.get_current_node())
+		return current_node == "ArcheryLocomotion"
+var is_drawing_arrow: bool:
+	get:
+		if not is_multiplayer_authority() or not equipped_bow:
+			return false
+		var current_node: String = String(locomotion_state.get_current_node())
+		return current_node == "BowDrawArrow"
+var is_firing_arrow: bool:
+	get:
+		if not is_multiplayer_authority() or not equipped_bow:
+			return false
+		var current_node: String = String(locomotion_state.get_current_node())
+		return current_node == "BowFireArrow"
 # Climbing
 var is_climbing: bool = false ## Is the Player currently climbing?
 var is_climbing_on: bool = false ## Is the Player currently climbing on to a ledge?
@@ -107,14 +137,34 @@ var is_crouching: bool = false ## Is the Player currently crouching?
 var is_emoting: bool = false ## Is the Player currently emoting?
 var is_exhausted: bool = false ## Is the Player currently exhausted?
 var is_falling: bool = false ## Is the Player currently falling?
-var is_focusing: bool = false ## Is the Player currently focusing (forward or on a target)?
+var is_focusing: bool: ## Is the Player currently focusing (forward or on a target)?
+	get:
+		if not is_multiplayer_authority() or is_driving:
+			return false
+		return Input.is_action_pressed("focus")
 var is_jumping: bool = false ## Is the Player currently jumping?
 var is_jump_queued: bool = false ## Is the Player currently queued to jump?
-var is_mining: bool = false ## Is the Player currently mining?
-var is_logging: bool = false ## Is the Player currently logging?
+var is_mining: bool: ## Is the Player currently mining?
+	get:
+		if not is_multiplayer_authority() or animation_tree == null:
+			return false
+		var current_node: String = String(locomotion_state.get_current_node())
+		var travel_path: Variant = locomotion_state.get_travel_path()
+		return current_node == "Mining" or "Mining" in travel_path
+var is_logging: bool: ## Is the Player currently logging?
+	get:
+		if not is_multiplayer_authority() or animation_tree == null:
+			return false
+		var current_node: String = String(locomotion_state.get_current_node())
+		var travel_path: Variant = locomotion_state.get_travel_path()
+		return current_node == "Logging" or "Logging" in travel_path
 var is_paragliding: bool = false ## Is the Player currently paragliding?
 var is_paused: bool = false ## Is the Player currently paused?
-var is_shooting: bool = false ## Is the Player currently shooting?
+var is_shooting: bool: ## Is the Player currently shooting?
+	get:
+		if not is_multiplayer_authority() or is_driving or inventory == null:
+			return false
+		return Input.is_action_pressed("shoot") and inventory.can_player_shoot
 var is_skateboarding: bool = false ## Is the Player currently skateboarding?
 var is_sliding: bool = false ## Is the Player currently sliding?
 var is_sprinting: bool = false ## Is the Player currently sprinting?
@@ -248,9 +298,6 @@ func apply_input(delta: float) -> void:
 	# Get the target motion from the synchronized input.
 	var target_motion: Vector2 = player_input.motion
 
-	# Track if player is mining or logging.
-	is_mining = locomotion_state.get_current_node() == "Mining" or "Mining" in locomotion_state.get_travel_path()
-	is_logging = locomotion_state.get_current_node() == "Logging" or "Logging" in locomotion_state.get_travel_path()
 	# If the player is mining or logging, block regular locomotion transitions by setting the `target_motion` to zero.
 	if is_mining or is_logging:
 		target_motion = Vector2.ZERO
@@ -336,15 +383,6 @@ func apply_input(delta: float) -> void:
 		# Start "crouching"
 		state_machine.travel(current_state, NodeStateMachine.States.CROUCHING)
 		return
-
-	# Focus { Microsoft: 🄻T, Nintendo: Z🄻, Sony: 🄻2, Keyboard: [Right Mouse Button] }.
-	# Shoot { Microsoft: 🅁T, Nintendo: 🅁L, Sony: 🅁2, Keyboard: [Left Mouse Button] }
-	if is_driving:
-		is_focusing = false
-		is_shooting = false
-	else:
-		is_focusing = Input.is_action_pressed("focus")
-		is_shooting = Input.is_action_pressed("shoot") and inventory.can_player_shoot
 
 	# Jump { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
 	if not is_driving \

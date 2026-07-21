@@ -183,13 +183,11 @@ enum InputType {
 @onready var key_right: TouchScreenButton = $BottomRight/KeyRight ## Keyboard [Right] key
 @onready var key_right_label: Label = $BottomRight/KeyRight/Label
 
-
 var current_input_type: InputType = InputType.TOUCH:
 	set(value):
 		if current_input_type != value:
 			current_input_type = value
 			input_type_changed.emit(value)
-
 
 var all_buttons: Array[TouchScreenButton] = []
 var _label_texts: Dictionary = {}

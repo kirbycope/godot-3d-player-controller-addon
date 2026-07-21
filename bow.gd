@@ -5,6 +5,8 @@ extends Equipment
 const DRAW_ARROW_RUMBLE_DELAY_SECONDS: float = 1.0
 
 var _draw_arrow_rumble_request_id: int = 0
+var _was_drawing_arrow: bool = false
+var _was_firing_arrow: bool = false
 
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
@@ -14,20 +16,13 @@ func _physics_process(delta: float) -> void:
 
 	# Proceed once the player has been initialized
 	if player:
-		# Get the animation currently playing in the locomotion state machine
-		var locomotion_state_currently_playing_animation = player.locomotion_state.get_current_node()
+		# Track prior frame archery states for edge-triggered effects.
+		var was_drawing_arrow: bool = _was_drawing_arrow
+		var was_firing_arrow: bool = _was_firing_arrow
 
-		# Track was drawing_arrow using the state BEFORE updating input
-		var was_drawing_arrow := player.is_drawing_arrow
-
-		# Track was_firing_arrow using the state BEFORE updating input
-		var was_firing_arrow := player.is_firing_arrow
-
-		# Update archery flags on the player based on the currently playing animation in the locomotion state machine
 		var has_bow: bool = player.inventory.has_equipment(Equipment.EquipmentType.BOW)
-		player.is_aiming_bow = has_bow and locomotion_state_currently_playing_animation == "ArcheryLocomotion"
-		player.is_drawing_arrow = has_bow and locomotion_state_currently_playing_animation == "BowDrawArrow"
-		player.is_firing_arrow = has_bow and locomotion_state_currently_playing_animation == "BowFireArrow"
+		var is_drawing_arrow_now: bool = player.is_drawing_arrow
+		var is_firing_arrow_now: bool = player.is_firing_arrow
 		if not player.is_aiming_bow and not player.is_drawing_arrow:
 			_draw_arrow_rumble_request_id += 1
 		var bow: Node3D = player.inventory.get_equipment_by_type(Equipment.EquipmentType.BOW)
@@ -58,7 +53,7 @@ func _physics_process(delta: float) -> void:
 
 		## Fire arrow
 		if has_bow \
-		and player.is_firing_arrow \
+		and is_firing_arrow_now \
 		and not was_firing_arrow \
 		and bow:
 				# Duplicate the bow's $Arrow node
@@ -91,12 +86,12 @@ func _physics_process(delta: float) -> void:
 
 		## Play Bow sound(s) once when entering draw/fire arrow animations.
 		if has_bow and bow:
-			if player.is_drawing_arrow and not was_drawing_arrow and bow.has_node("BowDrawArrow"):
+			if is_drawing_arrow_now and not was_drawing_arrow and bow.has_node("BowDrawArrow"):
 				bow.get_node("BowDrawArrow").play()
 				# Rumble when arrow is knocked
 				if player.controls.current_input_type not in [ player.controls.InputType.KEYBOARD_MOUSE,  player.controls.InputType.TOUCH]:
 					Input.start_joy_vibration(0, 0.0, 0.2, 0.5)
-			if player.is_firing_arrow and not was_firing_arrow and bow.has_node("BowFireArrow"):
+			if is_firing_arrow_now and not was_firing_arrow and bow.has_node("BowFireArrow"):
 				bow.get_node("BowFireArrow").play()
 				# Rumble when arrow is fired
 				if player.controls.current_input_type not in [ player.controls.InputType.KEYBOARD_MOUSE,  player.controls.InputType.TOUCH]:
@@ -112,6 +107,9 @@ func _physics_process(delta: float) -> void:
 						var force_magnitude := 10.0
 						(hit_object as RigidBody3D).apply_impulse(collision_point - hit_object.global_transform.origin, force_direction * force_magnitude)
 					#bow.get_node("Arrow/Twang").play()
+
+		_was_drawing_arrow = is_drawing_arrow_now
+		_was_firing_arrow = is_firing_arrow_now
 
 
 ## Sets the collision shape to disabled or enabled for the given node and all of its children recursively.

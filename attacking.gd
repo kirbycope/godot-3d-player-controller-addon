@@ -21,11 +21,8 @@ func _physics_process(delta: float) -> void:
 	# Do nothing if the player is not set
 	if not player: return
 
-	# Determine which attack is currently in progress
-	var current_node := player.locomotion_state.get_current_node() as String
-	player.is_attacking_1 = current_node in ["GreatSwordDownwardSlash", "ShieldDownwardSlash"] # Attack 1 of 3
-	player.is_attacking_2 = current_node in ["GreatSwordLowSlash", "ShieldCrossSlash"] # Attack 2 of 3
-	player.is_attacking_3 = current_node in ["GreatSwordPowerSlash", "ShieldPowerSlash"] # Attack 3 of 3
+	# Determine which attack is currently in progress.
+	var current_node: String = String(player.locomotion_state.get_current_node())
 
 	# Attack { Microsoft: Ⓧ, Nintendo: Ⓨ, Sony: 🟗, Keyboard: [Alt] }
 	if Input.is_action_just_pressed("attack") and player.inventory.can_player_attack:
@@ -76,9 +73,6 @@ func start() -> void:
 	player.attack_sequence_timer.start()
 	# Reset the attack state variables
 	player.attack_sequence = 0
-	player.is_attacking_1 = false
-	player.is_attacking_2 = false
-	player.is_attacking_3 = false
 
 
 ## Stop "attacking".
@@ -94,6 +88,3 @@ func stop() -> void:
 	player.attack_sequence_timer.stop()
 	# Reset the state variables
 	player.attack_sequence = 0
-	player.is_attacking_1 = false
-	player.is_attacking_2 = false
-	player.is_attacking_3 = false
