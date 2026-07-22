@@ -119,7 +119,7 @@ var is_firing_arrow: bool:
 # Climbing
 var is_climbing: bool = false ## Is the Player currently climbing?
 var is_climbing_on: bool = false ## Is the Player currently climbing on to a ledge?
-var climbing_on_target: Vector3  ## The target position the Player is climbing on to (from ledge detection).
+var climbing_on_target: Vector3 ## The target position the Player is climbing on to (from ledge detection).
 var is_climbing_hopping_left: bool = false ## Is the Player currently hopping left while climbing?
 var is_climbing_hopping_right: bool = false ## Is the Player currently hopping right while climbing?
 var is_climbing_hopping_up: bool = false ## Is the Player currently hopping up while climbing?
@@ -428,7 +428,6 @@ func apply_input(delta: float) -> void:
 	var is_first_person: bool = camera is Camera and (camera as Camera).perspective == Camera.Perspective.FIRST_PERSON
 	# Handle movement is strafing
 	if not is_driving and (is_shooting or is_focusing or is_first_person):
-
 		# Rotate to face the camera direction when focusing, shooting, or in first person
 		if (is_shooting or not is_focusing or is_first_person) and not is_firing_arrow and not is_hanging_braced and not is_hanging_free and not is_climbing:
 			var camera_basis := spring_arm.global_transform.basis
@@ -437,7 +436,7 @@ func apply_input(delta: float) -> void:
 			if camera_forward.length_squared() > 0.001:
 				camera_forward = camera_forward.normalized()
 				var q_from: Quaternion = orientation.basis.get_rotation_quaternion()
-				var q_to: Quaternion = Basis.looking_at(-camera_forward).get_rotation_quaternion()
+				var q_to: Quaternion = Basis.looking_at(-camera_forward, up_direction).get_rotation_quaternion()
 				orientation.basis = Basis(q_from.slerp(q_to, delta * rotation_interpolate_speed))
 		if is_crouching:
 			animation_tree.set(CROUCHING_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
@@ -471,7 +470,7 @@ func apply_input(delta: float) -> void:
 		if target_dir.length_squared() > 0.001 and not is_firing_arrow and not is_hanging_braced and not is_hanging_free and not is_climbing:
 			target_dir = target_dir.normalized()
 			var q_from: Quaternion = orientation.basis.get_rotation_quaternion()
-			var q_to: Quaternion = Basis.looking_at(-target_dir).get_rotation_quaternion()
+			var q_to: Quaternion = Basis.looking_at(-target_dir, up_direction).get_rotation_quaternion()
 			orientation.basis = Basis(q_from.slerp(q_to, delta * rotation_interpolate_speed))
 		# While climbing or hanging keep (rotate towards) facing the wall surface from the LedgeDetectionHorizontal raycast
 		if is_climbing or is_hanging_braced or is_hanging_free:
@@ -482,7 +481,7 @@ func apply_input(delta: float) -> void:
 				if wall_dir.length_squared() > 0.001:
 					wall_dir = wall_dir.normalized()
 					var q_from: Quaternion = orientation.basis.get_rotation_quaternion()
-					var q_to: Quaternion = Basis.looking_at(-wall_dir).get_rotation_quaternion()
+					var q_to: Quaternion = Basis.looking_at(-wall_dir, up_direction).get_rotation_quaternion()
 					orientation.basis = Basis(q_from.slerp(q_to, delta * rotation_interpolate_speed))
 		if is_climbing:
 			animation_tree.set(CLIMBING_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
@@ -554,6 +553,19 @@ func apply_input(delta: float) -> void:
 
 	orientation.origin = Vector3() # Clear accumulated root motion displacement (was applied to speed).
 	orientation = orientation.orthonormalized() # Orthonormalize orientation.
+
+	# Smoothly align character body and model orientation Y-axis with up_direction
+	var current_up := orientation.basis.y
+	if not current_up.is_equal_approx(up_direction):
+		var next_up := current_up.slerp(up_direction, delta * 10.0).normalized()
+		var q_align := Quaternion(current_up, next_up)
+		orientation.basis = Basis(q_align) * orientation.basis
+
+	var current_body_up := global_basis.y
+	if not current_body_up.is_equal_approx(up_direction):
+		var next_body_up := current_body_up.slerp(up_direction, delta * 10.0).normalized()
+		var q_align_body := Quaternion(current_body_up, next_body_up)
+		global_basis = Basis(q_align_body) * global_basis
 
 	# Rotate the Player Model (unless entering/exiting a vehicle)
 	if not (is_driving and (is_entering_vehicle or is_exiting_vehicle)):

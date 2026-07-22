@@ -41,7 +41,7 @@ func _physics_process(delta: float) -> void:
 		# Slerp model orientation toward flight direction for smooth, frame-rate independent turning.
 		target_dir = target_dir.normalized()
 		var q_from: Quaternion = player.orientation.basis.get_rotation_quaternion()
-		var q_to: Quaternion = Basis.looking_at(-target_dir).get_rotation_quaternion()
+		var q_to: Quaternion = Basis.looking_at(-target_dir, player.up_direction).get_rotation_quaternion()
 		player.orientation.basis = Basis(q_from.slerp(q_to, delta * player.rotation_interpolate_speed))
 
 	# Keep horizontal momentum while enforcing a minimum forward glide speed for controllability.

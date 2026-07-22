@@ -105,10 +105,17 @@ func _get_player_shoulder_offset() -> float:
 
 
 func _get_water_surface_along_up(up_direction: Vector3) -> float:
+	if not is_inside_tree():
+		return NAN
+
+	var tree := get_tree()
+	if not tree:
+		return NAN
+
 	var has_surface := false
 	var highest_surface_along_up := 0.0
 	
-	var water_nodes := get_tree().get_nodes_in_group("WATER")
+	var water_nodes := tree.get_nodes_in_group("WATER")
 
 	for node in water_nodes:
 		var water_area := node as Area3D
@@ -150,6 +157,10 @@ func _get_water_surface_along_up(up_direction: Vector3) -> float:
 
 ## Start "swimming".
 func start() -> void:
+	# Do not start swimming if player is driving or in a vehicle
+	if player and (player.is_driving or player.is_driving_in != null or player.is_entering_vehicle or player.is_exiting_vehicle):
+		return
+
 	# Enable _this_ state node
 	process_mode = Node.PROCESS_MODE_INHERIT
 	

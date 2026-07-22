@@ -63,7 +63,9 @@ func _physics_process(delta: float) -> void:
 				arrow_instance.shooter = player
 				set_collision_shapes_disabled(arrow_instance, false)
 				
-				get_tree().current_scene.add_child(arrow_instance)
+				var tree := get_tree()
+				if tree and tree.current_scene:
+					tree.current_scene.add_child(arrow_instance)
 				arrow_instance.global_transform = arrow_node.global_transform
 				arrow_instance.freeze = false
 				arrow_instance.visible = true
