@@ -66,4 +66,4 @@ func _on_unstuck_touch_screen_button_pressed() -> void:
 
 
 func _on_unstuck_pressed() -> void:
-	player.global_position = player.initial_position
+	player.global_transform = player.initial_transform
