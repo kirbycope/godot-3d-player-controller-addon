@@ -9,6 +9,7 @@ const BRACED_HANG_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/Locomotio
 const CLIMBING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/ClimbingLocomotion/blend_position"
 const CROUCHING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/CrouchingLocomotion/blend_position"
 const FREE_HANGING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/FreeHangingLocomotion/blend_position"
+const FLYING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/FlyingLocomotion/blend_position"
 const GREATSWORD_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/GreatSwordLocomotion/blend_position"
 const PISTOL_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/PistolLocomotion/blend_position"
 const RIFLE_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/RifleLocomotion/blend_position"
@@ -137,6 +138,7 @@ var is_crouching: bool = false ## Is the Player currently crouching?
 var is_emoting: bool = false ## Is the Player currently emoting?
 var is_exhausted: bool = false ## Is the Player currently exhausted?
 var is_falling: bool = false ## Is the Player currently falling?
+var is_flying: bool = false ## Is the Player currently flying?
 var is_focusing: bool: ## Is the Player currently focusing (forward or on a target)?
 	get:
 		if not is_multiplayer_authority() or is_driving:
@@ -240,6 +242,14 @@ func _input(event: InputEvent) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
 
+	# Flying, Start { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
+	if not is_driving \
+	and is_jumping \
+	and event.is_action_pressed("jump") \
+	and not event.is_echo():
+		state_machine.travel(current_state, NodeStateMachine.States.FLYING)
+		return
+
 	# Toggle mouse capture
 	if event.is_action_pressed("ui_cancel") and not pause.visible and not settings.visible:
 		# Check if the mouse is currently captured
@@ -263,6 +273,7 @@ func _physics_process(delta: float) -> void:
 	and not falling_raycast.is_colliding() \
 	and not is_climbing and not is_climbing_on \
 	and not is_driving \
+	and not is_flying \
 	and not is_hanging_braced and not is_hanging_free \
 	and not is_jumping and not is_jump_queued \
 	and not is_paragliding \
@@ -309,9 +320,9 @@ func apply_input(delta: float) -> void:
 	smoothed_motion = smoothed_motion.lerp(target_motion, motion_weight)
 	target_motion = smoothed_motion
 
-	# While driving, paragliding or skateboarding, block regular locomotion.
-	# Driving.gd / Paragliding.gd / Skateboarding.gd will handle movement.
-	if (is_driving and not is_entering_vehicle and not is_exiting_vehicle) or is_paragliding or is_skateboarding:
+	# While driving, paragliding, skateboarding, or flying, block regular locomotion.
+	# Driving.gd / Paragliding.gd / Skateboarding.gd / Flying.gd will handle movement.
+	if (is_driving and not is_entering_vehicle and not is_exiting_vehicle) or is_paragliding or is_skateboarding or is_flying:
 		return
 
 	# While swimming, keep SwimmingLocomotion active and feed its BlendSpace1D.
@@ -345,6 +356,7 @@ func apply_input(delta: float) -> void:
 	and not is_hanging_free \
 	and not is_skateboarding \
 	and not is_swimming \
+	and not is_flying \
 	and Input.is_action_just_pressed("jump") \
 	and ledge_detection_horizontal.is_colliding():
 		# Stop "falling", start "climbing"
@@ -371,6 +383,7 @@ func apply_input(delta: float) -> void:
 	and not is_paragliding \
 	and not is_skateboarding \
 	and not is_swimming \
+	and not is_flying \
 	and not paraglider_raycast.is_colliding():
 		state_machine.travel(current_state, NodeStateMachine.States.PARAGLIDING)
 		return

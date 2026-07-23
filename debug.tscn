@@ -258,9 +258,9 @@ anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
 offset_left = -346.0
-offset_top = -397.5
+offset_top = -399.0
 offset_right = -176.0
-offset_bottom = 221.5
+offset_bottom = 255.0
 grow_horizontal = 0
 grow_vertical = 2
 
@@ -302,6 +302,10 @@ text = "is_hanging"
 [node name="is_falling" type="CheckBox" parent="States" unique_id=650160220]
 layout_mode = 2
 text = "is_falling"
+
+[node name="is_flying" type="CheckBox" parent="States" unique_id=162732379]
+layout_mode = 2
+text = "is_flying"
 
 [node name="is_focusing" type="CheckBox" parent="States" unique_id=202642783]
 layout_mode = 2

@@ -178,9 +178,10 @@ func start() -> void:
 	player.current_state = _this_state
 	# Flag the player as "swimming"
 	player.is_swimming = true
-	# Flag the player as not falling/jumping
+	# Flag the player as not falling/jumping/flying
 	player.is_falling = false
 	player.is_jumping = false
+	player.is_flying = false
 
 
 ## Stop "swimming".
