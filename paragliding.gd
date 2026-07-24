@@ -56,14 +56,7 @@ func _physics_process(delta: float) -> void:
 	vertical_speed += player.get_gravity().dot(player.up_direction) * 0.35 * delta
 	vertical_speed = max(vertical_speed, -4.0)
 	player.velocity = current_h_vel + (player.up_direction * vertical_speed)
-	player.set_velocity(player.velocity)
-	player.set_up_direction(player.up_direction)
-	player.move_and_slide()
-
-	# Normalize orientation every tick to prevent drift after repeated quaternion interpolation.
-	player.orientation.origin = Vector3()
-	player.orientation = player.orientation.orthonormalized()
-	player.player_model.global_transform.basis = player.orientation.basis
+	player.update_movement_and_rotation(delta)
 
 
 ## Start "paragliding".

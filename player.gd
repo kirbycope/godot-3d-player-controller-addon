@@ -20,6 +20,7 @@ const SWIMMING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionSt
 
 @export var animation_tree: AnimationTree
 @export var current_animation: int
+@export var enable_flying: bool = false
 @export var motion_interpolate_speed: float = 10.0
 @export var rotation_interpolate_speed: float = 10.0
 @export var swimming_root_motion_multiplier: float = 2.0
@@ -243,7 +244,8 @@ func _input(event: InputEvent) -> void:
 	if not is_multiplayer_authority(): return
 
 	# Flying, Start { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
-	if not is_driving \
+	if enable_flying \
+	and not is_driving \
 	and is_jumping \
 	and event.is_action_pressed("jump") \
 	and not event.is_echo():
@@ -560,29 +562,7 @@ func apply_input(delta: float) -> void:
 	else:
 		vertical_speed += get_gravity().dot(up_direction) * 1.5 * delta
 	velocity = h_velocity.slide(up_direction) + (up_direction * vertical_speed)
-	set_velocity(velocity)
-	set_up_direction(up_direction)
-	move_and_slide()
-
-	orientation.origin = Vector3() # Clear accumulated root motion displacement (was applied to speed).
-	orientation = orientation.orthonormalized() # Orthonormalize orientation.
-
-	# Smoothly align character body and model orientation Y-axis with up_direction
-	var current_up := orientation.basis.y
-	if not current_up.is_equal_approx(up_direction):
-		var next_up := current_up.slerp(up_direction, delta * 10.0).normalized()
-		var q_align := Quaternion(current_up, next_up)
-		orientation.basis = Basis(q_align) * orientation.basis
-
-	var current_body_up := global_basis.y
-	if not current_body_up.is_equal_approx(up_direction):
-		var next_body_up := current_body_up.slerp(up_direction, delta * 10.0).normalized()
-		var q_align_body := Quaternion(current_body_up, next_body_up)
-		global_basis = Basis(q_align_body) * global_basis
-
-	# Rotate the Player Model (unless entering/exiting a vehicle)
-	if not (is_driving and (is_entering_vehicle or is_exiting_vehicle)):
-		player_model.global_transform.basis = orientation.basis
+	update_movement_and_rotation(delta)
 
 
 ## Detect if the player is in front of a ledge and can hang from it and/or climb on to it.
@@ -669,3 +649,30 @@ func sfx_footsteps_slide_play():
 ## Reset the attack sequence when the attack sequence timer times out.
 func _on_attack_sequence_timer_timeout() -> void:
 	attack_sequence = 0
+
+
+## Applies the current velocity, moves the player, and updates the orientation to match the up_direction.
+func update_movement_and_rotation(delta: float) -> void:
+	set_velocity(velocity)
+	set_up_direction(up_direction)
+	move_and_slide()
+
+	orientation.origin = Vector3() # Clear accumulated root motion displacement (was applied to speed).
+	orientation = orientation.orthonormalized() # Orthonormalize orientation.
+
+	# Smoothly align character body and model orientation Y-axis with up_direction
+	var current_up := orientation.basis.y
+	if not current_up.is_equal_approx(up_direction):
+		var next_up := current_up.slerp(up_direction, delta * 10.0).normalized()
+		var q_align := Quaternion(current_up, next_up)
+		orientation.basis = Basis(q_align) * orientation.basis
+
+	var current_body_up := global_basis.y
+	if not current_body_up.is_equal_approx(up_direction):
+		var next_body_up := current_body_up.slerp(up_direction, delta * 10.0).normalized()
+		var q_align_body := Quaternion(current_body_up, next_body_up)
+		global_basis = Basis(q_align_body) * global_basis
+
+	# Rotate the Player Model (unless entering/exiting a vehicle)
+	if not (is_driving and (is_entering_vehicle or is_exiting_vehicle)):
+		player_model.global_transform.basis = orientation.basis

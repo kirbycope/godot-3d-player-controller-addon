@@ -12,10 +12,6 @@ func _input(event: InputEvent) -> void:
 	# Do nothing if the player is not set
 	if not player: return
 
-	# Fly if jump is pressed again as a separate event (no echo)
-	if event.is_action_pressed("jump") and not event.is_echo() and player.is_jumping:
-		player.state_machine.travel(_this_state, NodeStateMachine.States.FLYING)
-
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(delta: float) -> void:

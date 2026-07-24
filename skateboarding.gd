@@ -42,7 +42,7 @@ func _physics_process(delta: float) -> void:
 	var current_h_vel: Vector3 = player.velocity.slide(player.up_direction)
 	var speed_ratio: float = clamp(current_h_vel.length() / SKATEBOARD_MAX_SPEED, 0.0, 1.0)
 	var turn_speed_factor: float = 1.0 - ((1.0 - SKATEBOARD_HIGH_SPEED_TURN_FACTOR) * speed_ratio)
-	var turn_amount: float = -target_motion.x * SKATEBOARD_TURN_SPEED * turn_speed_factor * delta
+	var turn_amount: float = - target_motion.x * SKATEBOARD_TURN_SPEED * turn_speed_factor * delta
 	if not is_zero_approx(turn_amount):
 		player.orientation.basis = Basis(player.up_direction, turn_amount) \
 				* player.orientation.basis
@@ -81,13 +81,7 @@ func _physics_process(delta: float) -> void:
 	vertical_speed += player.get_gravity().dot(player.up_direction) * 1.5 * delta
 	player.velocity = current_h_vel + (player.up_direction * vertical_speed)
 	player.animation_tree.set(Player.SKATEBOARDING_LOCOMOTION_BLEND_POSITION_PATH, target_motion.y)
-	player.set_velocity(player.velocity)
-	player.set_up_direction(player.up_direction)
-	player.move_and_slide()
-
-	player.orientation.origin = Vector3()
-	player.orientation = player.orientation.orthonormalized()
-	player.player_model.global_transform.basis = player.orientation.basis
+	player.update_movement_and_rotation(delta)
 
 
 ## Start "skateboarding".

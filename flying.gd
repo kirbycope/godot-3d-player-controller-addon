@@ -83,27 +83,7 @@ func _physics_process(delta: float) -> void:
 		v_speed = -6.0
 
 	player.velocity = h_velocity + (up_dir * v_speed)
-	player.set_velocity(player.velocity)
-	player.set_up_direction(up_dir)
-	player.move_and_slide()
-
-	player.orientation.origin = Vector3()
-	player.orientation = player.orientation.orthonormalized()
-
-	# Smoothly align character model and player body orientation Y-axis with up_dir
-	var current_up := player.orientation.basis.y
-	if not current_up.is_equal_approx(up_dir):
-		var next_up := current_up.slerp(up_dir, delta * 10.0).normalized()
-		var q_align := Quaternion(current_up, next_up)
-		player.orientation.basis = Basis(q_align) * player.orientation.basis
-
-	var current_body_up := player.global_basis.y
-	if not current_body_up.is_equal_approx(up_dir):
-		var next_body_up := current_body_up.slerp(up_dir, delta * 10.0).normalized()
-		var q_align_body := Quaternion(current_body_up, next_body_up)
-		player.global_basis = Basis(q_align_body) * player.global_basis
-
-	player.player_model.global_transform.basis = player.orientation.basis
+	player.update_movement_and_rotation(delta)
 
 
 ## Start "flying".
