@@ -39,6 +39,8 @@ func _physics_process(delta: float) -> void:
 	if not player: return
 
 	var target_motion: Vector2 = player.player_input.motion
+	if Input.is_action_pressed("sprint") and target_motion.y > 0.0:
+		target_motion.y = 1.1
 	var current_h_vel: Vector3 = player.velocity.slide(player.up_direction)
 	var speed_ratio: float = clamp(current_h_vel.length() / SKATEBOARD_MAX_SPEED, 0.0, 1.0)
 	var turn_speed_factor: float = 1.0 - ((1.0 - SKATEBOARD_HIGH_SPEED_TURN_FACTOR) * speed_ratio)
@@ -92,6 +94,9 @@ func start() -> void:
 	player.current_state = _this_state
 	# Flag the player as "skateboarding"
 	player.is_skateboarding = true
+	# Disable the separation ray shape while skateboarding
+	if player.separation_ray_shape:
+		player.separation_ray_shape.disabled = true
 	# Show the skateboard
 	if player.skateboard:
 		player.skateboard.show()
@@ -112,6 +117,9 @@ func stop() -> void:
 		player.current_state = -1
 	# Flag the player as not "skateboarding"
 	player.is_skateboarding = false
+	# Re-enable the separation ray shape when stopping skateboarding
+	if player.separation_ray_shape:
+		player.separation_ray_shape.disabled = false
 	# Hide the skateboard
 	if player.skateboard:
 		player.skateboard.hide()

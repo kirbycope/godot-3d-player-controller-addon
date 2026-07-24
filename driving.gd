@@ -40,7 +40,14 @@ func _physics_process(delta: float) -> void:
 			player.orientation = driver_seat.global_transform
 			player.orientation.origin = Vector3.ZERO
 			player.player_model.global_transform = driver_seat.global_transform
-			player.reparent(driver_seat)
+
+	if player.is_driving_in and not player.is_entering_vehicle and not player.is_exiting_vehicle:
+		var driver_seat = player.is_driving_in.get_node("DriverSeat")
+		if driver_seat:
+			player.global_position = driver_seat.global_position
+			player.orientation = driver_seat.global_transform
+			player.orientation.origin = Vector3.ZERO
+			player.player_model.global_transform = driver_seat.global_transform
 
 	# Check if "ExitCar" animation has finished
 	var was_exiting_vehicle = player.is_exiting_vehicle
@@ -120,8 +127,6 @@ func stop() -> void:
 	player.is_exiting_vehicle = false
 	# [Re]Enable player collision
 	player.collision_shape.disabled = false
-	# Reparent the player back to its initial parent
-	player.reparent(player.initial_parent)
 	# Reset the labels in the UI to reflect the original control labels
 	if player.controls:
 		player.controls.reset_labels()

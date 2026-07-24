@@ -182,6 +182,8 @@ var smoothed_motion: Vector2 = Vector2.ZERO
 @onready var attack_sequence_timer: Timer = $AttackSequenceTimer
 @onready var collision_shape: CollisionShape3D = $CollisionShape3D
 @onready var initial_collision_shape_transform: Transform3D = collision_shape.transform
+@onready var separation_ray_shape: CollisionShape3D = $SeparationRayShape3D
+@onready var initial_separation_ray_transform: Transform3D = separation_ray_shape.transform
 @onready var controls: CanvasLayer = $Controls
 @onready var debug: CanvasLayer = $Debug
 @onready var inventory: Inventory = $Inventory
@@ -671,3 +673,7 @@ func update_movement_and_rotation(delta: float) -> void:
 	# Rotate the Player Model (unless entering/exiting a vehicle)
 	if not (is_driving and (is_entering_vehicle or is_exiting_vehicle)):
 		player_model.global_transform.basis = orientation.basis
+		var model_facing_basis: Basis = orientation.basis.rotated(up_direction, PI)
+		var rotated_basis: Basis = model_facing_basis * initial_separation_ray_transform.basis
+		var rotated_origin: Vector3 = model_facing_basis * initial_separation_ray_transform.origin
+		separation_ray_shape.transform = Transform3D(rotated_basis, rotated_origin)
