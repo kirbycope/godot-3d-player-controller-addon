@@ -289,6 +289,7 @@ blend_point_3/name = &"Bow Standing Aim Walk Left_mixamo_com"
 blend_point_4/node = SubResource("AnimationNodeAnimation_si0et")
 blend_point_4/pos = Vector2(1, 0)
 blend_point_4/name = &"Bow Standing Aim Walk Right_mixamo_com"
+triangles = PackedInt32Array(0, 2, 3, 0, 1, 3, 0, 2, 4, 0, 1, 4)
 
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_7oe5o"]
 animation = &"Bow Standing Draw Arrow/mixamo_com"
@@ -369,6 +370,7 @@ blend_point_8/name = &"Bow Standing Walk Right_mixamo_com"
 blend_point_9/node = SubResource("AnimationNodeAnimation_gfpdn")
 blend_point_9/pos = Vector2(-0.5, 0)
 blend_point_9/name = &"Bow Standing Walk Left_mixamo_com"
+triangles = PackedInt32Array(2, 4, 5, 3, 4, 5, 1, 2, 7, 2, 6, 7, 1, 3, 7, 3, 6, 7, 2, 6, 8, 0, 6, 8, 2, 5, 8, 0, 5, 8, 3, 6, 9, 0, 6, 9, 3, 5, 9, 0, 5, 9)
 
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_x0r6x"]
 animation = &"Bow Standing Melee Punch/mixamo_com"
@@ -436,6 +438,7 @@ blend_point_3/name = &"Climbing Up Wall_mixamo_com"
 blend_point_4/node = SubResource("AnimationNodeAnimation_0hp1n")
 blend_point_4/pos = Vector2(0, -1)
 blend_point_4/name = &"Climbing Down Wall_mixamo_com"
+triangles = PackedInt32Array(0, 2, 3, 0, 1, 3, 0, 2, 4, 0, 1, 4)
 
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_b226b"]
 animation = &"Crouching Idle/mixamo_com"
@@ -469,6 +472,7 @@ blend_point_3/name = &"Crouched Sneaking Right_mixamo_com"
 blend_point_4/node = SubResource("AnimationNodeAnimation_xyp3y")
 blend_point_4/pos = Vector2(-1, 0)
 blend_point_4/name = &"Crouched Sneaking Left_mixamo_com"
+triangles = PackedInt32Array(0, 2, 3, 0, 1, 3, 0, 2, 4, 0, 1, 4)
 
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_errws"]
 animation = &"Driving/mixamo_com"
@@ -590,6 +594,7 @@ blend_point_7/name = &"Great Sword Strafe Left Run_mixamo_com"
 blend_point_8/node = SubResource("AnimationNodeAnimation_1520m")
 blend_point_8/pos = Vector2(-0.4, 0)
 blend_point_8/name = &"Great Sword Strafe Walk Left_mixamo_com"
+triangles = PackedInt32Array(3, 4, 5, 1, 2, 5, 0, 2, 6, 2, 5, 6, 0, 4, 6, 4, 5, 6, 3, 4, 7, 1, 2, 7, 0, 2, 8, 2, 7, 8, 0, 4, 8, 4, 7, 8)
 
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_0ktn1"]
 animation = &"Great Sword Low Slash/mixamo_com"
@@ -661,6 +666,7 @@ blend_point_5/name = &"Pistol Aimed Run Backward_mixamo_com"
 blend_point_6/node = SubResource("AnimationNodeAnimation_58cou")
 blend_point_6/pos = Vector2(0, 0.5)
 blend_point_6/name = &"Pistol Aimed Walk_mixamo_com"
+triangles = PackedInt32Array(0, 2, 3, 0, 1, 3, 1, 3, 5, 2, 3, 5, 0, 1, 6, 1, 4, 6, 0, 2, 6, 2, 4, 6)
 
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_108j8"]
 animation = &"Pistol Whip/mixamo_com"
@@ -718,6 +724,7 @@ blend_point_5/name = &"Rifle Aiming Run Backward_mixamo_com"
 blend_point_6/node = SubResource("AnimationNodeAnimation_jlii4")
 blend_point_6/pos = Vector2(0, 1)
 blend_point_6/name = &"Rifle Aiming Run Forward_mixamo_com"
+triangles = PackedInt32Array(0, 2, 3, 0, 1, 3, 0, 2, 4, 0, 1, 4, 1, 3, 5, 2, 3, 5, 1, 4, 6, 2, 4, 6)
 
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_yo4rg"]
 animation = &"Rifle Punch/mixamo_com"
@@ -798,6 +805,7 @@ blend_point_7/name = &"Sword And Shield Right Run Strafe_mixamo_com"
 blend_point_8/node = SubResource("AnimationNodeAnimation_3fpkw")
 blend_point_8/pos = Vector2(-0.5, 0)
 blend_point_8/name = &"Sword And Shield Right Strafe Walk_mixamo_com"
+triangles = PackedInt32Array(3, 4, 5, 1, 2, 5, 0, 2, 6, 2, 5, 6, 0, 4, 6, 4, 5, 6, 3, 4, 7, 1, 2, 7, 0, 2, 8, 2, 7, 8, 0, 4, 8, 4, 7, 8)
 
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_dtq52"]
 animation = &"Sword And Shield Power Slash/mixamo_com"
@@ -888,6 +896,7 @@ blend_point_8/name = &"Running_mixamo_com"
 blend_point_9/node = SubResource("AnimationNodeAnimation_5cw3m")
 blend_point_9/pos = Vector2(0, 1.5)
 blend_point_9/name = &"Sprint_mixamo_com"
+triangles = PackedInt32Array(0, 2, 3, 0, 1, 3, 0, 2, 4, 0, 1, 4, 1, 3, 5, 2, 3, 5, 1, 4, 6, 2, 4, 6, 2, 6, 7, 2, 5, 7, 1, 6, 8, 1, 5, 8, 5, 8, 9, 6, 8, 9)
 
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_c5lmm"]
 animation = &"Swimming At Edge/mixamo_com"
@@ -1671,19 +1680,19 @@ animation_tree = NodePath("AnimationTree")
 [node name="PlayerModel" parent="." unique_id=1771073607 instance=ExtResource("2_om2v3")]
 transform = Transform3D(-1, 0, -1.509958e-07, 0, 1, 0, 1.509958e-07, 0, -1, 0, 0, 0)
 
-[node name="GeneralSkeleton" parent="PlayerModel/Armature" parent_id_path=PackedInt32Array(1771073607, 1028936029) index="0" unique_id=446702789]
+[node name="GeneralSkeleton" parent="PlayerModel/Armature" parent_id_path=PackedInt32Array(1771073607, 1259024794) index="0" unique_id=962678158]
 bones/0/position = Vector3(0.0026162867, 0, -0.0012634211)
 bones/1/position = Vector3(6.945423e-07, 0.9899598, -4.8260063e-11)
-bones/1/rotation = Quaternion(-0.032168917, -0.04447363, -0.026125584, 0.9981507)
-bones/2/rotation = Quaternion(0.03232653, 0.016951738, 0.02372335, 0.999052)
-bones/3/rotation = Quaternion(0.010935536, 0.0045551253, 0.014107985, 0.99983037)
-bones/4/rotation = Quaternion(0.010380558, 0.004405744, 0.014032163, 0.999838)
-bones/5/rotation = Quaternion(0.049669232, -0.0020588634, 0.0033229177, 0.99875814)
-bones/6/rotation = Quaternion(-0.073836744, 0.0075164596, -0.001838596, 0.9972403)
-bones/8/rotation = Quaternion(0.45814347, 0.49856186, 0.63434327, -0.37302718)
-bones/9/rotation = Quaternion(0.12574665, 0.80518186, -0.5664157, -0.1226508)
+bones/1/rotation = Quaternion(-0.030982932, -0.047193814, -0.029086364, 0.9979814)
+bones/2/rotation = Quaternion(0.028725596, 0.01220988, 0.021788519, 0.99927527)
+bones/3/rotation = Quaternion(0.010123566, 0.0029471782, 0.013593841, 0.999852)
+bones/4/rotation = Quaternion(0.009932842, 0.0031655347, 0.01364188, 0.9998526)
+bones/5/rotation = Quaternion(0.04879935, -0.0009070155, 0.0040807743, 0.9987999)
+bones/6/rotation = Quaternion(-0.065862924, 0.011572868, -0.001390429, 0.9977606)
+bones/8/rotation = Quaternion(0.45693424, 0.500402, 0.6323469, -0.3754283)
+bones/9/rotation = Quaternion(0.1230153, 0.80359966, -0.56809336, -0.12792492)
 bones/10/rotation = Quaternion(0.009004968, -0.7070495, 0.009005011, 0.7070495)
-bones/11/rotation = Quaternion(0.052209895, 0.47601238, -0.0119953435, 0.8778056)
+bones/11/rotation = Quaternion(0.052861627, 0.47546834, -0.015860083, 0.8780001)
 bones/12/rotation = Quaternion(-0.23049825, 0.68289214, 0.17169982, 0.67160124)
 bones/13/rotation = Quaternion(0.20149457, 0.20389189, -0.059591617, 0.9561783)
 bones/14/rotation = Quaternion(0.04001307, -0.052876003, -0.12858759, 0.9894789)
@@ -1700,10 +1709,10 @@ bones/26/rotation = Quaternion(0.15521277, -1.9371507e-07, -0.015905587, 0.98775
 bones/28/rotation = Quaternion(0.23386711, -0.0035057068, -0.049008608, 0.97102636)
 bones/29/rotation = Quaternion(0.15125789, -1.3411045e-07, -0.015500367, 0.98837286)
 bones/30/rotation = Quaternion(0.14349763, -8.940697e-08, -0.014705032, 0.9895415)
-bones/32/rotation = Quaternion(0.47464085, -0.47949338, -0.6387162, -0.36992404)
-bones/33/rotation = Quaternion(-0.14818186, 0.8282052, -0.49564806, 0.21552578)
-bones/34/rotation = Quaternion(0.040809076, 0.7059283, -0.040808972, 0.7059282)
-bones/35/rotation = Quaternion(0.041945428, -0.56882393, 0.0360086, 0.8205994)
+bones/32/rotation = Quaternion(0.47567278, -0.47971287, -0.6343906, -0.37571204)
+bones/33/rotation = Quaternion(-0.15160331, 0.82743174, -0.49679577, 0.21346498)
+bones/34/rotation = Quaternion(0.041242454, 0.70590305, -0.041242328, 0.70590305)
+bones/35/rotation = Quaternion(0.046083316, -0.57170236, 0.037719663, 0.81829697)
 bones/36/rotation = Quaternion(-0.24051937, -0.6719299, -0.18474628, 0.6756696)
 bones/37/rotation = Quaternion(0.2382267, -0.20985532, 0.051183697, 0.94688386)
 bones/38/rotation = Quaternion(0.045545463, 0.04607943, 0.16169317, 0.984712)
@@ -1720,17 +1729,17 @@ bones/50/rotation = Quaternion(0.15551049, 5.9604645e-08, 0.012668192, 0.9877530
 bones/52/rotation = Quaternion(0.2284934, 0.0034029484, 0.04298061, 0.9725903)
 bones/53/rotation = Quaternion(0.15154798, 7.4505806e-08, 0.012345433, 0.9883728)
 bones/54/rotation = Quaternion(0.14377289, 8.940697e-08, 0.011711985, 0.9895414)
-bones/56/rotation = Quaternion(0.13694115, 0.080057025, 0.9844451, -0.075538084)
-bones/57/rotation = Quaternion(-0.038122058, 0.9930783, -0.11068326, 0.009559893)
-bones/58/rotation = Quaternion(-0.042031344, 0.71120846, -0.69996655, 0.049626008)
+bones/56/rotation = Quaternion(0.1354117, 0.08509942, 0.98415685, -0.076532625)
+bones/57/rotation = Quaternion(-0.038528338, 0.9926033, -0.11424224, 0.014253041)
+bones/58/rotation = Quaternion(-0.041172694, 0.7104083, -0.70089847, 0.048645116)
 bones/59/rotation = Quaternion(-9.186695e-08, 0.9990753, 0.042996287, -1.6792885e-08)
-bones/61/rotation = Quaternion(-0.091676764, -0.01164441, 0.9953166, -0.028366905)
-bones/62/rotation = Quaternion(0.03401773, 0.99405885, -0.061186872, -0.08334278)
-bones/63/rotation = Quaternion(0.008932545, 0.6804863, -0.73212886, -0.029086255)
-bones/64/rotation = Quaternion(-2.0927882e-07, 0.9980713, 0.062077884, -2.6887658e-08)
+bones/61/rotation = Quaternion(-0.09044671, -0.010680513, 0.9954112, -0.029358683)
+bones/62/rotation = Quaternion(0.032916967, 0.99446666, -0.05493965, -0.08327182)
+bones/63/rotation = Quaternion(0.010016682, 0.68576676, -0.7272083, -0.0281386)
+bones/64/rotation = Quaternion(-7.3866584e-09, 0.9979955, 0.06328555, -4.732317e-09)
 
 [node name="FirstPersonCameraBoneAttachment" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton" index="2" unique_id=1896825249]
-transform = Transform3D(0.9972816, -0.06521284, -0.03430104, 0.059808526, 0.9883285, -0.14010537, 0.04303738, 0.13767304, 0.9895422, -0.0010667997, 1.4879981, -0.033754744)
+transform = Transform3D(0.9968649, -0.057631887, -0.054212842, 0.050130684, 0.9901425, -0.13078567, 0.061215848, 0.12765789, 0.9899273, 0.004152949, 1.4880359, -0.036082648)
 bone_name = "Neck"
 bone_idx = 5
 
@@ -1750,7 +1759,7 @@ secondary_limit_angle = 1.9198622
 secondary_damp_threshold = 1.0
 
 [node name="ParagliderBoneAttachment" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton" index="4" unique_id=1910251258]
-transform = Transform3D(0.41598415, 0.028203983, 0.9089345, 0.05997385, -0.9981937, 0.0035260515, 0.907392, 0.05304558, -0.4169242, -0.23972258, 0.8381411, -0.00024827942)
+transform = Transform3D(0.39639613, 0.020185787, 0.91785777, 0.066550225, -0.99776, -0.0067983177, 0.91566455, 0.0637784, -0.39685148, -0.2455253, 0.84296876, -0.0024374872)
 bone_name = "RightHand"
 bone_idx = 35
 
@@ -1758,7 +1767,7 @@ bone_idx = 35
 visible = false
 player = NodePath("../../../../..")
 
-[node name="AnimationPlayer" parent="PlayerModel" index="1" unique_id=1480147924]
+[node name="AnimationPlayer" parent="PlayerModel" index="1" unique_id=2005817495]
 "libraries/Axe Standing Melee Attack Downward" = ExtResource("4_dtq52")
 "libraries/Axe Standing Melee Attack Horizontal" = ExtResource("5_barxw")
 "libraries/Bow Falling Idle" = ExtResource("8_goiqs")

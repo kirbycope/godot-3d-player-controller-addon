@@ -17,6 +17,7 @@ dest_files=["res://.godot/imported/switch_right.svg-556de3029901a4e4d8a482e17640
 
 compress/mode=0
 compress/high_quality=false
+compress/high_quality_mode=0
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

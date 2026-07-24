@@ -17,6 +17,7 @@ dest_files=["res://.godot/imported/xbox_guide.svg-b2b9b4cb11d2e396ff63d7d04bbfc9
 
 compress/mode=0
 compress/high_quality=false
+compress/high_quality_mode=0
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

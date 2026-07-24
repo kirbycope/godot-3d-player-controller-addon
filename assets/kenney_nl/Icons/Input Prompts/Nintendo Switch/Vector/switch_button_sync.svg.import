@@ -17,6 +17,7 @@ dest_files=["res://.godot/imported/switch_button_sync.svg-742feec416bdd1a7676ecb
 
 compress/mode=0
 compress/high_quality=false
+compress/high_quality_mode=0
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

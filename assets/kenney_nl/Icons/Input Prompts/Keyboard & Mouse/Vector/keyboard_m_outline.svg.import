@@ -17,6 +17,7 @@ dest_files=["res://.godot/imported/keyboard_m_outline.svg-1d0b31f13662e4330b12aa
 
 compress/mode=0
 compress/high_quality=false
+compress/high_quality_mode=0
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
