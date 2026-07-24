@@ -66,4 +66,10 @@ func _on_unstuck_touch_screen_button_pressed() -> void:
 
 
 func _on_unstuck_pressed() -> void:
-	player.global_transform = player.initial_transform
+	if player:
+		player.global_transform = player.initial_transform
+		player.velocity = Vector3.ZERO
+		player.up_direction = player.initial_transform.basis.y.normalized()
+		player.orientation = Transform3D(player.initial_transform.basis, Vector3.ZERO)
+		player.player_model.transform = player.initial_player_model_transform
+		player.collision_shape.transform = player.initial_collision_shape_transform

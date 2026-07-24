@@ -20,7 +20,6 @@ const SWIMMING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionSt
 
 @export var animation_tree: AnimationTree
 @export var current_animation: int
-@export var enable_flying: bool = false
 @export var motion_interpolate_speed: float = 10.0
 @export var rotation_interpolate_speed: float = 10.0
 @export var swimming_root_motion_multiplier: float = 2.0
@@ -182,6 +181,7 @@ var smoothed_motion: Vector2 = Vector2.ZERO
 
 @onready var attack_sequence_timer: Timer = $AttackSequenceTimer
 @onready var collision_shape: CollisionShape3D = $CollisionShape3D
+@onready var initial_collision_shape_transform: Transform3D = collision_shape.transform
 @onready var controls: CanvasLayer = $Controls
 @onready var debug: CanvasLayer = $Debug
 @onready var inventory: Inventory = $Inventory
@@ -197,9 +197,10 @@ var smoothed_motion: Vector2 = Vector2.ZERO
 @onready var look_at_target: Marker3D = $SpringArm3D/ProjectileRaycast/LookAtTarget
 @onready var player_input: InputSynchronizer = $InputSynchronizer
 @onready var player_model: Node3D = $PlayerModel
+@onready var initial_player_model_transform: Transform3D = player_model.transform
 @onready var paraglider_raycast: RayCast3D = $ParagliderRaycast
 @onready var projectile_raycast: RayCast3D = $SpringArm3D/ProjectileRaycast
-@onready var skateboard: StaticBody3D = $PlayerModel/Skateboard
+@onready var skateboard: Node3D = $PlayerModel/Skateboard
 @onready var skeleton: Skeleton3D = $PlayerModel/Armature/GeneralSkeleton
 @onready var spring_arm: SpringArm3D = $SpringArm3D
 @onready var camera: Camera3D = $SpringArm3D/Camera3D
@@ -242,15 +243,6 @@ func _ready() -> void:
 func _input(event: InputEvent) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
-
-	# Flying, Start { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
-	if enable_flying \
-	and not is_driving \
-	and is_jumping \
-	and event.is_action_pressed("jump") \
-	and not event.is_echo():
-		state_machine.travel(current_state, NodeStateMachine.States.FLYING)
-		return
 
 	# Toggle mouse capture
 	if event.is_action_pressed("ui_cancel") and not pause.visible and not settings.visible:
@@ -364,15 +356,12 @@ func apply_input(delta: float) -> void:
 		# Stop "falling", start "climbing"
 		if is_falling:
 			state_machine.travel(NodeStateMachine.States.FALLING, NodeStateMachine.States.CLIMBING)
-			return
 		# Stop "jumping", start "climbing"
 		elif is_jumping:
 			state_machine.travel(NodeStateMachine.States.JUMPING, NodeStateMachine.States.CLIMBING)
-			return
 		# Start "climbing" from any other state
 		else:
 			state_machine.travel(current_state, NodeStateMachine.States.CLIMBING)
-			return
 
 	# Paragliding, Start { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
 	if not is_driving \
@@ -388,7 +377,6 @@ func apply_input(delta: float) -> void:
 	and not is_flying \
 	and not paraglider_raycast.is_colliding():
 		state_machine.travel(current_state, NodeStateMachine.States.PARAGLIDING)
-		return
 
 	# Crouch { Console: Left ⬤, Keyboard: [Control] }.
 	if not is_driving \
@@ -399,7 +387,6 @@ func apply_input(delta: float) -> void:
 	and not is_sprinting:
 		# Start "crouching"
 		state_machine.travel(current_state, NodeStateMachine.States.CROUCHING)
-		return
 
 	# Jump { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
 	if not is_driving \
@@ -413,6 +400,14 @@ func apply_input(delta: float) -> void:
 	and not is_sliding:
 		# Enable the "jumping" state in the NodeStateMachine. The AnimationTree will automatically transition to the "Falling" animation state.
 		state_machine.travel(current_state, NodeStateMachine.States.JUMPING)
+
+	# Flying, Start { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
+	if not is_flying \
+	and (is_jumping or is_falling) \
+	and not is_jump_queued \
+	and paraglider_raycast.is_colliding() \
+	and Input.is_action_just_pressed("jump"):
+		state_machine.travel(current_state, NodeStateMachine.States.FLYING)
 
 	# Sprint { Microsoft: Ⓑ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Shift] }.
 	if not is_driving \

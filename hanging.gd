@@ -16,6 +16,7 @@ func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("crouch"):
 		# Stop "hanging" and start "falling"
 		player.state_machine.travel(_this_state, NodeStateMachine.States.FALLING)
+		return
 
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
@@ -34,7 +35,6 @@ func _physics_process(delta: float) -> void:
 
 	# Update footing status if not climbing onto a ledge
 	if not player.is_climbing_on:
-
 		# Check if "hanging" (braced) [Raycast]
 		if player.is_hanging_free \
 		and player.hanging_braced_detection.is_colliding():

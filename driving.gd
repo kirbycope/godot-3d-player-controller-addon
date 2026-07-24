@@ -49,6 +49,7 @@ func _physics_process(delta: float) -> void:
 	and not player.is_exiting_vehicle:
 		# Stop "driving" and start "standing"
 		player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
+		return
 
 	# Accelerate { Microsoft: Ⓑ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Shift] }
 	if Input.is_action_pressed("sprint") \

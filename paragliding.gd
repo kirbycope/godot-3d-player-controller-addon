@@ -16,6 +16,7 @@ func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("crouch"):
 		# Stop "paragliding" and start "falling"
 		player.state_machine.travel(_this_state, NodeStateMachine.States.FALLING)
+		return
 
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
