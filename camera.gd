@@ -15,9 +15,9 @@ const SKATEBOARDING_CAMERA_FOLLOW_DELAY: float = 2.0
 @export var perspective: Perspective = Perspective.THIRD_PERSON ## What perspective should the Camera use?
 @export var player: Player
 
+var camera_follow_delay_remaining: float = 0.0
 var first_person_bone_attachment: BoneAttachment3D
 var looking_at: Node3D = null
-var skateboarding_camera_follow_delay_remaining: float = 0.0
 
 @onready var camera_initial_transform: Transform3D = transform
 @onready var camera_ray_cast: RayCast3D = $CameraRayCast
@@ -45,7 +45,7 @@ func _input(event: InputEvent) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
 
-	# Check if the player is interacting with an equipment item
+	# Check if the player is interacting with an equipment item and has pressed "action" to interact
 	if looking_at and event.is_action_pressed("action") and looking_at.has_method("equip"):
 		looking_at.equip(player)
 		looking_at = null
@@ -61,11 +61,13 @@ func _input(event: InputEvent) -> void:
 
 	# Rotate the [Camera3D]'s [SpringArm3D] using the mouse motion input event
 	if event is InputEventMouseMotion \
-	and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED\
+	and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED \
+	and (not player.is_driving or perspective == Perspective.THIRD_PERSON) \
 	and not player.is_focusing:
 		rotate_camera_using_mouse_motion(event)
-		if player.is_skateboarding and event.relative.length_squared() > 0.0:
-			defer_skateboarding_camera_follow()
+		if (player.is_driving or player.is_skateboarding) \
+		and event.relative.length_squared() > 0.0:
+			defer_camera_follow()
 
 	# Only continue if the perspective is third-person
 	if perspective == Perspective.THIRD_PERSON:
@@ -88,27 +90,32 @@ func _process(delta: float) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
 
+	# Move camera to player's head if in first-person perspective
 	if perspective == Perspective.FIRST_PERSON:
 		move_camera_to_player_head()
 
 	# Rotate the [Camera3D]'s [SpringArm3D] using the joypad motion input event
 	var joypad_motion_input: Vector2 = Input.get_vector("look_left", "look_right", "look_up", "look_down")
 	if joypad_motion_input != Vector2.ZERO:
+		# Rotate the camera based on the joypad motion input event
 		rotate_camera_using_joypad_motion(delta)
+		# Add a delay before the camera starts following the player again
 		if player.is_skateboarding:
-			defer_skateboarding_camera_follow()
+			defer_camera_follow()
 
-	if skateboarding_camera_follow_delay_remaining > 0.0:
-		skateboarding_camera_follow_delay_remaining = max(
-				skateboarding_camera_follow_delay_remaining - delta,
+	# Decrement the camera follow delay
+	if camera_follow_delay_remaining > 0.0:
+		camera_follow_delay_remaining = max(
+				camera_follow_delay_remaining - delta,
 				0.0
 		)
 
-	# Lerp camera to face the player's direction when focusing or skateboarding.
-	if (player.is_focusing \
-	or player.is_skateboarding and skateboarding_camera_follow_delay_remaining <= 0.0) \
-	and perspective != Perspective.FIRST_PERSON:
-		camera_spring_arm.rotation.y = lerp_angle(camera_spring_arm.rotation.y, player.player_model.rotation.y + PI, delta * 8.0)
+	# Lerp camera to face the player's direction when focusing or skateboarding (and the follow delay has expired).
+	if perspective == Perspective.THIRD_PERSON:
+		if player.is_focusing \
+		or (player.is_driving and camera_follow_delay_remaining <= 0.0) \
+		or (player.is_skateboarding and camera_follow_delay_remaining <= 0.0):
+			camera_spring_arm.rotation.y = lerp_angle(camera_spring_arm.rotation.y, player.player_model.rotation.y + PI, delta * 8.0)
 
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
@@ -116,36 +123,9 @@ func _physics_process(_delta: float) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
 
-	# Keep the [Camera3D] (and its child [RayCast3D]) at the player's head before the raycast is
-	# evaluated, otherwise the parent [SpringArm3D] leaves it at the spring position this physics frame
+	# Move camera to player's head if in first-person perspective
 	if perspective == Perspective.FIRST_PERSON:
 		move_camera_to_player_head()
-
-	# Check if the "CameraRayCast" is colliding with an object that has a "display_menu" method, and if so, call that method
-	if camera_ray_cast.is_colliding():
-		var collider = camera_ray_cast.get_collider()
-		if collider:
-			var target = null
-			var current_node = collider
-			while current_node:
-				if current_node.has_method("display_menu"):
-					target = current_node
-					break
-				current_node = current_node.get_parent()
-			
-			if target:
-				if looking_at and looking_at != target and looking_at.has_method("hide_menu"):
-					looking_at.hide_menu()
-				target.display_menu(player)
-				looking_at = target
-			else:
-				if looking_at and looking_at.has_method("hide_menu"):
-					looking_at.hide_menu()
-				looking_at = null
-	else:
-		if looking_at and looking_at.has_method("hide_menu"):
-			looking_at.hide_menu()
-		looking_at = null
 
 
 ## Rotates the [Camera3D]'s [SpringArm3D] using the input from a joypad motion event, while clamping the vertical rotation to prevent flipping.
@@ -178,8 +158,9 @@ func rotate_camera_using_mouse_motion(event: InputEventMouseMotion) -> void:
 	camera_spring_arm.rotation_degrees.x = new_rotation_x
 
 
-func defer_skateboarding_camera_follow() -> void:
-	skateboarding_camera_follow_delay_remaining = SKATEBOARDING_CAMERA_FOLLOW_DELAY
+## Adds a delay before the camera starts following the player again.
+func defer_camera_follow() -> void:
+	camera_follow_delay_remaining = SKATEBOARDING_CAMERA_FOLLOW_DELAY
 
 
 ## Update the camera to follow the character head's position (while in "first-person").
@@ -207,4 +188,4 @@ func _update_raycast() -> void:
 		var length := 2.0
 		if is_instance_valid(camera_spring_arm):
 			length = camera_spring_arm.spring_length
-		camera_ray_cast.target_position = Vector3(0, 0, -(length + 1.0))
+		camera_ray_cast.target_position = Vector3(0, 0, - (length + 1.0))
