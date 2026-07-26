@@ -1,10 +1,14 @@
 class_name Flying
 extends NodeStateMachine
 
-var _this_state := NodeStateMachine.States.FLYING
-
 const DOUBLE_TAP_TIME_MS: int = 300
+
+@export var down_action: StringName = &"action"
+@export var stop_action: StringName = &"action" ## Requires a double-press
+@export var up_action: StringName = &"jump"
+
 var _last_crouch_press_time: int = 0
+var _this_state := NodeStateMachine.States.FLYING
 
 
 ## Called when there is an input event.
@@ -16,7 +20,7 @@ func _input(event: InputEvent) -> void:
 	if not player: return
 
 	# Stop flying if double-press crouch
-	if event.is_action_pressed("crouch") and not event.is_echo():
+	if event.is_action_pressed(stop_action) and not event.is_echo():
 		var current_time := Time.get_ticks_msec()
 		if current_time - _last_crouch_press_time <= DOUBLE_TAP_TIME_MS:
 			if player.is_on_floor():
@@ -77,9 +81,9 @@ func _physics_process(delta: float) -> void:
 
 	# Vertical control along player.up_direction (jump to fly upward along up_dir, crouch to fly downward along -up_dir)
 	var v_speed: float = 0.0
-	if Input.is_action_pressed("jump"):
+	if Input.is_action_pressed(up_action):
 		v_speed = 6.0
-	elif Input.is_action_pressed("crouch"):
+	elif Input.is_action_pressed(down_action):
 		v_speed = -6.0
 
 	player.velocity = h_velocity + (up_dir * v_speed)

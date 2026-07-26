@@ -1,6 +1,8 @@
 class_name Paragliding
 extends NodeStateMachine
 
+@export var stop_action: StringName = &"action"
+
 var _this_state := NodeStateMachine.States.PARAGLIDING
 
 
@@ -12,9 +14,8 @@ func _input(event: InputEvent) -> void:
 	# Do nothing if the player is not set
 	if not player: return
 
-	# Crouch { Controller: Left Stick, Keyboard: Left Control }
-	if event.is_action_pressed("crouch"):
-		# Stop "paragliding" and start "falling"
+	# Stop "paragliding" and start "falling"
+	if event.is_action_pressed(stop_action) and not event.is_echo():
 		player.state_machine.travel(_this_state, NodeStateMachine.States.FALLING)
 		return
 
