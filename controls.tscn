@@ -1015,6 +1015,7 @@ offset_right = -1.0
 offset_bottom = 11.5
 grow_vertical = 2
 text = "Throw"
+metadata/_edit_use_anchors_ = true
 
 [node name="JoypadAxis5Plus" type="TouchScreenButton" parent="TopRight" unique_id=1548286525]
 position = Vector2(0, 64)
@@ -1028,9 +1029,10 @@ action = "shoot"
 anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
-offset_left = -42.0
+offset_left = -88.0
 offset_top = -11.5
-offset_right = 3.0
+offset_right = -1.0
 offset_bottom = 11.5
 grow_vertical = 2
 text = "Shoot"
+horizontal_alignment = 2

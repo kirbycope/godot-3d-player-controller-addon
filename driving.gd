@@ -1,6 +1,10 @@
 class_name Driving
 extends NodeStateMachine
 
+@export var accelerate_action: StringName = &"shoot"
+@export var brake_action: StringName = &"focus"
+@export var exit_action: StringName = &"jump"
+
 var _this_state := NodeStateMachine.States.DRIVING
 
 
@@ -12,8 +16,8 @@ func _input(event: InputEvent) -> void:
 	# Do nothing if the player is not set
 	if not player: return
 
-	# Exit { Microsoft: Ⓧ, Nintendo: Ⓨ, Sony: 🟗, Keyboard: [Alt] }
-	if Input.is_action_just_pressed("attack"):
+	# Exit
+	if Input.is_action_just_pressed(exit_action):
 		# Flag the Player as exiting the vehicle
 		player.is_exiting_vehicle = true
 		# Open (and then close) the driver's car door
@@ -75,8 +79,8 @@ func _physics_process(delta: float) -> void:
 			car.engine_force = 0.0
 			car.brake = 0.0
 		else:
-			var accelerate_pressed := Input.is_action_pressed("sprint")
-			var brake_pressed := Input.is_action_pressed("action")
+			var accelerate_pressed := Input.is_action_pressed(accelerate_action)
+			var brake_pressed := Input.is_action_pressed(brake_action)
 
 			# If braking/reversing is pressed
 			if brake_pressed:
@@ -130,9 +134,9 @@ func start() -> void:
 	# Update the labels in the UI to reflect the driving state controls
 	if player.controls:
 		player.controls.set_labels({
-			player.controls.joypad_button_0_label: "Brake",
-			player.controls.joypad_button_1_label: "Accelerate",
-			player.controls.joypad_button_2_label: "Exit",
+			player.controls.joypad_axis_4_plus_label: "Brake", # Joypad Axis 4 + (Left Trigger, Sony L2, XBox LT, Nintendo ZL)
+			player.controls.joypad_axis_5_plus_label: "Accelerate", # Joypad Axis 5 + (Right Trigger, Sony R2, XBox RT, Nintendo ZR)
+			player.controls.joypad_button_3_label: "Exit", # Joypad Button 3 (Top Action, Sony Triangle, XBox Y, Nintendo X)
 			player.controls.left_joystick_label: "Steer",
 			player.controls.right_joystick_label: "Camera",
 		})
