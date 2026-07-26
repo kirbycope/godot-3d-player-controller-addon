@@ -65,34 +65,35 @@ func _physics_process(delta: float) -> void:
 		var heading := Vector3(car.global_transform.basis.z.x, 0.0, car.global_transform.basis.z.z).normalized()
 		forward_speed = heading.dot(car.linear_velocity) if heading != Vector3.ZERO else car.global_transform.basis.z.dot(car.linear_velocity)
 
-	# Accelerate { Microsoft: Ⓑ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Shift] }
-	if Input.is_action_pressed("sprint") \
-	and player.is_driving_in != null \
+	# Accelerate, Brake, and Reverse
+	if player.is_driving_in != null \
 	and not player.is_entering_vehicle \
 	and not player.is_exiting_vehicle:
-		var acceleration_force: float = player.is_driving_in.max_acceleration_force if player.is_driving_in.max_acceleration_force else 50.0
-		player.is_driving_in.engine_force = lerp(player.is_driving_in.engine_force, acceleration_force, delta * 5.0)
-	elif player.is_driving_in != null and not Input.is_action_pressed("action"):
-		# Coast to zero only when neither accelerate nor brake is held
-		player.is_driving_in.engine_force = 0.0
+		var car = player.is_driving_in
+		var accelerate_pressed := Input.is_action_pressed("sprint")
+		var brake_pressed := Input.is_action_pressed("action")
 
-	# Brake { Microsoft: Ⓐ, Nintendo: Ⓑ, Sony: Ⓧ, Keyboard: [E] }
-	if Input.is_action_pressed("action") \
-	and player.is_driving_in != null \
-	and not player.is_entering_vehicle \
-	and not player.is_exiting_vehicle \
-	and not Input.is_action_pressed("sprint"):
-		# If moving forward, brake
-		if forward_speed > 0.0:
-			var brake_force: float = player.is_driving_in.max_brake_force if player.is_driving_in.max_brake_force else 50.0
-			player.is_driving_in.brake = lerp(player.is_driving_in.brake, brake_force, delta * 5.0)
-		# If not moving or moving backward, reverse
+		# If braking/reversing is pressed
+		if brake_pressed:
+			# If moving forward, or if accelerate is also held, brake to stop
+			if forward_speed > 0.1 or accelerate_pressed:
+				var brake_force: float = car.max_brake_force if car.max_brake_force else 50.0
+				car.brake = lerp(car.brake, brake_force, delta * 5.0)
+				car.engine_force = 0.0
+			# Otherwise, reverse
+			else:
+				var reverse_force: float = car.max_reverse_force if car.max_reverse_force else -50.0
+				car.brake = 0.0
+				car.engine_force = lerp(car.engine_force, reverse_force, delta * 5.0)
+		# If only accelerating is pressed
+		elif accelerate_pressed:
+			var acceleration_force: float = car.max_acceleration_force if car.max_acceleration_force else 50.0
+			car.brake = 0.0
+			car.engine_force = lerp(car.engine_force, acceleration_force, delta * 5.0)
+		# Otherwise, coast
 		else:
-			var reverse_force: float = player.is_driving_in.max_reverse_force if player.is_driving_in.max_reverse_force else -50.0
-			player.is_driving_in.brake = 0.0
-			player.is_driving_in.engine_force = lerp(player.is_driving_in.engine_force, reverse_force, delta * 5.0)
-	elif player.is_driving_in != null:
-		player.is_driving_in.brake = 0.0
+			car.brake = 0.0
+			car.engine_force = 0.0
 
 	# Steering { Controller: Left-Stick, Keyboard: [A] / [D] }
 	if player.is_driving_in != null \

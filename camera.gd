@@ -6,7 +6,7 @@ enum Perspective {
 	THIRD_PERSON, ## Rendered from a fixed distance behind and slightly above the player character.
 }
 
-const SKATEBOARDING_CAMERA_FOLLOW_DELAY: float = 2.0
+const CAMERA_FOLLOW_DELAY: float = 2.0
 
 @export var camera_spring_arm: SpringArm3D
 @export var first_person_offset: Vector3 = Vector3(0.0, 0.0, -0.3) ## The offset of the camera from the player's head when in first-person perspective.
@@ -96,11 +96,13 @@ func _process(delta: float) -> void:
 
 	# Rotate the [Camera3D]'s [SpringArm3D] using the joypad motion input event
 	var joypad_motion_input: Vector2 = Input.get_vector("look_left", "look_right", "look_up", "look_down")
-	if joypad_motion_input != Vector2.ZERO:
+	if joypad_motion_input != Vector2.ZERO \
+	and (not player.is_driving or perspective == Perspective.THIRD_PERSON) \
+	and not player.is_focusing:
 		# Rotate the camera based on the joypad motion input event
 		rotate_camera_using_joypad_motion(delta)
 		# Add a delay before the camera starts following the player again
-		if player.is_skateboarding:
+		if player.is_skateboarding or player.is_driving:
 			defer_camera_follow()
 
 	# Decrement the camera follow delay
@@ -110,7 +112,7 @@ func _process(delta: float) -> void:
 				0.0
 		)
 
-	# Lerp camera to face the player's direction when focusing or skateboarding (and the follow delay has expired).
+	# Lerp camera to face the player's direction when focusing, driving, or skateboarding (and the follow delay has expired).
 	if perspective == Perspective.THIRD_PERSON:
 		if player.is_focusing \
 		or (player.is_driving and camera_follow_delay_remaining <= 0.0) \
@@ -160,7 +162,7 @@ func rotate_camera_using_mouse_motion(event: InputEventMouseMotion) -> void:
 
 ## Adds a delay before the camera starts following the player again.
 func defer_camera_follow() -> void:
-	camera_follow_delay_remaining = SKATEBOARDING_CAMERA_FOLLOW_DELAY
+	camera_follow_delay_remaining = CAMERA_FOLLOW_DELAY
 
 
 ## Update the camera to follow the character head's position (while in "first-person").
