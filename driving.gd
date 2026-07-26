@@ -70,37 +70,47 @@ func _physics_process(delta: float) -> void:
 	and not player.is_entering_vehicle \
 	and not player.is_exiting_vehicle:
 		var car = player.is_driving_in
-		var accelerate_pressed := Input.is_action_pressed("sprint")
-		var brake_pressed := Input.is_action_pressed("action")
-
-		# If braking/reversing is pressed
-		if brake_pressed:
-			# If moving forward, or if accelerate is also held, brake to stop
-			if forward_speed > 0.1 or accelerate_pressed:
-				var brake_force: float = car.max_brake_force if car.max_brake_force else 50.0
-				car.brake = lerp(car.brake, brake_force, delta * 5.0)
-				car.engine_force = 0.0
-			# Otherwise, reverse
-			else:
-				var reverse_force: float = car.max_reverse_force if car.max_reverse_force else -50.0
-				car.brake = 0.0
-				car.engine_force = lerp(car.engine_force, reverse_force, delta * 5.0)
-		# If only accelerating is pressed
-		elif accelerate_pressed:
-			var acceleration_force: float = car.max_acceleration_force if car.max_acceleration_force else 50.0
-			car.brake = 0.0
-			car.engine_force = lerp(car.engine_force, acceleration_force, delta * 5.0)
-		# Otherwise, coast
-		else:
-			car.brake = 0.0
+		var is_car_disabled: bool = car.get("is_on_fire") == true or car.get("has_exploded") == true
+		if is_car_disabled:
 			car.engine_force = 0.0
+			car.brake = 0.0
+		else:
+			var accelerate_pressed := Input.is_action_pressed("sprint")
+			var brake_pressed := Input.is_action_pressed("action")
+
+			# If braking/reversing is pressed
+			if brake_pressed:
+				# If moving forward, or if accelerate is also held, brake to stop
+				if forward_speed > 0.1 or accelerate_pressed:
+					var brake_force: float = car.max_brake_force if car.max_brake_force else 50.0
+					car.brake = lerp(car.brake, brake_force, delta * 5.0)
+					car.engine_force = 0.0
+				# Otherwise, reverse
+				else:
+					var reverse_force: float = car.max_reverse_force if car.max_reverse_force else -50.0
+					car.brake = 0.0
+					car.engine_force = lerp(car.engine_force, reverse_force, delta * 5.0)
+			# If only accelerating is pressed
+			elif accelerate_pressed:
+				var acceleration_force: float = car.max_acceleration_force if car.max_acceleration_force else 50.0
+				car.brake = 0.0
+				car.engine_force = lerp(car.engine_force, acceleration_force, delta * 5.0)
+			# Otherwise, coast
+			else:
+				car.brake = 0.0
+				car.engine_force = 0.0
 
 	# Steering { Controller: Left-Stick, Keyboard: [A] / [D] }
 	if player.is_driving_in != null \
 	and not player.is_entering_vehicle \
 	and not player.is_exiting_vehicle:
-		var steer_input := Input.get_axis("move_right", "move_left")
-		player.is_driving_in.steering = steer_input * deg_to_rad(30.0)
+		var car = player.is_driving_in
+		var is_car_disabled: bool = car.get("is_on_fire") == true or car.get("has_exploded") == true
+		if is_car_disabled:
+			car.steering = 0.0
+		else:
+			var steer_input := Input.get_axis("move_right", "move_left")
+			car.steering = steer_input * deg_to_rad(30.0)
 
 
 ## Start "driving".
