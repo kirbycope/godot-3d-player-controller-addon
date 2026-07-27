@@ -132,6 +132,7 @@
 [ext_resource type="AnimationLibrary" uid="uid://djmfv5qy41m6c" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Bow Standing Fire Arrow.glb" id="61_y5ufv"]
 [ext_resource type="AnimationLibrary" uid="uid://cih2s5nl7qamp" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Sword And Shield Jump Forward.glb" id="67_pmh06"]
 [ext_resource type="AnimationLibrary" uid="uid://bdl3yymua2mfv" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Rifle Aiming Jump.glb" id="77_1pf77"]
+[ext_resource type="AnimationLibrary" uid="uid://druxubhr33v2o" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Petting Animal.glb" id="77_k50we"]
 [ext_resource type="AnimationLibrary" uid="uid://7t6w5h5oypy1" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Rifle Aiming Run Backward.glb" id="78_acai3"]
 [ext_resource type="AnimationLibrary" uid="uid://ng1pt0a4ylit" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Rifle Aiming Run Forward.glb" id="79_7y4ty"]
 [ext_resource type="AnimationLibrary" uid="uid://gv568fcyq7dt" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Rifle Aiming Standing Idle.glb" id="79_i5x2b"]
@@ -233,6 +234,9 @@ loop_mode = 1
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_k2txm"]
 animation = &"Idle/mixamo_com"
 
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_b712a"]
+animation = &"Petting Animal/mixamo_com"
+
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_mihb1"]
 animation = &"Rifle Aiming Standing Idle/mixamo_com"
 
@@ -299,6 +303,14 @@ advance_expression = "is_reeling_line"
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_0bued"]
 xfade_time = 0.2
 
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_5h1fl"]
+xfade_time = 0.2
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_nc0qw"]
+xfade_time = 0.2
+switch_mode = 2
+advance_mode = 2
+
 [sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_gfpdn"]
 states/FishingCast/node = SubResource("AnimationNodeAnimation_ue3ts")
 states/FishingCast/position = Vector2(862.64246, 203.16876)
@@ -308,14 +320,16 @@ states/FishingReel/node = SubResource("AnimationNodeAnimation_nlnto")
 states/FishingReel/position = Vector2(643.66, 203.04532)
 states/Idle/node = SubResource("AnimationNodeAnimation_k2txm")
 states/Idle/position = Vector2(462.66046, 100.33333)
+states/PettingAnimal/node = SubResource("AnimationNodeAnimation_b712a")
+states/PettingAnimal/position = Vector2(288.15997, 203.10704)
 states/RifleAimingStandingIdle/node = SubResource("AnimationNodeAnimation_mihb1")
 states/RifleAimingStandingIdle/position = Vector2(719.47, -4.2599945)
 states/RifleFiringStanding/node = SubResource("AnimationNodeAnimation_xsdw7")
 states/RifleFiringStanding/position = Vector2(462.6543, -2.4375)
 states/Waving/node = SubResource("AnimationNodeAnimation_jmy3t")
 states/Waving/position = Vector2(462.64197, 204.66667)
-transitions = ["Idle", "Waving", SubResource("AnimationNodeStateMachineTransition_vn1rt"), "Waving", "Idle", SubResource("AnimationNodeStateMachineTransition_rlekb"), "Start", "Idle", SubResource("AnimationNodeStateMachineTransition_skqw1"), "Idle", "RifleFiringStanding", SubResource("AnimationNodeStateMachineTransition_sqjrs"), "RifleFiringStanding", "RifleAimingStandingIdle", SubResource("AnimationNodeStateMachineTransition_y7usr"), "RifleAimingStandingIdle", "Idle", SubResource("AnimationNodeStateMachineTransition_f3q3i"), "RifleAimingStandingIdle", "RifleFiringStanding", SubResource("AnimationNodeStateMachineTransition_gfa47"), "Idle", "FishingIdle", SubResource("AnimationNodeStateMachineTransition_rhxkt"), "FishingIdle", "FishingCast", SubResource("AnimationNodeStateMachineTransition_v6de3"), "FishingCast", "FishingIdle", SubResource("AnimationNodeStateMachineTransition_t3so4"), "FishingIdle", "Idle", SubResource("AnimationNodeStateMachineTransition_fl5qr"), "FishingReel", "FishingIdle", SubResource("AnimationNodeStateMachineTransition_xw6m8"), "FishingIdle", "FishingReel", SubResource("AnimationNodeStateMachineTransition_07say"), "FishingCast", "FishingReel", SubResource("AnimationNodeStateMachineTransition_0cxoa"), "FishingReel", "FishingCast", SubResource("AnimationNodeStateMachineTransition_0bued")]
-graph_offset = Vector2(-93.84003, 25.674988)
+transitions = ["Idle", "Waving", SubResource("AnimationNodeStateMachineTransition_vn1rt"), "Waving", "Idle", SubResource("AnimationNodeStateMachineTransition_rlekb"), "Start", "Idle", SubResource("AnimationNodeStateMachineTransition_skqw1"), "Idle", "RifleFiringStanding", SubResource("AnimationNodeStateMachineTransition_sqjrs"), "RifleFiringStanding", "RifleAimingStandingIdle", SubResource("AnimationNodeStateMachineTransition_y7usr"), "RifleAimingStandingIdle", "Idle", SubResource("AnimationNodeStateMachineTransition_f3q3i"), "RifleAimingStandingIdle", "RifleFiringStanding", SubResource("AnimationNodeStateMachineTransition_gfa47"), "Idle", "FishingIdle", SubResource("AnimationNodeStateMachineTransition_rhxkt"), "FishingIdle", "FishingCast", SubResource("AnimationNodeStateMachineTransition_v6de3"), "FishingCast", "FishingIdle", SubResource("AnimationNodeStateMachineTransition_t3so4"), "FishingIdle", "Idle", SubResource("AnimationNodeStateMachineTransition_fl5qr"), "FishingReel", "FishingIdle", SubResource("AnimationNodeStateMachineTransition_xw6m8"), "FishingIdle", "FishingReel", SubResource("AnimationNodeStateMachineTransition_07say"), "FishingCast", "FishingReel", SubResource("AnimationNodeStateMachineTransition_0cxoa"), "FishingReel", "FishingCast", SubResource("AnimationNodeStateMachineTransition_0bued"), "Idle", "PettingAnimal", SubResource("AnimationNodeStateMachineTransition_5h1fl"), "PettingAnimal", "Idle", SubResource("AnimationNodeStateMachineTransition_nc0qw")]
+graph_offset = Vector2(-107.84003, 39.674988)
 
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_w3427"]
 animation = &"Bow Standing Aim Idle 01/mixamo_com"
@@ -1576,10 +1590,12 @@ advance_expression = "is_flying"
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_cjm4b"]
 xfade_time = 0.2
 advance_mode = 0
+advance_expression = "is_fishing"
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_gl6xl"]
 xfade_time = 0.2
 advance_mode = 0
+advance_expression = "!is_fishing"
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_7deqm"]
 advance_mode = 2
@@ -1793,16 +1809,16 @@ transform = Transform3D(-1, 0, -1.509958e-07, 0, 1, 0, 1.509958e-07, 0, -1, 0, 0
 [node name="GeneralSkeleton" parent="PlayerModel/Armature" parent_id_path=PackedInt32Array(1771073607, 388703482) index="0" unique_id=1055428854]
 bones/0/position = Vector3(0.0026162867, 0, -0.0012634211)
 bones/1/position = Vector3(6.945423e-07, 0.9899598, -4.8260063e-11)
-bones/1/rotation = Quaternion(-0.029062036, -0.050748188, -0.029446173, 0.99785423)
-bones/2/rotation = Quaternion(0.029704101, 0.012982442, 0.021362077, 0.9992461)
-bones/3/rotation = Quaternion(0.010298296, 0.003601713, 0.01367197, 0.99984705)
-bones/4/rotation = Quaternion(0.010281878, 0.0039431043, 0.013826919, 0.99984384)
-bones/5/rotation = Quaternion(0.048556842, -0.0014422896, 0.004426237, 0.9988096)
-bones/6/rotation = Quaternion(-0.06790301, 0.01082926, -0.0018402394, 0.99763155)
-bones/8/rotation = Quaternion(0.4580586, 0.49948144, 0.6315161, -0.3766805)
-bones/9/rotation = Quaternion(0.12448588, 0.80440485, -0.56729245, -0.1249619)
+bones/1/rotation = Quaternion(-0.032712072, -0.04675971, -0.0248594, 0.9980609)
+bones/2/rotation = Quaternion(0.028094321, 0.013818533, 0.022965096, 0.9992459)
+bones/3/rotation = Quaternion(0.010008786, 0.0037359027, 0.014228148, 0.9998418)
+bones/4/rotation = Quaternion(0.00949029, 0.0035359901, 0.0141095, 0.9998492)
+bones/5/rotation = Quaternion(0.047890563, -0.0014669955, 0.0048381016, 0.99883986)
+bones/6/rotation = Quaternion(-0.06819691, 0.010813595, -0.0010319814, 0.9976128)
+bones/8/rotation = Quaternion(0.45879608, 0.49947423, 0.6288479, -0.38023943)
+bones/9/rotation = Quaternion(0.12566556, 0.80104506, -0.5719667, -0.1240529)
 bones/10/rotation = Quaternion(0.009004968, -0.7070495, 0.009005011, 0.7070495)
-bones/11/rotation = Quaternion(0.051351856, 0.47665185, -0.015125636, 0.8774608)
+bones/11/rotation = Quaternion(0.05222484, 0.47969186, -0.015026104, 0.8757527)
 bones/12/rotation = Quaternion(-0.23049825, 0.68289214, 0.17169982, 0.67160124)
 bones/13/rotation = Quaternion(0.20149457, 0.20389189, -0.059591617, 0.9561783)
 bones/14/rotation = Quaternion(0.04001307, -0.052876003, -0.12858759, 0.9894789)
@@ -1819,10 +1835,10 @@ bones/26/rotation = Quaternion(0.15521277, -1.9371507e-07, -0.015905587, 0.98775
 bones/28/rotation = Quaternion(0.23386711, -0.0035057068, -0.049008608, 0.97102636)
 bones/29/rotation = Quaternion(0.15125789, -1.3411045e-07, -0.015500367, 0.98837286)
 bones/30/rotation = Quaternion(0.14349763, -8.940697e-08, -0.014705032, 0.9895415)
-bones/32/rotation = Quaternion(0.47668308, -0.47842604, -0.6350631, -0.37493566)
-bones/33/rotation = Quaternion(-0.15006489, 0.8269337, -0.49804688, 0.21356633)
-bones/34/rotation = Quaternion(0.04103238, 0.7059154, -0.041032262, 0.7059153)
-bones/35/rotation = Quaternion(0.04631385, -0.5712011, 0.038245667, 0.81860965)
+bones/32/rotation = Quaternion(0.47719416, -0.4778183, -0.6352479, -0.37474737)
+bones/33/rotation = Quaternion(-0.14891548, 0.8277561, -0.4960611, 0.21579503)
+bones/34/rotation = Quaternion(0.041042052, 0.7059148, -0.041042, 0.7059147)
+bones/35/rotation = Quaternion(0.042295, -0.5714025, 0.036019627, 0.8187875)
 bones/36/rotation = Quaternion(-0.24051937, -0.6719299, -0.18474628, 0.6756696)
 bones/37/rotation = Quaternion(0.2382267, -0.20985532, 0.051183697, 0.94688386)
 bones/38/rotation = Quaternion(0.045545463, 0.04607943, 0.16169317, 0.984712)
@@ -1839,17 +1855,17 @@ bones/50/rotation = Quaternion(0.15551049, 5.9604645e-08, 0.012668192, 0.9877530
 bones/52/rotation = Quaternion(0.2284934, 0.0034029484, 0.04298061, 0.9725903)
 bones/53/rotation = Quaternion(0.15154798, 7.4505806e-08, 0.012345433, 0.9883728)
 bones/54/rotation = Quaternion(0.14377289, 8.940697e-08, 0.011711985, 0.9895414)
-bones/56/rotation = Quaternion(0.13670611, 0.08550453, 0.9838497, -0.07771832)
-bones/57/rotation = Quaternion(-0.03838377, 0.9924897, -0.115036435, 0.016054153)
-bones/58/rotation = Quaternion(-0.04154474, 0.7101875, -0.70106786, 0.04910859)
+bones/56/rotation = Quaternion(0.13544929, 0.07451679, 0.9851843, -0.07424775)
+bones/57/rotation = Quaternion(-0.03934172, 0.9934751, -0.10615266, 0.013831352)
+bones/58/rotation = Quaternion(-0.04267662, 0.7116725, -0.6994011, 0.050390303)
 bones/59/rotation = Quaternion(-9.186695e-08, 0.9990753, 0.042996287, -1.6792885e-08)
-bones/61/rotation = Quaternion(-0.09000427, -0.012145313, 0.99540627, -0.030300504)
-bones/62/rotation = Quaternion(0.03223725, 0.99474037, -0.049371753, -0.0837543)
-bones/63/rotation = Quaternion(0.011888045, 0.6866563, -0.72644264, -0.025356295)
-bones/64/rotation = Quaternion(-1.9364722e-07, 0.9980524, 0.062380746, -2.822206e-08)
+bones/61/rotation = Quaternion(-0.09242227, -0.01589905, 0.9952254, -0.027052231)
+bones/62/rotation = Quaternion(0.033391986, 0.994321, -0.05690539, -0.083501905)
+bones/63/rotation = Quaternion(0.010717862, 0.68081176, -0.73188794, -0.0268468)
+bones/64/rotation = Quaternion(-5.278432e-08, 0.9981394, 0.060973726, -2.0555362e-08)
 
 [node name="FirstPersonCameraBoneAttachment" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton" index="2" unique_id=1896825249]
-transform = Transform3D(0.996599, -0.058321454, -0.058215987, 0.04989525, 0.98931986, -0.13695584, 0.06558168, 0.13358533, 0.988865, 0.0047218697, 1.488181, -0.03319885)
+transform = Transform3D(0.9963924, -0.07066505, -0.04699689, 0.06441635, 0.9902782, -0.12328689, 0.055252064, 0.119814746, 0.9912576, -0.0013978258, 1.4878378, -0.03870831)
 bone_name = "Neck"
 bone_idx = 5
 
@@ -1869,7 +1885,7 @@ secondary_limit_angle = 1.9198622
 secondary_damp_threshold = 1.0
 
 [node name="ParagliderBoneAttachment" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton" index="4" unique_id=1910251258]
-transform = Transform3D(0.38950813, 0.024523374, 0.9206967, 0.057431363, -0.998347, 0.002294769, 0.9192308, 0.05198308, -0.39027265, -0.24277402, 0.84208184, -0.0072190873)
+transform = Transform3D(0.39932054, 0.02501666, 0.9164701, 0.06961736, -0.9975691, -0.0031027254, 0.9141645, 0.06504138, -0.40009123, -0.24244107, 0.83898133, -0.0032361224)
 bone_name = "RightHand"
 bone_idx = 35
 
@@ -1951,6 +1967,7 @@ libraries/Jump = ExtResource("5_07327")
 "libraries/Jumping Up" = ExtResource("6_t7djy")
 "libraries/Left Strafe" = ExtResource("4_ha6ty")
 "libraries/Left Strafe Walk" = ExtResource("4_nfheb")
+"libraries/Petting Animal" = ExtResource("77_k50we")
 "libraries/Pistol Aimed Idle" = ExtResource("26_pb2cf")
 "libraries/Pistol Aimed Run" = ExtResource("27_ia82s")
 "libraries/Pistol Aimed Run Backward" = ExtResource("28_bdiue")
