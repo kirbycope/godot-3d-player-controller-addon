@@ -6,6 +6,7 @@ enum EquipmentType {
 	AXE_2H,
 	BOW,
 	DAGGER,
+	FISHING_ROD,
 	PISTOL,
 	RIFLE,
 	STAFF,
@@ -38,7 +39,7 @@ var equipment_instance: Node3D
 var menu_displayed: bool = false
 var player: Player
 
-@onready var action_prompt: Node3D = $ActionPrompt
+@onready var action_prompt: Node3D = get_node_or_null("ActionPrompt")
 
 
 func _update_attachment_offsets() -> void:
@@ -82,7 +83,7 @@ func equip(player: Player) -> void:
 		return
 
 	# 1. Find the Skeleton3D on the player (adjust the node path if needed)
-	var skeleton: Skeleton3D = player.get_node_or_null("PlayerModel/Armature/GeneralSkeleton") 
+	var skeleton: Skeleton3D = player.get_node_or_null("PlayerModel/Armature/GeneralSkeleton")
 	if not skeleton:
 		push_error("Skeleton3D not found on player!")
 		return

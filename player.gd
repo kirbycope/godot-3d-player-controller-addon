@@ -40,6 +40,9 @@ var equipped_bow: bool:
 var equipped_dagger: bool:
 	get:
 		return inventory != null and inventory.has_equipment(Equipment.EquipmentType.DAGGER)
+var equipped_fishing_rod: bool:
+	get:
+		return inventory != null and inventory.has_equipment(Equipment.EquipmentType.FISHING_ROD)
 var equipped_pistol: bool:
 	get:
 		return inventory != null and inventory.has_equipment(Equipment.EquipmentType.PISTOL)
@@ -67,6 +70,7 @@ var uses_equipment_jump_variants: bool:
 			or equipped_axe_2h \
 			or equipped_bow \
 			or equipped_dagger \
+			or equipped_fishing_rod \
 			or equipped_pistol \
 			or equipped_rifle \
 			or equipped_shield \
@@ -138,6 +142,9 @@ var is_crouching: bool = false ## Is the Player currently crouching?
 var is_emoting: bool = false ## Is the Player currently emoting?
 var is_exhausted: bool = false ## Is the Player currently exhausted?
 var is_falling: bool = false ## Is the Player currently falling?
+var is_fishing: bool = false ## Is the Player currently fishing (has a rod equipped)?
+var is_casting_line: bool = false ## Is the Player currently casting a fishing line?
+var is_reeling_line: bool = false ## Is the Player currently casting a fishing line?
 var is_flying: bool = false ## Is the Player currently flying?
 var is_focusing: bool: ## Is the Player currently focusing (forward or on a target)?
 	get:
@@ -195,7 +202,6 @@ var smoothed_motion: Vector2 = Vector2.ZERO
 @onready var ledge_detection_horizontal: RayCast3D = $PlayerModel/LedgeDetectionHorizontal
 @onready var ledge_detection_vertical: RayCast3D = $PlayerModel/LedgeDetectionHorizontal/LedgeDetectionVertical
 @onready var ledge_detection_marker: MeshInstance3D = $PlayerModel/LedgeDetectionHorizontal/LedgeDetectionVertical/LedgeDetectionMarker
-@onready var look_at_modifier = $PlayerModel/Armature/GeneralSkeleton/LookAtModifier3D
 @onready var look_at_target: Marker3D = $SpringArm3D/ProjectileRaycast/LookAtTarget
 @onready var player_input: InputSynchronizer = $InputSynchronizer
 @onready var player_model: Node3D = $PlayerModel
@@ -204,6 +210,7 @@ var smoothed_motion: Vector2 = Vector2.ZERO
 @onready var projectile_raycast: RayCast3D = $SpringArm3D/ProjectileRaycast
 @onready var skateboard: Node3D = $PlayerModel/Skateboard
 @onready var skeleton: Skeleton3D = $PlayerModel/Armature/GeneralSkeleton
+@onready var look_at_modifier = $PlayerModel/Armature/GeneralSkeleton/LookAtModifier3D
 @onready var spring_arm: SpringArm3D = $SpringArm3D
 @onready var camera: Camera3D = $SpringArm3D/Camera3D
 @onready var state_machine: NodeStateMachine = $NodeStateMachine ## Enables/Disables the scripts that run when various States are entered/exited.
@@ -599,7 +606,7 @@ func execute_jump() -> void:
 func get_grounded_locomotion_state() -> StringName:
 	if is_crouching:
 		return &"CrouchingLocomotion"
-	if equipped_axe_2h or equipped_staff or equipped_sword_2h:
+	if equipped_axe_2h or equipped_fishing_rod or equipped_staff or equipped_sword_2h:
 		return &"GreatSwordLocomotion"
 	if equipped_bow:
 		if is_shooting:

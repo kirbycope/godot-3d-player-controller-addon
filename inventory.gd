@@ -92,6 +92,7 @@ func has_any_equipment(types: Array) -> bool:
 func has_heavy_weapon_equipped() -> bool:
 	return has_any_equipment([
 		Equipment.EquipmentType.AXE_2H,
+		Equipment.EquipmentType.FISHING_ROD,
 		Equipment.EquipmentType.STAFF,
 		Equipment.EquipmentType.SWORD_2H,
 	])
