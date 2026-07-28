@@ -58,6 +58,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="RPM" type="Control" parent="." unique_id=114144023]
+visible = false
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 3
 anchors_preset = 7

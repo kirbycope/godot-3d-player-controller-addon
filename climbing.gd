@@ -1,6 +1,17 @@
 class_name Climbing
 extends NodeStateMachine
 
+@export_category("Climbing Controls")
+@export_group("Keyboard/Mouse Actions")
+@export var keyboard_drop_action: StringName = &"crouch"
+@export var keyboard_hop_action: StringName = &"jump"
+@export var keyboard_sprint_action: StringName = &"sprint"
+
+@export_group("Controller/Touch Actions")
+@export var pad_drop_action: StringName = &"crouch"
+@export var pad_hop_action: StringName = &"jump"
+@export var pad_sprint_action: StringName = &"sprint"
+
 var _this_state = NodeStateMachine.States.CLIMBING
 
 
@@ -12,8 +23,11 @@ func _input(event: InputEvent) -> void:
 	# Do nothing if the player is not set
 	if not player: return
 
-	# Crouch { Controller: Left Stick, Keyboard: Left Control }
-	if event.is_action_pressed("crouch"):
+	var input_type = player.controls.current_input_type if player.controls else 0
+	var current_drop_action = keyboard_drop_action if input_type == 0 else pad_drop_action
+
+	# Drop / Let go
+	if event.is_action_pressed(current_drop_action):
 		# Start "falling"
 		player.state_machine.travel(_this_state, NodeStateMachine.States.FALLING)
 		return
@@ -66,9 +80,13 @@ func _physics_process(delta: float) -> void:
 			player.global_position = player.climbing_on_target
 			player.is_climbing_on = false
 
-	# Climbing, Hopping [Input] { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
+	var input_type = player.controls.current_input_type if player.controls else 0
+	var current_hop_action = keyboard_hop_action if input_type == 0 else pad_hop_action
+	var current_sprint_action = keyboard_sprint_action if input_type == 0 else pad_sprint_action
+
+	# Climbing, Hopping [Input]
 	if not player.is_on_floor() \
-	and Input.is_action_just_pressed("jump") \
+	and Input.is_action_just_pressed(current_hop_action) \
 	and (player.locomotion_state.get_current_node() == "ClimbingLocomotion" or player.locomotion_state.get_current_node() == "BracedHangLocomotion"):
 		# Check: Left input past 0.1 deadzone, and |x| > |y| ensures horizontal input dominance (<45° angle to -X).
 		var hop_left = player.player_input.motion.x < -0.1 and abs(player.player_input.motion.x) > abs(player.player_input.motion.y)
@@ -109,9 +127,9 @@ func _physics_process(delta: float) -> void:
 				player.is_climbing_hopping_right = false
 				player.is_climbing_hopping_up = true
 
-	# Climbing, Speed Up [Input] { Microsoft: Ⓑ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Shift] }.
+	# Climbing, Speed Up [Input]
 	if player.is_climbing \
-	and Input.is_action_pressed("sprint"):
+	and Input.is_action_pressed(current_sprint_action):
 		player.animation_tree.set("parameters/LocomotionTimeScale/scale", 1.5)
 		player.is_sprinting = true
 	else:
@@ -152,3 +170,32 @@ func stop() -> void:
 	player.ledge_detection_vertical.position = Vector3(0, 0, -1) # Reset to default
 	player.ledge_detection_horizontal.hide()
 	player.ledge_detection_marker.hide()
+
+
+func get_contextual_controls(input_type: int) -> Dictionary:
+	if not player or not player.controls: return {}
+
+	if input_type == 0: # KEYBOARD_MOUSE
+		return {
+			player.controls.joypad_button_4_label: "Perspective",
+			player.controls.joypad_button_15_label: "Screenshot",
+			player.controls.joypad_button_6_label: "Pause Menu",
+
+			player.controls.joypad_button_3_label: "Hop",
+			player.controls.joypad_button_1_label: "Fast Climb",
+			player.controls.joypad_button_7_label: "Drop",
+			player.controls.left_joystick_label: "Climb",
+			player.controls.right_joystick_label: "Camera",
+		}
+	else:
+		return {
+			player.controls.joypad_button_4_label: "Perspective",
+			player.controls.joypad_button_15_label: "Screenshot",
+			player.controls.joypad_button_6_label: "Pause Menu",
+
+			player.controls.joypad_button_3_label: "Hop",
+			player.controls.joypad_button_1_label: "Fast Climb",
+			player.controls.joypad_button_7_label: "Drop",
+			player.controls.left_joystick_label: "Climb",
+			player.controls.right_joystick_label: "Camera",
+		}

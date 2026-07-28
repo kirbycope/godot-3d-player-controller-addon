@@ -420,11 +420,14 @@ anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -28.0
-offset_top = -16.0
+offset_top = -40.0
 offset_right = 28.0
-offset_bottom = 7.0
+offset_bottom = 9.0
 grow_horizontal = 2
 text = "Crouch"
+horizontal_alignment = 1
+vertical_alignment = 2
+autowrap_mode = 3
 
 [node name="LeftStickBase" type="TextureRect" parent="BottomLeft" unique_id=538675964]
 visible = false
@@ -467,6 +470,7 @@ offset_bottom = 40.0
 grow_horizontal = 2
 grow_vertical = 0
 text = "Move"
+horizontal_alignment = 1
 
 [node name="KeyW" type="TouchScreenButton" parent="BottomLeft" unique_id=227719598]
 visible = false
@@ -668,6 +672,8 @@ offset_right = 20.5
 offset_bottom = 7.0
 grow_horizontal = 2
 text = "Action"
+horizontal_alignment = 1
+metadata/_edit_use_anchors_ = true
 
 [node name="JoypadButton1" type="TouchScreenButton" parent="BottomRight" unique_id=872941844]
 position = Vector2(256, 64)
@@ -681,12 +687,16 @@ action = "sprint"
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -20.5
-offset_top = -16.0
-offset_right = 20.5
-offset_bottom = 7.0
+offset_left = -23.5
+offset_top = -43.0
+offset_right = 23.5
+offset_bottom = 6.0
 grow_horizontal = 2
 text = "Sprint"
+horizontal_alignment = 1
+vertical_alignment = 2
+autowrap_mode = 3
+metadata/_edit_use_anchors_ = true
 
 [node name="JoypadButton2" type="TouchScreenButton" parent="BottomRight" unique_id=1212512332]
 position = Vector2(128, 64)
@@ -700,12 +710,16 @@ action = "attack"
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -20.5
-offset_top = -16.0
-offset_right = 20.5
+offset_left = -25.0
+offset_top = -42.0
+offset_right = 25.0
 offset_bottom = 7.0
 grow_horizontal = 2
 text = "Attack"
+horizontal_alignment = 1
+vertical_alignment = 2
+autowrap_mode = 3
+metadata/_edit_use_anchors_ = true
 
 [node name="JoypadButton3" type="TouchScreenButton" parent="BottomRight" unique_id=798617834]
 position = Vector2(192, 0)
@@ -725,6 +739,8 @@ offset_right = 20.5
 offset_bottom = 7.0
 grow_horizontal = 2
 text = "Jump"
+horizontal_alignment = 1
+metadata/_edit_use_anchors_ = true
 
 [node name="JoypadButton8" type="TouchScreenButton" parent="BottomRight" unique_id=1690559978]
 position = Vector2(256, 256)
@@ -738,11 +754,14 @@ anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -23.0
-offset_top = -16.0
+offset_top = -40.0
 offset_right = 23.0
-offset_bottom = 7.0
+offset_bottom = 9.0
 grow_horizontal = 2
 text = "Scope"
+horizontal_alignment = 1
+vertical_alignment = 2
+autowrap_mode = 3
 
 [node name="RightStickBase" type="TextureRect" parent="BottomRight" unique_id=488676245]
 visible = false
@@ -781,6 +800,7 @@ offset_bottom = 40.0
 grow_horizontal = 2
 grow_vertical = 0
 text = "Camera"
+horizontal_alignment = 1
 
 [node name="KeyUp" type="TouchScreenButton" parent="BottomRight" unique_id=194875519]
 visible = false
@@ -892,8 +912,9 @@ anchor_left = 1.0
 anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
+offset_left = 2.0
 offset_top = -11.5
-offset_right = 49.0
+offset_right = 89.0
 offset_bottom = 11.5
 grow_horizontal = 0
 grow_vertical = 2
@@ -913,9 +934,9 @@ anchor_left = 1.0
 anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
-offset_left = 1.0
+offset_left = 7.0
 offset_top = -11.5
-offset_right = 46.0
+offset_right = 94.0
 offset_bottom = 11.5
 grow_horizontal = 0
 grow_vertical = 2
@@ -946,6 +967,7 @@ offset_top = -11.5
 offset_bottom = 11.5
 grow_vertical = 2
 text = "Perspective"
+horizontal_alignment = 2
 
 [node name="JoypadButton15" type="TouchScreenButton" parent="TopCenter" unique_id=722696144]
 position = Vector2(64, 0)
@@ -967,6 +989,7 @@ offset_bottom = 16.0
 grow_horizontal = 2
 grow_vertical = 0
 text = "Screenshot"
+horizontal_alignment = 1
 
 [node name="JoypadButton6" type="TouchScreenButton" parent="TopCenter" unique_id=231754768]
 position = Vector2(128, 0)
@@ -1009,12 +1032,13 @@ action = "throw"
 anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
-offset_left = -50.0
+offset_left = -90.0
 offset_top = -11.5
-offset_right = -1.0
+offset_right = -3.0
 offset_bottom = 11.5
 grow_vertical = 2
 text = "Throw"
+horizontal_alignment = 2
 metadata/_edit_use_anchors_ = true
 
 [node name="JoypadAxis5Plus" type="TouchScreenButton" parent="TopRight" unique_id=1548286525]

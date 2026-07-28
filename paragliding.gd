@@ -1,7 +1,12 @@
 class_name Paragliding
 extends NodeStateMachine
 
-@export var stop_action: StringName = &"action"
+@export_category("Paragliding Controls")
+@export_group("Keyboard/Mouse Actions")
+@export var keyboard_stop_action: StringName = &"crouch"
+
+@export_group("Controller/Touch Actions")
+@export var pad_stop_action: StringName = &"action"
 
 var _this_state := NodeStateMachine.States.PARAGLIDING
 
@@ -14,8 +19,11 @@ func _input(event: InputEvent) -> void:
 	# Do nothing if the player is not set
 	if not player: return
 
+	var input_type = player.controls.current_input_type if player.controls else 0
+	var current_stop_action = keyboard_stop_action if input_type == 0 else pad_stop_action
+
 	# Stop "paragliding" and start "falling"
-	if event.is_action_pressed(stop_action) and not event.is_echo():
+	if event.is_action_pressed(current_stop_action) and not event.is_echo():
 		player.state_machine.travel(_this_state, NodeStateMachine.States.FALLING)
 		return
 
@@ -90,3 +98,28 @@ func stop() -> void:
 	player.is_paragliding = false
 	# Restore equipped item visuals when exiting glide.
 	player.inventory.set_equipment_visibility(true)
+
+
+func get_contextual_controls(input_type: int) -> Dictionary:
+	if not player or not player.controls: return {}
+
+	if input_type == 0: # KEYBOARD_MOUSE
+		return {
+			player.controls.joypad_button_4_label: "Perspective",
+			player.controls.joypad_button_15_label: "Screenshot",
+			player.controls.joypad_button_6_label: "Pause Menu",
+
+			player.controls.joypad_button_7_label: "Cancel",
+			player.controls.left_joystick_label: "Steer",
+			player.controls.right_joystick_label: "Camera",
+		}
+	else:
+		return {
+			player.controls.joypad_button_4_label: "Perspective",
+			player.controls.joypad_button_15_label: "Screenshot",
+			player.controls.joypad_button_6_label: "Pause Menu",
+
+			player.controls.joypad_button_0_label: "Cancel",
+			player.controls.left_joystick_label: "Steer",
+			player.controls.right_joystick_label: "Camera",
+		}

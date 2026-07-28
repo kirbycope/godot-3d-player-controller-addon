@@ -1,6 +1,17 @@
 class_name Swimming
 extends NodeStateMachine
 
+@export_category("Swimming Controls")
+@export_group("Keyboard/Mouse Actions")
+@export var keyboard_climb_out_action: StringName = &"jump"
+@export var keyboard_sprint_action: StringName = &"sprint"
+@export var keyboard_crouch_action: StringName = &"crouch"
+
+@export_group("Controller/Touch Actions")
+@export var pad_climb_out_action: StringName = &"jump"
+@export var pad_sprint_action: StringName = &"sprint"
+@export var pad_crouch_action: StringName = &"crouch"
+
 var _this_state := NodeStateMachine.States.SWIMMING
 
 const WATER_SURFACE_SNAP_RATIO := 0.75
@@ -14,9 +25,12 @@ func _input(event: InputEvent) -> void:
 	# Do nothing if the player is not set
 	if not player: return
 
-	# Swimming, Climbing-On [Input] { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
+	var input_type = player.controls.current_input_type if player.controls else 0
+	var current_climb_out_action = keyboard_climb_out_action if input_type == 0 else pad_climb_out_action
+
+	# Swimming, Climbing-On [Input]
 	if player.locomotion_state.get_current_node() == "SwimmingAtEdge" \
-	and Input.is_action_just_pressed("jump") \
+	and event.is_action_pressed(current_climb_out_action) \
 	and not player.is_climbing_on:
 		player.locomotion_state.travel("BracedHangClimbingOn")
 		player.is_climbing_on = true
@@ -55,27 +69,32 @@ func _physics_process(delta: float) -> void:
 	var ledge_detected = player.detect_ledge()
 
 	# Stop "swimming to edge" if the player is no longer colliding with the wall
-	if player.locomotion_state.get_current_node() in ["SwimmingAtEdge","SwimmingToEdge"] \
+	if player.locomotion_state.get_current_node() in ["SwimmingAtEdge", "SwimmingToEdge"] \
 	and not ledge_detected:
 		player.locomotion_state.travel("SwimmingLocomotion")
 
 	# Swimming, To Edge (Raycast)
-	if not player.locomotion_state.get_current_node() in ["SwimmingAtEdge","SwimmingToEdge"] \
+	if not player.locomotion_state.get_current_node() in ["SwimmingAtEdge", "SwimmingToEdge"] \
 	and ledge_detected:
 		player.locomotion_state.travel("SwimmingToEdge")
 
-	# Swimming, Up { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
+	var input_type = player.controls.current_input_type if player.controls else 0
+	var current_climb_out_action = keyboard_climb_out_action if input_type == 0 else pad_climb_out_action
+	var current_sprint_action = keyboard_sprint_action if input_type == 0 else pad_sprint_action
+	var current_crouch_action = keyboard_crouch_action if input_type == 0 else pad_crouch_action
+
+	# Swimming, Up
 	if not player.is_on_wall() \
-	and Input.is_action_just_pressed("jump"):
+	and Input.is_action_just_pressed(current_climb_out_action):
 		pass
 
-	# Swimming, Down { Controller: Left Stick, Keyboard: Left Control }
-	if Input.is_action_just_pressed("crouch"):
+	# Swimming, Down
+	if Input.is_action_just_pressed(current_crouch_action):
 		pass
 
-	# Swimming, Speed [Input] { Microsoft: Ⓑ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Shift] }.
+	# Swimming, Speed [Input]
 	if player.is_swimming \
-	and Input.is_action_pressed("sprint"):
+	and Input.is_action_pressed(current_sprint_action):
 		player.animation_tree.set("parameters/LocomotionTimeScale/scale", 1.5)
 		player.swimming_root_motion_multiplier = 3
 		player.is_sprinting = true
@@ -193,3 +212,30 @@ func stop() -> void:
 		player.current_state = -1
 	# Flag the player as not "swimming"
 	player.is_swimming = false
+
+
+func get_contextual_controls(input_type: int) -> Dictionary:
+	if not player or not player.controls: return {}
+
+	if input_type == 0: # KEYBOARD_MOUSE
+		return {
+			player.controls.joypad_button_4_label: "Perspective",
+			player.controls.joypad_button_15_label: "Screenshot",
+			player.controls.joypad_button_6_label: "Pause Menu",
+
+			player.controls.joypad_button_3_label: "Climb Out",
+			player.controls.joypad_button_1_label: "Fast Swim",
+			player.controls.left_joystick_label: "Swim",
+			player.controls.right_joystick_label: "Camera",
+		}
+	else:
+		return {
+			player.controls.joypad_button_4_label: "Perspective",
+			player.controls.joypad_button_15_label: "Screenshot",
+			player.controls.joypad_button_6_label: "Pause Menu",
+
+			player.controls.joypad_button_3_label: "Climb Out",
+			player.controls.joypad_button_1_label: "Fast Swim",
+			player.controls.left_joystick_label: "Swim",
+			player.controls.right_joystick_label: "Camera",
+		}

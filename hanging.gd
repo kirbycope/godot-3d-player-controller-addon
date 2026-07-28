@@ -1,6 +1,15 @@
 class_name Hanging
 extends NodeStateMachine
 
+@export_category("Hanging Controls")
+@export_group("Keyboard/Mouse Actions")
+@export var keyboard_drop_action: StringName = &"crouch"
+@export var keyboard_climb_up_action: StringName = &"jump"
+
+@export_group("Controller/Touch Actions")
+@export var pad_drop_action: StringName = &"crouch"
+@export var pad_climb_up_action: StringName = &"jump"
+
 var _this_state := NodeStateMachine.States.HANGING
 
 
@@ -12,8 +21,11 @@ func _input(event: InputEvent) -> void:
 	# Do nothing if the player is not set
 	if not player: return
 
-	# Crouch { Controller: Left Stick, Keyboard: Left Control }
-	if event.is_action_pressed("crouch"):
+	var input_type = player.controls.current_input_type if player.controls else 0
+	var current_drop_action = keyboard_drop_action if input_type == 0 else pad_drop_action
+
+	# Drop / Let go
+	if event.is_action_pressed(current_drop_action):
 		# Stop "hanging" and start "falling"
 		player.state_machine.travel(_this_state, NodeStateMachine.States.FALLING)
 		return
@@ -59,8 +71,11 @@ func _physics_process(delta: float) -> void:
 			player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
 			return
 
-	# Hanging, Climbing-On [Input] { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
-	if Input.is_action_just_pressed("jump"):
+	var input_type = player.controls.current_input_type if player.controls else 0
+	var current_climb_up_action = keyboard_climb_up_action if input_type == 0 else pad_climb_up_action
+
+	# Hanging, Climbing-On [Input]
+	if Input.is_action_just_pressed(current_climb_up_action):
 		if player.is_hanging_braced:
 			player.locomotion_state.travel("BracedHangClimbingOn")
 		elif player.is_hanging_free:
@@ -101,3 +116,31 @@ func stop() -> void:
 	player.ledge_detection_vertical.position = Vector3(0, 0, -1) # Reset to default
 	player.ledge_detection_horizontal.hide()
 	player.ledge_detection_marker.hide()
+
+
+func get_contextual_controls(input_type: int) -> Dictionary:
+	if not player or not player.controls: return {}
+
+	if input_type == 0: # KEYBOARD_MOUSE
+		return {
+			player.controls.joypad_button_4_label: "Perspective",
+			player.controls.joypad_button_15_label: "Screenshot",
+			player.controls.joypad_button_6_label: "Pause Menu",
+
+			player.controls.joypad_button_3_label: "Climb Up",
+			player.controls.joypad_button_7_label: "Drop",
+			player.controls.left_joystick_label: "Shimmy",
+			player.controls.right_joystick_label: "Camera",
+		}
+	else:
+		return {
+			player.controls.joypad_button_4_label: "Perspective",
+			player.controls.joypad_button_15_label: "Screenshot",
+			player.controls.joypad_button_6_label: "Pause Menu",
+
+			player.controls.joypad_button_3_label: "Climb Up",
+			player.controls.joypad_button_7_label: "Drop",
+			player.controls.left_joystick_label: "Shimmy",
+			player.controls.right_joystick_label: "Camera",
+		}
+
