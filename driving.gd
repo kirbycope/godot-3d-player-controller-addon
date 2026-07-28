@@ -34,11 +34,12 @@ func _physics_process(delta: float) -> void:
 
 	# Check if the "EnterCar" animation has finished
 	var was_entering_vehicle = player.is_entering_vehicle
-	player.is_entering_vehicle = player.locomotion_state.get_current_node() == "EnteringCar"
+	if player.locomotion_state:
+		player.is_entering_vehicle = player.locomotion_state.get_current_node() == "EnteringCar"
 	if was_entering_vehicle \
 	and not player.is_entering_vehicle:
 		# Move player to Driver's seat
-		var driver_seat = player.is_driving_in.get_node("DriverSeat")
+		var driver_seat = player.is_driving_in.get_node("DriverSeat") if player.is_driving_in else null
 		if driver_seat:
 			player.global_position = driver_seat.global_position
 			player.orientation = driver_seat.global_transform
@@ -55,11 +56,13 @@ func _physics_process(delta: float) -> void:
 
 	# Check if "ExitCar" animation has finished
 	var was_exiting_vehicle = player.is_exiting_vehicle
-	player.is_exiting_vehicle = player.locomotion_state.get_current_node() == "ExitingCar"
+	if player.locomotion_state:
+		player.is_exiting_vehicle = player.locomotion_state.get_current_node() == "ExitingCar"
 	if was_exiting_vehicle \
 	and not player.is_exiting_vehicle:
 		# Stop "driving" and start "standing"
-		player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
+		if player.state_machine:
+			player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
 		return
 
 	# Determine the vehicle's forward velocity relative to world horizontal heading
@@ -85,7 +88,7 @@ func _physics_process(delta: float) -> void:
 			# If braking/reversing is pressed
 			if brake_pressed:
 				# If moving forward, or if accelerate is also held, brake to stop
-				if forward_speed > 0.1 or accelerate_pressed:
+				if forward_speed > 0.5 or accelerate_pressed:
 					var brake_force: float = car.max_brake_force if car.max_brake_force else 50.0
 					car.brake = lerp(car.brake, brake_force, delta * 5.0)
 					car.engine_force = 0.0
