@@ -192,6 +192,7 @@ var smoothed_motion: Vector2 = Vector2.ZERO
 @onready var separation_ray_shape: CollisionShape3D = $SeparationRayShape3D
 @onready var initial_separation_ray_transform: Transform3D = separation_ray_shape.transform
 @onready var controls: CanvasLayer = $Controls
+@onready var crosshair: TextureRect = $Crosshair
 @onready var debug: CanvasLayer = $Debug
 @onready var inventory: Inventory = $Inventory
 @onready var pause: CanvasLayer = $Pause

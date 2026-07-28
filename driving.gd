@@ -1,9 +1,16 @@
 class_name Driving
 extends NodeStateMachine
 
-@export var accelerate_action: StringName = &"shoot"
-@export var brake_action: StringName = &"focus"
-@export var exit_action: StringName = &"jump"
+@export_category("Driving Controls")
+@export_group("Keyboard/Mouse Actions")
+@export var keyboard_accelerate_action: StringName = &"jump"
+@export var keyboard_brake_action: StringName = &"sprint"
+@export var keyboard_exit_action: StringName = &"action"
+
+@export_group("Controller/Touch Actions")
+@export var pad_accelerate_action: StringName = &"shoot"
+@export var pad_brake_action: StringName = &"focus"
+@export var pad_exit_action: StringName = &"jump"
 
 var _this_state := NodeStateMachine.States.DRIVING
 
@@ -16,12 +23,16 @@ func _input(event: InputEvent) -> void:
 	# Do nothing if the player is not set
 	if not player: return
 
+	var input_type = player.controls.current_input_type if player.controls else 0
+	var current_exit_action = keyboard_exit_action if input_type == 0 else pad_exit_action
+
 	# Exit
-	if Input.is_action_just_pressed(exit_action):
-		# Flag the Player as exiting the vehicle
-		player.is_exiting_vehicle = true
-		# Open (and then close) the driver's car door
-		await _open_and_close_drivers_door()
+	if not player.is_entering_vehicle and not player.is_exiting_vehicle:
+		if Input.is_action_just_pressed(current_exit_action):
+			# Flag the Player as exiting the vehicle
+			player.is_exiting_vehicle = true
+			# Open (and then close) the driver's car door
+			await _open_and_close_drivers_door()
 
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
@@ -82,8 +93,12 @@ func _physics_process(delta: float) -> void:
 			car.engine_force = 0.0
 			car.brake = 0.0
 		else:
-			var accelerate_pressed := Input.is_action_pressed(accelerate_action)
-			var brake_pressed := Input.is_action_pressed(brake_action)
+			var input_type = player.controls.current_input_type if player.controls else 0
+			var current_accelerate_action = keyboard_accelerate_action if input_type == 0 else pad_accelerate_action
+			var current_brake_action = keyboard_brake_action if input_type == 0 else pad_brake_action
+
+			var accelerate_pressed := Input.is_action_pressed(current_accelerate_action)
+			var brake_pressed := Input.is_action_pressed(current_brake_action)
 
 			# If braking/reversing is pressed
 			if brake_pressed:
@@ -132,17 +147,10 @@ func start() -> void:
 	player.is_exiting_vehicle = false
 	# Disable player collision
 	player.collision_shape.disabled = true
+	# Disable crosshair
+	player.crosshair.hide()
 	# Open (and then close) the driver's car door
 	await _open_and_close_drivers_door()
-	# Update the labels in the UI to reflect the driving state controls
-	if player.controls:
-		player.controls.set_labels({
-			player.controls.joypad_axis_4_plus_label: "Brake", # Joypad Axis 4 + (Left Trigger, Sony L2, XBox LT, Nintendo ZL)
-			player.controls.joypad_axis_5_plus_label: "Accelerate", # Joypad Axis 5 + (Right Trigger, Sony R2, XBox RT, Nintendo ZR)
-			player.controls.joypad_button_3_label: "Exit", # Joypad Button 3 (Top Action, Sony Triangle, XBox Y, Nintendo X)
-			player.controls.left_joystick_label: "Steer",
-			player.controls.right_joystick_label: "Camera",
-		})
 
 
 ## Stop "driving".
@@ -159,9 +167,8 @@ func stop() -> void:
 	player.is_exiting_vehicle = false
 	# [Re]Enable player collision
 	player.collision_shape.disabled = false
-	# Reset the labels in the UI to reflect the original control labels
-	if player.controls:
-		player.controls.reset_labels()
+	# [Re]Enable crosshair
+	player.crosshair.show()
 
 
 func _open_and_close_drivers_door() -> void:
@@ -171,3 +178,32 @@ func _open_and_close_drivers_door() -> void:
 		animation_player.play("open")
 		await get_tree().create_timer(2.6).timeout
 		animation_player.play("close")
+
+
+func get_contextual_controls(input_type: int) -> Dictionary:
+	if not player or not player.controls: return {}
+
+	if input_type == 0: # KEYBOARD_MOUSE
+		return {
+			player.controls.joypad_button_4_label: "Perspective",
+			player.controls.joypad_button_15_label: "Screenshot",
+			player.controls.joypad_button_6_label: "Pause Menu",
+
+			player.controls.joypad_button_3_label: "Accelerate",
+			player.controls.joypad_button_1_label: "Brake",
+			player.controls.joypad_button_0_label: "Exit",
+			player.controls.left_joystick_label: "Steer",
+			player.controls.right_joystick_label: "Camera",
+		}
+	else:
+		return {
+			player.controls.joypad_button_4_label: "Perspective",
+			player.controls.joypad_button_15_label: "Screenshot",
+			player.controls.joypad_button_6_label: "Pause Menu",
+
+			player.controls.joypad_axis_4_plus_label: "Brake",
+			player.controls.joypad_axis_5_plus_label: "Accelerate",
+			player.controls.joypad_button_3_label: "Exit",
+			player.controls.left_joystick_label: "Steer",
+			player.controls.right_joystick_label: "Camera",
+		}

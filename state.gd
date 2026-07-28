@@ -52,6 +52,12 @@ func _stop_state(state: int) -> void:
 	if not state_node.has_method("stop"):
 		push_error("State %s missing stop()" % str(state_name))
 		return
+	
+	if player and player.controls:
+		if player.controls.input_type_changed.is_connected(state_node._on_input_type_changed):
+			player.controls.input_type_changed.disconnect(state_node._on_input_type_changed)
+		player.controls.reset_labels()
+	
 	state_node.call("stop")
 
 
@@ -65,4 +71,24 @@ func _start_state(state: States) -> void:
 	if not state_node.has_method("start"):
 		push_error("State %s missing start()" % str(state_name))
 		return
+	
+	if player and player.controls:
+		if not player.controls.input_type_changed.is_connected(state_node._on_input_type_changed):
+			player.controls.input_type_changed.connect(state_node._on_input_type_changed)
+		state_node._on_input_type_changed(player.controls.current_input_type)
+	
 	state_node.call("start")
+
+
+func _on_input_type_changed(input_type: int) -> void:
+	if not player or not player.controls: return
+	
+	var controls = get_contextual_controls(input_type)
+	if controls.is_empty():
+		player.controls.reset_labels()
+	else:
+		player.controls.set_labels(controls)
+
+
+func get_contextual_controls(_input_type: int) -> Dictionary:
+	return {}

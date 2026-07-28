@@ -15,10 +15,10 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -160.0
-offset_top = -192.0
-offset_right = -96.0
-offset_bottom = -128.0
+offset_left = -79.99957
+offset_top = -176.0
+offset_right = -15.999573
+offset_bottom = -112.0
 grow_horizontal = 2
 grow_vertical = 0
 
@@ -58,7 +58,6 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="RPM" type="Control" parent="." unique_id=114144023]
-visible = false
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 3
 anchors_preset = 7
@@ -66,10 +65,10 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = 96.0
-offset_top = -192.0
-offset_right = 160.0
-offset_bottom = -128.0
+offset_left = 56.0
+offset_top = -176.0
+offset_right = 120.0
+offset_bottom = -112.0
 grow_horizontal = 2
 grow_vertical = 0
 
