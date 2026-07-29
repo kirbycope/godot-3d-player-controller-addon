@@ -174,8 +174,6 @@ var is_shooting: bool: ## Is the Player currently shooting?
 		if not is_multiplayer_authority() or is_driving or inventory == null:
 			return false
 		return Input.is_action_pressed("shoot") and inventory.can_player_shoot
-var is_on_half_pipe: bool = false ## Is the Player currently inside a half-pipe area?
-var _half_pipe_count: int = 0
 var is_skateboarding: bool = false ## Is the Player currently skateboarding?
 var is_sliding: bool = false ## Is the Player currently sliding?
 var is_sprinting: bool = false ## Is the Player currently sprinting?
@@ -187,14 +185,6 @@ var initial_parent: Node3D
 var orientation := Transform3D()
 var root_motion := Transform3D()
 var smoothed_motion: Vector2 = Vector2.ZERO
-
-
-func set_on_half_pipe(on_pipe: bool) -> void:
-	if on_pipe:
-		_half_pipe_count += 1
-	else:
-		_half_pipe_count = max(0, _half_pipe_count - 1)
-	is_on_half_pipe = _half_pipe_count > 0
 
 @onready var attack_sequence_timer: Timer = $AttackSequenceTimer
 @onready var collision_shape: CollisionShape3D = $CollisionShape3D
@@ -282,13 +272,6 @@ func _input(event: InputEvent) -> void:
 func _physics_process(delta: float) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
-
-	# Reset up_direction smoothly back to world UP when not skateboarding on a half-pipe
-	if not (is_skateboarding and is_on_half_pipe) and not up_direction.is_equal_approx(Vector3.UP):
-		if up_direction.angle_to(Vector3.UP) < 0.01:
-			up_direction = Vector3.UP
-		else:
-			up_direction = up_direction.slerp(Vector3.UP, delta * 10.0).normalized()
 
 	# Start falling if the player is not on the floor and not already falling.
 	if not is_on_floor() and not is_falling \
