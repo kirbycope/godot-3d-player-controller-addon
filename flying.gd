@@ -151,7 +151,7 @@ func get_contextual_controls(input_type: int) -> Dictionary:
 			player.controls.joypad_button_6_label: "Pause Menu",
 
 			player.controls.joypad_button_3_label: "Fly Up",
-			player.controls.joypad_axis_4_plus_label: "Fly Down",
+			player.controls.joypad_button_0_label: "Fly Down",
 			player.controls.left_joystick_label: "Fly",
 			player.controls.right_joystick_label: "Camera",
 		}
