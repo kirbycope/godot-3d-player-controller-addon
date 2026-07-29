@@ -416,6 +416,7 @@ shape = SubResource("CircleShape2D_rs4nb")
 action = "crouch"
 
 [node name="Label" type="Label" parent="BottomLeft/JoypadButton7" unique_id=433012390]
+custom_maximum_size = Vector2(56, 49)
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
@@ -684,6 +685,7 @@ passby_press = true
 action = "sprint"
 
 [node name="Label" type="Label" parent="BottomRight/JoypadButton1" unique_id=2121727848]
+custom_maximum_size = Vector2(47, 49)
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
@@ -707,6 +709,7 @@ passby_press = true
 action = "attack"
 
 [node name="Label" type="Label" parent="BottomRight/JoypadButton2" unique_id=924171933]
+custom_maximum_size = Vector2(50, 49)
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
@@ -750,6 +753,7 @@ shape = SubResource("CircleShape2D_rs4nb")
 action = "scope"
 
 [node name="Label" type="Label" parent="BottomRight/JoypadButton8" unique_id=1914557801]
+custom_maximum_size = Vector2(46, 49)
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5

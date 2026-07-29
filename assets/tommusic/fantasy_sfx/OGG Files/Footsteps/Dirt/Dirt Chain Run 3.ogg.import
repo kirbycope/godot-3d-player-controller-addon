@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://dblp7ljrbb5ht"
+path="res://.godot/imported/Dirt Chain Run 3.ogg-b9a15ecf50e1f2c08dfc570454f160c1.oggvorbisstr"
+
+[deps]
+
+source_file="res://addons/3d_player_controller/assets/tommusic/fantasy_sfx/OGG Files/Footsteps/Dirt/Dirt Chain Run 3.ogg"
+dest_files=["res://.godot/imported/Dirt Chain Run 3.ogg-b9a15ecf50e1f2c08dfc570454f160c1.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

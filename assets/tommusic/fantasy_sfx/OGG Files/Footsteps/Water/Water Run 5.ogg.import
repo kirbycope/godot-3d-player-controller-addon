@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://dlrv2l48nonrm"
+path="res://.godot/imported/Water Run 5.ogg-e3e85408c7d7121bb61a30a8480e3eba.oggvorbisstr"
+
+[deps]
+
+source_file="res://addons/3d_player_controller/assets/tommusic/fantasy_sfx/OGG Files/Footsteps/Water/Water Run 5.ogg"
+dest_files=["res://.godot/imported/Water Run 5.ogg-e3e85408c7d7121bb61a30a8480e3eba.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

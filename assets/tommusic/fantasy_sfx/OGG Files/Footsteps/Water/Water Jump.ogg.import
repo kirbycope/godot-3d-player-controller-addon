@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://dv6k7tdigqiug"
+path="res://.godot/imported/Water Jump.ogg-02d84ab86aadcd16ac4741ffab19322c.oggvorbisstr"
+
+[deps]
+
+source_file="res://addons/3d_player_controller/assets/tommusic/fantasy_sfx/OGG Files/Footsteps/Water/Water Jump.ogg"
+dest_files=["res://.godot/imported/Water Jump.ogg-02d84ab86aadcd16ac4741ffab19322c.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

@@ -38,6 +38,48 @@ func _physics_process(delta: float) -> void:
 	# Do nothing if the player is not set
 	if not player: return
 
+	# When on the half pipe, align player.up_direction to the surface normal
+	var target_up: Vector3 = Vector3.UP
+	if player.is_on_half_pipe:
+		if player.is_on_floor():
+			var floor_norm: Vector3 = player.get_floor_normal()
+			if floor_norm.length_squared() > 0.001:
+				target_up = floor_norm.normalized()
+		else:
+			# Multi-raycast: sample surface normals around player to preserve orientation past coping/airborne
+			var space_state := player.get_world_3d().direct_space_state
+			var ray_dirs: Array[Vector3] = [
+				-player.global_basis.y,
+				-player.global_basis.z,
+				player.global_basis.z,
+				-player.global_basis.y - player.global_basis.z * 0.5
+			]
+			var hit_normals: Array[Vector3] = []
+			for ray_dir in ray_dirs:
+				var ray_query := PhysicsRayQueryParameters3D.create(
+					player.global_position,
+					player.global_position + ray_dir.normalized() * 3.5,
+					player.collision_mask,
+					[player.get_rid()]
+				)
+				var result := space_state.intersect_ray(ray_query)
+				if not result.is_empty() and (result.normal as Vector3).length_squared() > 0.001:
+					hit_normals.append((result.normal as Vector3).normalized())
+
+			if not hit_normals.is_empty():
+				var avg_norm: Vector3 = Vector3.ZERO
+				for norm in hit_normals:
+					avg_norm += norm
+				target_up = avg_norm.normalized()
+			else:
+				target_up = player.up_direction
+
+	if not player.up_direction.is_equal_approx(target_up):
+		if player.up_direction.angle_to(target_up) < 0.01:
+			player.up_direction = target_up
+		else:
+			player.up_direction = player.up_direction.slerp(target_up, delta * 15.0).normalized()
+
 	var target_motion: Vector2 = player.player_input.motion
 	if Input.is_action_pressed("sprint") and target_motion.y > 0.0:
 		target_motion.y = 1.1
@@ -61,6 +103,15 @@ func _physics_process(delta: float) -> void:
 			var side_velocity: Vector3 = side_dir * current_h_vel.dot(side_dir)
 			current_h_vel = forward_velocity + (side_velocity * SKATEBOARD_SIDE_VELOCITY_FACTOR)
 
+	# Check for natural 180 turn at apex on vert wall when momentum reverses
+	if player.is_on_half_pipe and has_forward_dir:
+		var forward_speed: float = current_h_vel.dot(forward_dir)
+		if forward_speed < -0.1 and is_zero_approx(target_motion.x):
+			var q_turn := Quaternion(player.up_direction, PI)
+			player.orientation.basis = Basis(q_turn) * player.orientation.basis
+			forward_dir = player.orientation.basis.z.slide(player.up_direction).normalized()
+			current_h_vel = forward_dir * current_h_vel.length()
+
 	if Input.is_action_just_pressed("move_up") \
 	and current_h_vel.length() <= SKATEBOARD_KICK_PUSH_SPEED_THRESHOLD \
 	and player.locomotion_state.get_current_node() != "SkateboardingKickPush":
@@ -79,8 +130,12 @@ func _physics_process(delta: float) -> void:
 	else:
 		current_h_vel = current_h_vel.move_toward(Vector3.ZERO, SKATEBOARD_FRICTION * delta)
 
+	var gravity_vec: Vector3 = player.get_gravity() * 1.5
+	var tangential_gravity: Vector3 = gravity_vec.slide(player.up_direction)
+	current_h_vel += tangential_gravity * delta
+
 	var vertical_speed: float = player.velocity.dot(player.up_direction)
-	vertical_speed += player.get_gravity().dot(player.up_direction) * 1.5 * delta
+	vertical_speed += gravity_vec.dot(player.up_direction) * delta
 	player.velocity = current_h_vel + (player.up_direction * vertical_speed)
 	player.animation_tree.set(Player.SKATEBOARDING_LOCOMOTION_BLEND_POSITION_PATH, target_motion.y)
 	player.update_movement_and_rotation(delta)

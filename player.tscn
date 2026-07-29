@@ -164,32 +164,27 @@
 [ext_resource type="Script" uid="uid://cy5q0y18f16qq" path="res://addons/3d_player_controller/attacking.gd" id="143_5j8id"]
 [ext_resource type="Script" uid="uid://difhaam5qdn4r" path="res://addons/3d_player_controller/hanging.gd" id="144_0ktn1"]
 [ext_resource type="Script" uid="uid://bn76eia2dihta" path="res://addons/3d_player_controller/falling.gd" id="144_108j8"]
-[ext_resource type="AudioStream" uid="uid://daxnn5bnlesks" path="res://addons/3d_player_controller/assets/epicstockmedia/game_footsteps/FS_Astro_Turf_Boots/FEETHmn_Footstep Astro Turf Boots Dry Interior 7_ESM_GFOOT.wav" id="144_pij8a"]
 [ext_resource type="Script" uid="uid://d3yrab3eiq4j0" path="res://addons/3d_player_controller/crouching.gd" id="144_x0r6x"]
 [ext_resource type="Script" uid="uid://7oyjxd1xp6wx" path="res://addons/3d_player_controller/paragliding.gd" id="145_8f4nr"]
-[ext_resource type="AudioStream" uid="uid://cnx53ds4gby5h" path="res://addons/3d_player_controller/assets/epicstockmedia/game_footsteps/FS_Astro_Turf_Boots/FEETHmn_Footstep Astro Turf Boots Dry Interior 8_ESM_GFOOT.wav" id="145_osk5u"]
 [ext_resource type="AnimationLibrary" uid="uid://beoyakfbpowyp" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Treading Water.glb" id="145_sy08r"]
-[ext_resource type="AudioStream" uid="uid://xlu2vp05gkgd" path="res://addons/3d_player_controller/assets/epicstockmedia/game_footsteps/FS_Astro_Turf_Boots/FEETHmn_Footstep Astro Turf Boots Dry Interior 9_ESM_GFOOT.wav" id="146_3avsa"]
-[ext_resource type="AudioStream" uid="uid://c3swhh5spxtty" path="res://addons/3d_player_controller/assets/epicstockmedia/game_footsteps/FS_Astro_Turf_Boots/FEETHmn_Footstep Astro Turf Boots Dry Interior 10_ESM_GFOOT.wav" id="147_rb0fi"]
 [ext_resource type="Script" uid="uid://cfolkbq3v2mtf" path="res://addons/3d_player_controller/sliding.gd" id="147_x0r6x"]
 [ext_resource type="Script" uid="uid://c6mt7ujyuf5lm" path="res://addons/3d_player_controller/jumping.gd" id="148_7fh25"]
-[ext_resource type="AudioStream" uid="uid://cbrqdjr7nixvg" path="res://addons/3d_player_controller/assets/epicstockmedia/game_footsteps/FS_Wood_Boots/FEETHmn_Footstep Wood Boots Dry Running Punchy Interior 1_ESM_GFOOT.wav" id="148_vtuwp"]
-[ext_resource type="AudioStream" uid="uid://doeukageyk83v" path="res://addons/3d_player_controller/assets/epicstockmedia/game_footsteps/FS_Wood_Boots/FEETHmn_Footstep Wood Boots Dry Running Punchy Interior 2_ESM_GFOOT.wav" id="149_jatfe"]
 [ext_resource type="Script" uid="uid://ckfcvipflgbec" path="res://addons/3d_player_controller/sprinting.gd" id="150_16twp"]
-[ext_resource type="AudioStream" uid="uid://mhhf6v6slvid" path="res://addons/3d_player_controller/assets/epicstockmedia/game_footsteps/FS_Wood_Boots/FEETHmn_Footstep Wood Boots Dry Running Punchy Interior 3_ESM_GFOOT.wav" id="150_y3ps5"]
-[ext_resource type="AudioStream" uid="uid://dcv3gacax5v1s" path="res://addons/3d_player_controller/assets/epicstockmedia/game_footsteps/FS_Wood_Boots/FEETHmn_Footstep Wood Boots Dry Running Punchy Interior 4_ESM_GFOOT.wav" id="151_80vgy"]
-[ext_resource type="AudioStream" uid="uid://d0mdy67ocb43r" path="res://addons/3d_player_controller/assets/epicstockmedia/game_footsteps/FS_Wood_Boots/FEETHmn_Footstep Wood Boots Dry Running Punchy Interior 5_ESM_GFOOT.wav" id="152_miiyk"]
-[ext_resource type="AudioStream" uid="uid://bbn0mx0l5t5ck" path="res://addons/3d_player_controller/assets/epicstockmedia/game_footsteps/FS_Astro_Turf_Boots/FEETHmn_Footstep Astro Turf Boots Dry Interior 1_ESM_GFOOT.wav" id="152_xsdw7"]
-[ext_resource type="AudioStream" uid="uid://dknkk8bmjakuc" path="res://addons/3d_player_controller/assets/epicstockmedia/game_footsteps/FS_Wood_Boots/FEETHmn_Footstep Wood Boots Dry Running Punchy Interior 6_ESM_GFOOT.wav" id="153_0742e"]
-[ext_resource type="AudioStream" uid="uid://bygemduqq2jic" path="res://addons/3d_player_controller/assets/epicstockmedia/game_footsteps/FS_Astro_Turf_Boots/FEETHmn_Footstep Astro Turf Boots Dry Interior 2_ESM_GFOOT.wav" id="153_mihb1"]
-[ext_resource type="AudioStream" uid="uid://ccvorh3cjvjkx" path="res://addons/3d_player_controller/assets/epicstockmedia/game_footsteps/FS_Wood_Boots/FEETHmn_Footstep Wood Boots Dry Running Punchy Interior 7_ESM_GFOOT.wav" id="154_r2tgl"]
-[ext_resource type="AudioStream" uid="uid://cs3311ynomuc2" path="res://addons/3d_player_controller/assets/epicstockmedia/game_footsteps/FS_Astro_Turf_Boots/FEETHmn_Footstep Astro Turf Boots Dry Interior 3_ESM_GFOOT.wav" id="154_xyp3y"]
-[ext_resource type="AudioStream" uid="uid://il83w8couk3t" path="res://addons/3d_player_controller/assets/epicstockmedia/game_footsteps/FS_Astro_Turf_Boots/FEETHmn_Footstep Astro Turf Boots Dry Interior 4_ESM_GFOOT.wav" id="155_hdh45"]
-[ext_resource type="AudioStream" uid="uid://hqf4y4gilbjh" path="res://addons/3d_player_controller/assets/epicstockmedia/game_footsteps/FS_Wood_Boots/FEETHmn_Footstep Wood Boots Dry Running Punchy Interior 8_ESM_GFOOT.wav" id="155_q83rh"]
-[ext_resource type="AudioStream" uid="uid://cjsi27wm567k7" path="res://addons/3d_player_controller/assets/epicstockmedia/game_footsteps/FS_Wood_Boots/FEETHmn_Footstep Wood Boots Dry Running Punchy Interior 9_ESM_GFOOT.wav" id="156_02pgl"]
-[ext_resource type="AudioStream" uid="uid://dacjxelc3ekv4" path="res://addons/3d_player_controller/assets/epicstockmedia/game_footsteps/FS_Astro_Turf_Boots/FEETHmn_Footstep Astro Turf Boots Dry Interior 5_ESM_GFOOT.wav" id="156_pij8a"]
-[ext_resource type="AudioStream" uid="uid://bo7w4kt3h4fve" path="res://addons/3d_player_controller/assets/epicstockmedia/game_footsteps/FS_Wood_Boots/FEETHmn_Footstep Wood Boots Dry Running Punchy Interior 10_ESM_GFOOT.wav" id="157_2bgnt"]
-[ext_resource type="AudioStream" uid="uid://b27a202a6jywd" path="res://addons/3d_player_controller/assets/epicstockmedia/game_footsteps/FS_Astro_Turf_Boots/FEETHmn_Footstep Astro Turf Boots Dry Interior 6_ESM_GFOOT.wav" id="157_osk5u"]
+[ext_resource type="AudioStream" uid="uid://dnlidn43nrbed" path="res://addons/3d_player_controller/assets/tommusic/fantasy_sfx/OGG Files/Footsteps/Dirt/Dirt Run 1.ogg" id="157_ym3ug"]
+[ext_resource type="AudioStream" uid="uid://bleguj4vm8xif" path="res://addons/3d_player_controller/assets/tommusic/fantasy_sfx/OGG Files/Footsteps/Dirt/Dirt Run 2.ogg" id="158_8fd3h"]
+[ext_resource type="AudioStream" uid="uid://dygdp8cr02bdl" path="res://addons/3d_player_controller/assets/tommusic/fantasy_sfx/OGG Files/Footsteps/Dirt/Dirt Run 3.ogg" id="159_gqdy8"]
+[ext_resource type="AudioStream" uid="uid://bmuy24ll0agyd" path="res://addons/3d_player_controller/assets/tommusic/fantasy_sfx/OGG Files/Footsteps/Dirt/Dirt Run 4.ogg" id="160_xdbkn"]
+[ext_resource type="AudioStream" uid="uid://bxo66pgg6ey83" path="res://addons/3d_player_controller/assets/tommusic/fantasy_sfx/OGG Files/Footsteps/Dirt/Dirt Run 5.ogg" id="161_sjfj8"]
+[ext_resource type="AudioStream" uid="uid://d1g6dahq4dpob" path="res://addons/3d_player_controller/assets/tommusic/fantasy_sfx/OGG Files/Footsteps/Stone/Stone Run 1.ogg" id="162_k50we"]
+[ext_resource type="AudioStream" uid="uid://c058ym2eupuea" path="res://addons/3d_player_controller/assets/tommusic/fantasy_sfx/OGG Files/Footsteps/Stone/Stone Run 2.ogg" id="163_3iq4p"]
+[ext_resource type="AudioStream" uid="uid://dnotm8hmw0gfh" path="res://addons/3d_player_controller/assets/tommusic/fantasy_sfx/OGG Files/Footsteps/Stone/Stone Run 3.ogg" id="164_5iivw"]
+[ext_resource type="AudioStream" uid="uid://cfhbaocx6ld26" path="res://addons/3d_player_controller/assets/tommusic/fantasy_sfx/OGG Files/Footsteps/Stone/Stone Run 4.ogg" id="165_oa3tv"]
+[ext_resource type="AudioStream" uid="uid://bstvnojm6riyu" path="res://addons/3d_player_controller/assets/tommusic/fantasy_sfx/OGG Files/Footsteps/Stone/Stone Run 5.ogg" id="166_ue3ts"]
+[ext_resource type="AudioStream" uid="uid://duw88igh3lhib" path="res://addons/3d_player_controller/assets/tommusic/fantasy_sfx/OGG Files/Footsteps/Wood/Wood Run 1.ogg" id="167_qcaj2"]
+[ext_resource type="AudioStream" uid="uid://6olut58msfrx" path="res://addons/3d_player_controller/assets/tommusic/fantasy_sfx/OGG Files/Footsteps/Wood/Wood Run 2.ogg" id="168_nlnto"]
+[ext_resource type="AudioStream" uid="uid://boxq8r8cv2hlv" path="res://addons/3d_player_controller/assets/tommusic/fantasy_sfx/OGG Files/Footsteps/Wood/Wood Run 3.ogg" id="169_b712a"]
+[ext_resource type="AudioStream" uid="uid://b874yoqtyxpi8" path="res://addons/3d_player_controller/assets/tommusic/fantasy_sfx/OGG Files/Footsteps/Wood/Wood Run 4.ogg" id="170_uu022"]
+[ext_resource type="AudioStream" uid="uid://dr2fv4y1wyedo" path="res://addons/3d_player_controller/assets/tommusic/fantasy_sfx/OGG Files/Footsteps/Wood/Wood Run 5.ogg" id="171_ex132"]
 [ext_resource type="PackedScene" uid="uid://d3807jlpj5vsl" path="res://addons/3d_player_controller/inventory.tscn" id="173_0fqn4"]
 [ext_resource type="PackedScene" uid="uid://dgslo5b1yxrd0" path="res://addons/3d_player_controller/pause.tscn" id="173_errws"]
 [ext_resource type="PackedScene" uid="uid://2crtfw6co0ss" path="res://addons/3d_player_controller/settings.tscn" id="174_xwibx"]
@@ -1759,32 +1754,28 @@ nodes/EmoteSpineBlend2/position = Vector2(66.666664, 186.66667)
 node_connections = [&"output", 0, &"LocomotionTimeScale", &"LocomotionTimeScale", 0, &"EmoteSpineBlend2", &"EmoteSpineBlend2", 0, &"LocomotionStateMachine", &"EmoteSpineBlend2", 1, &"EmoteStateMachine"]
 
 [sub_resource type="AudioStreamRandomizer" id="AudioStreamRandomizer_senyo"]
-streams_count = 10
-stream_0/stream = ExtResource("152_xsdw7")
-stream_1/stream = ExtResource("153_mihb1")
-stream_2/stream = ExtResource("154_xyp3y")
-stream_3/stream = ExtResource("155_hdh45")
-stream_4/stream = ExtResource("156_pij8a")
-stream_5/stream = ExtResource("157_osk5u")
-stream_6/stream = ExtResource("144_pij8a")
-stream_7/stream = ExtResource("145_osk5u")
-stream_8/stream = ExtResource("146_3avsa")
-stream_9/stream = ExtResource("147_rb0fi")
+streams_count = 5
+stream_0/stream = ExtResource("157_ym3ug")
+stream_1/stream = ExtResource("158_8fd3h")
+stream_2/stream = ExtResource("159_gqdy8")
+stream_3/stream = ExtResource("160_xdbkn")
+stream_4/stream = ExtResource("161_sjfj8")
 
 [sub_resource type="AudioStreamRandomizer" id="AudioStreamRandomizer_fk680"]
+streams_count = 5
+stream_0/stream = ExtResource("162_k50we")
+stream_1/stream = ExtResource("163_3iq4p")
+stream_2/stream = ExtResource("164_5iivw")
+stream_3/stream = ExtResource("165_oa3tv")
+stream_4/stream = ExtResource("166_ue3ts")
 
 [sub_resource type="AudioStreamRandomizer" id="AudioStreamRandomizer_qjb52"]
-streams_count = 10
-stream_0/stream = ExtResource("148_vtuwp")
-stream_1/stream = ExtResource("149_jatfe")
-stream_2/stream = ExtResource("150_y3ps5")
-stream_3/stream = ExtResource("151_80vgy")
-stream_4/stream = ExtResource("152_miiyk")
-stream_5/stream = ExtResource("153_0742e")
-stream_6/stream = ExtResource("154_r2tgl")
-stream_7/stream = ExtResource("155_q83rh")
-stream_8/stream = ExtResource("156_02pgl")
-stream_9/stream = ExtResource("157_2bgnt")
+streams_count = 5
+stream_0/stream = ExtResource("167_qcaj2")
+stream_1/stream = ExtResource("168_nlnto")
+stream_2/stream = ExtResource("169_b712a")
+stream_3/stream = ExtResource("170_uu022")
+stream_4/stream = ExtResource("171_ex132")
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_fk680"]
 atlas = ExtResource("21_t7djy")
@@ -1805,68 +1796,68 @@ animation_tree = NodePath("AnimationTree")
 [node name="PlayerModel" parent="." unique_id=1771073607 instance=ExtResource("2_om2v3")]
 transform = Transform3D(-1, 0, -1.509958e-07, 0, 1, 0, 1.509958e-07, 0, -1, 0, 0, 0)
 
-[node name="GeneralSkeleton" parent="PlayerModel/Armature" parent_id_path=PackedInt32Array(1771073607, 478129218) index="0" unique_id=2000426114]
+[node name="GeneralSkeleton" parent="PlayerModel/Armature" parent_id_path=PackedInt32Array(1771073607, 75358423) index="0" unique_id=2027532999]
 bones/0/position = Vector3(-0.0059697176, 0, -0.0027810785)
-bones/1/position = Vector3(3.3194956e-05, 0.61753196, -2.9388048e-11)
-bones/1/rotation = Quaternion(-0.1542117, -0.059870545, -0.046633918, 0.98511904)
-bones/2/rotation = Quaternion(0.052459687, 0.017336166, 0.022763725, 0.9982131)
-bones/3/rotation = Quaternion(0.093504876, 0.0031358416, 0.021353101, 0.9953849)
-bones/4/rotation = Quaternion(0.09338961, 0.0035992004, 0.021785889, 0.9953848)
-bones/5/rotation = Quaternion(-0.03567786, 0.005797602, -0.0064574084, 0.9993257)
-bones/6/rotation = Quaternion(-0.10886359, 0.016786503, 0.031018468, 0.99343085)
-bones/8/rotation = Quaternion(0.5402287, 0.44453192, 0.5492971, -0.4569651)
-bones/9/rotation = Quaternion(0.41914964, 0.8585208, -0.28011525, 0.09376043)
-bones/10/rotation = Quaternion(0.46378362, -0.53376496, 0.4637832, 0.53376484)
-bones/11/rotation = Quaternion(-0.16676357, 0.6832478, 0.15488657, 0.6938102)
-bones/12/rotation = Quaternion(-0.15981172, 0.68900067, 0.48097622, 0.5180735)
-bones/13/rotation = Quaternion(0.5718996, 0.13911289, 0.147948, 0.79478925)
-bones/14/rotation = Quaternion(0.28462458, 0.052399352, 0.058806628, 0.95539784)
-bones/15/scale = Vector3(1.0005777, 1.0004861, 1.0001523)
-bones/16/rotation = Quaternion(0.6606452, -4.9546355e-07, -0.07972639, 0.7464527)
-bones/17/rotation = Quaternion(0.6299837, -5.327165e-07, -0.07602626, 0.7728781)
-bones/18/rotation = Quaternion(0.33456063, -3.5762787e-07, -0.040374637, 0.941509)
-bones/20/rotation = Quaternion(0.6605413, -4.8801303e-07, -0.07971385, 0.74654603)
-bones/21/rotation = Quaternion(0.63009155, -4.8801303e-07, -0.076039314, 0.7727889)
-bones/22/rotation = Quaternion(0.3345608, -2.9802322e-07, -0.040374696, 0.94150895)
-bones/24/rotation = Quaternion(0.6606452, -5.103647e-07, -0.07972645, 0.7464527)
-bones/25/rotation = Quaternion(0.6299836, -4.9546355e-07, -0.07602628, 0.7728781)
-bones/26/rotation = Quaternion(0.33456066, -3.2782555e-07, -0.040374607, 0.94150895)
-bones/28/rotation = Quaternion(0.65690285, 0.023723423, -0.106080055, 0.7460985)
-bones/29/rotation = Quaternion(0.6330238, 0.022622293, -0.048638932, 0.7722715)
-bones/30/rotation = Quaternion(0.33456063, -1.6391273e-07, -0.040374655, 0.9415089)
-bones/32/rotation = Quaternion(0.46496367, -0.4825975, -0.62039375, -0.40745556)
-bones/33/rotation = Quaternion(-0.26138717, 0.9447218, -0.13340701, -0.14621858)
-bones/34/rotation = Quaternion(0.46780166, 0.5302469, -0.46780118, 0.53024715)
-bones/35/rotation = Quaternion(-0.17067072, -0.6359371, -0.19779472, 0.72617686)
-bones/36/rotation = Quaternion(-0.056146648, -0.64267623, -0.4164613, 0.640605)
-bones/37/rotation = Quaternion(0.59039044, -0.07727043, 0.05319766, 0.8016473)
-bones/38/rotation = Quaternion(0.27468207, -0.032017242, 0.050910406, 0.9596525)
-bones/39/scale = Vector3(1.0005773, 1.0004869, 1.0001523)
-bones/40/rotation = Quaternion(0.6544766, 4.842878e-07, 0.07975889, 0.7518637)
-bones/41/rotation = Quaternion(0.54132706, 4.4703484e-07, 0.065969765, 0.8382202)
-bones/42/rotation = Quaternion(0.28232282, 1.3411045e-07, 0.034405917, 0.9587023)
-bones/44/rotation = Quaternion(0.6544766, 4.7311192e-07, 0.07975889, 0.7518637)
-bones/45/rotation = Quaternion(0.54132706, 4.0233135e-07, 0.065969825, 0.8382202)
-bones/46/rotation = Quaternion(0.2823228, 1.3411045e-07, 0.034405947, 0.9587023)
-bones/48/rotation = Quaternion(0.6544766, 4.842878e-07, 0.07975889, 0.7518637)
-bones/49/rotation = Quaternion(0.54132706, 4.3213367e-07, 0.065969765, 0.8382202)
-bones/50/rotation = Quaternion(0.28232282, 1.3411045e-07, 0.034405917, 0.9587023)
-bones/52/rotation = Quaternion(0.6544766, 4.842878e-07, 0.07975889, 0.7518637)
-bones/53/rotation = Quaternion(0.54132706, 4.4703484e-07, 0.065969765, 0.8382202)
-bones/54/rotation = Quaternion(0.28232282, 1.3411045e-07, 0.034405917, 0.9587023)
-bones/56/rotation = Quaternion(0.07053153, 0.5891686, 0.79974794, -0.09115394)
-bones/57/rotation = Quaternion(0.033280574, 0.948825, -0.30293834, 0.0827763)
+bones/1/position = Vector3(6.945423e-07, 0.9899598, -4.8260063e-11)
+bones/1/rotation = Quaternion(-0.03248464, -0.045932572, -0.028668894, 0.99800456)
+bones/2/rotation = Quaternion(0.029391337, 0.012903733, 0.022250246, 0.999237)
+bones/3/rotation = Quaternion(0.010217725, 0.0028986158, 0.01368812, 0.9998499)
+bones/4/rotation = Quaternion(0.009977467, 0.0030870098, 0.013707912, 0.9998516)
+bones/5/rotation = Quaternion(0.048995156, -0.00096221274, 0.004072629, 0.99879026)
+bones/6/rotation = Quaternion(-0.06604026, 0.011819713, -0.0014736885, 0.9977459)
+bones/8/rotation = Quaternion(0.4573456, 0.50001395, 0.63221526, -0.3756659)
+bones/9/rotation = Quaternion(0.12320412, 0.8036557, -0.56827694, -0.1265687)
+bones/10/rotation = Quaternion(0.009004968, -0.7070495, 0.009005011, 0.7070495)
+bones/11/rotation = Quaternion(0.05344734, 0.4752006, -0.015299732, 0.8781195)
+bones/12/rotation = Quaternion(-0.23049825, 0.68289214, 0.17169982, 0.67160124)
+bones/13/rotation = Quaternion(0.20149457, 0.20389189, -0.059591617, 0.9561783)
+bones/14/rotation = Quaternion(0.04001307, -0.052876003, -0.12858759, 0.9894789)
+bones/15/scale = Vector3(1.0005779, 1.0004861, 1.0001523)
+bones/16/rotation = Quaternion(0.06621675, 0.00073319674, 0.008431077, 0.9977695)
+bones/17/rotation = Quaternion(0.15099785, -2.9802322e-08, -0.015473753, 0.988413)
+bones/18/rotation = Quaternion(0.070081905, -1.3411045e-07, -0.0071816742, 0.99751544)
+bones/20/rotation = Quaternion(0.13653122, -0.0038359915, -0.02295226, 0.9903625)
+bones/21/rotation = Quaternion(0.15125465, -1.19209275e-07, -0.015500067, 0.9883733)
+bones/22/rotation = Quaternion(0.15993267, -1.0430813e-07, -0.016389221, 0.9869919)
+bones/24/rotation = Quaternion(0.18325119, -0.0046532154, -0.03145516, 0.9825518)
+bones/25/rotation = Quaternion(0.18138772, -8.940695e-08, -0.018587975, 0.98323596)
+bones/26/rotation = Quaternion(0.15521277, -1.9371507e-07, -0.015905587, 0.98775303)
+bones/28/rotation = Quaternion(0.23386711, -0.0035057068, -0.049008608, 0.97102636)
+bones/29/rotation = Quaternion(0.15125789, -1.3411045e-07, -0.015500367, 0.98837286)
+bones/30/rotation = Quaternion(0.14349763, -8.940697e-08, -0.014705032, 0.9895415)
+bones/32/rotation = Quaternion(0.4760052, -0.47927782, -0.63465923, -0.3753926)
+bones/33/rotation = Quaternion(-0.15162301, 0.8272392, -0.49738288, 0.21282893)
+bones/34/rotation = Quaternion(0.041268736, 0.7059015, -0.041268617, 0.7059015)
+bones/35/rotation = Quaternion(0.04539508, -0.57113636, 0.037261218, 0.81875163)
+bones/36/rotation = Quaternion(-0.24051937, -0.6719299, -0.18474628, 0.6756696)
+bones/37/rotation = Quaternion(0.2382267, -0.20985532, 0.051183697, 0.94688386)
+bones/38/rotation = Quaternion(0.045545463, 0.04607943, 0.16169317, 0.984712)
+bones/39/scale = Vector3(1.0005774, 1.0004866, 1.0001522)
+bones/40/rotation = Quaternion(0.059512973, -0.00099127, -0.010975808, 0.99816674)
+bones/41/rotation = Quaternion(0.15128753, 2.9802322e-08, 0.012324184, 0.988413)
+bones/42/rotation = Quaternion(0.07021642, -4.4703484e-08, 0.00571993, 0.9975154)
+bones/44/rotation = Quaternion(0.13051496, 0.003689811, 0.018922122, 0.991259)
+bones/45/rotation = Quaternion(0.15154472, 1.7881396e-07, 0.0123450775, 0.9883734)
+bones/46/rotation = Quaternion(0.16023959, 2.9802322e-08, 0.013053507, 0.9869918)
+bones/48/rotation = Quaternion(0.17745186, 0.0045017004, 0.02645886, 0.98376346)
+bones/49/rotation = Quaternion(0.18173558, 1.6391279e-07, 0.014804484, 0.9832361)
+bones/50/rotation = Quaternion(0.15551049, 5.9604645e-08, 0.012668192, 0.98775303)
+bones/52/rotation = Quaternion(0.2284934, 0.0034029484, 0.04298061, 0.9725903)
+bones/53/rotation = Quaternion(0.15154798, 7.4505806e-08, 0.012345433, 0.9883728)
+bones/54/rotation = Quaternion(0.14377289, 8.940697e-08, 0.011711985, 0.9895414)
+bones/56/rotation = Quaternion(0.1341639, 0.08419102, 0.98453474, -0.07485469)
+bones/57/rotation = Quaternion(-0.03849842, 0.9927454, -0.11301942, 0.014178048)
 bones/57/scale = Vector3(1.0000001, 1, 1.0000001)
-bones/58/rotation = Quaternion(0.059827402, 0.67358893, -0.73648506, -0.016981453)
-bones/59/rotation = Quaternion(-6.338491e-08, 0.99999976, 0.00072839856, -1.1030622e-08)
-bones/61/rotation = Quaternion(-0.046881013, 0.57304156, 0.8179615, 0.019098096)
-bones/62/rotation = Quaternion(-0.011196913, 0.9690272, -0.24348955, -0.039670207)
+bones/58/rotation = Quaternion(-0.040647615, 0.7115998, -0.6997676, 0.047948178)
+bones/59/rotation = Quaternion(-9.186695e-08, 0.9990753, 0.042996287, -1.6792885e-08)
+bones/61/rotation = Quaternion(-0.09073505, -0.0094260285, 0.99543315, -0.028128901)
+bones/62/rotation = Quaternion(0.033090293, 0.9943223, -0.057235397, -0.083381385)
 bones/62/scale = Vector3(0.99999994, 1.0000002, 1.0000001)
-bones/63/rotation = Quaternion(0.07869727, 0.89810884, -0.4240026, -0.08619187)
-bones/64/rotation = Quaternion(-6.404017e-08, 0.99812174, 0.06126214, -1.4177047e-08)
+bones/63/rotation = Quaternion(0.009594444, 0.68574005, -0.72718984, -0.029389305)
+bones/64/rotation = Quaternion(1.1115508e-08, 0.9979895, 0.063381374, 3.759258e-09)
 
 [node name="FirstPersonCameraBoneAttachment" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton" index="2" unique_id=1896825249]
-transform = Transform3D(0.9975878, -0.041331932, -0.05576954, 0.035937704, 0.9948777, -0.09448143, 0.05938898, 0.0922493, 0.99396324, 0.0055521196, 1.0987521, -0.068221755)
+transform = Transform3D(0.99698365, -0.05907539, -0.05033392, 0.05211284, 0.99015695, -0.12989767, 0.057512254, 0.12688282, 0.99024904, -0.0053269537, 1.4879451, -0.038487732)
 bone_name = "Neck"
 bone_idx = 5
 
@@ -1886,7 +1877,7 @@ secondary_limit_angle = 1.9198622
 secondary_damp_threshold = 1.0
 
 [node name="ParagliderBoneAttachment" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton" index="4" unique_id=1910251258]
-transform = Transform3D(0.6079508, 0.06371056, 0.7914145, 0.6097267, 0.6009909, -0.5167623, -0.50855595, 0.7967126, 0.32652685, -0.24226832, 0.9263804, 0.305295)
+transform = Transform3D(0.397014, 0.023574153, 0.91750973, 0.0698571, -0.99754643, -0.004597245, 0.9151501, 0.06591976, -0.39768666, -0.25211954, 0.8420996, -0.003088709)
 bone_name = "RightHand"
 bone_idx = 35
 
@@ -1894,7 +1885,7 @@ bone_idx = 35
 visible = false
 player = NodePath("../../../../..")
 
-[node name="AnimationPlayer" parent="PlayerModel" index="1" unique_id=1675377527]
+[node name="AnimationPlayer" parent="PlayerModel" index="1" unique_id=259935303]
 "libraries/Axe Standing Melee Attack Downward" = ExtResource("4_dtq52")
 "libraries/Axe Standing Melee Attack Horizontal" = ExtResource("5_barxw")
 "libraries/Bow Falling Idle" = ExtResource("8_goiqs")
@@ -2141,6 +2132,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 0)
 stream = SubResource("AudioStreamRandomizer_senyo")
 
 [node name="SFX_Footsteps_Slide" type="AudioStreamPlayer3D" parent="." unique_id=422765804]
+stream = SubResource("AudioStreamRandomizer_fk680")
+
+[node name="SFX_Footsteps_Stone" type="AudioStreamPlayer3D" parent="." unique_id=2001684523]
 stream = SubResource("AudioStreamRandomizer_fk680")
 
 [node name="SFX_Footsteps_Wood" type="AudioStreamPlayer3D" parent="." unique_id=1143168822]
