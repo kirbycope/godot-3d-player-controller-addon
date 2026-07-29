@@ -18,8 +18,8 @@ func _input(event: InputEvent) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
 
-	# Do nothing if the player is not set
-	if not player: return
+	# Do nothing if the player is not set or is paused/ragdolling
+	if not player or player.is_paused or player.is_ragdolling: return
 
 	# Jump
 	if Input.is_action_just_pressed("jump") \

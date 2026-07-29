@@ -45,6 +45,9 @@ func _input(event: InputEvent) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
 
+	# Do nothing if player is paused
+	if player and player.is_paused: return
+
 	# Check if the player is interacting with an equipment item and has pressed "action" to interact
 	if looking_at and event.is_action_pressed("action") and looking_at.has_method("equip"):
 		looking_at.equip(player)
@@ -97,6 +100,9 @@ func _process(delta: float) -> void:
 	# Rotate the [Camera3D]'s [SpringArm3D] using the joypad motion input event
 	var joypad_motion_input: Vector2 = Input.get_vector("look_left", "look_right", "look_up", "look_down")
 	if joypad_motion_input != Vector2.ZERO \
+	and player \
+	and not player.is_paused \
+	and not player.is_ragdolling \
 	and (not player.is_driving or perspective == Perspective.THIRD_PERSON) \
 	and not player.is_focusing:
 		# Rotate the camera based on the joypad motion input event

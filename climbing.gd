@@ -20,8 +20,8 @@ func _input(event: InputEvent) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
 
-	# Do nothing if the player is not set
-	if not player: return
+	# Do nothing if the player is not set or is paused/ragdolling
+	if not player or player.is_paused or player.is_ragdolling: return
 
 	var input_type = player.controls.current_input_type if player.controls else 0
 	var current_drop_action = keyboard_drop_action if input_type == 0 else pad_drop_action
@@ -86,6 +86,8 @@ func _physics_process(delta: float) -> void:
 
 	# Climbing, Hopping [Input]
 	if not player.is_on_floor() \
+	and not player.is_paused \
+	and not player.is_ragdolling \
 	and Input.is_action_just_pressed(current_hop_action) \
 	and (player.locomotion_state.get_current_node() == "ClimbingLocomotion" or player.locomotion_state.get_current_node() == "BracedHangLocomotion"):
 		# Check: Left input past 0.1 deadzone, and |x| > |y| ensures horizontal input dominance (<45° angle to -X).

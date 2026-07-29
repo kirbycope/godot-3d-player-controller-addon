@@ -24,6 +24,10 @@ const SWIMMING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionSt
 @export var rotation_interpolate_speed: float = 10.0
 @export var swimming_root_motion_multiplier: float = 2.0
 
+@export_category("Optional Gadgets & Gear")
+@export var paraglider_scene: PackedScene
+@export var skateboard_scene: PackedScene
+
 var current_state: int = -1 ## The current state of the Player (from the Node/Code [NodeStateMachine], not the AnimationTree NodeStateMachine).
 var locomotion_state: ## Gets the [NodeStateMachine] "LocomotionStateMachine"
 	get:
@@ -169,6 +173,7 @@ var is_logging: bool: ## Is the Player currently logging?
 		return current_node == "Logging" or "Logging" in travel_path
 var is_paragliding: bool = false ## Is the Player currently paragliding?
 var is_paused: bool = false ## Is the Player currently paused?
+var is_ragdolling: bool = false ## Is the Player currently ragdolling?
 var is_shooting: bool: ## Is the Player currently shooting?
 	get:
 		if not is_multiplayer_authority() or is_driving or inventory == null:
@@ -185,6 +190,8 @@ var initial_parent: Node3D
 var orientation := Transform3D()
 var root_motion := Transform3D()
 var smoothed_motion: Vector2 = Vector2.ZERO
+var paraglider: Node3D
+var skateboard: Node3D
 
 @onready var attack_sequence_timer: Timer = $AttackSequenceTimer
 @onready var collision_shape: CollisionShape3D = $CollisionShape3D
@@ -209,9 +216,9 @@ var smoothed_motion: Vector2 = Vector2.ZERO
 @onready var initial_player_model_transform: Transform3D = player_model.transform
 @onready var paraglider_raycast: RayCast3D = $ParagliderRaycast
 @onready var projectile_raycast: RayCast3D = $SpringArm3D/ProjectileRaycast
-@onready var skateboard: Node3D = $PlayerModel/Skateboard
 @onready var skeleton: Skeleton3D = $PlayerModel/Armature/GeneralSkeleton
 @onready var look_at_modifier = $PlayerModel/Armature/GeneralSkeleton/LookAtModifier3D
+@onready var physical_bone_simulator: PhysicalBoneSimulator3D = $PlayerModel/Armature/GeneralSkeleton/PhysicalBoneSimulator3D
 @onready var spring_arm: SpringArm3D = $SpringArm3D
 @onready var camera: Camera3D = $SpringArm3D/Camera3D
 @onready var state_machine: NodeStateMachine = $NodeStateMachine ## Enables/Disables the scripts that run when various States are entered/exited.
@@ -246,14 +253,47 @@ func _ready() -> void:
 	# Ensure the projectile RayCast3D doesn't collide with the player
 	projectile_raycast.add_exception(self)
 
+	# Ensure PhysicalBone3D nodes never collide with the player CharacterBody3D
+	if physical_bone_simulator:
+		for child in physical_bone_simulator.get_children():
+			if child is PhysicalBone3D:
+				child.add_collision_exception_with(self)
+				add_collision_exception_with(child)
+
 	# Set the Player's iniitial state
 	current_state = NodeStateMachine.States.STANDING
+
+	# Initialize optional gadget scenes if assigned
+	if not paraglider:
+		paraglider = get_node_or_null("PlayerModel/Armature/GeneralSkeleton/ParagliderBoneAttachment/Paraglider")
+	if paraglider_scene and not paraglider:
+		var bone_attachment = get_node_or_null("PlayerModel/Armature/GeneralSkeleton/ParagliderBoneAttachment")
+		var paraglider_instance = paraglider_scene.instantiate() as Node3D
+		if paraglider_instance:
+			if bone_attachment:
+				bone_attachment.add_child(paraglider_instance)
+			else:
+				player_model.add_child(paraglider_instance)
+			paraglider = paraglider_instance
+			if "player" in paraglider:
+				paraglider.set("player", self)
+			paraglider.hide()
+
+	if not skateboard:
+		skateboard = get_node_or_null("PlayerModel/Skateboard")
+	if skateboard_scene and not skateboard:
+		var skateboard_instance = skateboard_scene.instantiate() as Node3D
+		if skateboard_instance:
+			player_model.add_child(skateboard_instance)
+			skateboard = skateboard_instance
+			skateboard.hide()
 
 
 ## Called when there is an unhandled input event.
 func _input(event: InputEvent) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
+	if is_paused or is_ragdolling: return
 
 	# Toggle mouse capture
 	if event.is_action_pressed("ui_cancel") and not pause.visible and not settings.visible:
@@ -282,6 +322,7 @@ func _physics_process(delta: float) -> void:
 	and not is_hanging_braced and not is_hanging_free \
 	and not is_jumping and not is_jump_queued \
 	and not is_paragliding \
+	and not is_ragdolling \
 	and not is_skateboarding \
 	and not is_swimming:
 		# Enable the "falling" state in the NodeStateMachine. The AnimationTree will automatically transition to the "Falling" animation state.
@@ -299,7 +340,7 @@ func _physics_process(delta: float) -> void:
 		is_emoting = false
 
 	## DEBUG: Toggle emote state for testing purposes.
-	if Input.is_action_just_pressed("emote"):
+	if not is_paused and not is_ragdolling and Input.is_action_just_pressed("emote"):
 		var emote_state = animation_tree.get(EMOTE_STATE_PLAYBACK_PATH)
 		if emote_state.get_current_node() != "Waving":
 			animation_tree.set("parameters/EmoteSpineBlend2/blend_amount", 1.0)
@@ -307,7 +348,7 @@ func _physics_process(delta: float) -> void:
 			is_emoting = true
 
 	## DEBUG: Remove all equipment for testing purposes.
-	if Input.is_action_just_pressed("unequip"):
+	if not is_paused and not is_ragdolling and Input.is_action_just_pressed("unequip"):
 		inventory.debug_unequip_all()
 
 
@@ -315,6 +356,12 @@ func _physics_process(delta: float) -> void:
 func apply_input(delta: float) -> void:
 	# Get the target motion from the synchronized input.
 	var target_motion: Vector2 = player_input.motion
+
+	# Block player movement control if paused or ragdolling.
+	if is_paused or is_ragdolling:
+		target_motion = Vector2.ZERO
+		smoothed_motion = Vector2.ZERO
+		is_sprinting = false
 
 	# If the player is mining or logging, block regular locomotion transitions by setting the `target_motion` to zero.
 	if is_mining or is_logging:
@@ -346,7 +393,9 @@ func apply_input(delta: float) -> void:
 				animation_tree.set(SWIMMING_LOCOMOTION_BLEND_POSITION_PATH, target_motion.length())
 
 	# Attack { Microsoft: Ⓧ, Nintendo: Ⓨ, Sony: 🟗, Keyboard: [Alt] }
-	if not is_driving \
+	if not is_paused \
+	and not is_ragdolling \
+	and not is_driving \
 	and Input.is_action_just_pressed("attack") \
 	and not is_attacking \
 	and inventory.can_player_attack:
@@ -354,7 +403,9 @@ func apply_input(delta: float) -> void:
 		state_machine.travel(current_state, NodeStateMachine.States.ATTACKING)
 
 	# Climbing, Start { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
-	if not is_driving \
+	if not is_paused \
+	and not is_ragdolling \
+	and not is_driving \
 	and not is_on_floor() \
 	and not is_climbing \
 	and not is_hanging_braced \
@@ -375,7 +426,9 @@ func apply_input(delta: float) -> void:
 			state_machine.travel(current_state, NodeStateMachine.States.CLIMBING)
 
 	# Paragliding, Start { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
-	if not is_driving \
+	if not is_paused \
+	and not is_ragdolling \
+	and not is_driving \
 	and not is_on_floor() \
 	and Input.is_action_just_pressed("jump") \
 	and (is_falling or is_jumping) \
@@ -390,7 +443,9 @@ func apply_input(delta: float) -> void:
 		state_machine.travel(current_state, NodeStateMachine.States.PARAGLIDING)
 
 	# Crouch { Console: Left ⬤, Keyboard: [Control] }.
-	if not is_driving \
+	if not is_paused \
+	and not is_ragdolling \
+	and not is_driving \
 	and Input.is_action_pressed("crouch") \
 	and not is_crouching \
 	and is_on_floor() \
@@ -400,7 +455,9 @@ func apply_input(delta: float) -> void:
 		state_machine.travel(current_state, NodeStateMachine.States.CROUCHING)
 
 	# Jump { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
-	if not is_driving \
+	if not is_paused \
+	and not is_ragdolling \
+	and not is_driving \
 	and is_on_floor() \
 	and Input.is_action_just_pressed("jump") \
 	and not is_climbing \
@@ -413,7 +470,9 @@ func apply_input(delta: float) -> void:
 		state_machine.travel(current_state, NodeStateMachine.States.JUMPING)
 
 	# Flying, Start { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
-	if not is_flying \
+	if not is_paused \
+	and not is_ragdolling \
+	and not is_flying \
 	and (is_jumping or is_falling) \
 	and not is_jump_queued \
 	and paraglider_raycast.is_colliding() \
@@ -421,7 +480,9 @@ func apply_input(delta: float) -> void:
 		state_machine.travel(current_state, NodeStateMachine.States.FLYING)
 
 	# Sprint { Microsoft: Ⓑ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Shift] }.
-	if not is_driving \
+	if not is_paused \
+	and not is_ragdolling \
+	and not is_driving \
 	and is_on_floor() \
 	and Input.is_action_pressed("sprint") \
 	and not is_crouching \
@@ -439,7 +500,9 @@ func apply_input(delta: float) -> void:
 		is_sprinting = false
 
 	# Slide (Crouch while Sprinting)
-	if not is_driving \
+	if not is_paused \
+	and not is_ragdolling \
+	and not is_driving \
 	and is_sprinting \
 	and Input.is_action_just_pressed("crouch") \
 	and not is_sliding:
@@ -652,6 +715,13 @@ func sfx_footsteps_slide_play():
 		if collider:
 			if collider.is_in_group("GRASS"):
 				sfx_footsteps_slide.play()
+
+
+func toggle_ragdoll() -> void:
+	if not is_ragdolling:
+		state_machine.travel(current_state, NodeStateMachine.States.RAGDOLLING)
+	else:
+		state_machine.travel(current_state, NodeStateMachine.States.STANDING)
 
 
 ## Reset the attack sequence when the attack sequence timer times out.

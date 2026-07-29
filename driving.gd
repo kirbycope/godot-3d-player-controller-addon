@@ -20,8 +20,8 @@ func _input(event: InputEvent) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
 
-	# Do nothing if the player is not set
-	if not player: return
+	# Do nothing if the player is not set or is paused/ragdolling
+	if not player or player.is_paused or player.is_ragdolling: return
 
 	var input_type = player.controls.current_input_type if player.controls else 0
 	var current_exit_action = keyboard_exit_action if input_type == 0 else pad_exit_action
@@ -88,7 +88,7 @@ func _physics_process(delta: float) -> void:
 	and not player.is_entering_vehicle \
 	and not player.is_exiting_vehicle:
 		var car = player.is_driving_in
-		var is_car_disabled: bool = car.get("is_on_fire") == true or car.get("has_exploded") == true
+		var is_car_disabled: bool = car.get("is_on_fire") == true or car.get("has_exploded") == true or player.is_paused or player.is_ragdolling
 		if is_car_disabled:
 			car.engine_force = 0.0
 			car.brake = 0.0
@@ -127,7 +127,7 @@ func _physics_process(delta: float) -> void:
 	and not player.is_entering_vehicle \
 	and not player.is_exiting_vehicle:
 		var car = player.is_driving_in
-		var is_car_disabled: bool = car.get("is_on_fire") == true or car.get("has_exploded") == true
+		var is_car_disabled: bool = car.get("is_on_fire") == true or car.get("has_exploded") == true or player.is_paused or player.is_ragdolling
 		if is_car_disabled:
 			car.steering = 0.0
 		else:

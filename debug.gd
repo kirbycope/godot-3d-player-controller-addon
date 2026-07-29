@@ -12,6 +12,9 @@ func _input(event: InputEvent) -> void:
 		if event.is_action_pressed("debug"):
 			visible = !visible
 
+		if event is InputEventKey and event.pressed and not event.is_echo() and event.keycode == KEY_R:
+			player.toggle_ragdoll()
+
 
 ## Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta: float) -> void:
@@ -36,6 +39,7 @@ func _process(_delta: float) -> void:
 		$States/is_jumping.button_pressed = (player.is_jump_queued or player.is_jumping)
 		$States/is_paragliding.button_pressed = player.is_paragliding
 		$States/is_paused.button_pressed = player.is_paused
+		$States/is_ragdolling.button_pressed = player.is_ragdolling
 		$States/is_shooting.button_pressed = player.is_shooting
 		$States/is_skateboarding.button_pressed = player.is_skateboarding
 		$States/is_sliding.button_pressed = player.is_sliding

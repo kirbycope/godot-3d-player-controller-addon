@@ -18,8 +18,8 @@ func _input(event: InputEvent) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
 
-	# Do nothing if the player is not set
-	if not player: return
+	# Do nothing if the player is not set or is paused/ragdolling
+	if not player or player.is_paused or player.is_ragdolling: return
 
 	var input_type = player.controls.current_input_type if player.controls else 0
 	var current_drop_action = keyboard_drop_action if input_type == 0 else pad_drop_action
@@ -75,7 +75,7 @@ func _physics_process(delta: float) -> void:
 	var current_climb_up_action = keyboard_climb_up_action if input_type == 0 else pad_climb_up_action
 
 	# Hanging, Climbing-On [Input]
-	if Input.is_action_just_pressed(current_climb_up_action):
+	if not player.is_paused and not player.is_ragdolling and Input.is_action_just_pressed(current_climb_up_action):
 		if player.is_hanging_braced:
 			player.locomotion_state.travel("BracedHangClimbingOn")
 		elif player.is_hanging_free:

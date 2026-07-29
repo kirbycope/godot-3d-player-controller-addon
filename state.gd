@@ -11,6 +11,7 @@ enum States {
 	HANGING,
 	JUMPING,
 	PARAGLIDING,
+	RAGDOLLING,
 	SKATEBOARDING,
 	SLIDING,
 	SPRINTING,
@@ -31,6 +32,10 @@ static func get_state_name(state: int) -> StringName:
 
 ## Transition from one state to another.
 func travel(from_state: States, to_state: States) -> void:
+	# Block transitions while ragdolling unless explicitly entering or exiting the RAGDOLLING state
+	if player and player.is_ragdolling and to_state != States.RAGDOLLING and from_state != States.RAGDOLLING:
+		return
+
 	if from_state in States.values():
 		_stop_state(from_state)
 	else:
