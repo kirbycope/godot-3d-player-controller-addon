@@ -3,7 +3,7 @@ extends CanvasLayer
 
 var equipment: Array = []
 var equipment_by_type: Dictionary = {}
-var can_player_attack: bool = false ## Does the currently equipped item allow the Player to attack?
+var can_player_attack: bool = true ## Does the currently equipped item allow the Player to attack?
 var can_player_shoot: bool = false ## Does the currently equipped item allow the Player to shoot?
 @export var player: Player
 
@@ -27,7 +27,7 @@ func remove_equipment(item: Node) -> void:
 func debug_unequip_all() -> void:
 	equipment.clear()
 	equipment_by_type.clear()
-	can_player_attack = false
+	can_player_attack = true
 	can_player_shoot = false
 
 	if not player:
@@ -48,7 +48,7 @@ func debug_unequip_all() -> void:
 
 func rebuild_equipment_cache() -> void:
 	equipment_by_type.clear()
-	can_player_attack = false
+	can_player_attack = is_unarmed()
 	can_player_shoot = false
 
 	for item in equipment:
@@ -105,3 +105,7 @@ func has_one_handed_or_shield_equipped() -> bool:
 		Equipment.EquipmentType.SWORD_1H,
 		Equipment.EquipmentType.SWORD_AND_SHIELD,
 	])
+
+
+func is_unarmed() -> bool:
+	return equipment.is_empty()

@@ -5,6 +5,7 @@ const EMOTE_STATE_PLAYBACK_PATH: String = "parameters/EmoteStateMachine/playback
 const LOCOMOTION_STATE_PLAYBACK_PATH: String = "parameters/LocomotionStateMachine/playback"
 const ARCHERY_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/ArcheryLocomotion/blend_position"
 const BOW_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/BowLocomotion/blend_position"
+const BOXING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/BoxingLocomotion/blend_position"
 const BRACED_HANG_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/BracedHangLocomotion/blend_position"
 const CLIMBING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/ClimbingLocomotion/blend_position"
 const CROUCHING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/CrouchingLocomotion/blend_position"
@@ -84,8 +85,9 @@ var uses_equipment_jump_variants: bool:
 var is_hanging: bool:
 	get:
 		return is_hanging_braced or is_hanging_free
+var is_boxing: bool = false
 
-# Attack Sequence (while holding equipment)
+# Attack Sequence
 var attack_sequence: int = 0
 var is_attacking: bool = false
 var is_attacking_1: bool: # Attack Sequence: 1 of n
@@ -93,13 +95,13 @@ var is_attacking_1: bool: # Attack Sequence: 1 of n
 		if not is_multiplayer_authority() or animation_tree == null:
 			return false
 		var current_node: String = String(locomotion_state.get_current_node())
-		return current_node == "GreatSwordDownwardSlash" or current_node == "ShieldDownwardSlash"
+		return current_node == "GreatSwordDownwardSlash" or current_node == "ShieldDownwardSlash" or current_node == "ShortHeadJab"
 var is_attacking_2: bool: # Attack Sequence: 2 of n
 	get:
 		if not is_multiplayer_authority() or animation_tree == null:
 			return false
 		var current_node: String = String(locomotion_state.get_current_node())
-		return current_node == "GreatSwordLowSlash" or current_node == "ShieldCrossSlash"
+		return current_node == "GreatSwordLowSlash" or current_node == "ShieldCrossSlash" or current_node == "BackHandCross"
 var is_attacking_3: bool: # Attack Sequence: 3 of n
 	get:
 		if not is_multiplayer_authority() or animation_tree == null:
@@ -307,7 +309,6 @@ func _input(event: InputEvent) -> void:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
-# https://github.com/godotengine/tps-demo/blob/master/player/gd#L54
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(delta: float) -> void:
 	# Do nothing if not the authority
@@ -542,6 +543,8 @@ func apply_input(delta: float) -> void:
 				animation_tree.set(PISTOL_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 			elif inventory.has_equipment(Equipment.EquipmentType.RIFLE):
 				animation_tree.set(RIFLE_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
+			elif inventory.is_unarmed() and is_boxing:
+				animation_tree.set(BOXING_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 			else:
 				animation_tree.set(STANDING_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 
@@ -590,6 +593,8 @@ func apply_input(delta: float) -> void:
 				animation_tree.set(PISTOL_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
 			elif inventory.has_equipment(Equipment.EquipmentType.RIFLE):
 				animation_tree.set(RIFLE_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
+			elif inventory.is_unarmed() and is_boxing:
+				animation_tree.set(BOXING_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
 			else:
 				animation_tree.set(STANDING_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
 
@@ -683,6 +688,8 @@ func get_grounded_locomotion_state() -> StringName:
 		return &"PistolLocomotion"
 	if equipped_rifle:
 		return &"RifleLocomotion"
+	if is_boxing:
+		return &"BoxingLocomotion"
 	return &"StandingLocomotion"
 
 

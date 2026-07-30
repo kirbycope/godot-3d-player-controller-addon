@@ -48,6 +48,13 @@ func _physics_process(delta: float) -> void:
 			elif current_node == "GreatSwordPowerSlash": ## 2-Handed Weapon, Attack 3 of 3
 				player.attack_sequence = 3
 
+		# Attack Sequence: Unarmed / Boxing
+		elif player.inventory.is_unarmed():
+			if current_node == "ShortHeadJab": ## Unarmed / Boxing, Attack 1 of 2
+				player.attack_sequence = 1
+			elif current_node == "BackHandCross": ## Unarmed / Boxing, Attack 2 of 2
+				player.attack_sequence = 2
+
 	# Check if the player is no longer attacking
 	if player.locomotion_state.get_current_node() not in [
 		"GreatSwordDownwardSlash", ## 2-Handed Weapon, Attack 1 of 3
@@ -56,6 +63,8 @@ func _physics_process(delta: float) -> void:
 		"ShieldDownwardSlash", ## Sword and Shield, Attack 1 of 3
 		"ShieldCrossSlash", ## Sword and Shield, Attack 2 of 3
 		"ShieldPowerSlash", ## Sword and Shield, Attack 3 of 3
+		"ShortHeadJab", ## Unarmed / Boxing, Attack 1 of 2
+		"BackHandCross", ## Unarmed / Boxing, Attack 2 of 2
 	]:
 		# Stop "attacking"
 		stop()
@@ -69,6 +78,9 @@ func start() -> void:
 	player.current_state = _this_state
 	# Flag the player as "attacking"
 	player.is_attacking = true
+	# Flag as boxing if unarmed
+	if player.inventory and player.inventory.is_unarmed():
+		player.is_boxing = true
 	# Start the attack sequence timer
 	player.attack_sequence_timer.start()
 	# Reset the attack state variables
