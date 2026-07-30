@@ -288,6 +288,8 @@ func _ready() -> void:
 		if skateboard_instance:
 			player_model.add_child(skateboard_instance)
 			skateboard = skateboard_instance
+			if "player" in skateboard:
+				skateboard.set("player", self)
 			skateboard.hide()
 
 
@@ -467,6 +469,8 @@ func apply_input(delta: float) -> void:
 	and not is_jump_queued \
 	and not is_paragliding \
 	and not is_sliding:
+		if is_boxing:
+			is_boxing = false
 		# Enable the "jumping" state in the NodeStateMachine. The AnimationTree will automatically transition to the "Falling" animation state.
 		state_machine.travel(current_state, NodeStateMachine.States.JUMPING)
 
@@ -491,6 +495,8 @@ func apply_input(delta: float) -> void:
 	and not is_jumping \
 	and not is_sliding \
 	and (target_motion.y > 0.0 if is_focusing else target_motion.length() > 0.0):
+		if is_boxing:
+			is_boxing = false
 		if is_focusing:
 			target_motion.y *= 1.5
 			target_motion.x *= 0.5 # reduce strafe blend by 50% when sprinting so the blend favors the forward direction
@@ -707,9 +713,9 @@ func sfx_footsteps_play():
 	if is_on_floor() and paraglider_raycast.is_colliding():
 		var collider := paraglider_raycast.get_collider() as Node3D
 		if collider:
-			if collider.is_in_group("GRASS"):
+			if (collider.is_in_group("DIRT") or collider.is_in_group("GRASS")):
 				sfx_footsteps_grass.play()
-			elif collider.is_in_group("STONE"):
+			elif (collider.is_in_group("COBBLESTONE") or collider.is_in_group("CONCRETE") or collider.is_in_group("STONE")):
 				sfx_footsteps_stone.play()
 			elif collider.is_in_group("WOOD"):
 				sfx_footsteps_wood.play()
