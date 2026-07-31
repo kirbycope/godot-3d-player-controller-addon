@@ -18,7 +18,9 @@ enum EquipmentType {
 @export var bone_attachment_bone_name: String ## The name of the bone on the player's skeleton to which this equipment will be attached when equipped. (e.g. "RightHand", "LeftHand", etc.)
 @export var can_attack: bool = false ## Does this equipment have an attack/melee action that the player can perform?
 @export var can_shoot: bool = false ## Does this equipment have a shooting/ranged action that the player can perform?
+@export var display_name: String = "" ## Name displayed in the UI. If empty, falls back to equipment type name.
 @export var equipment_type: EquipmentType ## The type of equipment (e.g. AXE_1H, BOW, RIFLE, etc.)
+@export var icon: Texture2D ## Icon to display in the UI for this equipment
 @export var is_exclusive: bool = false ## Is this equipment exclusive, meaning it cannot be equipped with other equipment types simultaneously?
 @export var is_throwable: bool = false ## Can this equipment be thrown?
 @export var projectile_speed: float = 50.0 ## meters/second (Arrows, Bullets, etc.)
@@ -56,6 +58,9 @@ func _update_attachment_offsets() -> void:
 
 
 func display_menu(player: Player) -> void:
+	if player.inventory and player.inventory.has_equipment_in_backpack(equipment_type, bone_attachment_bone_name):
+		return
+
 	if action_prompt:
 		action_prompt.show()
 		action_prompt.get_node("KeyboardMouse").hide()
@@ -80,6 +85,9 @@ func equip(player: Player) -> void:
 		return
 	if not player.inventory:
 		push_error("Inventory not found on player!")
+		return
+
+	if player.inventory.has_equipment_in_backpack(equipment_type, bone_attachment_bone_name):
 		return
 
 	# 1. Find the Skeleton3D on the player (adjust the node path if needed)
@@ -113,7 +121,8 @@ func equip(player: Player) -> void:
 					if "equipment_type" in sub_child:
 						player.inventory.remove_equipment(sub_child)
 				skeleton.remove_child(child)
-				child.queue_free() # Clean it up from memory
+				player.inventory.add_child(child)
+				child.hide()
 
 	# 3. Create a new BoneAttachment3D and configure it
 	var new_attachment = BoneAttachment3D.new()
