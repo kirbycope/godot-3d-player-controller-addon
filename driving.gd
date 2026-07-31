@@ -149,6 +149,10 @@ func start() -> void:
 	player.collision_shape.disabled = true
 	# Disable crosshair
 	player.crosshair.hide()
+	# Disable physical bone simulator
+	if player.physical_bone_simulator:
+		player.physical_bone_simulator.physical_bones_stop_simulation()
+		player.physical_bone_simulator.process_mode = Node.PROCESS_MODE_DISABLED
 	# Open (and then close) the driver's car door
 	await _open_and_close_drivers_door()
 
@@ -169,6 +173,9 @@ func stop() -> void:
 	player.collision_shape.disabled = false
 	# [Re]Enable crosshair
 	player.crosshair.show()
+	# [Re]Enable physical bone simulator
+	if player.physical_bone_simulator:
+		player.physical_bone_simulator.process_mode = Node.PROCESS_MODE_INHERIT
 
 
 func _open_and_close_drivers_door() -> void:
