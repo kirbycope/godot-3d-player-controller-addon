@@ -61,7 +61,7 @@ func _process(_delta: float) -> void:
 		$Bow/is_drawing_arrow.button_pressed = player.is_drawing_arrow
 		$Bow/is_firing_arrow.button_pressed = player.is_firing_arrow
 
-		$Attacking.visible = player.inventory.can_player_attack
+		$Attacking.visible = player.inventory.can_player_attack and (player.is_attacking_1 or player.is_attacking_2 or player.is_attacking_3)
 		$Attacking/is_attacking_1.button_pressed = player.is_attacking_1
 		$Attacking/is_attacking_2.button_pressed = player.is_attacking_2
 		$Attacking/is_attacking_3.button_pressed = player.is_attacking_3

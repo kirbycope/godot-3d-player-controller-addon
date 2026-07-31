@@ -25,12 +25,57 @@ func _input(event: InputEvent) -> void:
 
 	var input_type = player.controls.current_input_type if player.controls else 0
 	var current_drop_action = keyboard_drop_action if input_type == 0 else pad_drop_action
+	var current_hop_action = keyboard_hop_action if input_type == 0 else pad_hop_action
 
 	# Drop / Let go
 	if event.is_action_pressed(current_drop_action):
 		# Start "falling"
 		player.state_machine.travel(_this_state, NodeStateMachine.States.FALLING)
 		return
+
+	# Climbing, Hopping [Input]
+	if not player.is_on_floor() \
+	and event.is_action_pressed(current_hop_action) \
+	and not event.is_echo() \
+	and (player.locomotion_state.get_current_node() == "ClimbingLocomotion" or player.locomotion_state.get_current_node() == "BracedHangLocomotion"):
+		# Check: Left input past 0.1 deadzone, and |x| > |y| ensures horizontal input dominance (<45° angle to -X).
+		var hop_left = player.player_input.motion.x < -0.1 and abs(player.player_input.motion.x) > abs(player.player_input.motion.y)
+		# Check: Right input past 0.1 deadzone, and |x| > |y| ensures horizontal input dominance (<45° angle to +X).
+		var hop_right = player.player_input.motion.x > 0.1 and abs(player.player_input.motion.x) > abs(player.player_input.motion.y)
+		# Check: Up input past 0.1 deadzone, and |y| > |x| ensures vertical input dominance (<45° angle to +Y).
+		var hop_up = player.player_input.motion == Vector2.ZERO or (player.player_input.motion.y > 0.1 and abs(player.player_input.motion.y) > abs(player.player_input.motion.x))
+		# Determine which hop direction to take based on input
+		if hop_left:
+			player.locomotion_state.travel("BracedHangHopLeft")
+			player.is_hopping_from_climbing = player.is_climbing
+			player.is_climbing_hopping_left = true
+			player.is_climbing_hopping_right = false
+			player.is_climbing_hopping_up = false
+		elif hop_right:
+			player.locomotion_state.travel("BracedHangHopRight")
+			player.is_hopping_from_climbing = player.is_climbing
+			player.is_climbing_hopping_left = false
+			player.is_climbing_hopping_right = true
+			player.is_climbing_hopping_up = false
+		else:
+			# Check if the player can climb on to the ledge detection target
+			if player.is_hanging_braced and player.ledge_detection_vertical and player.ledge_detection_vertical.is_colliding():
+				player.climbing_on_target = player.ledge_detection_vertical.get_collision_point()
+				player.locomotion_state.travel("BracedHangClimbingOn")
+				player.is_climbing = false
+				player.is_climbing_on = true
+				player.is_hanging_braced = false
+				player.is_hanging_free = false
+				player.is_climbing_hopping_left = false
+				player.is_climbing_hopping_right = false
+				player.is_climbing_hopping_up = false
+			# If the ledge detection target is not valid, the player will hop up instead.
+			elif hop_up:
+				player.locomotion_state.travel("BracedHangHopUp")
+				player.is_hopping_from_climbing = player.is_climbing
+				player.is_climbing_hopping_left = false
+				player.is_climbing_hopping_right = false
+				player.is_climbing_hopping_up = true
 
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
@@ -81,53 +126,8 @@ func _physics_process(delta: float) -> void:
 			player.is_climbing_on = false
 
 	var input_type = player.controls.current_input_type if player.controls else 0
-	var current_hop_action = keyboard_hop_action if input_type == 0 else pad_hop_action
 	var current_sprint_action = keyboard_sprint_action if input_type == 0 else pad_sprint_action
 
-	# Climbing, Hopping [Input]
-	if not player.is_on_floor() \
-	and not player.is_paused \
-	and not player.is_ragdolling \
-	and Input.is_action_just_pressed(current_hop_action) \
-	and (player.locomotion_state.get_current_node() == "ClimbingLocomotion" or player.locomotion_state.get_current_node() == "BracedHangLocomotion"):
-		# Check: Left input past 0.1 deadzone, and |x| > |y| ensures horizontal input dominance (<45° angle to -X).
-		var hop_left = player.player_input.motion.x < -0.1 and abs(player.player_input.motion.x) > abs(player.player_input.motion.y)
-		# Check: Right input past 0.1 deadzone, and |x| > |y| ensures horizontal input dominance (<45° angle to +X).
-		var hop_right = player.player_input.motion.x > 0.1 and abs(player.player_input.motion.x) > abs(player.player_input.motion.y)
-		# Check: Up input past 0.1 deadzone, and |y| > |x| ensures vertical input dominance (<45° angle to +Y).
-		var hop_up = player.player_input.motion == Vector2.ZERO or (player.player_input.motion.y > 0.1 and abs(player.player_input.motion.y) > abs(player.player_input.motion.x))
-		# Determine which hop direction to take based on input
-		if hop_left:
-			player.locomotion_state.travel("BracedHangHopLeft")
-			player.is_hopping_from_climbing = player.is_climbing
-			player.is_climbing_hopping_left = true
-			player.is_climbing_hopping_right = false
-			player.is_climbing_hopping_up = false
-		elif hop_right:
-			player.locomotion_state.travel("BracedHangHopRight")
-			player.is_hopping_from_climbing = player.is_climbing
-			player.is_climbing_hopping_left = false
-			player.is_climbing_hopping_right = true
-			player.is_climbing_hopping_up = false
-		else:
-			# Check if the player can climb on to the ledge detection target
-			if player.is_hanging_braced and player.ledge_detection_vertical and player.ledge_detection_vertical.is_colliding():
-				player.climbing_on_target = player.ledge_detection_vertical.get_collision_point()
-				player.locomotion_state.travel("BracedHangClimbingOn")
-				player.is_climbing = false
-				player.is_climbing_on = true
-				player.is_hanging_braced = false
-				player.is_hanging_free = false
-				player.is_climbing_hopping_left = false
-				player.is_climbing_hopping_right = false
-				player.is_climbing_hopping_up = false
-			# If the ledge detection target is not valid, the player will hop up instead.
-			elif hop_up:
-				player.locomotion_state.travel("BracedHangHopUp")
-				player.is_hopping_from_climbing = player.is_climbing
-				player.is_climbing_hopping_left = false
-				player.is_climbing_hopping_right = false
-				player.is_climbing_hopping_up = true
 
 	# Climbing, Speed Up [Input]
 	if player.is_climbing \
