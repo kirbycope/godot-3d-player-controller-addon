@@ -324,7 +324,7 @@ scale = Vector2(2, 2)
 texture_normal = ExtResource("52_iccxp")
 texture_pressed = ExtResource("53_1mwrh")
 shape = SubResource("ConvexPolygonShape2D_rs4nb")
-action = "ui_up"
+action = "seeker"
 
 [node name="Label" type="Label" parent="BottomLeft/JoypadButton11" unique_id=724217657]
 visible = false
@@ -345,7 +345,7 @@ scale = Vector2(2, 2)
 texture_normal = ExtResource("52_iccxp")
 texture_pressed = ExtResource("54_uepbl")
 shape = SubResource("ConvexPolygonShape2D_kwisa")
-action = "ui_down"
+action = "whistle"
 
 [node name="Label" type="Label" parent="BottomLeft/JoypadButton12" unique_id=1859234343]
 visible = false
@@ -366,7 +366,7 @@ scale = Vector2(2, 2)
 texture_normal = ExtResource("52_iccxp")
 texture_pressed = ExtResource("55_8gkmr")
 shape = SubResource("ConvexPolygonShape2D_qrmb0")
-action = "ui_left"
+action = "last_weapon"
 
 [node name="Label" type="Label" parent="BottomLeft/JoypadButton13" unique_id=222978466]
 anchors_preset = 4
@@ -390,7 +390,7 @@ scale = Vector2(2, 2)
 texture_normal = ExtResource("52_iccxp")
 texture_pressed = ExtResource("56_t8hsd")
 shape = SubResource("ConvexPolygonShape2D_wwnia")
-action = "ui_right"
+action = "next_weapon"
 
 [node name="Label" type="Label" parent="BottomLeft/JoypadButton14" unique_id=1667560914]
 anchors_preset = 4
@@ -567,6 +567,7 @@ position = Vector2(224, 192)
 texture_normal = ExtResource("68_y0ckb")
 texture_pressed = ExtResource("69_c88j6")
 shape = SubResource("RectangleShape2D_sp4yc")
+action = "seeker"
 
 [node name="Label" type="Label" parent="BottomLeft/KeyI" unique_id=1517276430]
 visible = false
@@ -586,27 +587,9 @@ position = Vector2(176, 240)
 texture_normal = ExtResource("70_thqgb")
 texture_pressed = ExtResource("71_fqvfc")
 shape = SubResource("RectangleShape2D_sp4yc")
+action = "last_weapon"
 
 [node name="Label" type="Label" parent="BottomLeft/KeyJ" unique_id=1359570107]
-visible = false
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = 19.5
-offset_top = 57.5
-offset_right = 77.5
-offset_bottom = 80.5
-grow_horizontal = 2
-text = "Whistle"
-
-[node name="KeyK" type="TouchScreenButton" parent="BottomLeft" unique_id=711519297]
-visible = false
-position = Vector2(224, 240)
-texture_normal = ExtResource("72_tr8h5")
-texture_pressed = ExtResource("73_l1jde")
-shape = SubResource("RectangleShape2D_sp4yc")
-
-[node name="Label" type="Label" parent="BottomLeft/KeyK" unique_id=1993763106]
 anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
@@ -621,12 +604,33 @@ label_settings = SubResource("LabelSettings_xf6l6")
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="KeyK" type="TouchScreenButton" parent="BottomLeft" unique_id=711519297]
+visible = false
+position = Vector2(224, 240)
+texture_normal = ExtResource("72_tr8h5")
+texture_pressed = ExtResource("73_l1jde")
+shape = SubResource("RectangleShape2D_sp4yc")
+action = "whistle"
+
+[node name="Label" type="Label" parent="BottomLeft/KeyK" unique_id=1993763106]
+visible = false
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = 19.5
+offset_top = 57.5
+offset_right = 77.5
+offset_bottom = 80.5
+grow_horizontal = 2
+text = "Whistle"
+
 [node name="KeyL" type="TouchScreenButton" parent="BottomLeft" unique_id=215858380]
 visible = false
 position = Vector2(272, 240)
 texture_normal = ExtResource("74_bcmhq")
 texture_pressed = ExtResource("75_msk0v")
 shape = SubResource("RectangleShape2D_sp4yc")
+action = "next_weapon"
 
 [node name="Label" type="Label" parent="BottomLeft/KeyL" unique_id=1224760024]
 anchors_preset = 4

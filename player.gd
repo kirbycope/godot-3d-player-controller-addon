@@ -186,6 +186,7 @@ var is_sliding: bool = false ## Is the Player currently sliding?
 var is_sprinting: bool = false ## Is the Player currently sprinting?
 var is_standing: bool = false ## Is the Player currently standing?
 var is_swimming: bool = false ## Is the Player currently swimming?
+var last_fall_speed: float = 0.0 ## The downward vertical fall speed right before movement update.
 var initial_collision_shape_height: float
 var initial_collision_shape_position: Vector3
 var initial_parent: Node3D
@@ -292,6 +293,11 @@ func _ready() -> void:
 				skateboard.set("player", self)
 			skateboard.hide()
 
+	if skateboard:
+		for child in skateboard.find_children("*", "CollisionShape3D", true, false):
+			if child is CollisionShape3D:
+				child.disabled = true
+
 
 ## Called when there is an unhandled input event.
 func _input(event: InputEvent) -> void:
@@ -375,9 +381,9 @@ func apply_input(delta: float) -> void:
 	smoothed_motion = smoothed_motion.lerp(target_motion, motion_weight)
 	target_motion = smoothed_motion
 
-	# While driving, paragliding, skateboarding, or flying, block regular locomotion.
-	# Driving.gd / Paragliding.gd / Skateboarding.gd / Flying.gd will handle movement.
-	if (is_driving and not is_entering_vehicle and not is_exiting_vehicle) or is_paragliding or is_skateboarding or is_flying:
+	# While driving, paragliding, skateboarding, flying, or ragdolling, block regular locomotion.
+	# Driving.gd / Paragliding.gd / Skateboarding.gd / Flying.gd / Ragdolling.gd will handle movement.
+	if (is_driving and not is_entering_vehicle and not is_exiting_vehicle) or is_paragliding or is_skateboarding or is_flying or is_ragdolling:
 		return
 
 	# While swimming, keep SwimmingLocomotion active and feed its BlendSpace1D.
@@ -642,6 +648,7 @@ func apply_input(delta: float) -> void:
 	else:
 		vertical_speed += get_gravity().dot(up_direction) * 1.5 * delta
 	velocity = h_velocity.slide(up_direction) + (up_direction * vertical_speed)
+	last_fall_speed = -vertical_speed
 	update_movement_and_rotation(delta)
 
 
@@ -710,7 +717,7 @@ func get_facing_direction() -> Vector3:
 
 ## Called by the animation(s) using "Call Method Track" to play footstep sound effects at the right time.
 func sfx_footsteps_play():
-	if is_on_floor() and paraglider_raycast.is_colliding():
+	if is_on_floor() and paraglider_raycast.is_colliding() and not is_ragdolling:
 		var collider := paraglider_raycast.get_collider() as Node3D
 		if collider:
 			if (collider.is_in_group("DIRT") or collider.is_in_group("GRASS")):
@@ -764,8 +771,8 @@ func update_movement_and_rotation(delta: float) -> void:
 		var q_align_body := Quaternion(current_body_up, next_body_up)
 		global_basis = Basis(q_align_body) * global_basis
 
-	# Rotate the Player Model (unless entering/exiting a vehicle)
-	if not (is_driving and (is_entering_vehicle or is_exiting_vehicle)):
+	# Rotate the Player Model (unless entering/exiting a vehicle or ragdolling)
+	if not (is_driving and (is_entering_vehicle or is_exiting_vehicle)) and not is_ragdolling:
 		player_model.global_transform.basis = orientation.basis
 		var model_facing_basis: Basis = orientation.basis.rotated(up_direction, PI)
 		var rotated_basis: Basis = model_facing_basis * initial_separation_ray_transform.basis

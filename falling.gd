@@ -1,6 +1,8 @@
 class_name Falling
 extends NodeStateMachine
 
+@export var lethal_velocity: float = 15.0
+
 var _this_state := NodeStateMachine.States.FALLING
 
 
@@ -23,8 +25,12 @@ func _physics_process(delta: float) -> void:
 
 	# Check if the player has reached the floor
 	if player.is_on_floor():
-		# Start "standing"
-		player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
+		if player.last_fall_speed >= lethal_velocity:
+			# Start "ragdolling" if falling at a lethal velocity
+			player.state_machine.travel(_this_state, NodeStateMachine.States.RAGDOLLING)
+		else:
+			# Start "standing"
+			player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
 		return
 
 

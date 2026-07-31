@@ -66,7 +66,8 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion \
 	and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED \
 	and (not player.is_driving or perspective == Perspective.THIRD_PERSON) \
-	and not player.is_focusing:
+	and not player.is_focusing \
+	and not is_radial_menu_open():
 		rotate_camera_using_mouse_motion(event)
 		if (player.is_driving or player.is_skateboarding) \
 		and event.relative.length_squared() > 0.0:
@@ -104,7 +105,8 @@ func _process(delta: float) -> void:
 	and not player.is_paused \
 	and not player.is_ragdolling \
 	and (not player.is_driving or perspective == Perspective.THIRD_PERSON) \
-	and not player.is_focusing:
+	and not player.is_focusing \
+	and not is_radial_menu_open():
 		# Rotate the camera based on the joypad motion input event
 		rotate_camera_using_joypad_motion(delta)
 		# Add a delay before the camera starts following the player again
@@ -197,3 +199,10 @@ func _update_raycast() -> void:
 		if is_instance_valid(camera_spring_arm):
 			length = camera_spring_arm.spring_length
 		camera_ray_cast.target_position = Vector3(0, 0, - (length + 1.0))
+
+
+## Returns whether the RadialMenu is currently open/visible.
+func is_radial_menu_open() -> bool:
+	if player and player.inventory and player.inventory.has_node("RadialMenu"):
+		return player.inventory.get_node("RadialMenu").visible
+	return false

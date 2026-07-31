@@ -8,11 +8,31 @@ var can_player_shoot: bool = false ## Does the currently equipped item allow the
 @export var player: Player
 
 
+var _last_weapon_press_time: int = 0
+var _last_weapon_press_pending: bool = false
+var _next_weapon_press_time: int = 0
+var _next_weapon_press_pending: bool = false
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("next_weapon"):
-		cycle_weapon(1)
+		_next_weapon_press_time = Time.get_ticks_msec()
+		_next_weapon_press_pending = true
+	elif event.is_action_released("next_weapon"):
+		if _next_weapon_press_pending:
+			_next_weapon_press_pending = false
+			var radial_menu = get_node_or_null("RadialMenu")
+			if not radial_menu or not radial_menu.visible:
+				cycle_weapon(1)
 	elif event.is_action_pressed("last_weapon"):
-		cycle_weapon(-1)
+		_last_weapon_press_time = Time.get_ticks_msec()
+		_last_weapon_press_pending = true
+	elif event.is_action_released("last_weapon"):
+		if _last_weapon_press_pending:
+			_last_weapon_press_pending = false
+			var radial_menu = get_node_or_null("RadialMenu")
+			if not radial_menu or not radial_menu.visible:
+				cycle_weapon(-1)
 
 func cycle_weapon(direction: int) -> void:
 	var all_weapons = [null]

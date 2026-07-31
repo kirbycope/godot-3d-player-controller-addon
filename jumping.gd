@@ -23,8 +23,13 @@ func _physics_process(delta: float) -> void:
 
 	# Check if the player has reached the floor
 	if player.is_on_floor() and not player.is_jump_queued:
-		# Start "standing"
-		player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
+		var falling_state := player.state_machine.get_node_or_null("Falling") as Falling
+		var lethal_velocity := falling_state.lethal_velocity if falling_state else 20.0
+		if player.last_fall_speed >= lethal_velocity:
+			player.state_machine.travel(_this_state, NodeStateMachine.States.RAGDOLLING)
+		else:
+			# Start "standing"
+			player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
 		return
 
 
