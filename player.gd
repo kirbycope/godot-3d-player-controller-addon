@@ -1,6 +1,7 @@
 class_name Player
 extends CharacterBody3D
 
+
 const EMOTE_STATE_PLAYBACK_PATH: String = "parameters/EmoteStateMachine/playback"
 const LOCOMOTION_STATE_PLAYBACK_PATH: String = "parameters/LocomotionStateMachine/playback"
 const ARCHERY_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/ArcheryLocomotion/blend_position"
@@ -249,6 +250,11 @@ func _ready() -> void:
 
 	# Ensure the AnimationTree is active so that root motion is applied in the first frame.
 	animation_tree.active = true
+
+	# Improve traction on spheres/slopes
+	floor_snap_length = 0.5
+	floor_max_angle = deg_to_rad(60.0)
+	floor_constant_speed = true
 
 	# Keep animation sampling in physics domainD to match root-motion consumption in _physics_process.
 	animation_tree.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_PHYSICS
@@ -816,9 +822,13 @@ func _on_attack_sequence_timer_timeout() -> void:
 
 ## Applies the current velocity, moves the player, and updates the orientation to match the up_direction.
 func update_movement_and_rotation(delta: float) -> void:
-	set_velocity(velocity)
-	set_up_direction(up_direction)
+	var current_body_up := global_basis.y
+	if not current_body_up.is_equal_approx(up_direction):
+		var q_align_body := Quaternion(current_body_up, up_direction)
+		global_basis = Basis(q_align_body) * global_basis
+
 	move_and_slide()
+
 
 	orientation.origin = Vector3() # Clear accumulated root motion displacement (was applied to speed).
 	orientation = orientation.orthonormalized() # Orthonormalize orientation.
@@ -830,16 +840,11 @@ func update_movement_and_rotation(delta: float) -> void:
 		var q_align := Quaternion(current_up, next_up)
 		orientation.basis = Basis(q_align) * orientation.basis
 
-	var current_body_up := global_basis.y
-	if not current_body_up.is_equal_approx(up_direction):
-		var next_body_up := current_body_up.slerp(up_direction, delta * 10.0).normalized()
-		var q_align_body := Quaternion(current_body_up, next_body_up)
-		global_basis = Basis(q_align_body) * global_basis
 
 	# Rotate the Player Model (unless entering/exiting a vehicle or ragdolling)
 	if not (is_driving and (is_entering_vehicle or is_exiting_vehicle)) and not is_ragdolling:
 		player_model.global_transform.basis = orientation.basis
 		var model_facing_basis: Basis = orientation.basis.rotated(up_direction, PI)
 		var rotated_basis: Basis = model_facing_basis * initial_separation_ray_transform.basis
-		var rotated_origin: Vector3 = model_facing_basis * initial_separation_ray_transform.origin
-		separation_ray_shape.transform = Transform3D(rotated_basis, rotated_origin)
+		var rotated_origin: Vector3 = global_position + (model_facing_basis * initial_separation_ray_transform.origin)
+		separation_ray_shape.global_transform = Transform3D(rotated_basis, rotated_origin)
