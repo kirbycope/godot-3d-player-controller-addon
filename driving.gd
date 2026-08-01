@@ -15,6 +15,28 @@ extends NodeStateMachine
 var _this_state := NodeStateMachine.States.DRIVING
 
 
+## Returns the accelerate action name based on the player's current input type.
+func get_current_accelerate_action() -> StringName:
+	var input_type: int = player.controls.current_input_type if player and player.controls else 0
+	return keyboard_accelerate_action if input_type == 0 else pad_accelerate_action
+
+
+## Returns the brake action name based on the player's current input type.
+func get_current_brake_action() -> StringName:
+	var input_type: int = player.controls.current_input_type if player and player.controls else 0
+	return keyboard_brake_action if input_type == 0 else pad_brake_action
+
+
+## Returns true if the accelerate action is currently pressed.
+func is_accelerate_pressed() -> bool:
+	return Input.is_action_pressed(get_current_accelerate_action())
+
+
+## Returns true if the brake action is currently pressed.
+func is_brake_pressed() -> bool:
+	return Input.is_action_pressed(get_current_brake_action())
+
+
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:
 	# Do nothing if not the authority
@@ -93,12 +115,8 @@ func _physics_process(delta: float) -> void:
 			car.engine_force = 0.0
 			car.brake = 0.0
 		else:
-			var input_type = player.controls.current_input_type if player.controls else 0
-			var current_accelerate_action = keyboard_accelerate_action if input_type == 0 else pad_accelerate_action
-			var current_brake_action = keyboard_brake_action if input_type == 0 else pad_brake_action
-
-			var accelerate_pressed := Input.is_action_pressed(current_accelerate_action)
-			var brake_pressed := Input.is_action_pressed(current_brake_action)
+			var accelerate_pressed := is_accelerate_pressed()
+			var brake_pressed := is_brake_pressed()
 
 			# If braking/reversing is pressed
 			if brake_pressed:
