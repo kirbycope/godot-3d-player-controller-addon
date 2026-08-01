@@ -163,6 +163,8 @@ func start() -> void:
 	player.is_driving = true
 	player.is_entering_vehicle = true
 	player.is_exiting_vehicle = false
+	if player.locomotion_state:
+		player.locomotion_state.start("EnteringCar")
 	# Disable player collision
 	player.collision_shape.disabled = true
 	# Disable crosshair
