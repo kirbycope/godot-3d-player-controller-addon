@@ -27,9 +27,6 @@ func is_keyboard_mouse() -> bool:
 	return true
 
 func is_menu_requested() -> bool:
-	if Input.is_physical_key_pressed(KEY_TAB):
-		return true
-
 	if inventory:
 		var current_time = Time.get_ticks_msec()
 		if inventory._last_weapon_press_pending and Input.is_action_pressed("last_weapon"):
@@ -40,12 +37,10 @@ func is_menu_requested() -> bool:
 			if current_time - inventory._next_weapon_press_time >= hold_threshold_ms:
 				inventory._next_weapon_press_pending = false
 				return true
-
 	return false
 
 func is_menu_held() -> bool:
-	return Input.is_physical_key_pressed(KEY_TAB) \
-		or Input.is_action_pressed("last_weapon") \
+	return Input.is_action_pressed("last_weapon") \
 		or Input.is_action_pressed("next_weapon")
 
 func _process(delta: float) -> void:
@@ -130,7 +125,7 @@ func _draw() -> void:
 	
 	var center = size / 2.0
 	var segment_angle = deg_to_rad(360.0 / weapons.size())
-	var start_angle = -PI / 2.0
+	var start_angle = - PI / 2.0
 	
 	for i in range(weapons.size()):
 		var is_hovered = (i == hovered_index)

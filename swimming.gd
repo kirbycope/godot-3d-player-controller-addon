@@ -123,84 +123,25 @@ func _get_player_shoulder_offset() -> float:
 	return 0.0
 
 
-func _get_water_surface_along_up(up_direction: Vector3) -> float:
-	if not is_inside_tree():
-		return NAN
 
-	var tree := get_tree()
-	if not tree:
-		return NAN
-
-	var has_surface := false
-	var highest_surface_along_up := 0.0
-	
-	var water_nodes := tree.get_nodes_in_group("WATER")
-
-	for node in water_nodes:
-		var water_area := node as Area3D
-		if not water_area:
-			continue
-		
-		# Check overlap or proximity
-		var overlapping := water_area.overlaps_body(player)
-		if not overlapping:
-			continue
-
-		var collision_shape := water_area.get_node_or_null("CollisionShape3D") as CollisionShape3D
-		if not collision_shape:
-			continue
-
-		var box_shape := collision_shape.shape as BoxShape3D
-		if not box_shape:
-			continue
-
-		var up_in_local: Vector3 = collision_shape.global_basis.inverse() * up_direction
-		var half_size: Vector3 = box_shape.size * 0.5
-		var half_extent_along_up: float = abs(up_in_local.x) * half_size.x \
-			+ abs(up_in_local.y) * half_size.y \
-			+ abs(up_in_local.z) * half_size.z
-
-		var local_surface: Vector3 = up_in_local.normalized() * half_extent_along_up
-		var world_surface: Vector3 = collision_shape.to_global(local_surface)
-		var surface_along_up: float = up_direction.dot(world_surface)
-
-		if not has_surface or surface_along_up > highest_surface_along_up:
-			has_surface = true
-			highest_surface_along_up = surface_along_up
-
-	if not has_surface:
-		return NAN
-
-	return highest_surface_along_up
 
 
 ## Start "swimming".
 func start() -> void:
-	# Do not start swimming if player is driving or in a vehicle
-	if player and (player.is_driving or player.is_driving_in != null or player.is_entering_vehicle or player.is_exiting_vehicle):
-		return
-
 	# Enable _this_ state node
 	process_mode = Node.PROCESS_MODE_INHERIT
-	
-	var up_direction: Vector3 = player.up_direction.normalized()
-	var water_surface_along_up: float = _get_water_surface_along_up(up_direction)
-	if not is_nan(water_surface_along_up):
-		var shoulder_offset := _get_player_shoulder_offset()
-		var target_position_along_up := water_surface_along_up - shoulder_offset
-		var current_position_along_up := up_direction.dot(player.global_position)
-		
-		# Unconditionally snap player to floating level upon starting swim state
-		player.global_position += up_direction * (target_position_along_up - current_position_along_up)
-			
 	# Set the player's new state
 	player.current_state = _this_state
 	# Flag the player as "swimming"
 	player.is_swimming = true
-	# Flag the player as not falling/jumping/flying
-	player.is_falling = false
-	player.is_jumping = false
-	player.is_flying = false
+	# Unconditionally snap player to floating level upon starting swim state
+	var up_direction: Vector3 = player.up_direction.normalized()
+	var water_surface_along_up: float = player.get_water_surface_along_up()
+	if not is_nan(water_surface_along_up):
+		var shoulder_offset := _get_player_shoulder_offset()
+		var target_position_along_up := water_surface_along_up - shoulder_offset
+		var current_position_along_up := up_direction.dot(player.global_position)
+		player.global_position += up_direction * (target_position_along_up - current_position_along_up)
 
 
 ## Stop "swimming".

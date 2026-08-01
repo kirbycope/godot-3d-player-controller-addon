@@ -20,7 +20,6 @@ const STANDING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionSt
 const SWIMMING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/SwimmingLocomotion/blend_position"
 
 @export var animation_tree: AnimationTree
-@export var current_animation: int
 @export var motion_interpolate_speed: float = 10.0
 @export var rotation_interpolate_speed: float = 10.0
 @export var swimming_root_motion_multiplier: float = 2.0
@@ -181,6 +180,7 @@ var is_shooting: bool: ## Is the Player currently shooting?
 		if not is_multiplayer_authority() or is_driving or inventory == null:
 			return false
 		return Input.is_action_pressed("shoot") and inventory.can_player_shoot
+var is_sitting: bool = false ## Is the Player currently sitting?
 var is_skateboarding: bool = false ## Is the Player currently skateboarding?
 var is_sliding: bool = false ## Is the Player currently sliding?
 var is_sprinting: bool = false ## Is the Player currently sprinting?
@@ -337,6 +337,20 @@ func _physics_process(delta: float) -> void:
 		# Enable the "falling" state in the NodeStateMachine. The AnimationTree will automatically transition to the "Falling" animation state.
 		state_machine.travel(current_state, NodeStateMachine.States.FALLING)
 
+	# Water depth check
+	var water_surface_along_up := get_water_surface_along_up()
+	if not is_nan(water_surface_along_up):
+		var current_position_along_up := up_direction.dot(global_position)
+		var swim_depth_threshold = current_position_along_up + (collision_shape.shape.height * 0.5)
+		if water_surface_along_up > swim_depth_threshold:
+			if not is_swimming and not is_driving and is_driving_in == null and not is_entering_vehicle and not is_exiting_vehicle:
+				state_machine.travel(current_state, NodeStateMachine.States.SWIMMING)
+		else:
+			if is_swimming:
+				is_swimming = false
+	elif is_swimming:
+		is_swimming = false
+
 	# Apply player input to control the character and update the animation state.
 	apply_input(delta)
 
@@ -383,7 +397,7 @@ func apply_input(delta: float) -> void:
 
 	# While driving, paragliding, skateboarding, flying, or ragdolling, block regular locomotion.
 	# Driving.gd / Paragliding.gd / Skateboarding.gd / Flying.gd / Ragdolling.gd will handle movement.
-	if (is_driving and not is_entering_vehicle and not is_exiting_vehicle) or is_paragliding or is_skateboarding or is_flying or is_ragdolling:
+	if (is_driving and not is_entering_vehicle and not is_exiting_vehicle) or is_paragliding or is_skateboarding or is_flying or is_ragdolling or is_sitting:
 		return
 
 	# While swimming, keep SwimmingLocomotion active and feed its BlendSpace1D.
@@ -648,7 +662,7 @@ func apply_input(delta: float) -> void:
 	else:
 		vertical_speed += get_gravity().dot(up_direction) * 1.5 * delta
 	velocity = h_velocity.slide(up_direction) + (up_direction * vertical_speed)
-	last_fall_speed = -vertical_speed
+	last_fall_speed = - vertical_speed
 	update_movement_and_rotation(delta)
 
 
@@ -742,6 +756,57 @@ func toggle_ragdoll() -> void:
 		state_machine.travel(current_state, NodeStateMachine.States.RAGDOLLING)
 	else:
 		state_machine.travel(current_state, NodeStateMachine.States.STANDING)
+
+
+func get_water_surface_along_up() -> float:
+	if not is_inside_tree():
+		return NAN
+
+	var tree := get_tree()
+	if not tree:
+		return NAN
+
+	var has_surface := false
+	var highest_surface_along_up := 0.0
+	
+	var water_nodes := tree.get_nodes_in_group("WATER")
+
+	for node in water_nodes:
+		var water_area := node as Area3D
+		if not water_area:
+			continue
+		
+		# Check overlap or proximity
+		var overlapping := water_area.overlaps_body(self)
+		if not overlapping:
+			continue
+
+		var collision_shape := water_area.get_node_or_null("CollisionShape3D") as CollisionShape3D
+		if not collision_shape:
+			continue
+
+		var box_shape := collision_shape.shape as BoxShape3D
+		if not box_shape:
+			continue
+
+		var up_in_local: Vector3 = collision_shape.global_basis.inverse() * up_direction
+		var half_size: Vector3 = box_shape.size * 0.5
+		var half_extent_along_up: float = abs(up_in_local.x) * half_size.x \
+			+ abs(up_in_local.y) * half_size.y \
+			+ abs(up_in_local.z) * half_size.z
+
+		var local_surface: Vector3 = up_in_local.normalized() * half_extent_along_up
+		var world_surface: Vector3 = collision_shape.to_global(local_surface)
+		var surface_along_up: float = up_direction.dot(world_surface)
+
+		if not has_surface or surface_along_up > highest_surface_along_up:
+			has_surface = true
+			highest_surface_along_up = surface_along_up
+
+	if not has_surface:
+		return NAN
+
+	return highest_surface_along_up
 
 
 ## Reset the attack sequence when the attack sequence timer times out.
