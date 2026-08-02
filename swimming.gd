@@ -44,6 +44,20 @@ func _physics_process(delta: float) -> void:
 	# Do nothing if the player is not set
 	if not player: return
 
+	# Water depth check
+	var water_surface_along_up := get_water_surface_along_up()
+	if not is_nan(water_surface_along_up):
+		var current_position_along_up := player.up_direction.dot(player.global_position)
+		var swim_depth_threshold = current_position_along_up + (player.collision_shape.shape.height * 0.5)
+		if water_surface_along_up > swim_depth_threshold:
+			if not player.is_swimming and not player.is_driving and player.is_driving_in == null and not player.is_entering_vehicle and not player.is_exiting_vehicle:
+				player.state_machine.travel(player.current_state, NodeStateMachine.States.SWIMMING)
+		else:
+			if player.is_swimming:
+				player.is_swimming = false
+	elif player.is_swimming:
+		player.is_swimming = false
+
 	# Swimming, Climbing On [Status]
 	if player.is_climbing_on:
 		var was_climbing_on := player.is_climbing_on
@@ -103,6 +117,20 @@ func _physics_process(delta: float) -> void:
 		player.swimming_root_motion_multiplier = 2
 		player.is_sprinting = false
 
+	# While swimming, keep SwimmingLocomotion active and feed its BlendSpace1D.
+	var current_swimming_node = player.locomotion_state.get_current_node()
+	# Do not force SwimmingLocomotion while swimming to/at an edge or mantling out.
+	if not current_swimming_node in ["BracedHangClimbingOn", "SwimmingAtEdge", "SwimmingToEdge"] \
+	and current_swimming_node != "SwimmingLocomotion" \
+	and not player.is_climbing_on:
+		player.locomotion_state.travel("SwimmingLocomotion")
+	# Feed the BlendSpace1D only while in normal swimming locomotion.
+	if current_swimming_node == "SwimmingLocomotion":
+		if player.is_focusing: # or player.is_shooting:
+			player.animation_tree.set(player.SWIMMING_LOCOMOTION_BLEND_POSITION_PATH, player.smoothed_motion.y)
+		else:
+			player.animation_tree.set(player.SWIMMING_LOCOMOTION_BLEND_POSITION_PATH, player.smoothed_motion.length())
+
 
 func _get_player_shoulder_offset() -> float:
 	if not player or not player.collision_shape:
@@ -136,7 +164,7 @@ func start() -> void:
 	player.is_swimming = true
 	# Unconditionally snap player to floating level upon starting swim state
 	var up_direction: Vector3 = player.up_direction.normalized()
-	var water_surface_along_up: float = player.get_water_surface_along_up()
+	var water_surface_along_up: float = get_water_surface_along_up()
 	if not is_nan(water_surface_along_up):
 		var shoulder_offset := _get_player_shoulder_offset()
 		var target_position_along_up := water_surface_along_up - shoulder_offset
@@ -153,6 +181,7 @@ func stop() -> void:
 		player.current_state = -1
 	# Flag the player as not "swimming"
 	player.is_swimming = false
+	player.is_sprinting = false
 
 
 func get_contextual_controls(input_type: int) -> Dictionary:
@@ -180,3 +209,55 @@ func get_contextual_controls(input_type: int) -> Dictionary:
 			player.controls.left_joystick_label: "Swim",
 			player.controls.right_joystick_label: "Camera",
 		}
+
+
+func get_water_surface_along_up() -> float:
+	if not player or not player.is_inside_tree():
+		return NAN
+
+	var tree := player.get_tree()
+	if not tree:
+		return NAN
+
+	var has_surface := false
+	var highest_surface_along_up := 0.0
+	
+	var water_nodes := tree.get_nodes_in_group("WATER")
+
+	for node in water_nodes:
+		var water_area := node as Area3D
+		if not water_area:
+			continue
+		
+		# Check overlap or proximity
+		var overlapping := water_area.overlaps_body(player)
+		if not overlapping:
+			continue
+
+		var collision_shape := water_area.get_node_or_null("CollisionShape3D") as CollisionShape3D
+		if not collision_shape:
+			continue
+
+		var box_shape := collision_shape.shape as BoxShape3D
+		if not box_shape:
+			continue
+
+		var up_in_local: Vector3 = collision_shape.global_basis.inverse() * player.up_direction
+		var half_size: Vector3 = box_shape.size * 0.5
+		var half_extent_along_up: float = abs(up_in_local.x) * half_size.x \
+			+ abs(up_in_local.y) * half_size.y \
+			+ abs(up_in_local.z) * half_size.z
+
+		var local_surface: Vector3 = up_in_local.normalized() * half_extent_along_up
+		var world_surface: Vector3 = collision_shape.to_global(local_surface)
+		var surface_along_up: float = player.up_direction.dot(world_surface)
+
+		if not has_surface or surface_along_up > highest_surface_along_up:
+			has_surface = true
+			highest_surface_along_up = surface_along_up
+
+	if not has_surface:
+		return NAN
+
+	return highest_surface_along_up
+

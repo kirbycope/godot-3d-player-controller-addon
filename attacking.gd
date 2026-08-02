@@ -30,7 +30,7 @@ func _physics_process(delta: float) -> void:
 		if boxing_inactivity_delay_remaining > 0.0:
 			boxing_inactivity_delay_remaining = max(boxing_inactivity_delay_remaining - delta, 0.0)
 		if boxing_inactivity_delay_remaining <= 0.0:
-			stop()
+			player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
 			return
 
 	# Determine which attack is currently in progress.
@@ -100,8 +100,8 @@ func _physics_process(delta: float) -> void:
 			_has_entered_attack = false
 			player.attack_sequence = 0
 		else:
-			# Stop "attacking"
-			stop()
+			# Stop "attacking", start "standing"
+			player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
 
 
 ## Start "attacking".

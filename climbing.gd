@@ -138,6 +138,20 @@ func _physics_process(delta: float) -> void:
 		player.animation_tree.set("parameters/LocomotionTimeScale/scale", 1.0)
 		player.is_sprinting = false
 
+	# Keep (rotate towards) facing the wall surface
+	if player.ledge_detection_horizontal and player.ledge_detection_horizontal.is_colliding():
+		var normal := player.ledge_detection_horizontal.get_collision_normal()
+		var wall_dir := -normal
+		wall_dir = wall_dir.slide(player.up_direction)
+		if wall_dir.length_squared() > 0.001:
+			wall_dir = wall_dir.normalized()
+			var q_from: Quaternion = player.orientation.basis.get_rotation_quaternion()
+			var q_to: Quaternion = Basis.looking_at(-wall_dir, player.up_direction).get_rotation_quaternion()
+			player.orientation.basis = Basis(q_from.slerp(q_to, delta * player.rotation_interpolate_speed))
+	
+	if player.is_climbing:
+		player.animation_tree.set(player.CLIMBING_LOCOMOTION_BLEND_POSITION_PATH, player.smoothed_motion)
+
 
 ## Start "climbing".
 func start() -> void:
@@ -167,6 +181,7 @@ func stop() -> void:
 	player.is_climbing_on = false
 	# Reset timescale in case "sprint" action is still pressed
 	player.animation_tree.set("parameters/LocomotionTimeScale/scale", 1.0)
+	player.is_sprinting = false
 	player.is_hopping_from_climbing = false
 	# Clear ledge detection visuals
 	player.ledge_detection_vertical.position = Vector3(0, 0, -1) # Reset to default

@@ -67,7 +67,7 @@ func _physics_process(delta: float) -> void:
 
 	# Check if the "EnterCar" animation has finished
 	var was_entering_vehicle = player.is_entering_vehicle
-	if player.locomotion_state:
+	if player.locomotion_state and player.is_entering_vehicle:
 		player.is_entering_vehicle = player.locomotion_state.get_current_node() == "EnteringCar"
 	if was_entering_vehicle \
 	and not player.is_entering_vehicle:

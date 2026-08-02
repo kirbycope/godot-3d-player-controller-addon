@@ -81,6 +81,22 @@ func _physics_process(delta: float) -> void:
 			player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
 			return
 
+	# Keep (rotate towards) facing the wall surface
+	if player.ledge_detection_horizontal and player.ledge_detection_horizontal.is_colliding():
+		var normal := player.ledge_detection_horizontal.get_collision_normal()
+		var wall_dir := -normal
+		wall_dir = wall_dir.slide(player.up_direction)
+		if wall_dir.length_squared() > 0.001:
+			wall_dir = wall_dir.normalized()
+			var q_from: Quaternion = player.orientation.basis.get_rotation_quaternion()
+			var q_to: Quaternion = Basis.looking_at(-wall_dir, player.up_direction).get_rotation_quaternion()
+			player.orientation.basis = Basis(q_from.slerp(q_to, delta * player.rotation_interpolate_speed))
+
+	if player.is_hanging_braced:
+		player.animation_tree.set(player.BRACED_HANG_LOCOMOTION_BLEND_POSITION_PATH, player.smoothed_motion.x)
+	elif player.is_hanging_free:
+		player.animation_tree.set(player.FREE_HANGING_LOCOMOTION_BLEND_POSITION_PATH, player.smoothed_motion.x)
+
 
 
 ## Start "hanging".

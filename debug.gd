@@ -12,9 +12,6 @@ func _input(event: InputEvent) -> void:
 		if event.is_action_pressed("debug"):
 			visible = !visible
 
-		if event is InputEventKey and event.pressed and not event.is_echo() and event.keycode == KEY_R:
-			player.toggle_ragdoll()
-
 
 ## Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta: float) -> void:

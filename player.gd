@@ -269,8 +269,11 @@ func _ready() -> void:
 				child.add_collision_exception_with(self)
 				add_collision_exception_with(child)
 
-	# Set the Player's iniitial state
-	current_state = NodeStateMachine.States.STANDING
+	# Set the Player's initial state
+	if state_machine:
+		state_machine._start_state(NodeStateMachine.States.STANDING)
+	else:
+		current_state = NodeStateMachine.States.STANDING
 
 	# Initialize optional gadget scenes if assigned
 	if not paraglider:
@@ -328,34 +331,7 @@ func _physics_process(delta: float) -> void:
 	# Do nothing if not the authority
 	if not is_multiplayer_authority(): return
 
-	# Start falling if the player is not on the floor and not already falling.
-	if not is_on_floor() and not is_falling \
-	and not falling_raycast.is_colliding() \
-	and not is_climbing and not is_climbing_on \
-	and not is_driving \
-	and not is_flying \
-	and not is_hanging_braced and not is_hanging_free \
-	and not is_jumping and not is_jump_queued \
-	and not is_paragliding \
-	and not is_ragdolling \
-	and not is_skateboarding \
-	and not is_swimming:
-		# Enable the "falling" state in the NodeStateMachine. The AnimationTree will automatically transition to the "Falling" animation state.
-		state_machine.travel(current_state, NodeStateMachine.States.FALLING)
 
-	# Water depth check
-	var water_surface_along_up := get_water_surface_along_up()
-	if not is_nan(water_surface_along_up):
-		var current_position_along_up := up_direction.dot(global_position)
-		var swim_depth_threshold = current_position_along_up + (collision_shape.shape.height * 0.5)
-		if water_surface_along_up > swim_depth_threshold:
-			if not is_swimming and not is_driving and is_driving_in == null and not is_entering_vehicle and not is_exiting_vehicle:
-				state_machine.travel(current_state, NodeStateMachine.States.SWIMMING)
-		else:
-			if is_swimming:
-				is_swimming = false
-	elif is_swimming:
-		is_swimming = false
 
 	# Apply player input to control the character and update the animation state.
 	apply_input(delta)
@@ -406,141 +382,15 @@ func apply_input(delta: float) -> void:
 	if (is_driving and not is_entering_vehicle and not is_exiting_vehicle) or is_paragliding or is_skateboarding or is_flying or is_ragdolling or is_sitting:
 		return
 
-	# While swimming, keep SwimmingLocomotion active and feed its BlendSpace1D.
-	if is_swimming and not is_driving:
-		var current_swimming_node = locomotion_state.get_current_node()
-		# Do not force SwimmingLocomotion while swimming to/at an edge or mantling out.
-		if not current_swimming_node in ["BracedHangClimbingOn", "SwimmingAtEdge", "SwimmingToEdge"] \
-		and current_swimming_node != "SwimmingLocomotion" \
-		and not is_climbing_on:
-			locomotion_state.travel("SwimmingLocomotion")
-		# Feed the BlendSpace1D only while in normal swimming locomotion.
-		if current_swimming_node == "SwimmingLocomotion":
-			if is_focusing: # or is_shooting:
-				animation_tree.set(SWIMMING_LOCOMOTION_BLEND_POSITION_PATH, target_motion.y)
-			else:
-				animation_tree.set(SWIMMING_LOCOMOTION_BLEND_POSITION_PATH, target_motion.length())
 
-	# Attack { Microsoft: Ⓧ, Nintendo: Ⓨ, Sony: 🟗, Keyboard: [Alt] }
-	if not is_paused \
-	and not is_ragdolling \
-	and not is_driving \
-	and Input.is_action_just_pressed("attack") \
-	and not is_attacking \
-	and inventory.can_player_attack:
-		# Enable the "attacking" state in the NodeStateMachine. The AnimationTree will automatically transition to the "Falling" animation state.
-		state_machine.travel(current_state, NodeStateMachine.States.ATTACKING)
 
-	# Climbing, Start { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
-	if not is_paused \
-	and not is_ragdolling \
-	and not is_driving \
-	and not is_on_floor() \
-	and not is_climbing \
-	and not is_hanging_braced \
-	and not is_hanging_free \
-	and not is_skateboarding \
-	and not is_swimming \
-	and not is_flying \
-	and Input.is_action_just_pressed("jump") \
-	and ledge_detection_horizontal.is_colliding():
-		# Stop "falling", start "climbing"
-		if is_falling:
-			state_machine.travel(NodeStateMachine.States.FALLING, NodeStateMachine.States.CLIMBING)
-		# Stop "jumping", start "climbing"
-		elif is_jumping:
-			state_machine.travel(NodeStateMachine.States.JUMPING, NodeStateMachine.States.CLIMBING)
-		# Start "climbing" from any other state
-		else:
-			state_machine.travel(current_state, NodeStateMachine.States.CLIMBING)
-
-	# Paragliding, Start { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
-	if not is_paused \
-	and not is_ragdolling \
-	and not is_driving \
-	and not is_on_floor() \
-	and Input.is_action_just_pressed("jump") \
-	and (is_falling or is_jumping) \
-	and not is_climbing \
-	and not is_hanging_braced \
-	and not is_hanging_free \
-	and not is_paragliding \
-	and not is_skateboarding \
-	and not is_swimming \
-	and not is_flying \
-	and not paraglider_raycast.is_colliding():
-		state_machine.travel(current_state, NodeStateMachine.States.PARAGLIDING)
-
-	# Crouch { Console: Left ⬤, Keyboard: [Control] }.
-	if not is_paused \
-	and not is_ragdolling \
-	and not is_driving \
-	and Input.is_action_pressed("crouch") \
-	and not is_crouching \
-	and is_on_floor() \
-	and not is_sliding \
-	and not is_sprinting:
-		# Start "crouching"
-		state_machine.travel(current_state, NodeStateMachine.States.CROUCHING)
-
-	# Jump { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
-	if not is_paused \
-	and not is_ragdolling \
-	and not is_driving \
-	and is_on_floor() \
-	and Input.is_action_just_pressed("jump") \
-	and not is_climbing \
-	and not is_hanging_braced \
-	and not is_hanging_free \
-	and not is_jump_queued \
-	and not is_paragliding \
-	and not is_sliding:
-		if is_boxing:
-			is_boxing = false
-		# Enable the "jumping" state in the NodeStateMachine. The AnimationTree will automatically transition to the "Falling" animation state.
-		state_machine.travel(current_state, NodeStateMachine.States.JUMPING)
-
-	# Flying, Start { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
-	if not is_paused \
-	and not is_ragdolling \
-	and not is_flying \
-	and (is_jumping or is_falling) \
-	and not is_jump_queued \
-	and paraglider_raycast.is_colliding() \
-	and Input.is_action_just_pressed("jump"):
-		state_machine.travel(current_state, NodeStateMachine.States.FLYING)
-
-	# Sprint { Microsoft: Ⓑ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Shift] }.
-	if not is_paused \
-	and not is_ragdolling \
-	and not is_driving \
-	and is_on_floor() \
-	and Input.is_action_pressed("sprint") \
-	and not is_crouching \
-	and not is_jump_queued \
-	and not is_jumping \
-	and not is_sliding \
-	and (target_motion.y > 0.0 if is_focusing else target_motion.length() > 0.0):
-		if is_boxing:
-			is_boxing = false
+	# Sprint logic
+	if is_sprinting:
 		if is_focusing:
 			target_motion.y *= 1.5
 			target_motion.x *= 0.5 # reduce strafe blend by 50% when sprinting so the blend favors the forward direction
 		else:
 			target_motion *= 1.5
-		is_sprinting = true
-	elif not is_climbing:
-		is_sprinting = false
-
-	# Slide (Crouch while Sprinting)
-	if not is_paused \
-	and not is_ragdolling \
-	and not is_driving \
-	and is_sprinting \
-	and Input.is_action_just_pressed("crouch") \
-	and not is_sliding:
-		# Enable the "sliding" state in the NodeStateMachine. The AnimationTree will automatically transition to the "Falling" animation state.
-		state_machine.travel(current_state, NodeStateMachine.States.SLIDING)
 
 	var is_first_person: bool = camera is Camera and (camera as Camera).perspective == Camera.Perspective.FIRST_PERSON
 	# Handle movement is strafing
@@ -591,44 +441,27 @@ func apply_input(delta: float) -> void:
 			var q_from: Quaternion = orientation.basis.get_rotation_quaternion()
 			var q_to: Quaternion = Basis.looking_at(-target_dir, up_direction).get_rotation_quaternion()
 			orientation.basis = Basis(q_from.slerp(q_to, delta * rotation_interpolate_speed))
-		# While climbing or hanging keep (rotate towards) facing the wall surface from the LedgeDetectionHorizontal raycast
-		if is_climbing or is_hanging_braced or is_hanging_free:
-			if ledge_detection_horizontal and ledge_detection_horizontal.is_colliding():
-				var normal := ledge_detection_horizontal.get_collision_normal()
-				var wall_dir := -normal
-				wall_dir = wall_dir.slide(up_direction)
-				if wall_dir.length_squared() > 0.001:
-					wall_dir = wall_dir.normalized()
-					var q_from: Quaternion = orientation.basis.get_rotation_quaternion()
-					var q_to: Quaternion = Basis.looking_at(-wall_dir, up_direction).get_rotation_quaternion()
-					orientation.basis = Basis(q_from.slerp(q_to, delta * rotation_interpolate_speed))
-		if is_climbing:
-			animation_tree.set(CLIMBING_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
-		elif is_hanging_braced:
-			animation_tree.set(BRACED_HANG_LOCOMOTION_BLEND_POSITION_PATH, target_motion.x)
-		elif is_hanging_free:
-			animation_tree.set(FREE_HANGING_LOCOMOTION_BLEND_POSITION_PATH, target_motion.x)
-		else:
-			var anim_blend := Vector2(0.0, target_motion.length())
-			if is_crouching:
-				animation_tree.set(CROUCHING_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
-			if inventory.has_equipment(Equipment.EquipmentType.BOW):
-				if is_shooting:
-					animation_tree.set(ARCHERY_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
-				else:
-					animation_tree.set(BOW_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
-			elif inventory.has_one_handed_or_shield_equipped():
-				animation_tree.set(SHIELD_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
-			elif inventory.has_heavy_weapon_equipped():
-				animation_tree.set(GREATSWORD_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
-			elif inventory.has_equipment(Equipment.EquipmentType.PISTOL):
-				animation_tree.set(PISTOL_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
-			elif inventory.has_equipment(Equipment.EquipmentType.RIFLE):
-				animation_tree.set(RIFLE_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
-			elif inventory.is_unarmed() and is_boxing:
-				animation_tree.set(BOXING_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
+
+		var anim_blend := Vector2(0.0, target_motion.length())
+		if is_crouching:
+			animation_tree.set(CROUCHING_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
+		if inventory.has_equipment(Equipment.EquipmentType.BOW):
+			if is_shooting:
+				animation_tree.set(ARCHERY_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
 			else:
-				animation_tree.set(STANDING_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
+				animation_tree.set(BOW_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
+		elif inventory.has_one_handed_or_shield_equipped():
+			animation_tree.set(SHIELD_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
+		elif inventory.has_heavy_weapon_equipped():
+			animation_tree.set(GREATSWORD_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
+		elif inventory.has_equipment(Equipment.EquipmentType.PISTOL):
+			animation_tree.set(PISTOL_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
+		elif inventory.has_equipment(Equipment.EquipmentType.RIFLE):
+			animation_tree.set(RIFLE_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
+		elif inventory.is_unarmed() and is_boxing:
+			animation_tree.set(BOXING_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
+		else:
+			animation_tree.set(STANDING_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
 
 	var root_motion_position := animation_tree.get_root_motion_position()
 	if is_swimming and not is_climbing_on:
@@ -755,65 +588,6 @@ func sfx_footsteps_slide_play():
 		if collider:
 			if collider.is_in_group("GRASS"):
 				sfx_footsteps_slide.play()
-
-
-func toggle_ragdoll() -> void:
-	if not is_ragdolling:
-		state_machine.travel(current_state, NodeStateMachine.States.RAGDOLLING)
-	else:
-		state_machine.travel(current_state, NodeStateMachine.States.STANDING)
-
-
-func get_water_surface_along_up() -> float:
-	if not is_inside_tree():
-		return NAN
-
-	var tree := get_tree()
-	if not tree:
-		return NAN
-
-	var has_surface := false
-	var highest_surface_along_up := 0.0
-	
-	var water_nodes := tree.get_nodes_in_group("WATER")
-
-	for node in water_nodes:
-		var water_area := node as Area3D
-		if not water_area:
-			continue
-		
-		# Check overlap or proximity
-		var overlapping := water_area.overlaps_body(self)
-		if not overlapping:
-			continue
-
-		var collision_shape := water_area.get_node_or_null("CollisionShape3D") as CollisionShape3D
-		if not collision_shape:
-			continue
-
-		var box_shape := collision_shape.shape as BoxShape3D
-		if not box_shape:
-			continue
-
-		var up_in_local: Vector3 = collision_shape.global_basis.inverse() * up_direction
-		var half_size: Vector3 = box_shape.size * 0.5
-		var half_extent_along_up: float = abs(up_in_local.x) * half_size.x \
-			+ abs(up_in_local.y) * half_size.y \
-			+ abs(up_in_local.z) * half_size.z
-
-		var local_surface: Vector3 = up_in_local.normalized() * half_extent_along_up
-		var world_surface: Vector3 = collision_shape.to_global(local_surface)
-		var surface_along_up: float = up_direction.dot(world_surface)
-
-		if not has_surface or surface_along_up > highest_surface_along_up:
-			has_surface = true
-			highest_surface_along_up = surface_along_up
-
-	if not has_surface:
-		return NAN
-
-	return highest_surface_along_up
-
 
 ## Reset the attack sequence when the attack sequence timer times out.
 func _on_attack_sequence_timer_timeout() -> void:

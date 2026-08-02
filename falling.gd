@@ -12,7 +12,19 @@ func _input(event: InputEvent) -> void:
 	if not is_multiplayer_authority(): return
 
 	# Do nothing if the player is not set
-	if not player: return
+	if not player or player.is_paused or player.is_ragdolling: return
+
+	# Jump action triggers while falling
+	if event.is_action_pressed("jump"):
+		if player.ledge_detection_horizontal.is_colliding():
+			player.state_machine.travel(_this_state, NodeStateMachine.States.CLIMBING)
+			return
+		elif player.paraglider_raycast.is_colliding():
+			player.state_machine.travel(_this_state, NodeStateMachine.States.FLYING)
+			return
+		elif not player.paraglider_raycast.is_colliding():
+			player.state_machine.travel(_this_state, NodeStateMachine.States.PARAGLIDING)
+			return
 
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.

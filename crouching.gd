@@ -10,7 +10,19 @@ func _input(event: InputEvent) -> void:
 	if not is_multiplayer_authority(): return
 
 	# Do nothing if the player is not set
-	if not player: return
+	if not player or player.is_paused or player.is_ragdolling: return
+
+	# Attack
+	if event.is_action_pressed("attack") and player.inventory.can_player_attack:
+		player.state_machine.travel(_this_state, NodeStateMachine.States.ATTACKING)
+		return
+
+	# Jump
+	if event.is_action_pressed("jump"):
+		if player.is_boxing:
+			player.is_boxing = false
+		player.state_machine.travel(_this_state, NodeStateMachine.States.JUMPING)
+		return
 
 	# Crouch { Controller: Left Stick, Keyboard: Left Control }
 	if event.is_action_released("crouch"):
@@ -26,6 +38,12 @@ func _physics_process(delta: float) -> void:
 
 	# Do nothing if the player is not set
 	if not player: return
+
+	# Check if the player is no longer on the floor
+	if not player.is_on_floor() and not player.falling_raycast.is_colliding():
+		# Start "falling"
+		player.state_machine.travel(_this_state, NodeStateMachine.States.FALLING)
+		return
 
 
 ## Start "crouching".
