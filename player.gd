@@ -28,6 +28,8 @@ const SWIMMING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionSt
 @export_category("Optional Gadgets & Gear")
 @export var paraglider_scene: PackedScene
 @export var skateboard_scene: PackedScene
+@export_category("Optional Interaction")
+@export var held_object_throw_force: float = 5.0
 
 var current_state: int = -1 ## The current state of the Player (from the Node/Code [NodeStateMachine], not the AnimationTree NodeStateMachine).
 var locomotion_state: ## Gets the [NodeStateMachine] "LocomotionStateMachine"
@@ -136,6 +138,13 @@ var is_focusing: bool: ## Is the Player currently focusing (forward or on a targ
 		return Input.is_action_pressed("focus")
 var is_jumping: bool = false ## Is the Player currently jumping?
 var is_jump_queued: bool = false ## Is the Player currently queued to jump?
+var is_throw_queued: bool = false ## Is the Player currently queued to throw a held object?
+var is_throwing: bool = false ## Is the Player currently throwing?
+var is_charging_throw: bool = false ## Is the Player currently charging a throw?
+var throw_charge_time: float = 0.0 ## Current elapsed charge duration for throw.
+var throw_power: float = 1.0 ## Throw power multiplier (0.25 to 1.0).
+var queued_throw_direction: Vector3 = Vector3.ZERO ## The direction to apply when executing a queued throw.
+var throw_charge_bar: ProgressBar
 var is_mining: bool: ## Is the Player currently mining?
 	get:
 		if not is_multiplayer_authority() or animation_tree == null:
@@ -194,7 +203,7 @@ var skateboard: Node3D
 @onready var hanging_braced_detection: RayCast3D = $PlayerModel/HangingBracedDetection
 @onready var look_at_target: Marker3D = $CameraMount/ProjectileRaycast/LookAtTarget
 @onready var camera_mount: Node3D = $CameraMount
-@onready var item_spring_arm: SpringArm3D = $CameraMount/CameraSpringArm/Camera3D/ItemSpringArm
+@onready var item_spring_arm: SpringArm3D = $CameraMount/ItemSpringArm
 @onready var player_input: InputSynchronizer = $InputSynchronizer
 
 @onready var initial_player_model_transform: Transform3D = player_model.transform
@@ -252,6 +261,8 @@ func _ready() -> void:
 			if child is PhysicalBone3D:
 				child.add_collision_exception_with(self)
 				add_collision_exception_with(child)
+
+	_setup_throw_charge_bar()
 
 	# Set the Player's initial state
 	if state_machine:
@@ -322,6 +333,29 @@ func _physics_process(delta: float) -> void:
 	# Treat "jumping" as queued jump or upward airborne movement.
 	is_jumping = (is_on_floor() and is_jump_queued) or (not is_on_floor() and locomotion_state.get_current_node().contains("Jump"))
 
+	# Process throw charging if actively holding shoot action
+	if is_charging_throw:
+		throw_charge_time += delta
+		var throw_dir: Vector3
+		if camera:
+			throw_dir = -camera.global_transform.basis.z.normalized()
+		else:
+			throw_dir = get_facing_direction()
+		_rotate_model_to_direction(throw_dir)
+
+		if throw_charge_time >= 0.2:
+			if not is_throw_queued:
+				queue_throw(throw_dir)
+			if throw_charge_bar:
+				throw_charge_bar.visible = true
+				var charge_ratio: float = clamp((throw_charge_time - 0.2) / 0.6, 0.0, 1.0)
+				throw_charge_bar.value = charge_ratio * 100.0
+				throw_power = lerp(0.25, 1.0, charge_ratio)
+
+		if throw_charge_time >= 0.8:
+			throw_power = 1.0
+			execute_throw()
+
 	# Stop emote state when the animation finishes and reset the blend amount.
 	if is_emoting:
 		if animation_tree.get(EMOTE_STATE_PLAYBACK_PATH).get_current_node() != "Idle":
@@ -330,6 +364,7 @@ func _physics_process(delta: float) -> void:
 			animation_tree.set("parameters/EmoteSpineBlend2/blend_amount", 0.0)
 			is_emoting = false
 			has_started_emoting = false
+			is_throwing = false
 
 	## DEBUG: Toggle emote state for testing purposes.
 	if not is_paused and not is_ragdolling and Input.is_action_just_pressed("emote"):
@@ -524,6 +559,200 @@ func execute_jump() -> void:
 	velocity = velocity.slide(up_direction) + (up_direction * 5.0)
 	is_jump_queued = false
 	is_jumping = true
+
+
+func _setup_throw_charge_bar() -> void:
+	if controls and not throw_charge_bar:
+		throw_charge_bar = ProgressBar.new()
+		throw_charge_bar.name = "ThrowChargeBar"
+		throw_charge_bar.custom_minimum_size = Vector2(200, 24)
+		throw_charge_bar.anchors_preset = Control.PRESET_CENTER_BOTTOM
+		throw_charge_bar.anchor_left = 0.5
+		throw_charge_bar.anchor_top = 0.8
+		throw_charge_bar.anchor_right = 0.5
+		throw_charge_bar.anchor_bottom = 0.8
+		throw_charge_bar.offset_left = -100
+		throw_charge_bar.offset_top = -60
+		throw_charge_bar.offset_right = 100
+		throw_charge_bar.offset_bottom = -36
+		throw_charge_bar.show_percentage = true
+		throw_charge_bar.min_value = 0.0
+		throw_charge_bar.max_value = 100.0
+		throw_charge_bar.value = 0.0
+		throw_charge_bar.visible = false
+
+		var bg_style := StyleBoxFlat.new()
+		bg_style.bg_color = Color(0.1, 0.1, 0.1, 0.7)
+		bg_style.corner_radius_top_left = 6
+		bg_style.corner_radius_top_right = 6
+		bg_style.corner_radius_bottom_left = 6
+		bg_style.corner_radius_bottom_right = 6
+
+		var fg_style := StyleBoxFlat.new()
+		fg_style.bg_color = Color(0.2, 0.8, 0.3, 0.9)
+		fg_style.corner_radius_top_left = 6
+		fg_style.corner_radius_top_right = 6
+		fg_style.corner_radius_bottom_left = 6
+		fg_style.corner_radius_bottom_right = 6
+
+		throw_charge_bar.add_theme_stylebox_override("background", bg_style)
+		throw_charge_bar.add_theme_stylebox_override("fill", fg_style)
+		controls.add_child(throw_charge_bar)
+
+
+func _rotate_model_to_direction(dir: Vector3) -> void:
+	var horizontal_dir: Vector3 = dir.slide(up_direction)
+	if horizontal_dir.length_squared() > 0.001:
+		horizontal_dir = horizontal_dir.normalized()
+		var q_from: Quaternion = orientation.basis.get_rotation_quaternion()
+		var q_to: Quaternion = Basis.looking_at(-horizontal_dir, up_direction).get_rotation_quaternion()
+		orientation.basis = Basis(q_from.slerp(q_to, 1.0))
+		player_model.global_transform.basis = orientation.basis
+
+
+## Starts charging a throw when shoot button is pressed.
+func start_charging_throw() -> void:
+	if item_spring_arm.get_child_count() == 0:
+		return
+
+	is_charging_throw = true
+	throw_charge_time = 0.0
+	throw_power = 0.25
+
+	var throw_dir: Vector3
+	if camera:
+		throw_dir = -camera.global_transform.basis.z.normalized()
+	else:
+		throw_dir = get_facing_direction()
+	_rotate_model_to_direction(throw_dir)
+
+
+## Called when shoot button is released while charging a throw.
+func release_charging_throw() -> void:
+	if not is_charging_throw:
+		return
+
+	var throw_dir: Vector3
+	if camera:
+		throw_dir = -camera.global_transform.basis.z.normalized()
+	else:
+		throw_dir = get_facing_direction()
+	_rotate_model_to_direction(throw_dir)
+
+	if throw_charge_time < 0.2:
+		# Quick tap (<0.2s): Instant weak throw (25% power)
+		throw_power = 0.25
+		execute_instant_throw(throw_dir, throw_power)
+	else:
+		# Long press release (>0.2s): execute queued throw with charged power
+		var charge_ratio: float = clamp((throw_charge_time - 0.2) / 0.6, 0.0, 1.0)
+		throw_power = lerp(0.25, 1.0, charge_ratio)
+		execute_throw()
+
+	is_charging_throw = false
+	if throw_charge_bar:
+		throw_charge_bar.visible = false
+
+
+## Executes an instant throw without animation wind-up (for quick taps).
+func execute_instant_throw(throw_dir: Vector3, power: float) -> void:
+	if item_spring_arm.get_child_count() == 0:
+		return
+
+	_rotate_model_to_direction(throw_dir)
+	var held_node: Node = item_spring_arm.get_child(0)
+	clear_throw_queue()
+	is_charging_throw = false
+	if throw_charge_bar:
+		throw_charge_bar.visible = false
+
+	if held_node.has_method("throw_with_direction"):
+		held_node.call("throw_with_direction", throw_dir, power)
+	elif held_node.has_method("throw"):
+		held_node.call("throw", throw_dir)
+	elif held_node is RigidBody3D:
+		var throw_body: RigidBody3D = held_node as RigidBody3D
+		throw_body.set_collision_layer_value(1, true)
+		throw_body.set_collision_layer_value(2, false)
+		throw_body.freeze = false
+		if get_parent() != null:
+			throw_body.reparent(get_parent(), true)
+		throw_body.apply_impulse(throw_dir * held_object_throw_force * power, Vector3.ZERO)
+
+
+## Queues a held-object throw to be executed by animation call track or 0.8s timer.
+func queue_throw(throw_direction: Vector3) -> void:
+	if throw_direction.length_squared() <= 0.001:
+		if camera:
+			throw_direction = -camera.global_transform.basis.z.normalized()
+		else:
+			throw_direction = get_facing_direction()
+		if throw_direction.length_squared() <= 0.001:
+			throw_direction = -global_transform.basis.z.normalized()
+
+	is_throw_queued = true
+	is_throwing = true
+	queued_throw_direction = throw_direction.normalized()
+
+	_rotate_model_to_direction(queued_throw_direction)
+
+	var emote_state = animation_tree.get(EMOTE_STATE_PLAYBACK_PATH)
+	if emote_state:
+		animation_tree.set("parameters/EmoteSpineBlend2/blend_amount", 1.0)
+		emote_state.travel("Throw")
+		is_emoting = true
+		has_started_emoting = false
+
+
+## Clears the queued throw state.
+func clear_throw_queue() -> void:
+	is_throw_queued = false
+	queued_throw_direction = Vector3.ZERO
+
+
+## Called by throw animation(s) using "Call Method Track" or timer to throw held object at the right frame.
+func execute_throw() -> void:
+	if not is_throw_queued and not is_charging_throw:
+		return
+	if item_spring_arm.get_child_count() == 0:
+		clear_throw_queue()
+		if throw_charge_bar:
+			throw_charge_bar.visible = false
+		is_charging_throw = false
+		return
+
+	var held_node: Node = item_spring_arm.get_child(0)
+	var throw_dir: Vector3 = queued_throw_direction
+	if throw_dir.length_squared() <= 0.001:
+		if camera:
+			throw_dir = -camera.global_transform.basis.z.normalized()
+		else:
+			throw_dir = get_facing_direction()
+
+	_rotate_model_to_direction(throw_dir)
+	var power: float = throw_power
+	clear_throw_queue()
+	is_charging_throw = false
+	if throw_charge_bar:
+		throw_charge_bar.visible = false
+
+	if held_node.has_method("throw_with_direction"):
+		held_node.call("throw_with_direction", throw_dir, power)
+	elif held_node.has_method("throw"):
+		held_node.call("throw", throw_dir)
+	elif held_node is RigidBody3D:
+		var throw_body: RigidBody3D = held_node as RigidBody3D
+		throw_body.set_collision_layer_value(1, true)
+		throw_body.set_collision_layer_value(2, false)
+		throw_body.freeze = false
+		if get_parent() != null:
+			throw_body.reparent(get_parent(), true)
+		throw_body.apply_impulse(throw_dir * held_object_throw_force * power, Vector3.ZERO)
+
+
+## Alias for animation call tracks that expect a throw-named method.
+func throw_held_object() -> void:
+	execute_throw()
 
 ## Gets the grounded locomotion state that matches the current equipment and intent.
 func get_grounded_locomotion_state() -> StringName:

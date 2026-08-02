@@ -22,7 +22,7 @@ var looking_at: Node3D = null
 
 @onready var camera_initial_transform: Transform3D = transform
 @onready var camera_ray_cast: RayCast3D = $CameraRayCast
-@onready var item_spring_arm: SpringArm3D = $ItemSpringArm
+@onready var item_spring_arm: SpringArm3D = $"../../ItemSpringArm"
 
 
 ## Called when the node enters the scene tree for the first time.
@@ -186,16 +186,15 @@ func _update_raycast() -> void:
 	if perspective == Perspective.FIRST_PERSON:
 		camera_ray_cast.position = Vector3.ZERO
 		camera_ray_cast.target_position = Vector3(0, 0, -3.0)
-		if is_instance_valid(item_spring_arm):
-			item_spring_arm.spring_length = 2.0
 	else:
 		camera_ray_cast.position = Vector3(0, 0, -1.0)
 		var length := 2.0
 		if is_instance_valid(camera_spring_arm):
 			length = camera_spring_arm.spring_length
 		camera_ray_cast.target_position = Vector3(0, 0, - (length + 1.0))
-		if is_instance_valid(item_spring_arm):
-			item_spring_arm.spring_length = length + 2.0
+
+	if is_instance_valid(item_spring_arm):
+		item_spring_arm.spring_length = 2.0
 
 
 ## Returns whether the RadialMenu is currently open/visible.
