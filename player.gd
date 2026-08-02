@@ -122,6 +122,7 @@ var is_hanging_free: bool = false ## Is the Player currently hanging (free)?
 
 var is_crouching: bool = false ## Is the Player currently crouching?
 var is_emoting: bool = false ## Is the Player currently emoting?
+var has_started_emoting: bool = false ## Has the player's emote animation transitioned away from Idle yet?
 var is_exhausted: bool = false ## Is the Player currently exhausted?
 var is_falling: bool = false ## Is the Player currently falling?
 var is_fishing: bool = false ## Is the Player currently fishing (has a rod equipped)?
@@ -186,21 +187,24 @@ var skateboard: Node3D
 @onready var settings: CanvasLayer = $Settings
 @onready var initial_transform: Transform3D = global_transform
 @onready var falling_raycast: RayCast3D = $FallingRaycast
-@onready var hanging_braced_detection: RayCast3D = $PlayerModel/HangingBracedDetection
+@onready var player_model: Node3D = $PlayerModel
 @onready var ledge_detection_horizontal: RayCast3D = $PlayerModel/LedgeDetectionHorizontal
 @onready var ledge_detection_vertical: RayCast3D = $PlayerModel/LedgeDetectionHorizontal/LedgeDetectionVertical
 @onready var ledge_detection_marker: MeshInstance3D = $PlayerModel/LedgeDetectionHorizontal/LedgeDetectionVertical/LedgeDetectionMarker
-@onready var look_at_target: Marker3D = $SpringArm3D/ProjectileRaycast/LookAtTarget
+@onready var hanging_braced_detection: RayCast3D = $PlayerModel/HangingBracedDetection
+@onready var look_at_target: Marker3D = $CameraMount/ProjectileRaycast/LookAtTarget
+@onready var camera_mount: Node3D = $CameraMount
+@onready var item_spring_arm: SpringArm3D = $CameraMount/CameraSpringArm/Camera3D/ItemSpringArm
 @onready var player_input: InputSynchronizer = $InputSynchronizer
-@onready var player_model: Node3D = $PlayerModel
+
 @onready var initial_player_model_transform: Transform3D = player_model.transform
 @onready var paraglider_raycast: RayCast3D = $ParagliderRaycast
-@onready var projectile_raycast: RayCast3D = $SpringArm3D/ProjectileRaycast
+@onready var projectile_raycast: RayCast3D = $CameraMount/ProjectileRaycast
 @onready var skeleton: Skeleton3D = $PlayerModel/Armature/GeneralSkeleton
 @onready var look_at_modifier = $PlayerModel/Armature/GeneralSkeleton/LookAtModifier3D
 @onready var physical_bone_simulator: PhysicalBoneSimulator3D = $PlayerModel/Armature/GeneralSkeleton/PhysicalBoneSimulator3D
-@onready var spring_arm: SpringArm3D = $SpringArm3D
-@onready var camera: Camera3D = $SpringArm3D/Camera3D
+@onready var spring_arm: SpringArm3D = $CameraMount/CameraSpringArm
+@onready var camera: Camera3D = $CameraMount/CameraSpringArm/Camera3D
 @onready var state_machine: NodeStateMachine = $NodeStateMachine ## Enables/Disables the scripts that run when various States are entered/exited.
 @onready var sfx_footsteps_grass: AudioStreamPlayer3D = $SFX_Footsteps_Grass
 @onready var sfx_footsteps_slide: AudioStreamPlayer3D = $SFX_Footsteps_Slide
@@ -305,10 +309,13 @@ func _input(event: InputEvent) -> void:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
+## Called every frame. 'delta' is the elapsed time since the previous frame.
+func _process(_delta: float) -> void:
+	pass
+
+
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(delta: float) -> void:
-
-
 	# Apply player input to control the character and update the animation state.
 	apply_input(delta)
 
@@ -316,9 +323,13 @@ func _physics_process(delta: float) -> void:
 	is_jumping = (is_on_floor() and is_jump_queued) or (not is_on_floor() and locomotion_state.get_current_node().contains("Jump"))
 
 	# Stop emote state when the animation finishes and reset the blend amount.
-	if is_emoting and animation_tree.get(EMOTE_STATE_PLAYBACK_PATH).get_current_node() == "Idle":
-		animation_tree.set("parameters/EmoteSpineBlend2/blend_amount", 0.0)
-		is_emoting = false
+	if is_emoting:
+		if animation_tree.get(EMOTE_STATE_PLAYBACK_PATH).get_current_node() != "Idle":
+			has_started_emoting = true
+		elif has_started_emoting:
+			animation_tree.set("parameters/EmoteSpineBlend2/blend_amount", 0.0)
+			is_emoting = false
+			has_started_emoting = false
 
 	## DEBUG: Toggle emote state for testing purposes.
 	if not is_paused and not is_ragdolling and Input.is_action_just_pressed("emote"):
@@ -327,6 +338,7 @@ func _physics_process(delta: float) -> void:
 			animation_tree.set("parameters/EmoteSpineBlend2/blend_amount", 1.0)
 			emote_state.travel("Waving")
 			is_emoting = true
+			has_started_emoting = false
 
 	## DEBUG: Remove all equipment for testing purposes.
 	if not is_paused and not is_ragdolling and Input.is_action_just_pressed("unequip"):
@@ -357,7 +369,6 @@ func apply_input(delta: float) -> void:
 	# Driving.gd / Paragliding.gd / Skateboarding.gd / Flying.gd / Ragdolling.gd will handle movement.
 	if (is_driving and not is_entering_vehicle and not is_exiting_vehicle) or is_paragliding or is_skateboarding or is_flying or is_ragdolling or is_sitting:
 		return
-
 
 
 	# Sprint logic

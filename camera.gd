@@ -8,6 +8,7 @@ enum Perspective {
 
 const CAMERA_FOLLOW_DELAY: float = 2.0
 
+@export var camera_mount: Node3D
 @export var camera_spring_arm: SpringArm3D
 @export var first_person_offset: Vector3 = Vector3(0.0, 0.0, -0.3) ## The offset of the camera from the player's head when in first-person perspective.
 @export var joypad_sensitivity: float = 100.0
@@ -21,6 +22,7 @@ var looking_at: Node3D = null
 
 @onready var camera_initial_transform: Transform3D = transform
 @onready var camera_ray_cast: RayCast3D = $CameraRayCast
+@onready var item_spring_arm: SpringArm3D = $ItemSpringArm
 
 
 ## Called when the node enters the scene tree for the first time.
@@ -119,7 +121,7 @@ func _process(delta: float) -> void:
 		if player.is_focusing \
 		or (player.is_driving and camera_follow_delay_remaining <= 0.0) \
 		or (player.is_skateboarding and camera_follow_delay_remaining <= 0.0):
-			camera_spring_arm.rotation.y = lerp_angle(camera_spring_arm.rotation.y, player.player_model.rotation.y + PI, delta * 8.0)
+			camera_mount.rotation.y = lerp_angle(camera_mount.rotation.y, player.player_model.rotation.y + PI, delta * 8.0)
 
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
@@ -133,30 +135,30 @@ func _physics_process(_delta: float) -> void:
 func rotate_camera_using_joypad_motion(delta: float) -> void:
 	# Get the input from the joypad motion event
 	var joypad_motion_input: Vector2 = Input.get_vector("look_left", "look_right", "look_up", "look_down")
-	# Rotate the [Camera3D]'s [SpringArm3D] horizontally using the joypad motion input's x value
+	# Rotate the [Camera3D]'s [CameraMount] horizontally using the joypad motion input's x value
 	if joypad_motion_input.x != 0:
-		camera_spring_arm.rotate_y(deg_to_rad(-joypad_motion_input.x * joypad_sensitivity * delta))
-	# Rotate the [Camera3D]'s [SpringArm3D] vertically using the joypad motion input's y value
+		camera_mount.rotate_y(deg_to_rad(-joypad_motion_input.x * joypad_sensitivity * delta))
+	# Rotate the [Camera3D]'s [CameraMount] vertically using the joypad motion input's y value
 	if joypad_motion_input.y != 0:
-		var new_rotation_x: float = camera_spring_arm.rotation_degrees.x - joypad_motion_input.y * joypad_sensitivity * delta
+		var new_rotation_x: float = camera_mount.rotation_degrees.x - joypad_motion_input.y * joypad_sensitivity * delta
 		# Clamp the rotation to prevent flipping
 		new_rotation_x = clamp(new_rotation_x, -89, 89)
-		# Apply the new rotation to the [Camera3D]'s [SpringArm3D]
-		camera_spring_arm.rotation_degrees.x = new_rotation_x
+		# Apply the new rotation to the [Camera3D]'s [CameraMount]
+		camera_mount.rotation_degrees.x = new_rotation_x
 
 
 ## Rotates the [Camera3D]'s [SpringArm3D] using the input from a mouse motion event, while clamping the vertical rotation to prevent flipping.
 func rotate_camera_using_mouse_motion(event: InputEventMouseMotion) -> void:
 	# Get the input from the mouse motion event
 	var mouse_motion_input: Vector2 = event.relative
-	# Rotate the [Camera3D]'s [SpringArm3D] horizontally using the mouse motion input's x value
-	camera_spring_arm.rotate_y(deg_to_rad(-mouse_motion_input.x * mouse_sensitivity))
-	# Rotate the [Camera3D]'s [SpringArm3D] vertically using the mouse motion input's y value
-	var new_rotation_x: float = camera_spring_arm.rotation_degrees.x - mouse_motion_input.y * mouse_sensitivity
+	# Rotate the [Camera3D]'s [CameraMount] horizontally using the mouse motion input's x value
+	camera_mount.rotate_y(deg_to_rad(-mouse_motion_input.x * mouse_sensitivity))
+	# Rotate the [Camera3D]'s [CameraMount] vertically using the mouse motion input's y value
+	var new_rotation_x: float = camera_mount.rotation_degrees.x - mouse_motion_input.y * mouse_sensitivity
 	# Clamp the rotation to prevent flipping
 	new_rotation_x = clamp(new_rotation_x, -89, 89)
-	# Apply the new rotation to the [Camera3D]'s [SpringArm3D]
-	camera_spring_arm.rotation_degrees.x = new_rotation_x
+	# Apply the new rotation to the [Camera3D]'s [CameraMount]
+	camera_mount.rotation_degrees.x = new_rotation_x
 
 
 ## Adds a delay before the camera starts following the player again.
@@ -170,7 +172,7 @@ func move_camera_to_player_head() -> void:
 		first_person_bone_attachment = player.skeleton.get_node("FirstPersonCameraBoneAttachment") as BoneAttachment3D
 
 	global_position = first_person_bone_attachment.global_position
-	global_rotation = camera_spring_arm.global_rotation
+	global_rotation = camera_mount.global_rotation
 	global_position += global_transform.basis.z * first_person_offset.z
 	global_position += global_transform.basis.y * first_person_offset.y
 	global_position += global_transform.basis.x * first_person_offset.x
@@ -184,12 +186,16 @@ func _update_raycast() -> void:
 	if perspective == Perspective.FIRST_PERSON:
 		camera_ray_cast.position = Vector3.ZERO
 		camera_ray_cast.target_position = Vector3(0, 0, -3.0)
+		if is_instance_valid(item_spring_arm):
+			item_spring_arm.spring_length = 2.0
 	else:
 		camera_ray_cast.position = Vector3(0, 0, -1.0)
 		var length := 2.0
 		if is_instance_valid(camera_spring_arm):
 			length = camera_spring_arm.spring_length
 		camera_ray_cast.target_position = Vector3(0, 0, - (length + 1.0))
+		if is_instance_valid(item_spring_arm):
+			item_spring_arm.spring_length = length + 2.0
 
 
 ## Returns whether the RadialMenu is currently open/visible.
