@@ -91,42 +91,18 @@ var is_boxing: bool = false
 var attack_sequence: int = 0
 var is_attacking: bool = false
 var is_attacking_1: bool: # Attack Sequence: 1 of n
-	get:
-		if not is_multiplayer_authority() or animation_tree == null:
-			return false
-		var current_node: String = String(locomotion_state.get_current_node())
-		return current_node == "GreatSwordDownwardSlash" or current_node == "ShieldDownwardSlash" or current_node == "ShortHeadJab"
+	get: return String(locomotion_state.get_current_node()) in ["GreatSwordDownwardSlash", "ShieldDownwardSlash", "ShortHeadJab"] if is_multiplayer_authority() and animation_tree else false
 var is_attacking_2: bool: # Attack Sequence: 2 of n
-	get:
-		if not is_multiplayer_authority() or animation_tree == null:
-			return false
-		var current_node: String = String(locomotion_state.get_current_node())
-		return current_node == "GreatSwordLowSlash" or current_node == "ShieldCrossSlash" or current_node == "BackHandCross"
+	get: return String(locomotion_state.get_current_node()) in ["GreatSwordLowSlash", "ShieldCrossSlash", "BackHandCross"] if is_multiplayer_authority() and animation_tree else false
 var is_attacking_3: bool: # Attack Sequence: 3 of n
-	get:
-		if not is_multiplayer_authority() or animation_tree == null:
-			return false
-		var current_node: String = String(locomotion_state.get_current_node())
-		return current_node == "GreatSwordPowerSlash" or current_node == "ShieldPowerSlash"
+	get: return String(locomotion_state.get_current_node()) in ["GreatSwordPowerSlash", "ShieldPowerSlash"] if is_multiplayer_authority() and animation_tree else false
 # Bow and Arrow
 var is_aiming_bow: bool:
-	get:
-		if not is_multiplayer_authority() or not equipped_bow:
-			return false
-		var current_node: String = String(locomotion_state.get_current_node())
-		return current_node == "ArcheryLocomotion"
+	get: return String(locomotion_state.get_current_node()) == "ArcheryLocomotion" if is_multiplayer_authority() and equipped_bow else false
 var is_drawing_arrow: bool:
-	get:
-		if not is_multiplayer_authority() or not equipped_bow:
-			return false
-		var current_node: String = String(locomotion_state.get_current_node())
-		return current_node == "BowDrawArrow"
+	get: return String(locomotion_state.get_current_node()) == "BowDrawArrow" if is_multiplayer_authority() and equipped_bow else false
 var is_firing_arrow: bool:
-	get:
-		if not is_multiplayer_authority() or not equipped_bow:
-			return false
-		var current_node: String = String(locomotion_state.get_current_node())
-		return current_node == "BowFireArrow"
+	get: return String(locomotion_state.get_current_node()) == "BowFireArrow" if is_multiplayer_authority() and equipped_bow else false
 # Climbing
 var is_climbing: bool = false ## Is the Player currently climbing?
 var is_climbing_on: bool = false ## Is the Player currently climbing on to a ledge?
@@ -235,7 +211,11 @@ var skateboard: Node3D
 ## Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	# Do nothing if not the authority
-	if not is_multiplayer_authority(): return
+	if not is_multiplayer_authority():
+		set_process(false)
+		set_physics_process(false)
+		set_process_input(false)
+		return
 
 	# Pre-initialize orientation transform.
 	orientation = player_model.global_transform
@@ -271,7 +251,7 @@ func _ready() -> void:
 
 	# Set the Player's initial state
 	if state_machine:
-		state_machine._start_state(NodeStateMachine.States.STANDING)
+		state_machine.travel(-1, NodeStateMachine.States.STANDING)
 	else:
 		current_state = NodeStateMachine.States.STANDING
 
@@ -311,7 +291,6 @@ func _ready() -> void:
 ## Called when there is an unhandled input event.
 func _input(event: InputEvent) -> void:
 	# Do nothing if not the authority
-	if not is_multiplayer_authority(): return
 	if is_paused or is_ragdolling: return
 
 	# Toggle mouse capture
@@ -328,9 +307,6 @@ func _input(event: InputEvent) -> void:
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(delta: float) -> void:
-	# Do nothing if not the authority
-	if not is_multiplayer_authority(): return
-
 
 
 	# Apply player input to control the character and update the animation state.

@@ -19,8 +19,6 @@ const WATER_SURFACE_SNAP_RATIO := 0.75
 
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:
-	# Do nothing if not the authority
-	if not is_multiplayer_authority(): return
 
 	# Do nothing if the player is not set or is paused/ragdolling
 	if not player or player.is_paused or player.is_ragdolling: return
@@ -38,8 +36,6 @@ func _input(event: InputEvent) -> void:
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(delta: float) -> void:
-	# Do nothing if not the authority
-	if not is_multiplayer_authority(): return
 
 	# Do nothing if the player is not set
 	if not player: return
@@ -132,23 +128,6 @@ func _physics_process(delta: float) -> void:
 			player.animation_tree.set(player.SWIMMING_LOCOMOTION_BLEND_POSITION_PATH, player.smoothed_motion.length())
 
 
-func _get_player_shoulder_offset() -> float:
-	if not player or not player.collision_shape:
-		return 0.0
-
-	var shape: Shape3D = player.collision_shape.shape
-	if not shape:
-		return 0.0
-
-	if shape is CapsuleShape3D:
-		var capsule_shape := shape as CapsuleShape3D
-		return capsule_shape.height * WATER_SURFACE_SNAP_RATIO
-
-	if shape is BoxShape3D:
-		var box_shape := shape as BoxShape3D
-		return box_shape.size.y * WATER_SURFACE_SNAP_RATIO
-
-	return 0.0
 
 
 
@@ -166,7 +145,13 @@ func start() -> void:
 	var up_direction: Vector3 = player.up_direction.normalized()
 	var water_surface_along_up: float = get_water_surface_along_up()
 	if not is_nan(water_surface_along_up):
-		var shoulder_offset := _get_player_shoulder_offset()
+		var shoulder_offset := 0.0
+		if player and player.collision_shape and player.collision_shape.shape:
+			var shape = player.collision_shape.shape
+			if shape is CapsuleShape3D:
+				shoulder_offset = (shape as CapsuleShape3D).height * WATER_SURFACE_SNAP_RATIO
+			elif shape is BoxShape3D:
+				shoulder_offset = (shape as BoxShape3D).size.y * WATER_SURFACE_SNAP_RATIO
 		var target_position_along_up := water_surface_along_up - shoulder_offset
 		var current_position_along_up := up_direction.dot(player.global_position)
 		player.global_position += up_direction * (target_position_along_up - current_position_along_up)
@@ -187,28 +172,16 @@ func stop() -> void:
 func get_contextual_controls(input_type: int) -> Dictionary:
 	if not player or not player.controls: return {}
 
-	if input_type == 0: # KEYBOARD_MOUSE
-		return {
-			player.controls.joypad_button_4_label: "Perspective",
-			player.controls.joypad_button_15_label: "Screenshot",
-			player.controls.joypad_button_6_label: "Pause Menu",
+	return {
+		player.controls.joypad_button_4_label: "Perspective",
+		player.controls.joypad_button_15_label: "Screenshot",
+		player.controls.joypad_button_6_label: "Pause Menu",
 
-			player.controls.joypad_button_3_label: "Climb Out",
-			player.controls.joypad_button_1_label: "Fast Swim",
-			player.controls.left_joystick_label: "Swim",
-			player.controls.right_joystick_label: "Camera",
-		}
-	else:
-		return {
-			player.controls.joypad_button_4_label: "Perspective",
-			player.controls.joypad_button_15_label: "Screenshot",
-			player.controls.joypad_button_6_label: "Pause Menu",
-
-			player.controls.joypad_button_3_label: "Climb Out",
-			player.controls.joypad_button_1_label: "Fast Swim",
-			player.controls.left_joystick_label: "Swim",
-			player.controls.right_joystick_label: "Camera",
-		}
+		player.controls.joypad_button_3_label: "Climb Out",
+		player.controls.joypad_button_1_label: "Fast Swim",
+		player.controls.left_joystick_label: "Swim",
+		player.controls.right_joystick_label: "Camera",
+	}
 
 
 func get_water_surface_along_up() -> float:

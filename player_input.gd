@@ -12,14 +12,13 @@ extends MultiplayerSynchronizer
 
 ## Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	# Do nothing if not the authority
-	if not is_multiplayer_authority(): return
+	set_process(is_multiplayer_authority())
+	set_physics_process(is_multiplayer_authority())
+	set_process_input(is_multiplayer_authority())
 
 
 ## Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta: float) -> void:
-	# Do nothing if not the authority
-	if not is_multiplayer_authority(): return
 
 	var player := get_parent() as Player
 	if player and (player.is_paused or player.is_ragdolling):

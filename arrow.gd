@@ -9,6 +9,9 @@ var shooter: Node3D = null ## Reference to the CharacterBody3D that fired the ar
 
 ## Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+	set_process(is_multiplayer_authority())
+	set_physics_process(is_multiplayer_authority())
+	set_process_input(is_multiplayer_authority())
 	# If this is the main template arrow, keep it frozen and do not process physics
 	if is_template:
 		freeze = true
@@ -36,8 +39,6 @@ func _ready() -> void:
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(_delta: float) -> void:
-	# Do nothing if not the authority
-	if not is_multiplayer_authority(): return
 
 	# Point the arrow toward its movement trajectory while in flight
 	if not freeze and linear_velocity.length() > 0.1:

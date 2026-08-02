@@ -12,14 +12,15 @@ extends TextureProgressBar
 
 ## Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+	set_process(is_multiplayer_authority())
+	set_physics_process(is_multiplayer_authority())
+	set_process_input(is_multiplayer_authority())
 	step = 0.01
 	value = 100
 
 
 ## Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
-	# Do nothing if not the authority
-	if not is_multiplayer_authority(): return
 
 	# Check if the player is sprinting or actively moving while climbing
 	var climbing_moving := player.is_climbing and player.velocity.length() > 0.1

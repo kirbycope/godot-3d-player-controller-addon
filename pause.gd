@@ -5,8 +5,6 @@ extends CanvasLayer
 
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:
-	# Do nothing if not the authority
-	if not is_multiplayer_authority(): return
 
 	# Unpause
 	if event.is_action_pressed("start") \

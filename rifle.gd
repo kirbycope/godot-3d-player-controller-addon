@@ -7,8 +7,6 @@ var was_shooting: bool = false
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(delta: float) -> void:
-	# Do nothing if not the authority
-	if not is_multiplayer_authority(): return
 
 	# Proceed once the player has been initialized
 	if player:

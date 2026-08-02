@@ -196,8 +196,9 @@ var _normal_textures: Dictionary = {}
 
 ## Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	# Do nothing if not the authority
-	if not is_multiplayer_authority(): return
+	set_process(is_multiplayer_authority())
+	set_physics_process(is_multiplayer_authority())
+	set_process_input(is_multiplayer_authority())
 
 	# Connect the input_type_changed signal to the update_input_ui function
 	input_type_changed.connect(update_input_ui)
@@ -559,8 +560,6 @@ func _ready() -> void:
 
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:
-	# Do nothing if not the authority
-	if not is_multiplayer_authority(): return
 
 	# Check if the input is a keyboard or mouse event
 	if event is InputEventKey or (event is InputEventMouse and Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED):
@@ -598,12 +597,6 @@ func _input(event: InputEvent) -> void:
 			elif event.is_action_released(btn.action):
 				if btn in _normal_textures:
 					btn.texture_normal = _normal_textures[btn]
-
-
-## Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-	# Do nothing if not the authority
-	if not is_multiplayer_authority(): return
 
 
 func reset_labels() -> void:

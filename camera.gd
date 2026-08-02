@@ -26,8 +26,9 @@ var looking_at: Node3D = null
 
 ## Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	# Do nothing if not the authority
-	if not is_multiplayer_authority(): return
+	set_process(is_multiplayer_authority())
+	set_physics_process(is_multiplayer_authority())
+	set_process_input(is_multiplayer_authority())
 
 	# Ensure the [RayCast3D] doesn't collide with the player
 	camera_ray_cast.add_exception(player)
@@ -42,8 +43,6 @@ func _ready() -> void:
 
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:
-	# Do nothing if not the authority
-	if not is_multiplayer_authority(): return
 
 	# Do nothing if player is paused
 	if player and player.is_paused: return
@@ -91,8 +90,6 @@ func _input(event: InputEvent) -> void:
 
 ## Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
-	# Do nothing if not the authority
-	if not is_multiplayer_authority(): return
 
 	# Move camera to player's head if in first-person perspective
 	if perspective == Perspective.FIRST_PERSON:
@@ -130,8 +127,6 @@ func _process(delta: float) -> void:
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(_delta: float) -> void:
-	# Do nothing if not the authority
-	if not is_multiplayer_authority(): return
 
 	# Move camera to player's head if in first-person perspective
 	if perspective == Perspective.FIRST_PERSON:

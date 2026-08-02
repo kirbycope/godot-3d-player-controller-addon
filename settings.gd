@@ -23,6 +23,9 @@ extends CanvasLayer
 
 ## Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+	set_process(is_multiplayer_authority())
+	set_physics_process(is_multiplayer_authority())
+	set_process_input(is_multiplayer_authority())
 	# By default, hide anything not for all renderers
 	fxaa_button.visible = false
 	ssrl_button.visible = false
@@ -59,8 +62,6 @@ func _ready() -> void:
 
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:
-	# Do nothing if not the authority
-	if not is_multiplayer_authority(): return
 
 	# Close settings menu
 	if event.is_action_pressed("start") \

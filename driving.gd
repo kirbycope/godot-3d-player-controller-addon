@@ -39,8 +39,6 @@ func is_brake_pressed() -> bool:
 
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:
-	# Do nothing if not the authority
-	if not is_multiplayer_authority(): return
 
 	# Do nothing if the player is not set or is paused/ragdolling
 	if not player or player.is_paused or player.is_ragdolling: return
@@ -59,8 +57,6 @@ func _input(event: InputEvent) -> void:
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(delta: float) -> void:
-	# Do nothing if not the authority
-	if not is_multiplayer_authority(): return
 
 	# Do nothing if the player is not set
 	if not player: return
@@ -203,27 +199,20 @@ func _open_and_close_drivers_door() -> void:
 func get_contextual_controls(input_type: int) -> Dictionary:
 	if not player or not player.controls: return {}
 
+	var controls = {
+		player.controls.joypad_button_4_label: "Perspective",
+		player.controls.joypad_button_15_label: "Screenshot",
+		player.controls.joypad_button_6_label: "Pause Menu",
+		player.controls.left_joystick_label: "Steer",
+		player.controls.right_joystick_label: "Camera",
+	}
 	if input_type == 0: # KEYBOARD_MOUSE
-		return {
-			player.controls.joypad_button_4_label: "Perspective",
-			player.controls.joypad_button_15_label: "Screenshot",
-			player.controls.joypad_button_6_label: "Pause Menu",
-
-			player.controls.joypad_button_3_label: "Accelerate",
-			player.controls.joypad_button_1_label: "Brake",
-			player.controls.joypad_button_0_label: "Exit",
-			player.controls.left_joystick_label: "Steer",
-			player.controls.right_joystick_label: "Camera",
-		}
+		controls[player.controls.joypad_button_3_label] = "Accelerate"
+		controls[player.controls.joypad_button_1_label] = "Brake"
+		controls[player.controls.joypad_button_0_label] = "Exit"
 	else:
-		return {
-			player.controls.joypad_button_4_label: "Perspective",
-			player.controls.joypad_button_15_label: "Screenshot",
-			player.controls.joypad_button_6_label: "Pause Menu",
-
-			player.controls.joypad_axis_4_plus_label: "Brake",
-			player.controls.joypad_axis_5_plus_label: "Accelerate",
-			player.controls.joypad_button_3_label: "Exit",
-			player.controls.left_joystick_label: "Steer",
-			player.controls.right_joystick_label: "Camera",
-		}
+		controls[player.controls.joypad_axis_4_plus_label] = "Brake"
+		controls[player.controls.joypad_axis_5_plus_label] = "Accelerate"
+		controls[player.controls.joypad_button_3_label] = "Exit"
+	
+	return controls

@@ -22,13 +22,14 @@ var was_on_the_floor: bool
 
 ## Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+	set_process(is_multiplayer_authority())
+	set_physics_process(is_multiplayer_authority())
+	set_process_input(is_multiplayer_authority())
 	pass # Replace with function body.
 
 
 ## Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
-	# Do nothing if not the authority
-	if not is_multiplayer_authority(): return
 
 	if player.is_exhausted:
 		if abs(player.velocity.length()) > 0.2:

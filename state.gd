@@ -20,6 +20,11 @@ enum States {
 	SWIMMING,
 }
 
+func _ready() -> void:
+	set_process(is_multiplayer_authority())
+	set_physics_process(is_multiplayer_authority())
+	set_process_input(is_multiplayer_authority())
+
 @export var player: Player
 
 
@@ -38,52 +43,39 @@ func travel(from_state: States, to_state: States) -> void:
 		return
 
 	if from_state in States.values():
-		_stop_state(from_state)
-	else:
+		var from_state_name: StringName = get_state_name(from_state)
+		var from_state_node: Node = get_node_or_null(NodePath(from_state_name))
+		if from_state_node == null:
+			push_error("Invalid from_state: %s" % str(from_state_name))
+		elif not from_state_node.has_method("stop"):
+			push_error("State %s missing stop()" % str(from_state_name))
+		else:
+			if player and player.controls:
+				if player.controls.input_type_changed.is_connected(from_state_node._on_input_type_changed):
+					player.controls.input_type_changed.disconnect(from_state_node._on_input_type_changed)
+				player.controls.reset_labels()
+			from_state_node.call("stop")
+	elif from_state != -1:
 		push_warning("Invalid from_state: %s" % str(from_state))
 
 	if to_state in States.values():
-		_start_state(to_state)
+		var to_state_name: StringName = get_state_name(to_state)
+		var to_state_node: Node = get_node_or_null(NodePath(to_state_name))
+		if to_state_node == null:
+			push_error("Invalid to_state: %s" % str(to_state_name))
+		elif not to_state_node.has_method("start"):
+			push_error("State %s missing start()" % str(to_state_name))
+		else:
+			if player and player.controls:
+				if not player.controls.input_type_changed.is_connected(to_state_node._on_input_type_changed):
+					player.controls.input_type_changed.connect(to_state_node._on_input_type_changed)
+				to_state_node._on_input_type_changed(player.controls.current_input_type)
+			to_state_node.call("start")
 	else:
 		push_warning("Invalid to_state: %s" % str(to_state))
 
 
-## (Do not call this directly) Called by `travel()` to STOP the current state.
-func _stop_state(state: int) -> void:
-	var state_name: StringName = get_state_name(state)
-	var state_node: Node = get_node_or_null(NodePath(state_name))
-	if state_node == null:
-		push_error("Invalid from_state: %s" % str(state_name))
-		return
-	if not state_node.has_method("stop"):
-		push_error("State %s missing stop()" % str(state_name))
-		return
-	
-	if player and player.controls:
-		if player.controls.input_type_changed.is_connected(state_node._on_input_type_changed):
-			player.controls.input_type_changed.disconnect(state_node._on_input_type_changed)
-		player.controls.reset_labels()
-	
-	state_node.call("stop")
 
-
-## (Do not call this directly) Called by `travel()` to START the new state.
-func _start_state(state: States) -> void:
-	var state_name: StringName = get_state_name(state)
-	var state_node: Node = get_node_or_null(NodePath(state_name))
-	if state_node == null:
-		push_error("Invalid to_state: %s" % str(state_name))
-		return
-	if not state_node.has_method("start"):
-		push_error("State %s missing start()" % str(state_name))
-		return
-	
-	if player and player.controls:
-		if not player.controls.input_type_changed.is_connected(state_node._on_input_type_changed):
-			player.controls.input_type_changed.connect(state_node._on_input_type_changed)
-		state_node._on_input_type_changed(player.controls.current_input_type)
-	
-	state_node.call("start")
 
 
 func _on_input_type_changed(input_type: int) -> void:

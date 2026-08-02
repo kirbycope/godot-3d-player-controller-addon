@@ -72,7 +72,20 @@ func _process(delta: float) -> void:
 
 				if new_hovered != hovered_index:
 					hovered_index = new_hovered
-					_update_tooltip()
+					if tooltip_label:
+						if hovered_index == -1 or hovered_index >= weapons.size():
+							tooltip_label.text = ""
+						else:
+							var hovered_item = weapons[hovered_index]
+							var text_name = "Unknown"
+							if hovered_item is Dictionary:
+								text_name = hovered_item.get("display_name", "Unarmed")
+							else:
+								if "display_name" in hovered_item and hovered_item.display_name != "":
+									text_name = hovered_item.display_name
+								elif "equipment_type" in hovered_item:
+									text_name = Equipment.EquipmentType.keys()[hovered_item.equipment_type].capitalize()
+							tooltip_label.text = text_name
 					queue_redraw()
 			else:
 				Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
@@ -86,7 +99,20 @@ func _process(delta: float) -> void:
 					var new_hovered = int(angle / segment_angle) % weapons.size()
 					if new_hovered != hovered_index:
 						hovered_index = new_hovered
-						_update_tooltip()
+						if tooltip_label:
+							if hovered_index == -1 or hovered_index >= weapons.size():
+								tooltip_label.text = ""
+							else:
+								var hovered_item = weapons[hovered_index]
+								var text_name = "Unknown"
+								if hovered_item is Dictionary:
+									text_name = hovered_item.get("display_name", "Unarmed")
+								else:
+									if "display_name" in hovered_item and hovered_item.display_name != "":
+										text_name = hovered_item.display_name
+									elif "equipment_type" in hovered_item:
+										text_name = Equipment.EquipmentType.keys()[hovered_item.equipment_type].capitalize()
+								tooltip_label.text = text_name
 						queue_redraw()
 		else:
 			hide()
@@ -96,7 +122,8 @@ func _process(delta: float) -> void:
 			if hovered_index != -1 and weapons.size() > 0:
 				equip_item(hovered_index)
 			hovered_index = -1
-			_update_tooltip()
+			if tooltip_label:
+				tooltip_label.text = ""
 			weapons.clear()
 
 func update_items() -> void:
@@ -193,22 +220,3 @@ func _draw() -> void:
 	draw_arc(center, outer_radius, 0, TAU, 64, line_color, line_width, true)
 	# Draw inner circle
 	draw_arc(center, inner_radius, 0, TAU, 32, line_color, line_width, true)
-
-func _update_tooltip() -> void:
-	if not tooltip_label:
-		return
-	if hovered_index == -1 or hovered_index >= weapons.size():
-		tooltip_label.text = ""
-		return
-		
-	var hovered_item = weapons[hovered_index]
-	var text_name = "Unknown"
-	if hovered_item is Dictionary:
-		text_name = hovered_item.get("display_name", "Unarmed")
-	else:
-		if "display_name" in hovered_item and hovered_item.display_name != "":
-			text_name = hovered_item.display_name
-		elif "equipment_type" in hovered_item:
-			text_name = Equipment.EquipmentType.keys()[hovered_item.equipment_type].capitalize()
-			
-	tooltip_label.text = text_name
