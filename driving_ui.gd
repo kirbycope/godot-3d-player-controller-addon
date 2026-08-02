@@ -3,12 +3,12 @@ extends CanvasLayer
 @export var player: Player
 @export var speedometer_max_speed: float = 120
 
-@onready var speedometer_guage: TextureRect = $Speedometer/Guage
+@onready var speedometer_gauge: TextureRect = $Speedometer/Gauge
 @onready var speedometer_needle: TextureRect = $Speedometer/Needle
 
 ## NOTES
 # -132.5 is the rotation of the needle when linear velocity is near 0
-# 132.5 is the max rotation of the needgle (when the speed gets so high the guage tops out)
+# 132.5 is the max rotation of the needle (when the speed gets so high the gauge tops out)
 
 func _process(delta: float) -> void:
 	if player and player.is_driving_in and not player.is_entering_vehicle and not player.is_exiting_vehicle:

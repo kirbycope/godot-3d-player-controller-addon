@@ -21,7 +21,6 @@ var looking_at: Node3D = null
 
 @onready var camera_initial_transform: Transform3D = transform
 @onready var camera_ray_cast: RayCast3D = $CameraRayCast
-@onready var camera_ray_cast_initial_position: Vector3 = camera_ray_cast.position
 
 
 ## Called when the node enters the scene tree for the first time.
@@ -43,7 +42,6 @@ func _ready() -> void:
 
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:
-
 	# Do nothing if player is paused
 	if player and player.is_paused: return
 
@@ -90,7 +88,6 @@ func _input(event: InputEvent) -> void:
 
 ## Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
-
 	# Move camera to player's head if in first-person perspective
 	if perspective == Perspective.FIRST_PERSON:
 		move_camera_to_player_head()
@@ -127,7 +124,6 @@ func _process(delta: float) -> void:
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(_delta: float) -> void:
-
 	# Move camera to player's head if in first-person perspective
 	if perspective == Perspective.FIRST_PERSON:
 		move_camera_to_player_head()

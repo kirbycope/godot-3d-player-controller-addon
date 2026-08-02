@@ -22,7 +22,7 @@ offset_bottom = -112.0
 grow_horizontal = 2
 grow_vertical = 0
 
-[node name="Guage" type="TextureRect" parent="Speedometer" unique_id=1564685092]
+[node name="Gauge" type="TextureRect" parent="Speedometer" unique_id=1564685092]
 layout_mode = 1
 offset_right = 64.0
 offset_bottom = 64.0

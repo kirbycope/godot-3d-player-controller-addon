@@ -11,7 +11,6 @@ var _was_firing_arrow: bool = false
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(delta: float) -> void:
-
 	# Proceed once the player has been initialized
 	if player:
 		# Track prior frame archery states for edge-triggered effects.
@@ -89,12 +88,12 @@ func _physics_process(delta: float) -> void:
 			if is_drawing_arrow_now and not was_drawing_arrow and bow.has_node("BowDrawArrow"):
 				bow.get_node("BowDrawArrow").play()
 				# Rumble when arrow is knocked
-				if player.controls.current_input_type not in [ player.controls.InputType.KEYBOARD_MOUSE,  player.controls.InputType.TOUCH]:
+				if player.controls.current_input_type not in [player.controls.InputType.KEYBOARD_MOUSE, player.controls.InputType.TOUCH]:
 					Input.start_joy_vibration(0, 0.0, 0.2, 0.5)
 			if is_firing_arrow_now and not was_firing_arrow and bow.has_node("BowFireArrow"):
 				bow.get_node("BowFireArrow").play()
 				# Rumble when arrow is fired
-				if player.controls.current_input_type not in [ player.controls.InputType.KEYBOARD_MOUSE,  player.controls.InputType.TOUCH]:
+				if player.controls.current_input_type not in [player.controls.InputType.KEYBOARD_MOUSE, player.controls.InputType.TOUCH]:
 					Input.start_joy_vibration(0, 0.4, 0.0, 0.5)
 				if not player.projectile_raycast.is_colliding():
 					bow.get_node("Arrow/Swish").play()
@@ -102,7 +101,6 @@ func _physics_process(delta: float) -> void:
 					var hit_object := player.projectile_raycast.get_collider()
 					if hit_object and hit_object is RigidBody3D:
 						var collision_point := player.projectile_raycast.get_collision_point()
-						var collision_normal := player.projectile_raycast.get_collision_normal()
 						var force_direction := player.projectile_raycast.global_transform.basis.z
 						var force_magnitude := 10.0
 						(hit_object as RigidBody3D).apply_impulse(collision_point - hit_object.global_transform.origin, force_direction * force_magnitude)
