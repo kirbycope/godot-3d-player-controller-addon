@@ -11,6 +11,8 @@ const CAMERA_FOLLOW_DELAY: float = 2.0
 @export var camera_mount: Node3D
 @export var camera_spring_arm: SpringArm3D
 @export var first_person_offset: Vector3 = Vector3(0.0, 0.0, -0.3) ## The offset of the camera from the player's head when in first-person perspective.
+@export var first_person_item_spring_length: float = 0.7 ## Held-item spring length in first-person.
+@export var third_person_item_spring_length: float = 2.0 ## Held-item spring length in third-person.
 @export var joypad_sensitivity: float = 100.0
 @export var mouse_sensitivity: float = 0.1
 @export var perspective: Perspective = Perspective.THIRD_PERSON ## What perspective should the Camera use?
@@ -23,6 +25,7 @@ var looking_at: Node3D = null
 @onready var camera_initial_transform: Transform3D = transform
 @onready var camera_ray_cast: RayCast3D = $CameraRayCast
 @onready var item_spring_arm: SpringArm3D = $"../../ItemSpringArm"
+@onready var item_spring_arm_initial_transform: Transform3D = item_spring_arm.transform
 
 
 ## Called when the node enters the scene tree for the first time.
@@ -40,6 +43,8 @@ func _ready() -> void:
 	# Match the [RayCast3D] offset to the starting perspective (scene offset is for third-person)
 	if perspective == Perspective.FIRST_PERSON:
 		camera_ray_cast.position = Vector3.ZERO
+
+	_sync_item_spring_arm()
 
 
 ## Called when there is an input event.
@@ -123,12 +128,16 @@ func _process(delta: float) -> void:
 		or (player.is_skateboarding and camera_follow_delay_remaining <= 0.0):
 			camera_mount.rotation.y = lerp_angle(camera_mount.rotation.y, player.player_model.rotation.y + PI, delta * 8.0)
 
+	_sync_item_spring_arm()
+
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(_delta: float) -> void:
 	# Move camera to player's head if in first-person perspective
 	if perspective == Perspective.FIRST_PERSON:
 		move_camera_to_player_head()
+
+	_sync_item_spring_arm()
 
 
 ## Rotates the [Camera3D]'s [SpringArm3D] using the input from a joypad motion event, while clamping the vertical rotation to prevent flipping.
@@ -178,6 +187,22 @@ func move_camera_to_player_head() -> void:
 	global_position += global_transform.basis.x * first_person_offset.x
 
 
+## Keeps the held-item spring arm aligned with perspective/camera behavior.
+func _sync_item_spring_arm() -> void:
+	if not is_instance_valid(item_spring_arm):
+		return
+
+	if perspective == Perspective.FIRST_PERSON:
+		# Preserve arm's authored local orientation (typically 180deg yaw)
+		# so SpringArm extension remains in front of the first-person camera.
+		item_spring_arm.global_basis = global_basis * item_spring_arm_initial_transform.basis
+		item_spring_arm.global_position = global_position
+		item_spring_arm.spring_length = first_person_item_spring_length
+	else:
+		item_spring_arm.transform = item_spring_arm_initial_transform
+		item_spring_arm.spring_length = third_person_item_spring_length
+
+
 ## Updates the [RayCast3D] position and target_position based on current perspective/depth.
 func _update_raycast() -> void:
 	if not is_instance_valid(camera_ray_cast):
@@ -193,12 +218,11 @@ func _update_raycast() -> void:
 			length = camera_spring_arm.spring_length
 		camera_ray_cast.target_position = Vector3(0, 0, - (length + 1.0))
 
-	if is_instance_valid(item_spring_arm):
-		item_spring_arm.spring_length = 2.0
+	_sync_item_spring_arm()
 
 
 ## Returns whether the RadialMenu is currently open/visible.
 func is_radial_menu_open() -> bool:
-	if player and player.inventory and player.inventory.has_node("RadialMenu"):
-		return player.inventory.get_node("RadialMenu").visible
+	if player and is_instance_valid(player.radial_menu):
+		return player.radial_menu.is_open()
 	return false

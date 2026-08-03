@@ -43,6 +43,10 @@ func is_menu_held() -> bool:
 	return Input.is_action_pressed("last_weapon") \
 		or Input.is_action_pressed("next_weapon")
 
+
+func is_open() -> bool:
+	return visible
+
 func _process(delta: float) -> void:
 	if not visible:
 		if is_menu_requested():

@@ -145,6 +145,10 @@ var throw_charge_time: float = 0.0 ## Current elapsed charge duration for throw.
 var throw_power: float = 1.0 ## Throw power multiplier (0.25 to 1.0).
 var queued_throw_direction: Vector3 = Vector3.ZERO ## The direction to apply when executing a queued throw.
 var throw_charge_bar: ProgressBar
+var held_rigidbody: RigidBody3D = null
+var held_rigidbody_original_collision_layer: int = 0
+var held_rigidbody_original_collision_mask: int = 0
+var held_rigidbody_original_freeze: bool = false
 var is_mining: bool: ## Is the Player currently mining?
 	get:
 		if not is_multiplayer_authority() or animation_tree == null:
@@ -192,6 +196,7 @@ var skateboard: Node3D
 @onready var crosshair: TextureRect = $Crosshair
 @onready var debug: CanvasLayer = $Debug
 @onready var inventory: Inventory = $Inventory
+@onready var radial_menu: RadialMenu = $Inventory/RadialMenu
 @onready var pause: CanvasLayer = $Pause
 @onready var settings: CanvasLayer = $Settings
 @onready var initial_transform: Transform3D = global_transform
@@ -308,6 +313,25 @@ func _input(event: InputEvent) -> void:
 	# Do nothing if not the authority
 	if is_paused or is_ragdolling: return
 
+	if event.is_action_pressed("action") and not event.is_echo():
+		if _is_holding_rigidbody():
+			_drop_held_rigidbody()
+			get_viewport().set_input_as_handled()
+			return
+		if _try_pickup_rigidbody_from_crosshair():
+			get_viewport().set_input_as_handled()
+			return
+
+	if event.is_action_pressed("shoot") and not event.is_echo() and _is_holding_rigidbody():
+		start_charging_throw()
+		get_viewport().set_input_as_handled()
+		return
+
+	if event.is_action_released("shoot") and not event.is_echo() and _is_holding_rigidbody():
+		release_charging_throw()
+		get_viewport().set_input_as_handled()
+		return
+
 	# Toggle mouse capture
 	if event.is_action_pressed("ui_cancel") and not pause.visible and not settings.visible:
 		# Check if the mouse is currently captured
@@ -333,23 +357,28 @@ func _physics_process(delta: float) -> void:
 	# Treat "jumping" as queued jump or upward airborne movement.
 	is_jumping = (is_on_floor() and is_jump_queued) or (not is_on_floor() and locomotion_state.get_current_node().contains("Jump"))
 
+	# While throw windup is active, keep aiming at live crosshair direction.
+	if is_throwing:
+		var crosshair_throw_dir: Vector3 = _get_crosshair_throw_direction()
+		if crosshair_throw_dir.length_squared() > 0.001:
+			queued_throw_direction = crosshair_throw_dir.normalized()
+			_turn_model_toward_direction(queued_throw_direction, delta)
+
 	# Process throw charging if actively holding shoot action
 	if is_charging_throw:
 		throw_charge_time += delta
-		var throw_dir: Vector3
-		if camera:
-			throw_dir = -camera.global_transform.basis.z.normalized()
-		else:
-			throw_dir = get_facing_direction()
-		_rotate_model_to_direction(throw_dir)
+		var throw_dir: Vector3 = _get_crosshair_throw_direction()
+		_turn_model_toward_direction(throw_dir, delta)
 
 		if throw_charge_time >= 0.2:
 			if not is_throw_queued:
 				queue_throw(throw_dir)
+			var charge_ratio: float = clamp((throw_charge_time - 0.2) / 0.6, 0.0, 1.0)
 			if throw_charge_bar:
 				throw_charge_bar.visible = true
-				var charge_ratio: float = clamp((throw_charge_time - 0.2) / 0.6, 0.0, 1.0)
 				throw_charge_bar.value = charge_ratio * 100.0
+				throw_power = lerp(0.25, 1.0, charge_ratio)
+			else:
 				throw_power = lerp(0.25, 1.0, charge_ratio)
 
 		if throw_charge_time >= 0.8:
@@ -610,6 +639,126 @@ func _rotate_model_to_direction(dir: Vector3) -> void:
 		player_model.global_transform.basis = orientation.basis
 
 
+func _turn_model_toward_direction(dir: Vector3, delta: float) -> void:
+	var horizontal_dir: Vector3 = dir.slide(up_direction)
+	if horizontal_dir.length_squared() > 0.001:
+		horizontal_dir = horizontal_dir.normalized()
+		var q_from: Quaternion = orientation.basis.get_rotation_quaternion()
+		var q_to: Quaternion = Basis.looking_at(-horizontal_dir, up_direction).get_rotation_quaternion()
+		var rotate_weight: float = clampf(delta * rotation_interpolate_speed, 0.0, 1.0)
+		orientation.basis = Basis(q_from.slerp(q_to, rotate_weight))
+		player_model.global_transform.basis = orientation.basis
+
+
+func _get_crosshair_throw_direction() -> Vector3:
+	if camera:
+		return -camera.global_transform.basis.z.normalized()
+
+	var facing_direction: Vector3 = get_facing_direction()
+	if facing_direction.length_squared() > 0.001:
+		return facing_direction
+
+	return -global_transform.basis.z.normalized()
+
+
+func _is_holding_rigidbody() -> bool:
+	if item_spring_arm.get_child_count() == 0:
+		return false
+	var held_node: Node = item_spring_arm.get_child(0)
+	return held_node is RigidBody3D
+
+
+func _find_rigidbody_from_node(start_node: Node) -> RigidBody3D:
+	var current_node: Node = start_node
+	while current_node:
+		if current_node is RigidBody3D:
+			return current_node as RigidBody3D
+		current_node = current_node.get_parent()
+	return null
+
+
+func _try_pickup_rigidbody_from_crosshair() -> bool:
+	if not camera or not is_instance_valid(camera.camera_ray_cast):
+		return false
+	if item_spring_arm.get_child_count() > 0:
+		return false
+	if not camera.camera_ray_cast.is_colliding():
+		return false
+
+	var collider: Object = camera.camera_ray_cast.get_collider()
+	if collider == null or not (collider is Node):
+		return false
+
+	var target_body: RigidBody3D = _find_rigidbody_from_node(collider as Node)
+	if not target_body:
+		return false
+	if target_body.get_parent() == item_spring_arm:
+		return false
+
+	_pickup_rigidbody(target_body)
+	return true
+
+
+func _pickup_rigidbody(body: RigidBody3D) -> void:
+	held_rigidbody = body
+	held_rigidbody_original_collision_layer = body.collision_layer
+	held_rigidbody_original_collision_mask = body.collision_mask
+	held_rigidbody_original_freeze = body.freeze
+
+	body.linear_velocity = Vector3.ZERO
+	body.angular_velocity = Vector3.ZERO
+	body.freeze = true
+	body.set_collision_layer_value(1, false)
+	body.set_collision_layer_value(2, true)
+	body.add_collision_exception_with(self)
+	add_collision_exception_with(body)
+
+	body.reparent(item_spring_arm, true)
+	body.transform = Transform3D()
+	body.position = Vector3.ZERO
+
+
+func _drop_held_rigidbody() -> void:
+	if not is_instance_valid(held_rigidbody):
+		held_rigidbody = null
+		return
+
+	var drop_body: RigidBody3D = held_rigidbody
+	_restore_held_rigidbody_state(drop_body)
+
+	if get_parent() != null:
+		drop_body.reparent(get_parent(), true)
+	else:
+		var current_scene: Node = get_tree().current_scene
+		if current_scene:
+			drop_body.reparent(current_scene, true)
+
+	var forward: Vector3 = _get_crosshair_throw_direction()
+	var drop_offset: Vector3 = forward * 1.2 + up_direction * 0.3
+	drop_body.global_position = global_position + drop_offset
+	drop_body.linear_velocity = Vector3.ZERO
+	drop_body.angular_velocity = Vector3.ZERO
+	drop_body.sleeping = false
+
+
+func _restore_held_rigidbody_state(body: RigidBody3D) -> void:
+	body.collision_layer = held_rigidbody_original_collision_layer
+	body.collision_mask = held_rigidbody_original_collision_mask
+	body.freeze = held_rigidbody_original_freeze
+	body.remove_collision_exception_with(self)
+	remove_collision_exception_with(body)
+	held_rigidbody = null
+
+
+func _throw_rigidbody(body: RigidBody3D, throw_dir: Vector3, power: float) -> void:
+	_restore_held_rigidbody_state(body)
+	body.freeze = false
+	if get_parent() != null:
+		body.reparent(get_parent(), true)
+	body.sleeping = false
+	body.apply_impulse(throw_dir * held_object_throw_force * power, Vector3.ZERO)
+
+
 ## Starts charging a throw when shoot button is pressed.
 func start_charging_throw() -> void:
 	if item_spring_arm.get_child_count() == 0:
@@ -672,12 +821,7 @@ func execute_instant_throw(throw_dir: Vector3, power: float) -> void:
 		held_node.call("throw", throw_dir)
 	elif held_node is RigidBody3D:
 		var throw_body: RigidBody3D = held_node as RigidBody3D
-		throw_body.set_collision_layer_value(1, true)
-		throw_body.set_collision_layer_value(2, false)
-		throw_body.freeze = false
-		if get_parent() != null:
-			throw_body.reparent(get_parent(), true)
-		throw_body.apply_impulse(throw_dir * held_object_throw_force * power, Vector3.ZERO)
+		_throw_rigidbody(throw_body, throw_dir, power)
 
 
 ## Queues a held-object throw to be executed by animation call track or 0.8s timer.
@@ -693,8 +837,6 @@ func queue_throw(throw_direction: Vector3) -> void:
 	is_throw_queued = true
 	is_throwing = true
 	queued_throw_direction = throw_direction.normalized()
-
-	_rotate_model_to_direction(queued_throw_direction)
 
 	var emote_state = animation_tree.get(EMOTE_STATE_PLAYBACK_PATH)
 	if emote_state:
@@ -742,12 +884,7 @@ func execute_throw() -> void:
 		held_node.call("throw", throw_dir)
 	elif held_node is RigidBody3D:
 		var throw_body: RigidBody3D = held_node as RigidBody3D
-		throw_body.set_collision_layer_value(1, true)
-		throw_body.set_collision_layer_value(2, false)
-		throw_body.freeze = false
-		if get_parent() != null:
-			throw_body.reparent(get_parent(), true)
-		throw_body.apply_impulse(throw_dir * held_object_throw_force * power, Vector3.ZERO)
+		_throw_rigidbody(throw_body, throw_dir, power)
 
 
 ## Alias for animation call tracks that expect a throw-named method.
