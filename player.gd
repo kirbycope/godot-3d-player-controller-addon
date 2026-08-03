@@ -31,6 +31,7 @@ const SWIMMING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionSt
 @export_category("Optional Interaction")
 @export var held_object_throw_force: float = 5.0
 @export var push_force: float = 1.0
+@export var mass: float = 80.0
 
 var current_state: int = -1 ## The current state of the Player (from the Node/Code [NodeStateMachine], not the AnimationTree NodeStateMachine).
 var locomotion_state: ## Gets the [NodeStateMachine] "LocomotionStateMachine"
@@ -725,7 +726,6 @@ func _drop_held_rigidbody() -> void:
 		return
 
 	var drop_body: RigidBody3D = held_rigidbody
-	_restore_held_rigidbody_state(drop_body)
 
 	if get_parent() != null:
 		drop_body.reparent(get_parent(), true)
@@ -734,9 +734,8 @@ func _drop_held_rigidbody() -> void:
 		if current_scene:
 			drop_body.reparent(current_scene, true)
 
-	var forward: Vector3 = _get_crosshair_throw_direction()
-	var drop_offset: Vector3 = forward * 1.2 + up_direction * 0.3
-	drop_body.global_position = global_position + drop_offset
+	_restore_held_rigidbody_state(drop_body)
+	
 	drop_body.linear_velocity = Vector3.ZERO
 	drop_body.angular_velocity = Vector3.ZERO
 	drop_body.sleeping = false
@@ -968,7 +967,8 @@ func update_movement_and_rotation(delta: float) -> void:
 				var rb_velocity_proj := rb.linear_velocity.dot(push_dir)
 				var relative_velocity_proj := velocity_proj - rb_velocity_proj
 				if relative_velocity_proj > 0.0:
-					rb.apply_impulse(push_dir * relative_velocity_proj * rb.mass * push_force, c.get_position() - rb.global_position)
+					var effective_mass := (mass * rb.mass) / (mass + rb.mass)
+					rb.apply_impulse(push_dir * relative_velocity_proj * effective_mass * push_force, c.get_position() - rb.global_position)
 
 
 	orientation.origin = Vector3() # Clear accumulated root motion displacement (was applied to speed).

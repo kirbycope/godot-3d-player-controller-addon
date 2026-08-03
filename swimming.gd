@@ -128,11 +128,6 @@ func _physics_process(delta: float) -> void:
 			player.animation_tree.set(player.SWIMMING_LOCOMOTION_BLEND_POSITION_PATH, player.smoothed_motion.length())
 
 
-
-
-
-
-
 ## Start "swimming".
 func start() -> void:
 	# Enable _this_ state node
