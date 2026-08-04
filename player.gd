@@ -1053,24 +1053,24 @@ func update_movement_and_rotation(delta: float) -> void:
 				var coll = res.collider
 				# Exclude collisions with the player's own bodies
 				if coll != self and coll.get_parent() != physical_bone_simulator:
-					
-					var mesh_inst = MeshInstance3D.new()
-					var sm = SphereMesh.new()
-					sm.radius = 0.05
-					sm.height = 0.1
-					mesh_inst.mesh = sm
-					var mat = StandardMaterial3D.new()
-					mat.albedo_color = hit_color
-					mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-					mesh_inst.material_override = mat
-					get_tree().root.add_child(mesh_inst)
-					mesh_inst.global_position = query.transform.origin
-					get_tree().create_timer(1.0).timeout.connect(mesh_inst.queue_free)
-					
+					# Add a visual indicator for debugging (optional)
+					#var mesh_inst = MeshInstance3D.new()
+					#var sm = SphereMesh.new()
+					#sm.radius = 0.05
+					#sm.height = 0.1
+					#mesh_inst.mesh = sm
+					#var mat = StandardMaterial3D.new()
+					#mat.albedo_color = hit_color
+					#mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+					#mesh_inst.material_override = mat
+					#get_tree().root.add_child(mesh_inst)
+					#mesh_inst.global_position = query.transform.origin
+					#get_tree().create_timer(1.0).timeout.connect(mesh_inst.queue_free)
+					# Apply impulse to the collider
 					if not impulse_applied:
 						impulse_applied = true
 						if coll.has_method("apply_impulse"):
-							var push_dir = -global_transform.basis.z.normalized()
+							var push_dir = - global_transform.basis.z.normalized()
 							push_dir.y += 0.5 # Add a slight upward lift to the knockback
 							push_dir = push_dir.normalized()
 							
