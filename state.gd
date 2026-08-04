@@ -38,6 +38,10 @@ static func get_state_name(state: int) -> StringName:
 
 ## Transition from one state to another.
 func travel(from_state: States, to_state: States) -> void:
+	# Block transition to RAGDOLLING if player is paused or Pause CanvasLayer is visible
+	if to_state == States.RAGDOLLING and player and (player.is_paused or (player.pause and player.pause.visible)):
+		return
+
 	# Block transitions while ragdolling unless explicitly entering or exiting the RAGDOLLING state
 	if player and player.is_ragdolling and to_state != States.RAGDOLLING and from_state != States.RAGDOLLING:
 		return

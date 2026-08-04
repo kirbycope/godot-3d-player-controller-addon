@@ -13,6 +13,7 @@ const CAMERA_FOLLOW_DELAY: float = 2.0
 @export var first_person_offset: Vector3 = Vector3(0.0, 0.0, -0.3) ## The offset of the camera from the player's head when in first-person perspective.
 @export var first_person_item_spring_length: float = 0.7 ## Held-item spring length in first-person.
 @export var third_person_item_spring_length: float = 2.0 ## Held-item spring length in third-person.
+@export var interaction_distance: float = 3.0 ## The maximum distance the player can reach to interact with objects.
 @export var joypad_sensitivity: float = 100.0
 @export var mouse_sensitivity: float = 0.1
 @export var perspective: Perspective = Perspective.THIRD_PERSON ## What perspective should the Camera use?
@@ -210,13 +211,13 @@ func _update_raycast() -> void:
 
 	if perspective == Perspective.FIRST_PERSON:
 		camera_ray_cast.position = Vector3.ZERO
-		camera_ray_cast.target_position = Vector3(0, 0, -3.0)
+		camera_ray_cast.target_position = Vector3(0, 0, -interaction_distance)
 	else:
 		camera_ray_cast.position = Vector3(0, 0, -1.0)
 		var length := 2.0
 		if is_instance_valid(camera_spring_arm):
 			length = camera_spring_arm.spring_length
-		camera_ray_cast.target_position = Vector3(0, 0, - (length + 1.0))
+		camera_ray_cast.target_position = Vector3(0, 0, - (length + interaction_distance - 1.0))
 
 	_sync_item_spring_arm()
 

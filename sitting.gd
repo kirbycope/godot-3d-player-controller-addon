@@ -13,7 +13,6 @@ var _this_state := NodeStateMachine.States.SITTING
 
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:
-
 	# Do nothing if the player is not set or is paused/ragdolling
 	if not player or player.is_paused or player.is_ragdolling: return
 
@@ -55,6 +54,6 @@ func get_contextual_controls(input_type: int) -> Dictionary:
 		player.controls.joypad_button_15_label: "Screenshot",
 		player.controls.joypad_button_6_label: "Pause Menu",
 
-		player.controls.joypad_button_0_label: "Stand Up",
+		player.controls.joypad_button_3_label: "Stand Up",
 		player.controls.right_joystick_label: "Camera",
 	}

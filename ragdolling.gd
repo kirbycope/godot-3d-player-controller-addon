@@ -20,9 +20,8 @@ func _ready() -> void:
 
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:
-
-	# Do nothing if the player is not set
-	if not player: return
+	# Do nothing if the player is not set or is paused/pause layer visible
+	if not player or player.is_paused or (player.pause and player.pause.visible): return
 
 	# If the player is ragdolling, pressing the "action" button will stop "ragdolling"
 	if player.is_ragdolling and Input.is_action_just_pressed("action"):
@@ -31,7 +30,6 @@ func _input(event: InputEvent) -> void:
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(delta: float) -> void:
-
 	# Do nothing if the player is not set
 	if not player: return
 

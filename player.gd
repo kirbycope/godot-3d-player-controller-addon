@@ -436,7 +436,6 @@ func apply_input(delta: float) -> void:
 	if (is_driving and not is_entering_vehicle and not is_exiting_vehicle) or is_paragliding or is_skateboarding or is_flying or is_ragdolling or is_sitting:
 		return
 
-
 	# Sprint logic
 	if is_sprinting:
 		if is_focusing:
@@ -694,6 +693,8 @@ func _try_pickup_rigidbody_from_crosshair() -> bool:
 	var target_body: RigidBody3D = _find_rigidbody_from_node(collider as Node)
 	if not target_body:
 		return false
+	if target_body is VehicleBody3D:
+		return false
 	if target_body.get_parent() == item_spring_arm:
 		return false
 
@@ -770,7 +771,7 @@ func start_charging_throw() -> void:
 
 	var throw_dir: Vector3
 	if camera:
-		throw_dir = -camera.global_transform.basis.z.normalized()
+		throw_dir = - camera.global_transform.basis.z.normalized()
 	else:
 		throw_dir = get_facing_direction()
 	_rotate_model_to_direction(throw_dir)
@@ -783,7 +784,7 @@ func release_charging_throw() -> void:
 
 	var throw_dir: Vector3
 	if camera:
-		throw_dir = -camera.global_transform.basis.z.normalized()
+		throw_dir = - camera.global_transform.basis.z.normalized()
 	else:
 		throw_dir = get_facing_direction()
 	_rotate_model_to_direction(throw_dir)
@@ -828,11 +829,11 @@ func execute_instant_throw(throw_dir: Vector3, power: float) -> void:
 func queue_throw(throw_direction: Vector3) -> void:
 	if throw_direction.length_squared() <= 0.001:
 		if camera:
-			throw_direction = -camera.global_transform.basis.z.normalized()
+			throw_direction = - camera.global_transform.basis.z.normalized()
 		else:
 			throw_direction = get_facing_direction()
 		if throw_direction.length_squared() <= 0.001:
-			throw_direction = -global_transform.basis.z.normalized()
+			throw_direction = - global_transform.basis.z.normalized()
 
 	is_throw_queued = true
 	is_throwing = true
@@ -867,7 +868,7 @@ func execute_throw() -> void:
 	var throw_dir: Vector3 = queued_throw_direction
 	if throw_dir.length_squared() <= 0.001:
 		if camera:
-			throw_dir = -camera.global_transform.basis.z.normalized()
+			throw_dir = - camera.global_transform.basis.z.normalized()
 		else:
 			throw_dir = get_facing_direction()
 
@@ -890,6 +891,7 @@ func execute_throw() -> void:
 ## Alias for animation call tracks that expect a throw-named method.
 func throw_held_object() -> void:
 	execute_throw()
+
 
 ## Gets the grounded locomotion state that matches the current equipment and intent.
 func get_grounded_locomotion_state() -> StringName:
@@ -941,6 +943,7 @@ func sfx_footsteps_slide_play():
 		if collider:
 			if collider.is_in_group("GRASS"):
 				sfx_footsteps_slide.play()
+
 
 ## Reset the attack sequence when the attack sequence timer times out.
 func _on_attack_sequence_timer_timeout() -> void:
