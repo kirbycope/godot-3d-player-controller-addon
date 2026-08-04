@@ -33,6 +33,10 @@ const SWIMMING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionSt
 @export var push_force: float = 1.0
 @export var mass: float = 80.0
 
+@export_category("Debug Settings")
+@export var debug_left_hand_hit_color: Color = Color.ORANGE
+@export var debug_right_hand_hit_color: Color = Color.BLUE
+
 var current_state: int = -1 ## The current state of the Player (from the Node/Code [NodeStateMachine], not the AnimationTree NodeStateMachine).
 var locomotion_state: ## Gets the [NodeStateMachine] "LocomotionStateMachine"
 	get:
@@ -992,3 +996,40 @@ func update_movement_and_rotation(delta: float) -> void:
 		var rotated_basis: Basis = model_facing_basis * initial_separation_ray_transform.basis
 		var rotated_origin: Vector3 = global_position + (model_facing_basis * initial_separation_ray_transform.origin)
 		separation_ray_shape.global_transform = Transform3D(rotated_basis, rotated_origin)
+
+	# Debug: Check hand collisions against other PhysicalBone3Ds using space state (because inactive physical bones don't track animations)
+	if is_attacking and skeleton:
+		var space_state = get_world_3d().direct_space_state
+		var hand_names = ["LeftHand", "RightHand"]
+		for h_name in hand_names:
+			var b_idx = skeleton.find_bone(h_name)
+			if b_idx != -1:
+				var bone_pose = skeleton.get_bone_global_pose(b_idx)
+				var bone_global_trans = skeleton.global_transform * bone_pose
+				
+				var query = PhysicsShapeQueryParameters3D.new()
+				var sphere = SphereShape3D.new()
+				sphere.radius = 0.15
+				query.shape = sphere
+				query.transform = bone_global_trans
+				query.collision_mask = 0xFFFFFFFF # Check all layers
+				
+				var results = space_state.intersect_shape(query)
+				for res in results:
+					var coll = res.collider
+					# Exclude collisions with the player's own bodies
+					if coll != self and coll.get_parent() != physical_bone_simulator:
+						print("Debug: Hand ", h_name, " hit ", coll.name, " (", coll.get_class(), ")")
+						
+						var mesh_inst = MeshInstance3D.new()
+						var sm = SphereMesh.new()
+						sm.radius = 0.05
+						sm.height = 0.1
+						mesh_inst.mesh = sm
+						var mat = StandardMaterial3D.new()
+						mat.albedo_color = debug_left_hand_hit_color if h_name == "LeftHand" else debug_right_hand_hit_color
+						mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+						mesh_inst.material_override = mat
+						get_tree().root.add_child(mesh_inst)
+						mesh_inst.global_position = bone_global_trans.origin
+						get_tree().create_timer(1.0).timeout.connect(mesh_inst.queue_free)
