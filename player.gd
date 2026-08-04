@@ -1042,6 +1042,7 @@ func update_movement_and_rotation(delta: float) -> void:
 								})
 		
 		# Execute all gathered queries
+		var impulse_applied = false
 		for cq in collision_queries:
 			var query = cq["query"]
 			var h_name = cq["name"]
@@ -1052,7 +1053,6 @@ func update_movement_and_rotation(delta: float) -> void:
 				var coll = res.collider
 				# Exclude collisions with the player's own bodies
 				if coll != self and coll.get_parent() != physical_bone_simulator:
-					print("Debug: ", h_name, " hit ", coll.name, " (", coll.get_class(), ")")
 					
 					var mesh_inst = MeshInstance3D.new()
 					var sm = SphereMesh.new()
@@ -1066,3 +1066,19 @@ func update_movement_and_rotation(delta: float) -> void:
 					get_tree().root.add_child(mesh_inst)
 					mesh_inst.global_position = query.transform.origin
 					get_tree().create_timer(1.0).timeout.connect(mesh_inst.queue_free)
+					
+					if not impulse_applied:
+						impulse_applied = true
+						if coll.has_method("apply_impulse"):
+							var push_dir = -global_transform.basis.z.normalized()
+							push_dir.y += 0.5 # Add a slight upward lift to the knockback
+							push_dir = push_dir.normalized()
+							
+							var coll_mass = 1.0
+							if "mass" in coll:
+								coll_mass = coll.mass
+							elif coll.has_method("get_mass"):
+								coll_mass = coll.get_mass()
+								
+							var effective_mass = (mass * coll_mass) / (mass + coll_mass)
+							coll.apply_impulse(push_dir * push_force * 10.0 * effective_mass, query.transform.origin - coll.global_position)
