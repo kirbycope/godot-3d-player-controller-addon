@@ -64,3 +64,6 @@ func stop() -> void:
 	player.is_jumping = false
 	# Flag the player as not having a "jump queued"
 	player.is_jump_queued = false
+	# Flag the player as not "flipping"
+	player.is_front_flipping = false
+	player.is_back_flipping = false

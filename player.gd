@@ -144,6 +144,14 @@ var is_focusing: bool: ## Is the Player currently focusing (forward or on a targ
 		return Input.is_action_pressed("focus")
 var is_jumping: bool = false ## Is the Player currently jumping?
 var is_jump_queued: bool = false ## Is the Player currently queued to jump?
+var is_front_flipping: bool = false ## Is the Player currently front flipping?
+var is_back_flipping: bool = false ## Is the Player currently back flipping?
+var is_flipping: bool: ## Is the Player currently front or back flipping?
+	get:
+		if not is_multiplayer_authority() or animation_tree == null:
+			return false
+		return is_front_flipping or is_back_flipping \
+				or String(locomotion_state.get_current_node()) in ["Backflip", "FowardFlip"]
 var is_throw_queued: bool = false ## Is the Player currently queued to throw a held object?
 var is_throwing: bool = false ## Is the Player currently throwing?
 var is_charging_throw: bool = false ## Is the Player currently charging a throw?
@@ -453,8 +461,8 @@ func apply_input(delta: float) -> void:
 		smoothed_motion = Vector2.ZERO
 		is_sprinting = false
 
-	# If the player is mining or logging, block regular locomotion transitions by setting the `target_motion` to zero.
-	if is_mining or is_logging:
+	# If the player is mining, logging, or flipping, block regular locomotion transitions by setting the `target_motion` to zero.
+	if is_mining or is_logging or is_flipping:
 		target_motion = Vector2.ZERO
 
 	# Smoothly interpolate the target_motion for more gradual changes in animation blending and rotation.
@@ -470,8 +478,10 @@ func apply_input(delta: float) -> void:
 	# Sprint logic
 	if is_sprinting:
 		if is_focusing:
+			var forward_amount: float = clampf(absf(target_motion.y), 0.0, 1.0)
 			target_motion.y *= 1.5
-			target_motion.x *= 0.5 # reduce strafe blend by 50% when sprinting so the blend favors the forward direction
+			# Favor the forward blend only on diagonal sprints; pure strafing keeps full speed.
+			target_motion.x *= lerpf(1.0, 0.5, forward_amount)
 		else:
 			target_motion *= 1.5
 
@@ -579,7 +589,8 @@ func apply_input(delta: float) -> void:
 			h_velocity = (to_target + new_offset) / delta
 
 	# Influence of root motion is removed when in the air, and movement is instead based on the input direction to allow for more player control while jumping and falling.
-	if is_jumping or is_falling:
+	# Flips stay root-motion driven so held move input doesn't push the player around.
+	if (is_jumping or is_falling) and not is_flipping:
 		var camera_basis := spring_arm.global_transform.basis
 		var target_dir := camera_basis * Vector3(target_motion.x, 0.0, -target_motion.y)
 		target_dir = target_dir.slide(up_direction)
@@ -642,6 +653,9 @@ func execute_jump() -> void:
 	velocity = velocity.slide(up_direction) + (up_direction * 5.0)
 	is_jump_queued = false
 	is_jumping = true
+	# Flip flags are only needed to enter the flip animation state, so clear them here.
+	is_front_flipping = false
+	is_back_flipping = false
 
 
 func _setup_throw_charge_bar() -> void:

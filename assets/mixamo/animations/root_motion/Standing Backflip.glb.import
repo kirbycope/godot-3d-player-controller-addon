@@ -1,15 +1,15 @@
 [remap]
 
-importer="scene"
+importer="animation_library"
 importer_version=1
-type="PackedScene"
+type="AnimationLibrary"
 uid="uid://bnu1fi6khgekd"
-path="res://.godot/imported/Standing Backflip.glb-663e4bb0744e4bb58c91b31222b62406.scn"
+path="res://.godot/imported/Standing Backflip.glb-663e4bb0744e4bb58c91b31222b62406.res"
 
 [deps]
 
 source_file="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Standing Backflip.glb"
-dest_files=["res://.godot/imported/Standing Backflip.glb-663e4bb0744e4bb58c91b31222b62406.scn"]
+dest_files=["res://.godot/imported/Standing Backflip.glb-663e4bb0744e4bb58c91b31222b62406.res"]
 
 [params]
 
@@ -40,7 +40,13 @@ import_script/path=""
 materials/extract=0
 materials/extract_format=0
 materials/extract_path=""
-_subresources={}
+_subresources={
+"nodes": {
+"PATH:Armature/Skeleton3D": {
+"retarget/bone_map": Resource("uid://cbom5s7xsb5nn", "res://addons/3d_player_controller/assets/mixamo/characters/mixamo_root_bone_map.tres")
+}
+}
+}
 gltf/naming_version=2
 gltf/embedded_image_handling=1
 gltf/texture_map_mode=1

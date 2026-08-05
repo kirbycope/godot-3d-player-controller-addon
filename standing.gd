@@ -20,6 +20,11 @@ func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("jump"):
 		if player.is_boxing:
 			player.is_boxing = false
+		# While focusing (strafing), jumping with forward/backward input performs a flip.
+		player.is_front_flipping = player.is_focusing and Input.is_action_pressed("move_up")
+		player.is_back_flipping = player.is_focusing \
+				and Input.is_action_pressed("move_down") \
+				and not player.is_front_flipping
 		get_viewport().set_input_as_handled()
 		player.state_machine.travel(_this_state, NodeStateMachine.States.JUMPING)
 		return
