@@ -216,6 +216,11 @@ var skateboard: Node3D
 @onready var camera_mount: Node3D = $CameraMount
 @onready var item_spring_arm: SpringArm3D = $CameraMount/ItemSpringArm
 @onready var player_input: InputSynchronizer = $InputSynchronizer
+@onready var target_detection: Area3D = $TargetDetection
+@onready var focus_target_marker: Marker3D = $FocusTargetMarker
+
+var current_focus_target: Node3D = null
+var current_focus_marker: Marker3D = null
 
 @onready var initial_player_model_transform: Transform3D = player_model.transform
 @onready var paraglider_raycast: RayCast3D = $ParagliderRaycast
@@ -357,6 +362,28 @@ func _process(_delta: float) -> void:
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(delta: float) -> void:
+	# Handle Focus Target Logic
+	if is_focusing:
+		if not is_instance_valid(current_focus_target):
+			if is_instance_valid(current_focus_marker):
+				current_focus_marker.queue_free()
+			current_focus_target = null
+			current_focus_marker = null
+			
+			for body in target_detection.get_overlapping_bodies():
+				if body.is_in_group("Target") or body.is_in_group("Focusable") or "Guy" in body.name:
+					current_focus_target = body
+					current_focus_marker = focus_target_marker.duplicate()
+					body.add_child(current_focus_marker)
+					current_focus_marker.visible = true
+					break
+	else:
+		if current_focus_target != null:
+			if is_instance_valid(current_focus_marker):
+				current_focus_marker.queue_free()
+			current_focus_target = null
+			current_focus_marker = null
+
 	# Apply player input to control the character and update the animation state.
 	apply_input(delta)
 
@@ -451,16 +478,25 @@ func apply_input(delta: float) -> void:
 	var is_first_person: bool = camera is Camera and (camera as Camera).perspective == Camera.Perspective.FIRST_PERSON
 	# Handle movement is strafing
 	if not is_driving and (is_shooting or is_focusing or is_first_person):
-		# Rotate to face the camera direction when focusing, shooting, or in first person
-		if (is_shooting or not is_focusing or is_first_person) and not is_firing_arrow and not is_hanging_braced and not is_hanging_free and not is_climbing:
-			var camera_basis := spring_arm.global_transform.basis
-			var camera_forward := -camera_basis.z
-			camera_forward = camera_forward.slide(up_direction)
-			if camera_forward.length_squared() > 0.001:
-				camera_forward = camera_forward.normalized()
+		# Rotate to face the target, or the camera direction when shooting or in first person
+		if not is_firing_arrow and not is_hanging_braced and not is_hanging_free and not is_climbing:
+			var look_dir: Vector3 = Vector3.ZERO
+			
+			if is_focusing and is_instance_valid(current_focus_target):
+				look_dir = (current_focus_target.global_position - global_position).slide(up_direction)
+			elif is_shooting or not is_focusing or is_first_person:
+				var camera_basis := spring_arm.global_transform.basis
+				look_dir = -camera_basis.z
+				look_dir = look_dir.slide(up_direction)
+				
+			if look_dir.length_squared() > 0.001:
+				look_dir = look_dir.normalized()
 				var q_from: Quaternion = orientation.basis.get_rotation_quaternion()
-				var q_to: Quaternion = Basis.looking_at(-camera_forward, up_direction).get_rotation_quaternion()
-				orientation.basis = Basis(q_from.slerp(q_to, delta * rotation_interpolate_speed))
+				var q_to: Quaternion = Basis.looking_at(-look_dir, up_direction).get_rotation_quaternion()
+				
+				# Use slightly faster interpolation when focusing for better tracking, but keep it smooth
+				var interp_speed = rotation_interpolate_speed * 1.5 if is_focusing else rotation_interpolate_speed
+				orientation.basis = Basis(q_from.slerp(q_to, delta * interp_speed))
 		if is_crouching:
 			animation_tree.set(CROUCHING_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 		else:
@@ -528,6 +564,23 @@ func apply_input(delta: float) -> void:
 	orientation *= root_motion
 
 	var h_velocity: Vector3 = orientation.origin / delta
+	
+	# Override h_velocity when targeting to ensure perfect orbital movement without spiraling
+	if is_focusing and is_instance_valid(current_focus_target):
+		var to_target = (current_focus_target.global_position - global_position).slide(up_direction)
+		if to_target.length_squared() > 0.001:
+			# Apply the local root motion displacement exactly along the ideal facing direction
+			var ideal_basis = Basis.looking_at(-to_target.normalized(), up_direction)
+			h_velocity = (ideal_basis * root_motion_position) / delta
+			
+			# Correct the Euler spiral (straight-line tangent movement increases radius)
+			# by applying a tiny centripetal pull towards the target.
+			var tangent_speed = abs(root_motion_position.x) / delta
+			if tangent_speed > 0.01:
+				var current_radius = to_target.length()
+				if current_radius > 0.1:
+					var centripetal_speed = (tangent_speed * tangent_speed * delta) / (2.0 * current_radius)
+					h_velocity += to_target.normalized() * centripetal_speed
 
 	# Influence of root motion is removed when in the air, and movement is instead based on the input direction to allow for more player control while jumping and falling.
 	if is_jumping or is_falling:
