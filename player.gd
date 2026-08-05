@@ -493,10 +493,15 @@ func apply_input(delta: float) -> void:
 				look_dir = look_dir.normalized()
 				var q_from: Quaternion = orientation.basis.get_rotation_quaternion()
 				var q_to: Quaternion = Basis.looking_at(-look_dir, up_direction).get_rotation_quaternion()
-				
-				# Use slightly faster interpolation when focusing for better tracking, but keep it smooth
-				var interp_speed = rotation_interpolate_speed * 1.5 if is_focusing else rotation_interpolate_speed
-				orientation.basis = Basis(q_from.slerp(q_to, delta * interp_speed))
+				if is_focusing and is_instance_valid(current_focus_target):
+					# Catch up quickly on lock-on, then track the target exactly (lag causes orbit wobble).
+					var focus_weight: float = clampf(delta * rotation_interpolate_speed * 2.0, 0.0, 1.0)
+					if q_from.angle_to(q_to) < 0.05:
+						focus_weight = 1.0
+					orientation.basis = Basis(q_from.slerp(q_to, focus_weight))
+				else:
+					var rotate_weight: float = clampf(delta * rotation_interpolate_speed, 0.0, 1.0)
+					orientation.basis = Basis(q_from.slerp(q_to, rotate_weight))
 		if is_crouching:
 			animation_tree.set(CROUCHING_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 		else:
@@ -505,11 +510,7 @@ func apply_input(delta: float) -> void:
 					animation_tree.set(ARCHERY_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 				else:
 					animation_tree.set(BOW_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
-			elif inventory.has_any_equipment([
-				Equipment.EquipmentType.AXE_1H,
-				Equipment.EquipmentType.DAGGER,
-				Equipment.EquipmentType.SWORD_1H,
-			]):
+			elif inventory.has_one_handed_or_shield_equipped():
 				animation_tree.set(SHIELD_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 			elif inventory.has_heavy_weapon_equipped():
 				animation_tree.set(GREATSWORD_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
@@ -565,22 +566,17 @@ func apply_input(delta: float) -> void:
 
 	var h_velocity: Vector3 = orientation.origin / delta
 	
-	# Override h_velocity when targeting to ensure perfect orbital movement without spiraling
+	# Override h_velocity when targeting so tangential root motion follows an exact circular arc.
 	if is_focusing and is_instance_valid(current_focus_target):
-		var to_target = (current_focus_target.global_position - global_position).slide(up_direction)
-		if to_target.length_squared() > 0.001:
-			# Apply the local root motion displacement exactly along the ideal facing direction
-			var ideal_basis = Basis.looking_at(-to_target.normalized(), up_direction)
-			h_velocity = (ideal_basis * root_motion_position) / delta
-			
-			# Correct the Euler spiral (straight-line tangent movement increases radius)
-			# by applying a tiny centripetal pull towards the target.
-			var tangent_speed = abs(root_motion_position.x) / delta
-			if tangent_speed > 0.01:
-				var current_radius = to_target.length()
-				if current_radius > 0.1:
-					var centripetal_speed = (tangent_speed * tangent_speed * delta) / (2.0 * current_radius)
-					h_velocity += to_target.normalized() * centripetal_speed
+		var to_target: Vector3 = (current_focus_target.global_position - global_position).slide(up_direction)
+		var orbit_radius: float = to_target.length()
+		if orbit_radius > 0.1:
+			var target_dir: Vector3 = to_target / orbit_radius
+			# Strafe distance becomes rotation about the target; forward/back changes the radius.
+			var arc_angle: float = -root_motion_position.x / orbit_radius
+			var new_radius: float = maxf(orbit_radius - root_motion_position.z, 0.1)
+			var new_offset: Vector3 = (-target_dir * new_radius).rotated(up_direction, arc_angle)
+			h_velocity = (to_target + new_offset) / delta
 
 	# Influence of root motion is removed when in the air, and movement is instead based on the input direction to allow for more player control while jumping and falling.
 	if is_jumping or is_falling:
