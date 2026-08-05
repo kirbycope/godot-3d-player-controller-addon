@@ -49,10 +49,29 @@ func _input(event: InputEvent) -> void:
 	# Exit
 	if not player.is_entering_vehicle and not player.is_exiting_vehicle:
 		if Input.is_action_just_pressed(current_exit_action):
-			# Flag the Player as exiting the vehicle
-			player.is_exiting_vehicle = true
-			# Open (and then close) the driver's car door
-			await _open_and_close_drivers_door()
+			var speed := 0.0
+			if player.is_driving_in:
+				speed = player.is_driving_in.linear_velocity.length()
+			
+			if speed > 2.0:
+				var exit_marker = player.is_driving_in.get_node_or_null("ExitCar")
+				if not exit_marker:
+					exit_marker = player.is_driving_in.get_node_or_null("EnterCar")
+				
+				if exit_marker:
+					player.global_position = exit_marker.global_position
+				
+				var car_parent = player.is_driving_in.get_parent()
+				if car_parent and player.get_parent() != car_parent:
+					player.reparent(car_parent)
+				
+				if player.state_machine:
+					player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
+			else:
+				# Flag the Player as exiting the vehicle
+				player.is_exiting_vehicle = true
+				# Open (and then close) the driver's car door
+				await _open_and_close_drivers_door()
 
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
