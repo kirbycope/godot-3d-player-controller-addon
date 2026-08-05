@@ -30,7 +30,7 @@ func _physics_process(delta: float) -> void:
 			return
 
 	# Determine which attack is currently in progress.
-	var current_node: String = String(player.locomotion_state.get_current_node())
+	var current_node: String = player.current_locomotion_node
 
 	# Track if we have entered an active attack animation node
 	if current_node in [
@@ -80,7 +80,7 @@ func _physics_process(delta: float) -> void:
 				player.attack_sequence = 2
 
 	# Check if the player is no longer attacking (only after having entered an attack animation)
-	if _has_entered_attack and player.locomotion_state.get_current_node() not in [
+	if _has_entered_attack and player.current_locomotion_node not in [
 		"GreatSwordDownwardSlash", ## 2-Handed Weapon, Attack 1 of 3
 		"GreatSwordLowSlash", ## 2-Handed Weapon, Attack 2 of 3
 		"GreatSwordPowerSlash", ## 2-Handed Weapon, Attack 3 of 3

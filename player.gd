@@ -4,21 +4,22 @@ extends CharacterBody3D
 
 const EMOTE_STATE_PLAYBACK_PATH: String = "parameters/EmoteStateMachine/playback"
 const LOCOMOTION_STATE_PLAYBACK_PATH: String = "parameters/LocomotionStateMachine/playback"
-const ARCHERY_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/ArcheryLocomotion/blend_position"
-const BOW_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/BowLocomotion/blend_position"
-const BOXING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/BoxingLocomotion/blend_position"
+const ARCHERY_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/Bow/ArcheryLocomotion/blend_position"
+const BOW_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/Bow/BowLocomotion/blend_position"
+const BOXING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/Boxing/BoxingLocomotion/blend_position"
 const BRACED_HANG_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/BracedHangLocomotion/blend_position"
 const CLIMBING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/ClimbingLocomotion/blend_position"
 const CROUCHING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/CrouchingLocomotion/blend_position"
 const FREE_HANGING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/FreeHangingLocomotion/blend_position"
 const FLYING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/FlyingLocomotion/blend_position"
-const GREATSWORD_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/GreatSwordLocomotion/blend_position"
-const PISTOL_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/PistolLocomotion/blend_position"
-const RIFLE_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/RifleLocomotion/blend_position"
-const SHIELD_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/ShieldLocomotion/blend_position"
+const GREATSWORD_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/GreatSword/GreatSwordLocomotion/blend_position"
+const PISTOL_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/Pistol/PistolLocomotion/blend_position"
+const RIFLE_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/Rifle/RifleLocomotion/blend_position"
+const SHIELD_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/Shield/ShieldLocomotion/blend_position"
 const SKATEBOARDING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/SkateboardingLocomotion/blend_position"
 const STANDING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/StandingLocomotion/blend_position"
 const SWIMMING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/SwimmingLocomotion/blend_position"
+const LOCOMOTION_GROUPS: Array[String] = ["Bow", "Boxing", "GreatSword", "Pistol", "Rifle", "Shield"] ## Grouped sub-state machines inside the LocomotionStateMachine.
 
 @export var animation_tree: AnimationTree
 @export var motion_interpolate_speed: float = 10.0
@@ -41,6 +42,23 @@ var current_state: int = -1 ## The current state of the Player (from the Node/Co
 var locomotion_state: ## Gets the [NodeStateMachine] "LocomotionStateMachine"
 	get:
 		return animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH)
+var active_locomotion_playback: ## Playback of the active grouped locomotion machine, or the root LocomotionStateMachine playback.
+	get:
+		var root_playback: AnimationNodeStateMachinePlayback = animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH)
+		if root_playback == null:
+			return null
+		var root_node: String = String(root_playback.get_current_node())
+		if root_node in LOCOMOTION_GROUPS:
+			return animation_tree.get("parameters/LocomotionStateMachine/" + root_node + "/playback")
+		return root_playback
+var current_locomotion_node: String: ## The deepest current locomotion state name (resolves grouped state machines).
+	get:
+		if animation_tree == null:
+			return ""
+		var playback: AnimationNodeStateMachinePlayback = active_locomotion_playback
+		if playback == null:
+			return ""
+		return String(playback.get_current_node())
 var equipped_axe_1h: bool:
 	get:
 		return inventory != null and inventory.has_equipment(Equipment.EquipmentType.AXE_1H)
@@ -99,18 +117,18 @@ var is_boxing: bool = false
 var attack_sequence: int = 0
 var is_attacking: bool = false
 var is_attacking_1: bool: # Attack Sequence: 1 of n
-	get: return String(locomotion_state.get_current_node()) in ["GreatSwordDownwardSlash", "ShieldDownwardSlash", "ShortHeadJab"] if is_multiplayer_authority() and animation_tree else false
+	get: return current_locomotion_node in ["GreatSwordDownwardSlash", "ShieldDownwardSlash", "ShortHeadJab"] if is_multiplayer_authority() and animation_tree else false
 var is_attacking_2: bool: # Attack Sequence: 2 of n
-	get: return String(locomotion_state.get_current_node()) in ["GreatSwordLowSlash", "ShieldCrossSlash", "BackHandCross"] if is_multiplayer_authority() and animation_tree else false
+	get: return current_locomotion_node in ["GreatSwordLowSlash", "ShieldCrossSlash", "BackHandCross"] if is_multiplayer_authority() and animation_tree else false
 var is_attacking_3: bool: # Attack Sequence: 3 of n
-	get: return String(locomotion_state.get_current_node()) in ["GreatSwordPowerSlash", "ShieldPowerSlash"] if is_multiplayer_authority() and animation_tree else false
+	get: return current_locomotion_node in ["GreatSwordPowerSlash", "ShieldPowerSlash"] if is_multiplayer_authority() and animation_tree else false
 # Bow and Arrow
 var is_aiming_bow: bool:
-	get: return String(locomotion_state.get_current_node()) == "ArcheryLocomotion" if is_multiplayer_authority() and equipped_bow else false
+	get: return current_locomotion_node == "ArcheryLocomotion" if is_multiplayer_authority() and equipped_bow else false
 var is_drawing_arrow: bool:
-	get: return String(locomotion_state.get_current_node()) == "BowDrawArrow" if is_multiplayer_authority() and equipped_bow else false
+	get: return current_locomotion_node == "BowDrawArrow" if is_multiplayer_authority() and equipped_bow else false
 var is_firing_arrow: bool:
-	get: return String(locomotion_state.get_current_node()) == "BowFireArrow" if is_multiplayer_authority() and equipped_bow else false
+	get: return current_locomotion_node == "BowFireArrow" if is_multiplayer_authority() and equipped_bow else false
 # Climbing
 var is_climbing: bool = false ## Is the Player currently climbing?
 var is_climbing_on: bool = false ## Is the Player currently climbing on to a ledge?
@@ -151,7 +169,7 @@ var is_flipping: bool: ## Is the Player currently front or back flipping?
 		if not is_multiplayer_authority() or animation_tree == null:
 			return false
 		return is_front_flipping or is_back_flipping \
-				or String(locomotion_state.get_current_node()) in ["Backflip", "FowardFlip"]
+				or current_locomotion_node in ["Backflip", "FowardFlip"]
 var is_throw_queued: bool = false ## Is the Player currently queued to throw a held object?
 var is_throwing: bool = false ## Is the Player currently throwing?
 var is_charging_throw: bool = false ## Is the Player currently charging a throw?
@@ -167,16 +185,12 @@ var is_mining: bool: ## Is the Player currently mining?
 	get:
 		if not is_multiplayer_authority() or animation_tree == null:
 			return false
-		var current_node: String = String(locomotion_state.get_current_node())
-		var travel_path: Variant = locomotion_state.get_travel_path()
-		return current_node == "Mining" or "Mining" in travel_path
+		return is_locomotion_state_active_or_queued("Mining")
 var is_logging: bool: ## Is the Player currently logging?
 	get:
 		if not is_multiplayer_authority() or animation_tree == null:
 			return false
-		var current_node: String = String(locomotion_state.get_current_node())
-		var travel_path: Variant = locomotion_state.get_travel_path()
-		return current_node == "Logging" or "Logging" in travel_path
+		return is_locomotion_state_active_or_queued("Logging")
 var is_paragliding: bool = false ## Is the Player currently paragliding?
 var is_paused: bool = false ## Is the Player currently paused?
 var is_ragdolling: bool = false ## Is the Player currently ragdolling?
@@ -191,6 +205,7 @@ var is_sliding: bool = false ## Is the Player currently sliding?
 var is_sprinting: bool = false ## Is the Player currently sprinting?
 var is_standing: bool = false ## Is the Player currently standing?
 var is_swimming: bool = false ## Is the Player currently swimming?
+var drawn_weapon_group: String = "" ## Locomotion group whose draw animation already played; its Start skips the redraw.
 var last_fall_speed: float = 0.0 ## The downward vertical fall speed right before movement update.
 var initial_collision_shape_height: float
 var initial_collision_shape_position: Vector3
@@ -392,11 +407,21 @@ func _physics_process(delta: float) -> void:
 			current_focus_target = null
 			current_focus_marker = null
 
+	# Track which weapon group has finished its draw so re-entering it skips the redraw.
+	var root_locomotion_node: String = String(locomotion_state.get_current_node())
+	if root_locomotion_node in LOCOMOTION_GROUPS:
+		var inner_node: String = current_locomotion_node
+		# Skip Start/End so the flag isn't set before the entry edge picks draw vs skip.
+		if not inner_node.ends_with("Draw") and inner_node not in ["Start", "End", ""]:
+			drawn_weapon_group = root_locomotion_node
+	elif drawn_weapon_group != "" and not is_group_equipment_equipped(drawn_weapon_group):
+		drawn_weapon_group = ""
+
 	# Apply player input to control the character and update the animation state.
 	apply_input(delta)
 
 	# Treat "jumping" as queued jump or upward airborne movement.
-	is_jumping = (is_on_floor() and is_jump_queued) or (not is_on_floor() and locomotion_state.get_current_node().contains("Jump"))
+	is_jumping = (is_on_floor() and is_jump_queued) or (not is_on_floor() and current_locomotion_node.contains("Jump"))
 
 	# While throw windup is active, keep aiming at live crosshair direction.
 	if is_throwing:
@@ -961,24 +986,74 @@ func throw_held_object() -> void:
 
 
 ## Gets the grounded locomotion state that matches the current equipment and intent.
+## Grouped states use "Group/State" travel paths.
 func get_grounded_locomotion_state() -> StringName:
 	if is_crouching:
 		return &"CrouchingLocomotion"
 	if equipped_axe_2h or equipped_fishing_rod or equipped_staff or equipped_sword_2h:
-		return &"GreatSwordLocomotion"
+		return &"GreatSword/GreatSwordLocomotion"
 	if equipped_bow:
 		if is_shooting:
-			return &"ArcheryLocomotion"
-		return &"BowLocomotion"
+			return &"Bow/ArcheryLocomotion"
+		return &"Bow/BowLocomotion"
 	if equipped_axe_1h or equipped_dagger or equipped_shield or equipped_sword_1h:
-		return &"ShieldLocomotion"
+		return &"Shield/ShieldLocomotion"
 	if equipped_pistol:
-		return &"PistolLocomotion"
+		return &"Pistol/PistolLocomotion"
 	if equipped_rifle:
-		return &"RifleLocomotion"
+		return &"Rifle/RifleLocomotion"
 	if is_boxing:
-		return &"BoxingLocomotion"
+		return &"Boxing/BoxingLocomotion"
 	return &"StandingLocomotion"
+
+
+## True if the state is the deepest current locomotion node or queued in a travel path.
+func is_locomotion_state_active_or_queued(state_name: String) -> bool:
+	var root_playback: AnimationNodeStateMachinePlayback = locomotion_state
+	if root_playback == null:
+		return false
+	var playback: AnimationNodeStateMachinePlayback = active_locomotion_playback
+	if String(playback.get_current_node()) == state_name:
+		return true
+	if StringName(state_name) in playback.get_travel_path():
+		return true
+	return StringName(state_name) in root_playback.get_travel_path()
+
+
+## Travels the locomotion state machine; supports "Group/State" paths into nested machines.
+func travel_locomotion(state_path: String) -> void:
+	var root_playback: AnimationNodeStateMachinePlayback = locomotion_state
+	if root_playback == null:
+		return
+	var parts: PackedStringArray = state_path.split("/")
+	var entering_group: bool = parts[0] in LOCOMOTION_GROUPS \
+			and String(root_playback.get_current_node()) != parts[0]
+	root_playback.travel(parts[0])
+	if parts.size() > 1:
+		# On fresh entry of an undrawn group, let the Start edges route through the draw.
+		if entering_group and drawn_weapon_group != parts[0] and parts[1].ends_with("Locomotion"):
+			return
+		var group_playback: AnimationNodeStateMachinePlayback = animation_tree.get("parameters/LocomotionStateMachine/" + parts[0] + "/playback")
+		if group_playback:
+			group_playback.travel(parts[1])
+
+
+## True if the equipment matching the given locomotion group is currently equipped.
+func is_group_equipment_equipped(group_name: String) -> bool:
+	match group_name:
+		"Bow":
+			return equipped_bow
+		"Boxing":
+			return is_boxing
+		"GreatSword":
+			return equipped_axe_2h or equipped_fishing_rod or equipped_staff or equipped_sword_2h
+		"Pistol":
+			return equipped_pistol
+		"Rifle":
+			return equipped_rifle
+		"Shield":
+			return equipped_axe_1h or equipped_dagger or equipped_shield or equipped_sword_1h
+	return false
 
 
 ## Gets the player's forward direction projected onto the movement plane.
