@@ -17,7 +17,7 @@ func _physics_process(delta: float) -> void:
 			return
 
 		# Have the player look at the crosshair when aiming
-		#if player.is_shooting:
+		#if player.is_shooting and player.debug.visible:
 		#	player.look_at_modifier.target_node = player.look_at_target.get_path()
 		#	player.look_at_modifier.active = true
 		# Reset the look at modifier when not aiming

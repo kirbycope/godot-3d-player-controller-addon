@@ -30,13 +30,8 @@ const LOCOMOTION_GROUPS: Array[String] = ["Bow", "Boxing", "GreatSword", "Pistol
 @export var paraglider_scene: PackedScene
 @export var skateboard_scene: PackedScene
 @export_category("Optional Interaction")
-@export var held_object_throw_force: float = 5.0
 @export var push_force: float = 1.0
 @export var mass: float = 80.0
-
-@export_category("Debug Settings")
-@export var debug_left_hand_hit_color: Color = Color.ORANGE
-@export var debug_right_hand_hit_color: Color = Color.BLUE
 
 var current_state: int = -1 ## The current state of the Player (from the Node/Code [NodeStateMachine], not the AnimationTree NodeStateMachine).
 var locomotion_state: ## Gets the [NodeStateMachine] "LocomotionStateMachine"
@@ -170,17 +165,18 @@ var is_flipping: bool: ## Is the Player currently front or back flipping?
 			return false
 		return is_front_flipping or is_back_flipping \
 				or current_locomotion_node in ["Backflip", "FowardFlip"]
-var is_throw_queued: bool = false ## Is the Player currently queued to throw a held object?
-var is_throwing: bool = false ## Is the Player currently throwing?
-var is_charging_throw: bool = false ## Is the Player currently charging a throw?
-var throw_charge_time: float = 0.0 ## Current elapsed charge duration for throw.
-var throw_power: float = 1.0 ## Throw power multiplier (0.25 to 1.0).
-var queued_throw_direction: Vector3 = Vector3.ZERO ## The direction to apply when executing a queued throw.
-var throw_charge_bar: ProgressBar
-var held_rigidbody: RigidBody3D = null
-var held_rigidbody_original_collision_layer: int = 0
-var held_rigidbody_original_collision_mask: int = 0
-var held_rigidbody_original_freeze: bool = false
+var is_throwing: bool: ## Is the Player currently in a throw wind-up? (Delegates to [HeldObject].)
+	get:
+		return held_object != null and held_object.is_throwing
+	set(value):
+		if held_object:
+			held_object.is_throwing = value
+var held_rigidbody: RigidBody3D: ## The [RigidBody3D] currently carried, if any. (Delegates to [HeldObject].)
+	get:
+		return held_object.held_rigidbody if held_object else null
+var current_focus_target: Node3D: ## The body currently locked on to, if any. (Delegates to [Focus].)
+	get:
+		return focus.current_focus_target if focus else null
 var is_mining: bool: ## Is the Player currently mining?
 	get:
 		if not is_multiplayer_authority() or animation_tree == null:
@@ -239,12 +235,8 @@ var skateboard: Node3D
 @onready var camera_mount: Node3D = $CameraMount
 @onready var item_spring_arm: SpringArm3D = $CameraMount/ItemSpringArm
 @onready var player_input: InputSynchronizer = $InputSynchronizer
-@onready var target_detection: Area3D = $TargetDetection
-@onready var focus_target_marker: Marker3D = $FocusTargetMarker
-
-var current_focus_target: Node3D = null
-var current_focus_marker: Marker3D = null
-
+@onready var focus: Focus = $Focus
+@onready var held_object: HeldObject = $HeldObject
 @onready var initial_player_model_transform: Transform3D = player_model.transform
 @onready var paraglider_raycast: RayCast3D = $ParagliderRaycast
 @onready var projectile_raycast: RayCast3D = $CameraMount/ProjectileRaycast
@@ -301,8 +293,6 @@ func _ready() -> void:
 				child.add_collision_exception_with(self)
 				add_collision_exception_with(child)
 
-	_setup_throw_charge_bar()
-
 	# Set the Player's initial state
 	if state_machine:
 		state_machine.travel(-1, NodeStateMachine.States.STANDING)
@@ -347,25 +337,6 @@ func _input(event: InputEvent) -> void:
 	# Do nothing if not the authority
 	if is_paused or is_ragdolling: return
 
-	if event.is_action_pressed("action") and not event.is_echo():
-		if _is_holding_rigidbody():
-			_drop_held_rigidbody()
-			get_viewport().set_input_as_handled()
-			return
-		if _try_pickup_rigidbody_from_crosshair():
-			get_viewport().set_input_as_handled()
-			return
-
-	if event.is_action_pressed("shoot") and not event.is_echo() and _is_holding_rigidbody():
-		start_charging_throw()
-		get_viewport().set_input_as_handled()
-		return
-
-	if event.is_action_released("shoot") and not event.is_echo() and _is_holding_rigidbody():
-		release_charging_throw()
-		get_viewport().set_input_as_handled()
-		return
-
 	# Toggle mouse capture
 	if event.is_action_pressed("ui_cancel") and not pause.visible and not settings.visible:
 		# Check if the mouse is currently captured
@@ -385,28 +356,6 @@ func _process(_delta: float) -> void:
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(delta: float) -> void:
-	# Handle Focus Target Logic
-	if is_focusing:
-		if not is_instance_valid(current_focus_target):
-			if is_instance_valid(current_focus_marker):
-				current_focus_marker.queue_free()
-			current_focus_target = null
-			current_focus_marker = null
-			
-			for body in target_detection.get_overlapping_bodies():
-				if body.is_in_group("Target") or body.is_in_group("Focusable") or "Guy" in body.name:
-					current_focus_target = body
-					current_focus_marker = focus_target_marker.duplicate()
-					body.add_child(current_focus_marker)
-					current_focus_marker.visible = true
-					break
-	else:
-		if current_focus_target != null:
-			if is_instance_valid(current_focus_marker):
-				current_focus_marker.queue_free()
-			current_focus_target = null
-			current_focus_marker = null
-
 	# Track which weapon group has finished its draw so re-entering it skips the redraw.
 	var root_locomotion_node: String = String(locomotion_state.get_current_node())
 	if root_locomotion_node in LOCOMOTION_GROUPS:
@@ -422,34 +371,6 @@ func _physics_process(delta: float) -> void:
 
 	# Treat "jumping" as queued jump or upward airborne movement.
 	is_jumping = (is_on_floor() and is_jump_queued) or (not is_on_floor() and current_locomotion_node.contains("Jump"))
-
-	# While throw windup is active, keep aiming at live crosshair direction.
-	if is_throwing:
-		var crosshair_throw_dir: Vector3 = _get_crosshair_throw_direction()
-		if crosshair_throw_dir.length_squared() > 0.001:
-			queued_throw_direction = crosshair_throw_dir.normalized()
-			_turn_model_toward_direction(queued_throw_direction, delta)
-
-	# Process throw charging if actively holding shoot action
-	if is_charging_throw:
-		throw_charge_time += delta
-		var throw_dir: Vector3 = _get_crosshair_throw_direction()
-		_turn_model_toward_direction(throw_dir, delta)
-
-		if throw_charge_time >= 0.2:
-			if not is_throw_queued:
-				queue_throw(throw_dir)
-			var charge_ratio: float = clamp((throw_charge_time - 0.2) / 0.6, 0.0, 1.0)
-			if throw_charge_bar:
-				throw_charge_bar.visible = true
-				throw_charge_bar.value = charge_ratio * 100.0
-				throw_power = lerp(0.25, 1.0, charge_ratio)
-			else:
-				throw_power = lerp(0.25, 1.0, charge_ratio)
-
-		if throw_charge_time >= 0.8:
-			throw_power = 1.0
-			execute_throw()
 
 	# Stop emote state when the animation finishes and reset the blend amount.
 	if is_emoting:
@@ -683,46 +604,8 @@ func execute_jump() -> void:
 	is_back_flipping = false
 
 
-func _setup_throw_charge_bar() -> void:
-	if controls and not throw_charge_bar:
-		throw_charge_bar = ProgressBar.new()
-		throw_charge_bar.name = "ThrowChargeBar"
-		throw_charge_bar.custom_minimum_size = Vector2(200, 24)
-		throw_charge_bar.anchors_preset = Control.PRESET_CENTER_BOTTOM
-		throw_charge_bar.anchor_left = 0.5
-		throw_charge_bar.anchor_top = 0.8
-		throw_charge_bar.anchor_right = 0.5
-		throw_charge_bar.anchor_bottom = 0.8
-		throw_charge_bar.offset_left = -100
-		throw_charge_bar.offset_top = -60
-		throw_charge_bar.offset_right = 100
-		throw_charge_bar.offset_bottom = -36
-		throw_charge_bar.show_percentage = true
-		throw_charge_bar.min_value = 0.0
-		throw_charge_bar.max_value = 100.0
-		throw_charge_bar.value = 0.0
-		throw_charge_bar.visible = false
-
-		var bg_style := StyleBoxFlat.new()
-		bg_style.bg_color = Color(0.1, 0.1, 0.1, 0.7)
-		bg_style.corner_radius_top_left = 6
-		bg_style.corner_radius_top_right = 6
-		bg_style.corner_radius_bottom_left = 6
-		bg_style.corner_radius_bottom_right = 6
-
-		var fg_style := StyleBoxFlat.new()
-		fg_style.bg_color = Color(0.2, 0.8, 0.3, 0.9)
-		fg_style.corner_radius_top_left = 6
-		fg_style.corner_radius_top_right = 6
-		fg_style.corner_radius_bottom_left = 6
-		fg_style.corner_radius_bottom_right = 6
-
-		throw_charge_bar.add_theme_stylebox_override("background", bg_style)
-		throw_charge_bar.add_theme_stylebox_override("fill", fg_style)
-		controls.add_child(throw_charge_bar)
-
-
-func _rotate_model_to_direction(dir: Vector3) -> void:
+## Snaps the model orientation to face the given direction on the movement plane.
+func rotate_model_to_direction(dir: Vector3) -> void:
 	var horizontal_dir: Vector3 = dir.slide(up_direction)
 	if horizontal_dir.length_squared() > 0.001:
 		horizontal_dir = horizontal_dir.normalized()
@@ -732,7 +615,8 @@ func _rotate_model_to_direction(dir: Vector3) -> void:
 		player_model.global_transform.basis = orientation.basis
 
 
-func _turn_model_toward_direction(dir: Vector3, delta: float) -> void:
+## Smoothly turns the model orientation toward the given direction on the movement plane.
+func turn_model_toward_direction(dir: Vector3, delta: float) -> void:
 	var horizontal_dir: Vector3 = dir.slide(up_direction)
 	if horizontal_dir.length_squared() > 0.001:
 		horizontal_dir = horizontal_dir.normalized()
@@ -743,241 +627,22 @@ func _turn_model_toward_direction(dir: Vector3, delta: float) -> void:
 		player_model.global_transform.basis = orientation.basis
 
 
-func _get_crosshair_throw_direction() -> Vector3:
-	if camera:
-		return -camera.global_transform.basis.z.normalized()
-
-	var facing_direction: Vector3 = get_facing_direction()
-	if facing_direction.length_squared() > 0.001:
-		return facing_direction
-
-	return -global_transform.basis.z.normalized()
-
-
-func _is_holding_rigidbody() -> bool:
-	if item_spring_arm.get_child_count() == 0:
-		return false
-	var held_node: Node = item_spring_arm.get_child(0)
-	return held_node is RigidBody3D
-
-
-func _find_rigidbody_from_node(start_node: Node) -> RigidBody3D:
-	var current_node: Node = start_node
-	while current_node:
-		if current_node is RigidBody3D:
-			return current_node as RigidBody3D
-		current_node = current_node.get_parent()
-	return null
-
-
-func _try_pickup_rigidbody_from_crosshair() -> bool:
-	if not camera or not is_instance_valid(camera.camera_ray_cast):
-		return false
-	if item_spring_arm.get_child_count() > 0:
-		return false
-	if not camera.camera_ray_cast.is_colliding():
-		return false
-
-	var collider: Object = camera.camera_ray_cast.get_collider()
-	if collider == null or not (collider is Node):
-		return false
-
-	var target_body: RigidBody3D = _find_rigidbody_from_node(collider as Node)
-	if not target_body:
-		return false
-	if target_body is VehicleBody3D:
-		return false
-	if target_body.get_parent() == item_spring_arm:
-		return false
-
-	_pickup_rigidbody(target_body)
-	return true
-
-
-func _pickup_rigidbody(body: RigidBody3D) -> void:
-	held_rigidbody = body
-	held_rigidbody_original_collision_layer = body.collision_layer
-	held_rigidbody_original_collision_mask = body.collision_mask
-	held_rigidbody_original_freeze = body.freeze
-
-	body.linear_velocity = Vector3.ZERO
-	body.angular_velocity = Vector3.ZERO
-	body.freeze = true
-	body.set_collision_layer_value(1, false)
-	body.set_collision_layer_value(2, true)
-	body.add_collision_exception_with(self)
-	add_collision_exception_with(body)
-
-	body.reparent(item_spring_arm, true)
-	body.transform = Transform3D()
-	body.position = Vector3.ZERO
-
-
-func _drop_held_rigidbody() -> void:
-	if not is_instance_valid(held_rigidbody):
-		held_rigidbody = null
-		return
-
-	var drop_body: RigidBody3D = held_rigidbody
-
-	if get_parent() != null:
-		drop_body.reparent(get_parent(), true)
-	else:
-		var current_scene: Node = get_tree().current_scene
-		if current_scene:
-			drop_body.reparent(current_scene, true)
-
-	_restore_held_rigidbody_state(drop_body)
-	
-	drop_body.linear_velocity = Vector3.ZERO
-	drop_body.angular_velocity = Vector3.ZERO
-	drop_body.sleeping = false
-
-
-func _restore_held_rigidbody_state(body: RigidBody3D) -> void:
-	body.collision_layer = held_rigidbody_original_collision_layer
-	body.collision_mask = held_rigidbody_original_collision_mask
-	body.freeze = held_rigidbody_original_freeze
-	body.remove_collision_exception_with(self)
-	remove_collision_exception_with(body)
-	held_rigidbody = null
-
-
-func _throw_rigidbody(body: RigidBody3D, throw_dir: Vector3, power: float) -> void:
-	_restore_held_rigidbody_state(body)
-	body.freeze = false
-	if get_parent() != null:
-		body.reparent(get_parent(), true)
-	body.sleeping = false
-	body.apply_impulse(throw_dir * held_object_throw_force * power, Vector3.ZERO)
-
-
-## Starts charging a throw when shoot button is pressed.
+## Starts charging a throw when the shoot button is pressed. (Delegates to [HeldObject].)
 func start_charging_throw() -> void:
-	if item_spring_arm.get_child_count() == 0:
-		return
-
-	is_charging_throw = true
-	throw_charge_time = 0.0
-	throw_power = 0.25
-
-	var throw_dir: Vector3
-	if camera:
-		throw_dir = - camera.global_transform.basis.z.normalized()
-	else:
-		throw_dir = get_facing_direction()
-	_rotate_model_to_direction(throw_dir)
+	if held_object:
+		held_object.start_charging_throw()
 
 
-## Called when shoot button is released while charging a throw.
+## Called when the shoot button is released while charging a throw. (Delegates to [HeldObject].)
 func release_charging_throw() -> void:
-	if not is_charging_throw:
-		return
-
-	var throw_dir: Vector3
-	if camera:
-		throw_dir = - camera.global_transform.basis.z.normalized()
-	else:
-		throw_dir = get_facing_direction()
-	_rotate_model_to_direction(throw_dir)
-
-	if throw_charge_time < 0.2:
-		# Quick tap (<0.2s): Instant weak throw (25% power)
-		throw_power = 0.25
-		execute_instant_throw(throw_dir, throw_power)
-	else:
-		# Long press release (>0.2s): execute queued throw with charged power
-		var charge_ratio: float = clamp((throw_charge_time - 0.2) / 0.6, 0.0, 1.0)
-		throw_power = lerp(0.25, 1.0, charge_ratio)
-		execute_throw()
-
-	is_charging_throw = false
-	if throw_charge_bar:
-		throw_charge_bar.visible = false
+	if held_object:
+		held_object.release_charging_throw()
 
 
-## Executes an instant throw without animation wind-up (for quick taps).
-func execute_instant_throw(throw_dir: Vector3, power: float) -> void:
-	if item_spring_arm.get_child_count() == 0:
-		return
-
-	_rotate_model_to_direction(throw_dir)
-	var held_node: Node = item_spring_arm.get_child(0)
-	clear_throw_queue()
-	is_charging_throw = false
-	if throw_charge_bar:
-		throw_charge_bar.visible = false
-
-	if held_node.has_method("throw_with_direction"):
-		held_node.call("throw_with_direction", throw_dir, power)
-	elif held_node.has_method("throw"):
-		held_node.call("throw", throw_dir)
-	elif held_node is RigidBody3D:
-		var throw_body: RigidBody3D = held_node as RigidBody3D
-		_throw_rigidbody(throw_body, throw_dir, power)
-
-
-## Queues a held-object throw to be executed by animation call track or 0.8s timer.
-func queue_throw(throw_direction: Vector3) -> void:
-	if throw_direction.length_squared() <= 0.001:
-		if camera:
-			throw_direction = - camera.global_transform.basis.z.normalized()
-		else:
-			throw_direction = get_facing_direction()
-		if throw_direction.length_squared() <= 0.001:
-			throw_direction = - global_transform.basis.z.normalized()
-
-	is_throw_queued = true
-	is_throwing = true
-	queued_throw_direction = throw_direction.normalized()
-
-	var emote_state = animation_tree.get(EMOTE_STATE_PLAYBACK_PATH)
-	if emote_state:
-		animation_tree.set("parameters/EmoteSpineBlend2/blend_amount", 1.0)
-		emote_state.travel("Throw")
-		is_emoting = true
-		has_started_emoting = false
-
-
-## Clears the queued throw state.
-func clear_throw_queue() -> void:
-	is_throw_queued = false
-	queued_throw_direction = Vector3.ZERO
-
-
-## Called by throw animation(s) using "Call Method Track" or timer to throw held object at the right frame.
+## Called by throw animation(s) using "Call Method Track" to throw the held object at the right frame.
 func execute_throw() -> void:
-	if not is_throw_queued and not is_charging_throw:
-		return
-	if item_spring_arm.get_child_count() == 0:
-		clear_throw_queue()
-		if throw_charge_bar:
-			throw_charge_bar.visible = false
-		is_charging_throw = false
-		return
-
-	var held_node: Node = item_spring_arm.get_child(0)
-	var throw_dir: Vector3 = queued_throw_direction
-	if throw_dir.length_squared() <= 0.001:
-		if camera:
-			throw_dir = - camera.global_transform.basis.z.normalized()
-		else:
-			throw_dir = get_facing_direction()
-
-	_rotate_model_to_direction(throw_dir)
-	var power: float = throw_power
-	clear_throw_queue()
-	is_charging_throw = false
-	if throw_charge_bar:
-		throw_charge_bar.visible = false
-
-	if held_node.has_method("throw_with_direction"):
-		held_node.call("throw_with_direction", throw_dir, power)
-	elif held_node.has_method("throw"):
-		held_node.call("throw", throw_dir)
-	elif held_node is RigidBody3D:
-		var throw_body: RigidBody3D = held_node as RigidBody3D
-		_throw_rigidbody(throw_body, throw_dir, power)
+	if held_object:
+		held_object.execute_throw()
 
 
 ## Alias for animation call tracks that expect a throw-named method.
@@ -1134,89 +799,3 @@ func update_movement_and_rotation(delta: float) -> void:
 		var rotated_basis: Basis = model_facing_basis * initial_separation_ray_transform.basis
 		var rotated_origin: Vector3 = global_position + (model_facing_basis * initial_separation_ray_transform.origin)
 		separation_ray_shape.global_transform = Transform3D(rotated_basis, rotated_origin)
-
-	# Debug: Check collisions against other objects using space state
-	if is_attacking and skeleton:
-		var space_state = get_world_3d().direct_space_state
-		var collision_queries = []
-		
-		if inventory and inventory.is_unarmed():
-			# Check hand collisions
-			var hand_names = ["LeftHand", "RightHand"]
-			for h_name in hand_names:
-				var b_idx = skeleton.find_bone(h_name)
-				if b_idx != -1:
-					var bone_pose = skeleton.get_bone_global_pose(b_idx)
-					var bone_global_trans = skeleton.global_transform * bone_pose
-					
-					var query = PhysicsShapeQueryParameters3D.new()
-					var sphere = SphereShape3D.new()
-					sphere.radius = 0.15
-					query.shape = sphere
-					query.transform = bone_global_trans
-					query.collision_mask = 0xFFFFFFFF # Check all layers
-					
-					collision_queries.append({
-						"query": query,
-						"name": h_name,
-						"color": debug_left_hand_hit_color if h_name == "LeftHand" else debug_right_hand_hit_color
-					})
-		elif inventory:
-			# Check equipped weapon collisions
-			for equip in inventory.equipment:
-				if equip.can_attack:
-					var hitbox = equip.get_node_or_null("Hitbox")
-					if hitbox and hitbox is Area3D:
-						for child in hitbox.get_children():
-							if child is CollisionShape3D and child.shape:
-								var query = PhysicsShapeQueryParameters3D.new()
-								query.shape = child.shape
-								query.transform = child.global_transform
-								query.collision_mask = 0xFFFFFFFF
-								collision_queries.append({
-									"query": query,
-									"name": equip.name,
-									"color": Color.RED # Weapon debug color
-								})
-		
-		# Execute all gathered queries
-		var impulse_applied = false
-		for cq in collision_queries:
-			var query = cq["query"]
-			var h_name = cq["name"]
-			var hit_color = cq["color"]
-			
-			var results = space_state.intersect_shape(query)
-			for res in results:
-				var coll = res.collider
-				# Exclude collisions with the player's own bodies
-				if coll != self and coll.get_parent() != physical_bone_simulator:
-					# Add a visual indicator for debugging (optional)
-					#var mesh_inst = MeshInstance3D.new()
-					#var sm = SphereMesh.new()
-					#sm.radius = 0.05
-					#sm.height = 0.1
-					#mesh_inst.mesh = sm
-					#var mat = StandardMaterial3D.new()
-					#mat.albedo_color = hit_color
-					#mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-					#mesh_inst.material_override = mat
-					#get_tree().root.add_child(mesh_inst)
-					#mesh_inst.global_position = query.transform.origin
-					#get_tree().create_timer(1.0).timeout.connect(mesh_inst.queue_free)
-					# Apply impulse to the collider
-					if not impulse_applied:
-						impulse_applied = true
-						if coll.has_method("apply_impulse"):
-							var push_dir = - global_transform.basis.z.normalized()
-							push_dir.y += 0.5 # Add a slight upward lift to the knockback
-							push_dir = push_dir.normalized()
-							
-							var coll_mass = 1.0
-							if "mass" in coll:
-								coll_mass = coll.mass
-							elif coll.has_method("get_mass"):
-								coll_mass = coll.get_mass()
-								
-							var effective_mass = (mass * coll_mass) / (mass + coll_mass)
-							coll.apply_impulse(push_dir * push_force * 10.0 * effective_mass, query.transform.origin - coll.global_position)

@@ -232,6 +232,9 @@
 [ext_resource type="AudioStream" uid="uid://1iwbvyhw012s" path="res://addons/3d_player_controller/assets/tommusic/fantasy_sfx/Footsteps/Water/Water Run 4.ogg" id="191_g3iaa"]
 [ext_resource type="AudioStream" uid="uid://dlrv2l48nonrm" path="res://addons/3d_player_controller/assets/tommusic/fantasy_sfx/Footsteps/Water/Water Run 5.ogg" id="192_l7hcw"]
 [ext_resource type="Script" uid="uid://cki15rkegdlgq" path="res://addons/3d_player_controller/sitting.gd" id="207_gl6xl"]
+[ext_resource type="Script" path="res://addons/3d_player_controller/focus.gd" id="208_focus"]
+[ext_resource type="Script" path="res://addons/3d_player_controller/held_object.gd" id="209_heldobj"]
+[ext_resource type="Script" path="res://addons/3d_player_controller/hit_detection.gd" id="210_hitdet"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_ym3ug"]
 radius = 0.009999072
@@ -3715,6 +3718,20 @@ player = NodePath("../..")
 process_mode = 4
 script = ExtResource("185_sp0uh")
 player = NodePath("../..")
+
+[node name="Focus" type="Node" parent="." node_paths=PackedStringArray("player", "target_detection", "focus_target_marker")]
+script = ExtResource("208_focus")
+player = NodePath("..")
+target_detection = NodePath("../TargetDetection")
+focus_target_marker = NodePath("../FocusTargetMarker")
+
+[node name="HeldObject" type="Node" parent="." node_paths=PackedStringArray("player")]
+script = ExtResource("209_heldobj")
+player = NodePath("..")
+
+[node name="HitDetection" type="Node" parent="." node_paths=PackedStringArray("player")]
+script = ExtResource("210_hitdet")
+player = NodePath("..")
 
 [connection signal="timeout" from="AttackSequenceTimer" to="." method="_on_attack_sequence_timer_timeout"]
 
