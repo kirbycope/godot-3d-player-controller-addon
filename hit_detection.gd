@@ -8,6 +8,7 @@ extends Node
 const HAND_HIT_RADIUS: float = 0.15 ## Radius of the sphere queried around each hand bone.
 const KNOCKBACK_MULTIPLIER: float = 10.0 ## Scales [member Player.push_force] for attack knockback.
 const DEBUG_SPHERE_LIFETIME: float = 1.0 ## Seconds a debug hit sphere stays visible.
+const RESOURCE_SWEEP_RADIUS: float = 0.9 ## Radius of the sphere swept in front of the player for resource nodes.
 
 @export var player: Player
 
@@ -15,6 +16,9 @@ const DEBUG_SPHERE_LIFETIME: float = 1.0 ## Seconds a debug hit sphere stays vis
 @export var debug_left_hand_hit_color: Color = Color.ORANGE
 @export var debug_right_hand_hit_color: Color = Color.BLUE
 @export var debug_weapon_hit_color: Color = Color.RED
+
+var _swing_hit_targets: Array[Node] = [] ## Targets already notified during the current swing.
+var _last_swing_node: String = "" ## Locomotion node of the swing that populated [member _swing_hit_targets].
 
 
 ## Called when the node enters the scene tree for the first time.
@@ -27,6 +31,12 @@ func _physics_process(_delta: float) -> void:
 	if player == null or not player.is_attacking or player.skeleton == null:
 		return
 
+	# A new attack animation node means a new swing; targets may be hit again
+	var current_node: String = player.current_locomotion_node
+	if current_node != _last_swing_node:
+		_last_swing_node = current_node
+		_swing_hit_targets.clear()
+
 	var queries: Array[Dictionary] = []
 	if player.inventory and player.inventory.is_unarmed():
 		queries = _gather_hand_queries()
@@ -34,6 +44,31 @@ func _physics_process(_delta: float) -> void:
 		queries = _gather_weapon_queries()
 
 	_apply_first_hit_impulse(queries)
+	_sweep_resource_targets()
+
+
+## Registers weapon hits on resource nodes in front of the player.
+## Precise hitbox arcs miss short targets like ore, so a generous sphere is used instead.
+func _sweep_resource_targets() -> void:
+	if player.inventory == null or player.inventory.is_unarmed():
+		return
+	var space_state: PhysicsDirectSpaceState3D = player.get_world_3d().direct_space_state
+	var forward: Vector3 = -player.orientation.basis.z
+	var query := PhysicsShapeQueryParameters3D.new()
+	var sphere := SphereShape3D.new()
+	sphere.radius = RESOURCE_SWEEP_RADIUS
+	query.shape = sphere
+	query.transform = Transform3D(Basis(), player.global_position + player.up_direction * 0.5 + forward * RESOURCE_SWEEP_RADIUS)
+	query.collision_mask = 0xFFFFFFFF
+	for equip in player.inventory.equipment:
+		if not equip.can_attack:
+			continue
+		if not ("can_log" in equip and equip.can_log) and not ("can_mine" in equip and equip.can_mine):
+			continue
+		for result in space_state.intersect_shape(query):
+			var collider: Object = result.collider
+			if collider is Node:
+				_register_weapon_hit(collider, equip)
 
 
 ## Builds shape queries around the hand bones for unarmed attacks.
@@ -70,7 +105,7 @@ func _gather_weapon_queries() -> Array[Dictionary]:
 				query.shape = child.shape
 				query.transform = child.global_transform
 				query.collision_mask = 0xFFFFFFFF
-				queries.append({ "query": query, "color": debug_weapon_hit_color })
+				queries.append({ "query": query, "color": debug_weapon_hit_color, "equipment": equip })
 	return queries
 
 
@@ -91,7 +126,14 @@ func _apply_first_hit_impulse(queries: Array[Dictionary]) -> void:
 			if player.debug and player.debug.visible:
 				_spawn_debug_hit_sphere(query.transform.origin, hit_color)
 
+			var equipment: Equipment = entry.get("equipment") as Equipment
+			if equipment:
+				_register_weapon_hit(collider, equipment)
+
 			if impulse_applied or not collider.has_method("apply_impulse"):
+				continue
+			if collider is Node and (collider as Node).has_meta("no_knockback_until") \
+					and Time.get_ticks_msec() < (collider as Node).get_meta("no_knockback_until"):
 				continue
 			impulse_applied = true
 
@@ -108,6 +150,18 @@ func _apply_first_hit_impulse(queries: Array[Dictionary]) -> void:
 			var impulse: Vector3 = push_dir * player.push_force * KNOCKBACK_MULTIPLIER * effective_mass
 			var impulse_position: Vector3 = query.transform.origin - (collider as Node3D).global_position
 			collider.call("apply_impulse", impulse, impulse_position)
+
+
+## Notifies the nearest ancestor that handles weapon hits, once per target per swing.
+func _register_weapon_hit(collider: Object, equipment: Equipment) -> void:
+	var node: Node = collider as Node
+	while node:
+		if node.has_method("register_weapon_hit"):
+			if node not in _swing_hit_targets:
+				_swing_hit_targets.append(node)
+				node.call("register_weapon_hit", equipment)
+			return
+		node = node.get_parent()
 
 
 ## Spawns a short-lived unshaded sphere marking a detected hit.

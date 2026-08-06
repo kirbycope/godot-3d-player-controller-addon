@@ -1756,35 +1756,44 @@ switch_mode = 2
 advance_mode = 2
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_jtt00"]
+xfade_time = 0.2
 advance_mode = 2
 advance_expression = "is_attacking and attack_sequence == 0"
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_36tao"]
+xfade_time = 0.2
 switch_mode = 2
 advance_mode = 2
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_1t4v8"]
+xfade_time = 0.2
+switch_mode = 2
 advance_mode = 2
 advance_expression = "attack_sequence == 1"
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_3acf8"]
+xfade_time = 0.2
 switch_mode = 2
 advance_mode = 2
 advance_expression = "attack_sequence == 2"
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_lq5p6"]
+xfade_time = 0.2
 advance_mode = 2
-advance_expression = "attack_sequence == 1"
+advance_expression = "attack_sequence == 2"
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_vtuwp"]
+xfade_time = 0.2
 switch_mode = 2
 advance_mode = 2
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_jatfe"]
+xfade_time = 0.2
 advance_mode = 2
-advance_expression = "attack_sequence == 2"
+advance_expression = "attack_sequence == 3"
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_y3ps5"]
+xfade_time = 0.2
 switch_mode = 2
 advance_mode = 2
 
@@ -2200,7 +2209,7 @@ states/GreatSwordLowSlash/position = Vector2(700, 100)
 states/GreatSwordPowerSlash/node = SubResource("AnimationNodeAnimation_8f4nr")
 states/GreatSwordPowerSlash/position = Vector2(700, 200)
 states/Start/position = Vector2(0, 100)
-transitions = ["Start", "GreatSwordDraw", SubResource("AnimationNodeStateMachineTransition_greatsword_draw_in"), "Start", "GreatSwordLocomotion", SubResource("AnimationNodeStateMachineTransition_greatsword_skip_in"), "GreatSwordDraw", "GreatSwordLocomotion", SubResource("AnimationNodeStateMachineTransition_yg2ug"), "GreatSwordLocomotion", "GreatSwordJump", SubResource("AnimationNodeStateMachineTransition_6670k"), "GreatSwordJump", "GreatSwordLocomotion", SubResource("AnimationNodeStateMachineTransition_y5ufv"), "GreatSwordLocomotion", "GreatSwordJumpForward", SubResource("AnimationNodeStateMachineTransition_gsv3e"), "GreatSwordJumpForward", "GreatSwordLocomotion", SubResource("AnimationNodeStateMachineTransition_0ivy0"), "GreatSwordLocomotion", "GreatSwordDownwardSlash", SubResource("AnimationNodeStateMachineTransition_jtt00"), "GreatSwordDownwardSlash", "GreatSwordLocomotion", SubResource("AnimationNodeStateMachineTransition_36tao"), "GreatSwordDownwardSlash", "GreatSwordLowSlash", SubResource("AnimationNodeStateMachineTransition_1t4v8"), "GreatSwordLowSlash", "GreatSwordPowerSlash", SubResource("AnimationNodeStateMachineTransition_3acf8"), "GreatSwordLocomotion", "GreatSwordLowSlash", SubResource("AnimationNodeStateMachineTransition_lq5p6"), "GreatSwordLowSlash", "GreatSwordLocomotion", SubResource("AnimationNodeStateMachineTransition_vtuwp"), "GreatSwordLocomotion", "GreatSwordPowerSlash", SubResource("AnimationNodeStateMachineTransition_jatfe"), "GreatSwordPowerSlash", "GreatSwordLocomotion", SubResource("AnimationNodeStateMachineTransition_y3ps5")]
+transitions = ["Start", "GreatSwordDraw", SubResource("AnimationNodeStateMachineTransition_greatsword_draw_in"), "Start", "GreatSwordLocomotion", SubResource("AnimationNodeStateMachineTransition_greatsword_skip_in"), "GreatSwordDraw", "GreatSwordLocomotion", SubResource("AnimationNodeStateMachineTransition_yg2ug"), "GreatSwordLocomotion", "GreatSwordJump", SubResource("AnimationNodeStateMachineTransition_6670k"), "GreatSwordJump", "GreatSwordLocomotion", SubResource("AnimationNodeStateMachineTransition_y5ufv"), "GreatSwordLocomotion", "GreatSwordJumpForward", SubResource("AnimationNodeStateMachineTransition_gsv3e"), "GreatSwordJumpForward", "GreatSwordLocomotion", SubResource("AnimationNodeStateMachineTransition_0ivy0"), "GreatSwordLocomotion", "GreatSwordDownwardSlash", SubResource("AnimationNodeStateMachineTransition_jtt00"), "GreatSwordDownwardSlash", "GreatSwordLocomotion", SubResource("AnimationNodeStateMachineTransition_36tao"), "GreatSwordDownwardSlash", "GreatSwordLowSlash", SubResource("AnimationNodeStateMachineTransition_1t4v8"), "GreatSwordLowSlash", "GreatSwordLocomotion", SubResource("AnimationNodeStateMachineTransition_vtuwp"), "GreatSwordLocomotion", "GreatSwordLowSlash", SubResource("AnimationNodeStateMachineTransition_lq5p6"), "GreatSwordLowSlash", "GreatSwordPowerSlash", SubResource("AnimationNodeStateMachineTransition_3acf8"), "GreatSwordPowerSlash", "GreatSwordLocomotion", SubResource("AnimationNodeStateMachineTransition_y3ps5"), "GreatSwordLocomotion", "GreatSwordPowerSlash", SubResource("AnimationNodeStateMachineTransition_jatfe")]
 
 [sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_pistolgroup"]
 states/End/position = Vector2(750, 100)

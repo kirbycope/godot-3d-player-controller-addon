@@ -17,6 +17,8 @@ enum EquipmentType {
 
 @export var bone_attachment_bone_name: String ## The name of the bone on the player's skeleton to which this equipment will be attached when equipped. (e.g. "RightHand", "LeftHand", etc.)
 @export var can_attack: bool = false ## Does this equipment have an attack/melee action that the player can perform?
+@export var can_log: bool = false ## Can this equipment chop down trees? (See [Choppable].)
+@export var can_mine: bool = false ## Can this equipment mine ore? (See [Mineable].)
 @export var can_shoot: bool = false ## Does this equipment have a shooting/ranged action that the player can perform?
 @export var display_name: String = "" ## Name displayed in the UI. If empty, falls back to equipment type name.
 @export var equipment_type: EquipmentType ## The type of equipment (e.g. AXE_1H, BOW, RIFLE, etc.)
