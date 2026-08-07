@@ -14,6 +14,9 @@ func _input(event: InputEvent) -> void:
 ## Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta: float) -> void:
 
+	# Do nothing while the debug HUD is hidden
+	if not visible: return
+
 	if player:
 		$FPS.text = str(int(Engine.get_frames_per_second()))
 

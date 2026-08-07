@@ -518,8 +518,6 @@ advance_mode = 2
 xfade_time = 0.2
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_gfa47"]
-advance_mode = 2
-advance_expression = "is_shooting"
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_rhxkt"]
 xfade_time = 0.2
@@ -563,7 +561,7 @@ advance_mode = 2
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_g8gnv"]
 advance_mode = 2
-advance_expression = "is_throwing"
+advance_expression = "is_throwing and not has_started_emoting"
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_8rliy"]
 switch_mode = 2

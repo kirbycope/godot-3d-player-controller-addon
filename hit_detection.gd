@@ -19,11 +19,17 @@ const RESOURCE_SWEEP_RADIUS: float = 0.9 ## Radius of the sphere swept in front 
 
 var _swing_hit_targets: Array[Node] = [] ## Targets already notified during the current swing.
 var _last_swing_node: String = "" ## Locomotion node of the swing that populated [member _swing_hit_targets].
+var _hand_sphere: SphereShape3D ## Reused so the physics server doesn't create/destroy a shape every frame.
+var _sweep_sphere: SphereShape3D ## Reused so the physics server doesn't create/destroy a shape every frame.
 
 
 ## Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	set_physics_process(is_multiplayer_authority())
+	_hand_sphere = SphereShape3D.new()
+	_hand_sphere.radius = HAND_HIT_RADIUS
+	_sweep_sphere = SphereShape3D.new()
+	_sweep_sphere.radius = RESOURCE_SWEEP_RADIUS
 
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
@@ -60,9 +66,7 @@ func _sweep_resource_targets() -> void:
 	var space_state: PhysicsDirectSpaceState3D = player.get_world_3d().direct_space_state
 	var forward: Vector3 = -player.orientation.basis.z
 	var query := PhysicsShapeQueryParameters3D.new()
-	var sphere := SphereShape3D.new()
-	sphere.radius = RESOURCE_SWEEP_RADIUS
-	query.shape = sphere
+	query.shape = _sweep_sphere
 	query.transform = Transform3D(Basis(), player.global_position + player.up_direction * 0.5 + forward * RESOURCE_SWEEP_RADIUS)
 	query.collision_mask = 0xFFFFFFFF
 	for equip in player.inventory.equipment:
@@ -85,9 +89,7 @@ func _gather_hand_queries() -> Array[Dictionary]:
 			continue
 		var bone_pose: Transform3D = player.skeleton.get_bone_global_pose(bone_index)
 		var query := PhysicsShapeQueryParameters3D.new()
-		var sphere := SphereShape3D.new()
-		sphere.radius = HAND_HIT_RADIUS
-		query.shape = sphere
+		query.shape = _hand_sphere
 		query.transform = player.skeleton.global_transform * bone_pose
 		query.collision_mask = 0xFFFFFFFF
 		var hit_color: Color = debug_left_hand_hit_color if hand_name == "LeftHand" else debug_right_hand_hit_color
