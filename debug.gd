@@ -2,6 +2,8 @@ extends CanvasLayer
 
 @export var player: Player
 
+var navigation_marker: MeshInstance3D = null ## Green sphere marking the click-to-move target.
+
 
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:
@@ -13,6 +15,10 @@ func _input(event: InputEvent) -> void:
 
 ## Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta: float) -> void:
+
+	# Clear the click-to-move marker once navigation stops or the HUD is hidden
+	if navigation_marker and (not visible or player == null or not player.is_navigating):
+		clear_navigation_marker()
 
 	# Do nothing while the debug HUD is hidden
 	if not visible: return
@@ -78,3 +84,26 @@ func _process(_delta: float) -> void:
 		$Hanging/is_climbing_on.button_pressed = player.is_climbing_on
 		$Hanging/is_hanging_braced.button_pressed = player.is_hanging_braced
 		$Hanging/is_hanging_free.button_pressed = player.is_hanging_free
+
+
+## Draws a small green sphere at the given position to mark the click-to-move target.
+func draw_navigation_marker(marker_position: Vector3) -> void:
+	if navigation_marker == null:
+		var sphere_mesh := SphereMesh.new()
+		sphere_mesh.radius = 0.1
+		sphere_mesh.height = 0.2
+		var marker_material := StandardMaterial3D.new()
+		marker_material.albedo_color = Color.GREEN
+		marker_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		sphere_mesh.material = marker_material
+		navigation_marker = MeshInstance3D.new()
+		navigation_marker.mesh = sphere_mesh
+		player.get_tree().current_scene.add_child(navigation_marker)
+	navigation_marker.global_position = marker_position
+
+
+## Removes the click-to-move marker sphere, if any.
+func clear_navigation_marker() -> void:
+	if is_instance_valid(navigation_marker):
+		navigation_marker.queue_free()
+	navigation_marker = null

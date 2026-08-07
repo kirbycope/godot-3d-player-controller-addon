@@ -154,6 +154,12 @@ var is_focusing: bool: ## Is the Player currently focusing (forward or on a targ
 	get:
 		if not is_multiplayer_authority() or is_driving:
 			return false
+		# While the cursor is visible, right-click is reserved for camera rotation.
+		if Input.mouse_mode == Input.MOUSE_MODE_VISIBLE:
+			return false
+		# Also suppressed during the temporary right-click capture used for camera rotation.
+		if camera is Camera and (camera as Camera).is_temporarily_captured:
+			return false
 		return Input.is_action_pressed("focus")
 var is_jumping: bool = false ## Is the Player currently jumping?
 var is_jump_queued: bool = false ## Is the Player currently queued to jump?
@@ -187,6 +193,7 @@ var is_logging: bool: ## Is the Player currently logging?
 		if not is_multiplayer_authority() or animation_tree == null:
 			return false
 		return is_locomotion_state_active_or_queued("Logging")
+var is_navigating: bool = false ## Is the Player currently navigating (click to move)?
 var is_paragliding: bool = false ## Is the Player currently paragliding?
 var is_paused: bool = false ## Is the Player currently paused?
 var is_ragdolling: bool = false ## Is the Player currently ragdolling?
@@ -222,6 +229,7 @@ var skateboard: Node3D
 @onready var debug: CanvasLayer = $Debug
 @onready var inventory: Inventory = $Inventory
 @onready var radial_menu: RadialMenu = $Inventory/RadialMenu
+@onready var navigation_agent: NavigationAgent3D = $NavigationAgent3D
 @onready var pause: CanvasLayer = $Pause
 @onready var settings: CanvasLayer = $Settings
 @onready var initial_transform: Transform3D = global_transform
@@ -347,6 +355,32 @@ func _input(event: InputEvent) -> void:
 		else:
 			# Set the mouse mode to captured to hide the mouse cursor
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+	## DEBUG: [N] toggles the cursor visibility for testing click-to-move navigation.
+	if event is InputEventKey and event.pressed and not event.echo \
+			and event.keycode == KEY_N \
+			and not pause.visible and not settings.visible:
+		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		else:
+			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+	# [Left Mouse Button] pressed while the cursor is visible -> Start "navigating"
+	if event is InputEventMouse \
+			and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) \
+			and Input.mouse_mode == Input.MOUSE_MODE_VISIBLE \
+			and not pause.visible and not settings.visible:
+		# Find out where the click lands on the player's movement plane
+		var mouse_event: InputEventMouse = event
+		var from: Vector3 = camera.project_ray_origin(mouse_event.position)
+		var to: Vector3 = from + camera.project_ray_normal(mouse_event.position) * 10000.0
+		var movement_plane := Plane(up_direction, global_position.dot(up_direction))
+		var cursor_position: Variant = movement_plane.intersects_ray(from, to)
+		if cursor_position != null:
+			navigation_agent.target_position = cursor_position
+			is_navigating = true
+			if debug.visible:
+				debug.draw_navigation_marker(cursor_position)
 
 
 ## Called every frame. 'delta' is the elapsed time since the previous frame.

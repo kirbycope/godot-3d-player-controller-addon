@@ -21,6 +21,7 @@ const CAMERA_FOLLOW_DELAY: float = 2.0
 
 var camera_follow_delay_remaining: float = 0.0
 var first_person_bone_attachment: BoneAttachment3D
+var is_temporarily_captured: bool = false ## Cursor captured only while right-click rotating; released back to visible.
 var looking_at: Node3D = null
 
 @onready var camera_initial_transform: Transform3D = transform
@@ -66,6 +67,15 @@ func _input(event: InputEvent) -> void:
 		else:
 			perspective = Perspective.FIRST_PERSON
 		_update_raycast()
+
+	# With a visible cursor, holding right-click temporarily captures the mouse so rotation feels normal.
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT:
+		if event.pressed and Input.mouse_mode == Input.MOUSE_MODE_VISIBLE:
+			is_temporarily_captured = true
+			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		elif not event.pressed and is_temporarily_captured:
+			is_temporarily_captured = false
+			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 	# Rotate the [Camera3D]'s [SpringArm3D] using the mouse motion input event
 	if event is InputEventMouseMotion \
