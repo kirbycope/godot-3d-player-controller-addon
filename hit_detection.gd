@@ -28,7 +28,12 @@ func _ready() -> void:
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(_delta: float) -> void:
-	if player == null or not player.is_attacking or player.skeleton == null:
+	if player == null or player.skeleton == null:
+		return
+	if not player.is_attacking:
+		# Attack ended; the next swing is new even if it reuses the same animation node
+		_last_swing_node = ""
+		_swing_hit_targets.clear()
 		return
 
 	# A new attack animation node means a new swing; targets may be hit again
