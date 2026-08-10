@@ -250,6 +250,7 @@ var skateboard: Node3D
 @onready var projectile_raycast: RayCast3D = $CameraMount/ProjectileRaycast
 @onready var skeleton: Skeleton3D = $PlayerModel/Armature/GeneralSkeleton
 @onready var look_at_modifier = $PlayerModel/Armature/GeneralSkeleton/LookAtModifier3D
+@onready var right_hand_ik: TwoBoneIK3D = $PlayerModel/Armature/GeneralSkeleton/RightHandIK
 @onready var physical_bone_simulator: PhysicalBoneSimulator3D = $PlayerModel/Armature/GeneralSkeleton/PhysicalBoneSimulator3D
 @onready var spring_arm: SpringArm3D = $CameraMount/CameraSpringArm
 @onready var camera: Camera3D = $CameraMount/CameraSpringArm/Camera3D
