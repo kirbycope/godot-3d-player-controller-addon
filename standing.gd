@@ -30,7 +30,7 @@ func _input(event: InputEvent) -> void:
 		return
 
 	# Sprint
-	if event.is_action_pressed("sprint") and (player.smoothed_motion.y > 0.0 if player.is_focusing else player.smoothed_motion.length() > 0.0):
+	if event.is_action_pressed("sprint") and not player.is_exhausted and (player.smoothed_motion.y > 0.0 if player.is_focusing else player.smoothed_motion.length() > 0.0):
 		get_viewport().set_input_as_handled()
 		player.state_machine.travel(_this_state, NodeStateMachine.States.SPRINTING)
 		return
@@ -47,6 +47,19 @@ func _physics_process(delta: float) -> void:
 
 	# Do nothing if the player is not set
 	if not player: return
+
+	# Sprint if sprint key is currently held down and player is moving
+	if Input.is_action_pressed("sprint") and not player.is_exhausted and (player.smoothed_motion.y > 0.0 if player.is_focusing else player.smoothed_motion.length() > 0.0):
+		player.state_machine.travel(_this_state, NodeStateMachine.States.SPRINTING)
+		return
+
+	# Keep grounded locomotion state updated (e.g. HeavyBreathing when idle & exhausted)
+	var target_locomotion: String = String(player.get_grounded_locomotion_state())
+	var root_node: String = String(player.locomotion_state.get_current_node()) if player.locomotion_state else ""
+	var current_node: String = player.current_locomotion_node
+	var is_target_active: bool = (target_locomotion == root_node) or (target_locomotion.ends_with("/" + current_node))
+	if not is_target_active:
+		player.travel_locomotion(target_locomotion)
 
 	# Check if the player is no longer on the floor
 	if not player.is_on_floor() and not player.falling_raycast.is_colliding():

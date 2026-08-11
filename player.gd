@@ -232,6 +232,7 @@ var skateboard: Node3D
 @onready var navigation_agent: NavigationAgent3D = $NavigationAgent3D
 @onready var pause: CanvasLayer = $Pause
 @onready var settings: CanvasLayer = $Settings
+@onready var stamina: TextureProgressBar = $Stamina
 @onready var initial_transform: Transform3D = global_transform
 @onready var falling_raycast: RayCast3D = $FallingRaycast
 @onready var player_model: Node3D = $PlayerModel
@@ -688,6 +689,8 @@ func throw_held_object() -> void:
 ## Gets the grounded locomotion state that matches the current equipment and intent.
 ## Grouped states use "Group/State" travel paths.
 func get_grounded_locomotion_state() -> StringName:
+	if is_exhausted and is_on_floor() and not has_move_input:
+		return &"HeavyBreathing"
 	if is_crouching:
 		return &"CrouchingLocomotion"
 	if equipped_axe_2h or equipped_fishing_rod or equipped_staff or equipped_sword_2h:

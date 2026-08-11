@@ -13,12 +13,14 @@ func _input(event: InputEvent) -> void:
 	# Jump action triggers while jumping
 	if event.is_action_pressed("jump") and not player.is_on_floor():
 		if player.ledge_detection_horizontal.is_colliding():
-			player.state_machine.travel(_this_state, NodeStateMachine.States.CLIMBING)
+			# Exhausted players cannot grab the wall
+			if not player.is_exhausted:
+				player.state_machine.travel(_this_state, NodeStateMachine.States.CLIMBING)
 			return
 		elif player.paraglider_raycast.is_colliding() and not player.is_jump_queued:
 			player.state_machine.travel(_this_state, NodeStateMachine.States.FLYING)
 			return
-		elif not player.paraglider_raycast.is_colliding():
+		elif not player.paraglider_raycast.is_colliding() and not player.is_exhausted:
 			player.state_machine.travel(_this_state, NodeStateMachine.States.PARAGLIDING)
 			return
 

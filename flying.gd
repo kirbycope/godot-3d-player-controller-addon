@@ -59,7 +59,7 @@ func _physics_process(delta: float) -> void:
 	var target_motion: Vector2 = player.player_input.motion
 
 	# Update sprint flag and locomotion blend position in FlyingLocomotion
-	player.is_sprinting = Input.is_action_pressed("sprint")
+	player.is_sprinting = Input.is_action_pressed("sprint") and not player.is_exhausted
 	var speed_blend: float = target_motion.length()
 	if player.is_sprinting:
 		speed_blend *= 1.5

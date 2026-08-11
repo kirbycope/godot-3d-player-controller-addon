@@ -4,70 +4,81 @@ extends TextureProgressBar
 @export var drain_sprint: float = 20.0
 @export var drain_paraglide: float = 12.0
 @export var drain_climb: float = 5.0
+@export var drain_swim: float = 8.0
+@export var sprint_multiplier: float = 1.5 ## Drain multiplier when sprinting while climbing/swimming
 @export var regen_rate: float = 15.0
 @export var regen_rate_falling: float = 3.0
+@export var hide_delay: float = 1.0 ## Delay in seconds before hiding the stamina bar after refilling
 
-@onready var timer: Timer = $Timer ## Used to hide the [TextureProgressBar] onace stamina has refilled
+var stamina: float = 100.0:
+	set(val):
+		stamina = clampf(val, min_value, max_value)
+		value = stamina
+
+@onready var timer: Timer = $Timer ## Used to hide the [TextureProgressBar] once stamina has refilled
 
 
 ## Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+	hide()
 	set_process(is_multiplayer_authority())
 	set_physics_process(is_multiplayer_authority())
 	set_process_input(is_multiplayer_authority())
+	exp_edit = false
 	step = 0.01
-	value = 100
+	stamina = max_value
+	timer.one_shot = true
+	timer.wait_time = hide_delay
+	if not timer.timeout.is_connected(_on_timer_timeout):
+		timer.timeout.connect(_on_timer_timeout)
 
 
 ## Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
+	# Determine which stamina-draining activity (if any) the player is doing
+	var climbing_moving: bool = player.is_climbing and player.velocity.length() > 0.1
+	var swimming_moving: bool = player.is_swimming and player.velocity.length() > 0.1
+	var sprinting_on_land: bool = player.is_sprinting \
+			and not player.is_climbing \
+			and not player.is_swimming \
+			and not player.is_paragliding
+	var draining: bool = sprinting_on_land or climbing_moving or swimming_moving \
+			or player.is_paragliding
 
-	# Check if the player is sprinting or actively moving while climbing
-	var climbing_moving := player.is_climbing and player.velocity.length() > 0.1
-	var climbing_sprint := climbing_moving and Input.is_action_pressed("sprint")
-	if (player.is_sprinting or climbing_moving or player.is_paragliding) \
-	# and the current value is above the minimum
-	and value > min_value:
+	# Drain stamina while doing a draining activity
+	if draining and not player.is_exhausted and stamina > min_value:
 		show()
-		# Sprinting or sprint-climbing drains fast; paragliding medium; climbing drains slowly
-		var drain_rate := drain_sprint if (player.is_sprinting or climbing_sprint) else drain_paraglide if player.is_paragliding else drain_climb
-		value = max(value - drain_rate * delta, min_value)
-		if value <= min_value and (player.is_climbing or player.is_paragliding):
+		if not timer.is_stopped():
+			timer.stop()
+		var drain_rate: float = drain_sprint
+		if climbing_moving:
+			drain_rate = drain_climb * (sprint_multiplier if player.is_sprinting else 1.0)
+		elif swimming_moving:
+			drain_rate = drain_swim * (sprint_multiplier if player.is_sprinting else 1.0)
+		elif player.is_paragliding:
+			drain_rate = drain_paraglide
+		stamina -= drain_rate * delta
+		# Flag the player as exhausted once stamina is fully depleted
+		if stamina <= min_value:
 			player.is_exhausted = true
 
-	# Check if the player is exhausted and falling — slow regen
-	elif player.is_exhausted and player.is_falling \
-	and value < max_value:
-		value = min(value + regen_rate_falling * delta, max_value)
+	# Regenerate stamina when not draining (slowly while falling or in water)
+	elif stamina < max_value:
+		show()
+		if not timer.is_stopped():
+			timer.stop()
+		var current_regen_rate: float = regen_rate
+		if player.is_falling or player.is_swimming:
+			current_regen_rate = regen_rate_falling
+		stamina += current_regen_rate * delta
 
-	# Check if the player is exhausted and not moving
-	elif (player.is_exhausted and abs(player.velocity.length()) < 0.2) \
-	# and the current value less than the maximum
-	and value < max_value:
-		# Regenerate stamina when exhausted and not moving
-		value = min(value + regen_rate * delta, max_value)
-
-	# Check if the player is not exhausted and not sprinting and not climbing and not paragliding
-	elif (not player.is_exhausted and not player.is_sprinting and not player.is_climbing and not player.is_paragliding) \
-	# and the current value less than the maximum
-	and value < max_value:
-		# Regenerate stamina when not exhausted and not sprinting
-		value = min(value + regen_rate * delta, max_value)
-
-	# Check if the player is exhausted but at full stamina
-	elif player.is_exhausted and value >= max_value:
-		# Remove exhaustion when at full stamina
+	# Exhaustion clears only once stamina has fully refilled (BotW style)
+	if player.is_exhausted and stamina >= max_value:
 		player.is_exhausted = false
 
-	# Check if the the [TextureProgressBar] is still showing and the stamina is full
-	if visible and value >= max_value \
-	# and the timer is not already started
-	and timer.is_stopped():
+	# Check if the [TextureProgressBar] is still showing and the stamina is full
+	if visible and stamina >= max_value and timer.is_stopped():
 		timer.start()
-	
-	# Check if the player is flagged as exhausted but has regained some stamina — remove exhaustion
-	elif player.is_exhausted and value > (max_value * 0.25):
-		player.is_exhausted = false
 
 
 ## Called when the "full stamina" timer elapses.

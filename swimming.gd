@@ -104,6 +104,7 @@ func _physics_process(delta: float) -> void:
 
 	# Swimming, Speed [Input]
 	if player.is_swimming \
+	and not player.is_exhausted \
 	and Input.is_action_pressed(current_sprint_action):
 		player.animation_tree.set("parameters/LocomotionTimeScale/scale", 1.5)
 		player.swimming_root_motion_multiplier = 3

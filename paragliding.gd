@@ -38,6 +38,12 @@ func _physics_process(delta: float) -> void:
 		player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
 		return
 
+	# Check if the player is exhausted — close the paraglider
+	if player.is_exhausted:
+		# Start "falling"
+		player.state_machine.travel(_this_state, NodeStateMachine.States.FALLING)
+		return
+
 	# While paragliding, regular locomotion is blocked and movement is driven directly (below)
 	# Use camera-relative input, then remove any component along up_direction so glide steering stays tangential.
 	var camera_basis = player.spring_arm.global_transform.basis
