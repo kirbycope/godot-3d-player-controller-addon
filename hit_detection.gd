@@ -92,7 +92,15 @@ func _sweep_resource_targets() -> void:
 ## Builds shape queries around the hand bones for unarmed attacks.
 func _gather_hand_queries() -> Array[Dictionary]:
 	var queries: Array[Dictionary] = []
+	var swing_node: String = player.current_locomotion_node.to_lower()
+	
 	for hand_name in ["LeftHand", "RightHand"]:
+		# Only check the active attacking hand if the animation specifies left/right
+		if "left" in swing_node and hand_name == "RightHand":
+			continue
+		if "right" in swing_node and hand_name == "LeftHand":
+			continue
+			
 		var bone_index: int = player.skeleton.find_bone(hand_name)
 		if bone_index == -1:
 			continue
@@ -102,6 +110,17 @@ func _gather_hand_queries() -> Array[Dictionary]:
 		query.transform = player.skeleton.global_transform * bone_pose
 		query.collision_mask = 0xFFFFFFFF
 		var hit_color: Color = debug_left_hand_hit_color if hand_name == "LeftHand" else debug_right_hand_hit_color
+		
+		# Lazily initialize dummy nodes to support hot-reloading
+		if _left_hand_node == null:
+			_left_hand_node = Node.new()
+			_left_hand_node.name = "LeftHand"
+			add_child(_left_hand_node)
+		if _right_hand_node == null:
+			_right_hand_node = Node.new()
+			_right_hand_node.name = "RightHand"
+			add_child(_right_hand_node)
+			
 		var equip_node: Node = _left_hand_node if hand_name == "LeftHand" else _right_hand_node
 		queries.append({ "query": query, "color": hit_color, "equipment": equip_node })
 	return queries
