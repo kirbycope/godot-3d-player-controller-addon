@@ -23,6 +23,9 @@ var _hand_sphere: SphereShape3D ## Reused so the physics server doesn't create/d
 var _sweep_sphere: SphereShape3D ## Reused so the physics server doesn't create/destroy a shape every frame.
 
 
+var _left_hand_node: Node
+var _right_hand_node: Node
+
 ## Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	set_physics_process(is_multiplayer_authority())
@@ -30,7 +33,14 @@ func _ready() -> void:
 	_hand_sphere.radius = HAND_HIT_RADIUS
 	_sweep_sphere = SphereShape3D.new()
 	_sweep_sphere.radius = RESOURCE_SWEEP_RADIUS
-
+	
+	_left_hand_node = Node.new()
+	_left_hand_node.name = "LeftHand"
+	add_child(_left_hand_node)
+	
+	_right_hand_node = Node.new()
+	_right_hand_node.name = "RightHand"
+	add_child(_right_hand_node)
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(_delta: float) -> void:
@@ -59,7 +69,6 @@ func _physics_process(_delta: float) -> void:
 
 
 ## Registers weapon hits on resource nodes in front of the player.
-## Precise hitbox arcs miss short targets like ore, so a generous sphere is used instead.
 func _sweep_resource_targets() -> void:
 	if player.inventory == null or player.inventory.is_unarmed():
 		return
@@ -93,7 +102,8 @@ func _gather_hand_queries() -> Array[Dictionary]:
 		query.transform = player.skeleton.global_transform * bone_pose
 		query.collision_mask = 0xFFFFFFFF
 		var hit_color: Color = debug_left_hand_hit_color if hand_name == "LeftHand" else debug_right_hand_hit_color
-		queries.append({ "query": query, "color": hit_color })
+		var equip_node: Node = _left_hand_node if hand_name == "LeftHand" else _right_hand_node
+		queries.append({ "query": query, "color": hit_color, "equipment": equip_node })
 	return queries
 
 
@@ -133,9 +143,10 @@ func _apply_first_hit_impulse(queries: Array[Dictionary]) -> void:
 			if player.debug and player.debug.visible:
 				_spawn_debug_hit_sphere(query.transform.origin, hit_color)
 
-			var equipment: Equipment = entry.get("equipment") as Equipment
-			if equipment:
-				_register_weapon_hit(collider, equipment)
+			var equipment: Node = entry.get("equipment") as Node
+			if not equipment:
+				equipment = player
+			_register_weapon_hit(collider, equipment)
 
 			if impulse_applied or not collider.has_method("apply_impulse"):
 				continue
@@ -160,13 +171,13 @@ func _apply_first_hit_impulse(queries: Array[Dictionary]) -> void:
 
 
 ## Notifies the nearest ancestor that handles weapon hits, once per target per swing.
-func _register_weapon_hit(collider: Object, equipment: Equipment) -> void:
+func _register_weapon_hit(collider: Object, equipment: Node = null) -> void:
 	var node: Node = collider as Node
 	while node:
 		if node.has_method("register_weapon_hit"):
 			if node not in _swing_hit_targets:
 				_swing_hit_targets.append(node)
-				node.call("register_weapon_hit", equipment)
+				node.call("register_weapon_hit", equipment, collider)
 			return
 		node = node.get_parent()
 
