@@ -557,6 +557,90 @@ func _ready() -> void:
 		key_event.physical_keycode = KEY_L
 		InputMap.action_add_event("next_weapon", key_event)
 
+	# "ui_accept" { Microsoft: Ⓐ, Keyboard: [Enter], [Numpad Enter], [Space] }
+	if not InputMap.has_action("ui_accept"):
+		# Add the [ui_accept] action to the Input Map
+		InputMap.add_action("ui_accept", 0.5)
+		# Microsoft Ⓐ, Nintendo Ⓑ, Sony Ⓧ
+		var joystick_event = InputEventJoypadButton.new()
+		joystick_event.button_index = JOY_BUTTON_A
+		InputMap.action_add_event("ui_accept", joystick_event)
+		# Keyboard [Enter]
+		var key_event = InputEventKey.new()
+		key_event.keycode = KEY_ENTER
+		InputMap.action_add_event("ui_accept", key_event)
+		# Keyboard [Numpad Enter]
+		key_event = InputEventKey.new()
+		key_event.keycode = KEY_KP_ENTER
+		InputMap.action_add_event("ui_accept", key_event)
+		# Keyboard [Space]
+		key_event = InputEventKey.new()
+		key_event.physical_keycode = KEY_SPACE
+		InputMap.action_add_event("ui_accept", key_event)
+
+	# "ui_left" { Controller: DPad Left }
+	if not InputMap.has_action("ui_left"):
+		# Add the [ui_left] action to the Input Map
+		InputMap.add_action("ui_left", 0.5)
+		# Controller DPad Left
+		var joystick_event = InputEventJoypadButton.new()
+		joystick_event.button_index = JOY_BUTTON_DPAD_LEFT
+		InputMap.action_add_event("ui_left", joystick_event)
+
+	# "ui_right" { Controller: DPad Right }
+	if not InputMap.has_action("ui_right"):
+		# Add the [ui_right] action to the Input Map
+		InputMap.add_action("ui_right", 0.5)
+		# Controller DPad Right
+		var joystick_event = InputEventJoypadButton.new()
+		joystick_event.button_index = JOY_BUTTON_DPAD_RIGHT
+		InputMap.action_add_event("ui_right", joystick_event)
+
+	# "ui_up" { Controller: DPad Up }
+	if not InputMap.has_action("ui_up"):
+		# Add the [ui_up] action to the Input Map
+		InputMap.add_action("ui_up", 0.5)
+		# Controller DPad Up
+		var joystick_event = InputEventJoypadButton.new()
+		joystick_event.button_index = JOY_BUTTON_DPAD_UP
+		InputMap.action_add_event("ui_up", joystick_event)
+
+	# "ui_down" { Controller: DPad Down }
+	if not InputMap.has_action("ui_down"):
+		# Add the [ui_down] action to the Input Map
+		InputMap.add_action("ui_down", 0.5)
+		# Controller DPad Down
+		var joystick_event = InputEventJoypadButton.new()
+		joystick_event.button_index = JOY_BUTTON_DPAD_DOWN
+		InputMap.action_add_event("ui_down", joystick_event)
+
+	# "emote" { Keyboard: [M] }
+	if not InputMap.has_action("emote"):
+		# Add the [emote] action to the Input Map
+		InputMap.add_action("emote", 0.2)
+		# Keyboard [M]
+		var key_event = InputEventKey.new()
+		key_event.physical_keycode = KEY_M
+		InputMap.action_add_event("emote", key_event)
+
+	# "unequip" { Keyboard: [Q] }
+	if not InputMap.has_action("unequip"):
+		# Add the [unequip] action to the Input Map
+		InputMap.add_action("unequip", 0.2)
+		# Keyboard [Q]
+		var key_event = InputEventKey.new()
+		key_event.physical_keycode = KEY_Q
+		InputMap.action_add_event("unequip", key_event)
+
+	# "debug" { Keyboard: [F11] }
+	if not InputMap.has_action("debug"):
+		# Add the [debug] action to the Input Map
+		InputMap.add_action("debug", 0.2)
+		# Keyboard [F11]
+		var key_event = InputEventKey.new()
+		key_event.keycode = KEY_F11
+		InputMap.action_add_event("debug", key_event)
+
 
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:

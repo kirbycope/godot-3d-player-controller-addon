@@ -2,7 +2,7 @@
 
 [ext_resource type="Texture2D" uid="uid://cvy38tabsewje" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_button_outline_75.svg" id="1_i8lnr"]
 [ext_resource type="Script" uid="uid://chanwb6rlis3" path="res://addons/3d_player_controller/driving_ui.gd" id="1_xnu4r"]
-[ext_resource type="Texture2D" uid="uid://cidqwxk42n0xr" path="res://assets/godotshaders/needle.svg" id="2_xnu4r"]
+[ext_resource type="Texture2D" uid="uid://cidqwxk42n0xr" path="res://addons/3d_player_controller/assets/needle.svg" id="2_xnu4r"]
 
 [node name="DrivingUI" type="CanvasLayer" unique_id=1110728206]
 script = ExtResource("1_xnu4r")
