@@ -632,19 +632,18 @@ func _ready() -> void:
 		key_event.physical_keycode = KEY_Q
 		InputMap.action_add_event("unequip", key_event)
 
-	# "debug" { Keyboard: [F11] }
+	# "debug" { Keyboard: [F3] }
 	if not InputMap.has_action("debug"):
 		# Add the [debug] action to the Input Map
 		InputMap.add_action("debug", 0.2)
-		# Keyboard [F11]
+		# Keyboard [F3]
 		var key_event = InputEventKey.new()
-		key_event.keycode = KEY_F11
+		key_event.keycode = KEY_F3
 		InputMap.action_add_event("debug", key_event)
 
 
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:
-
 	# Check if the input is a keyboard or mouse event
 	if event is InputEventKey or (event is InputEventMouse and Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED):
 		# Set the current input type to Keyboard and Mouse

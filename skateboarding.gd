@@ -15,7 +15,6 @@ var _this_state := NodeStateMachine.States.SKATEBOARDING
 
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:
-
 	# Do nothing if the player is not set or is paused/ragdolling
 	if not player or player.is_paused or player.is_ragdolling: return
 
@@ -30,7 +29,6 @@ func _input(event: InputEvent) -> void:
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(delta: float) -> void:
-
 	# Do nothing if the player is not set
 	if not player: return
 
