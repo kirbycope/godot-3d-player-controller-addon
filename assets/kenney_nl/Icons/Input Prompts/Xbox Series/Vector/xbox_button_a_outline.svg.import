@@ -4,16 +4,15 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://bn5f4wvar6tor"
 path.s3tc="res://.godot/imported/xbox_button_a_outline.svg-d921e96ddc6e190a089ac2ae92293ed6.s3tc.ctex"
-path.etc2="res://.godot/imported/xbox_button_a_outline.svg-d921e96ddc6e190a089ac2ae92293ed6.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/Xbox Series/Vector/xbox_button_a_outline.svg"
-dest_files=["res://.godot/imported/xbox_button_a_outline.svg-d921e96ddc6e190a089ac2ae92293ed6.s3tc.ctex", "res://.godot/imported/xbox_button_a_outline.svg-d921e96ddc6e190a089ac2ae92293ed6.etc2.ctex"]
+dest_files=["res://.godot/imported/xbox_button_a_outline.svg-d921e96ddc6e190a089ac2ae92293ed6.s3tc.ctex"]
 
 [params]
 
