@@ -140,6 +140,13 @@ func has_any_equipment(types: Array) -> bool:
 	return false
 
 
+func has_equipment_with_capability(capability: StringName) -> bool:
+	for item in equipment:
+		if is_instance_valid(item) and capability in item and item.get(capability):
+			return true
+	return false
+
+
 func has_heavy_weapon_equipped() -> bool:
 	return has_any_equipment([
 		Equipment.EquipmentType.AXE_2H,
