@@ -38,6 +38,9 @@ static func get_state_name(state: int) -> StringName:
 
 ## Transition from one state to another.
 func travel(from_state: States, to_state: States) -> void:
+	if not _is_state_enabled(to_state):
+		return
+
 	# Block transition to RAGDOLLING if player is paused or Pause CanvasLayer is visible
 	if to_state == States.RAGDOLLING and player and (player.is_paused or (player.pause and player.pause.visible)):
 		return
@@ -77,6 +80,21 @@ func travel(from_state: States, to_state: States) -> void:
 			to_state_node.call("start")
 	else:
 		push_warning("Invalid to_state: %s" % str(to_state))
+
+
+func _is_state_enabled(state: States) -> bool:
+	if player == null:
+		return true
+
+	match state:
+		States.FLYING:
+			return player.enable_flying
+		States.PARAGLIDING:
+			return player.enable_paraglider
+		States.RAGDOLLING:
+			return player.enable_ragdoll
+		_:
+			return true
 
 
 

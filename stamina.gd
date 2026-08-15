@@ -35,6 +35,12 @@ func _ready() -> void:
 
 ## Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
+	if not player.enable_stamina:
+		stamina = max_value
+		player.is_exhausted = false
+		hide()
+		return
+
 	# Determine which stamina-draining activity (if any) the player is doing
 	var climbing_moving: bool = player.is_climbing and player.velocity.length() > 0.1
 	var swimming_moving: bool = player.is_swimming and player.velocity.length() > 0.1
