@@ -26,6 +26,11 @@ const LOCOMOTION_GROUPS: Array[String] = ["Bow", "Boxing", "GreatSword", "Pistol
 @export var rotation_interpolate_speed: float = 10.0
 @export var swimming_root_motion_multiplier: float = 2.0
 
+@export_category("Enable Settings")
+@export var enable_flying: bool = false
+@export var enable_paraglider: bool = false
+@export var enable_ragdoll: bool = false
+@export var enable_stamina: bool = false
 @export_category("Optional Gadgets & Gear")
 @export var paraglider_scene: PackedScene
 @export var skateboard_scene: PackedScene
@@ -478,7 +483,7 @@ func apply_input(delta: float) -> void:
 				look_dir = (current_focus_target.global_position - global_position).slide(up_direction)
 			elif is_shooting or not is_focusing or is_first_person:
 				var camera_basis := spring_arm.global_transform.basis
-				look_dir = -camera_basis.z
+				look_dir = - camera_basis.z
 				look_dir = look_dir.slide(up_direction)
 				
 			if look_dir.length_squared() > 0.001:
@@ -565,7 +570,7 @@ func apply_input(delta: float) -> void:
 		if orbit_radius > 0.1:
 			var target_dir: Vector3 = to_target / orbit_radius
 			# Strafe distance becomes rotation about the target; forward/back changes the radius.
-			var arc_angle: float = -root_motion_position.x / orbit_radius
+			var arc_angle: float = - root_motion_position.x / orbit_radius
 			var new_radius: float = maxf(orbit_radius - root_motion_position.z, 0.1)
 			var new_offset: Vector3 = (-target_dir * new_radius).rotated(up_direction, arc_angle)
 			h_velocity = (to_target + new_offset) / delta

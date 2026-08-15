@@ -9,13 +9,52 @@ outline_color = Color(0, 0, 0, 1)
 [node name="Debug" type="CanvasLayer" unique_id=2032410064]
 script = ExtResource("1_86eym")
 
+[node name="Enable" type="VBoxContainer" parent="." unique_id=1868662932]
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -194.0
+offset_top = -275.0
+offset_bottom = 99.0
+grow_horizontal = 0
+grow_vertical = 2
+
+[node name="Panel" type="Panel" parent="Enable" unique_id=1529727463]
+custom_minimum_size = Vector2(160, 24)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Enable/Panel" unique_id=160205289]
+layout_mode = 0
+offset_left = 4.0
+offset_right = 155.0
+offset_bottom = 23.0
+text = "ENABLE"
+
+[node name="EnableFlying" type="CheckButton" parent="Enable" unique_id=59718181]
+layout_mode = 2
+text = "enable_flying"
+
+[node name="EnableParaglider" type="CheckButton" parent="Enable" unique_id=1431216245]
+layout_mode = 2
+text = "enable_paraglider"
+
+[node name="EnableRagdoll" type="CheckButton" parent="Enable" unique_id=869432366]
+layout_mode = 2
+text = "enable_ragoll"
+
+[node name="EnableStamina" type="CheckButton" parent="Enable" unique_id=783508208]
+layout_mode = 2
+text = "enable_stamina"
+
 [node name="Equipment" type="VBoxContainer" parent="." unique_id=2044336599]
 anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
-offset_left = 184.0
+offset_left = 192.0
 offset_top = -395.0
-offset_right = 366.0
+offset_right = 374.0
 offset_bottom = -21.0
 grow_vertical = 2
 
@@ -74,9 +113,9 @@ text = "equipped_sword_2h"
 anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
-offset_left = 368.0
+offset_left = 376.0
 offset_top = -294.0
-offset_right = 550.0
+offset_right = 558.0
 offset_bottom = -165.0
 grow_vertical = 2
 
@@ -109,9 +148,9 @@ anchor_left = 1.0
 anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
-offset_left = -580.0
+offset_left = -588.0
 offset_top = -365.5
-offset_right = -352.0
+offset_right = -360.0
 offset_bottom = -236.5
 grow_horizontal = 0
 grow_vertical = 2
@@ -145,9 +184,9 @@ anchor_left = 1.0
 anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
-offset_left = -580.0
+offset_left = -588.0
 offset_top = -331.5
-offset_right = -352.0
+offset_right = -360.0
 offset_bottom = -132.5
 grow_horizontal = 0
 grow_vertical = 2
@@ -189,9 +228,9 @@ anchor_left = 1.0
 anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
-offset_left = -580.0
+offset_left = -588.0
 offset_top = -227.5
-offset_right = -352.0
+offset_right = -360.0
 offset_bottom = -133.5
 grow_horizontal = 0
 grow_vertical = 2
@@ -221,9 +260,9 @@ anchor_left = 1.0
 anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
-offset_left = -580.0
+offset_left = -588.0
 offset_top = -192.5
-offset_right = -352.0
+offset_right = -360.0
 offset_bottom = -63.5
 grow_horizontal = 0
 grow_vertical = 2
@@ -257,9 +296,9 @@ anchor_left = 1.0
 anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
-offset_left = -346.0
+offset_left = -354.0
 offset_top = -397.0
-offset_right = -176.0
+offset_right = -184.0
 offset_bottom = 327.0
 grow_horizontal = 0
 grow_vertical = 2
@@ -442,3 +481,8 @@ grow_horizontal = 2
 grow_vertical = 0
 text = "###"
 label_settings = SubResource("LabelSettings_senyo")
+
+[connection signal="pressed" from="Enable/EnableFlying" to="." method="_on_enable_flying_pressed"]
+[connection signal="pressed" from="Enable/EnableParaglider" to="." method="_on_enable_paraglider_pressed"]
+[connection signal="pressed" from="Enable/EnableRagdoll" to="." method="_on_enable_ragdoll_pressed"]
+[connection signal="pressed" from="Enable/EnableStamina" to="." method="_on_enable_stamina_pressed"]

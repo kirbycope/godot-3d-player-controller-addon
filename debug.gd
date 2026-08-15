@@ -29,6 +29,11 @@ func _process(_delta: float) -> void:
 		$CurrentPerspective.text = "First-person" if player.camera.perspective == Camera.Perspective.FIRST_PERSON else "Third-person"
 		$CurrentState.text = NodeStateMachine.get_state_name(player.current_state)
 
+		$Enable/EnableFlying.button_pressed = player.enable_flying
+		$Enable/EnableParaglider.button_pressed = player.enable_paraglider
+		$Enable/EnableRagdoll.button_pressed = player.enable_ragdoll
+		$Enable/EnableStamina.button_pressed = player.enable_stamina
+
 		$States/is_attacking.button_pressed = player.is_attacking
 		$States/is_climbing.button_pressed = player.is_climbing
 		$States/is_crouching.button_pressed = player.is_crouching
@@ -107,3 +112,20 @@ func clear_navigation_marker() -> void:
 	if is_instance_valid(navigation_marker):
 		navigation_marker.queue_free()
 	navigation_marker = null
+
+
+func _on_enable_flying_pressed() -> void:
+	player.enable_flying = !player.enable_flying
+
+
+func _on_enable_paraglider_pressed() -> void:
+	player.enable_paraglider = !player.enable_paraglider
+
+
+func _on_enable_ragdoll_pressed() -> void:
+	player.enable_ragdoll = !player.enable_ragdoll
+
+
+func _on_enable_stamina_pressed() -> void:
+	player.enable_stamina = !player.enable_stamina
+	
