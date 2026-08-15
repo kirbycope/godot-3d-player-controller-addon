@@ -9,9 +9,18 @@ const CHARGE_START_DELAY: float = 0.2 ## Seconds "shoot" must be held before a c
 const CHARGE_DURATION: float = 0.6 ## Seconds from charge start to full throw power.
 const MIN_THROW_POWER: float = 0.25 ## Throw power multiplier for a quick tap.
 const MAX_THROW_POWER: float = 1.0 ## Throw power multiplier at full charge.
+const CONNECTOR_MATERIAL: Material = preload("res://assets/ultrahand.tres")
+const CONNECTOR_RINGS: int = 16 ## Rings along the connector tube (more = smoother curve).
+const CONNECTOR_RADIAL_SEGMENTS: int = 8 ## Vertices around each connector tube ring.
 
 @export var player: Player
 @export var throw_force: float = 5.0 ## Impulse strength applied to thrown [RigidBody3D] objects.
+@export var connector_radius: float = 0.08 ## Connector tube radius at its widest (mid) point.
+@export var connector_origin_height: float = 1.0 ## Connector start height above the Player origin.
+@export var connector_lag: float = 6.0 ## Midpoint catch-up speed (lower = more bend when turning).
+@export var connector_wave_amplitude: float = 0.06 ## Sideways wobble strength along the tube.
+@export var connector_wave_frequency: float = 2.0 ## Wobble cycles along the tube length.
+@export var connector_wave_speed: float = 1.5 ## Wobble scroll speed along the tube.
 
 var is_throw_queued: bool = false ## Is a throw waiting on the animation call track or charge timeout?
 var is_throwing: bool = false ## Is the throw wind-up currently active?
@@ -24,6 +33,11 @@ var held_rigidbody: RigidBody3D = null
 var _original_collision_layer: int = 0
 var _original_collision_mask: int = 0
 var _original_freeze: bool = false
+var _connector_mesh: MeshInstance3D
+var _connector_immediate_mesh: ImmediateMesh
+var _connector_mid: Vector3 = Vector3.ZERO
+var _is_connector_mid_initialized: bool = false
+var _connector_wave_time: float = 0.0
 
 
 ## Called when the node enters the scene tree for the first time.
@@ -31,6 +45,7 @@ func _ready() -> void:
 	set_process(is_multiplayer_authority())
 	set_physics_process(is_multiplayer_authority())
 	set_process_input(is_multiplayer_authority())
+	_create_connector_mesh()
 
 
 ## Called when there is an input event.
@@ -86,6 +101,8 @@ func _physics_process(delta: float) -> void:
 		if throw_charge_time >= CHARGE_START_DELAY + CHARGE_DURATION:
 			throw_power = MAX_THROW_POWER
 			execute_throw()
+
+	_update_connector_mesh(delta)
 
 
 ## True if the item spring arm currently holds a [RigidBody3D].
@@ -352,3 +369,98 @@ func _ensure_throw_charge_bar() -> void:
 	throw_charge_bar.add_theme_stylebox_override("background", bg_style)
 	throw_charge_bar.add_theme_stylebox_override("fill", fg_style)
 	player.controls.add_child(throw_charge_bar)
+
+
+func _create_connector_mesh() -> void:
+	_connector_immediate_mesh = ImmediateMesh.new()
+	_connector_mesh = MeshInstance3D.new()
+	_connector_mesh.name = "HeldObjectConnector"
+	_connector_mesh.mesh = _connector_immediate_mesh
+	_connector_mesh.material_override = CONNECTOR_MATERIAL
+	_connector_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_connector_mesh.visible = false
+	add_child(_connector_mesh)
+
+
+func _update_connector_mesh(delta: float) -> void:
+	if not is_instance_valid(_connector_mesh):
+		return
+	if player == null or not is_instance_valid(held_rigidbody):
+		_connector_mesh.visible = false
+		_is_connector_mid_initialized = false
+		return
+
+	_connector_wave_time += delta
+	var player_up: Vector3 = player.up_direction.normalized()
+	var start_position: Vector3 = player.global_position + player_up * connector_origin_height
+	var end_position: Vector3 = held_rigidbody.global_position
+	var connector_vector: Vector3 = end_position - start_position
+	var connector_length: float = connector_vector.length()
+	if connector_length <= 0.001:
+		_connector_mesh.visible = false
+		return
+
+	# The midpoint lags behind the true center, bending the tube while the Player turns.
+	var target_mid: Vector3 = start_position + connector_vector * 0.5
+	if not _is_connector_mid_initialized:
+		_connector_mid = target_mid
+		_is_connector_mid_initialized = true
+	var smoothing_weight: float = 1.0 - exp(-connector_lag * delta)
+	_connector_mid = _connector_mid.lerp(target_mid, smoothing_weight)
+
+	_rebuild_connector_tube(start_position, _connector_mid, end_position)
+	_connector_mesh.global_transform = Transform3D.IDENTITY
+	_connector_mesh.visible = true
+
+
+## Rebuilds the connector tube mesh along a quadratic bezier through the lagged midpoint.
+func _rebuild_connector_tube(p0: Vector3, p1: Vector3, p2: Vector3) -> void:
+	var reference_axis: Vector3 = player.global_transform.basis.x
+	var chord_direction: Vector3 = (p2 - p0).normalized()
+	if absf(reference_axis.dot(chord_direction)) > 0.99:
+		reference_axis = player.global_transform.basis.z
+
+	var vertices: Array[Vector3] = []
+	var normals: Array[Vector3] = []
+	var uvs: Array[Vector2] = []
+
+	for ring_index in CONNECTOR_RINGS + 1:
+		var t: float = float(ring_index) / float(CONNECTOR_RINGS)
+		var one_minus_t: float = 1.0 - t
+		var ring_center: Vector3 = p0 * (one_minus_t * one_minus_t) \
+				+ p1 * (2.0 * one_minus_t * t) \
+				+ p2 * (t * t)
+		var tangent: Vector3 = ((p1 - p0) * one_minus_t + (p2 - p1) * t).normalized()
+		var ring_normal: Vector3 = reference_axis.cross(tangent).normalized()
+		var ring_binormal: Vector3 = tangent.cross(ring_normal).normalized()
+
+		# Anchor factor pins both ends while the middle wobbles and bulges.
+		var anchor: float = sin(PI * t)
+		var wave_phase: float = TAU * (t * connector_wave_frequency \
+				- _connector_wave_time * connector_wave_speed)
+		var wave_offset: Vector3 = (ring_normal * sin(wave_phase) \
+				+ ring_binormal * cos(wave_phase)) * connector_wave_amplitude * anchor
+		ring_center += wave_offset
+		var ring_radius: float = connector_radius * (0.35 + 0.65 * anchor)
+
+		for radial_index in CONNECTOR_RADIAL_SEGMENTS + 1:
+			var angle: float = TAU * float(radial_index) / float(CONNECTOR_RADIAL_SEGMENTS)
+			var radial_direction: Vector3 = ring_normal * cos(angle) + ring_binormal * sin(angle)
+			vertices.append(ring_center + radial_direction * ring_radius)
+			normals.append(radial_direction)
+			uvs.append(Vector2(float(radial_index) / float(CONNECTOR_RADIAL_SEGMENTS), t))
+
+	_connector_immediate_mesh.clear_surfaces()
+	_connector_immediate_mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
+	var ring_stride: int = CONNECTOR_RADIAL_SEGMENTS + 1
+	for ring_index in CONNECTOR_RINGS:
+		for radial_index in CONNECTOR_RADIAL_SEGMENTS:
+			var index_a: int = ring_index * ring_stride + radial_index
+			var index_b: int = index_a + 1
+			var index_c: int = index_a + ring_stride
+			var index_d: int = index_c + 1
+			for vertex_index: int in [index_a, index_c, index_b, index_b, index_c, index_d]:
+				_connector_immediate_mesh.surface_set_normal(normals[vertex_index])
+				_connector_immediate_mesh.surface_set_uv(uvs[vertex_index])
+				_connector_immediate_mesh.surface_add_vertex(vertices[vertex_index])
+	_connector_immediate_mesh.surface_end()
