@@ -411,7 +411,7 @@ func _physics_process(delta: float) -> void:
 	apply_input(delta)
 
 	# Treat "jumping" as queued jump or upward airborne movement.
-	is_jumping = (is_on_floor() and is_jump_queued) or (not is_on_floor() and current_locomotion_node.contains("Jump"))
+	is_jumping = is_jump_queued or (not is_on_floor() and current_locomotion_node.contains("Jump"))
 
 	# Stop emote state when the animation finishes and reset the blend amount.
 	if is_emoting:

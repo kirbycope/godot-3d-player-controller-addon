@@ -60,6 +60,9 @@ func start() -> void:
 	player.is_jumping = true
 	# Flag the player as having a "jump queued"
 	player.is_jump_queued = true
+	# HeavyBreathing has no direct jump edge; return to the normal locomotion graph.
+	if player.current_locomotion_node == "HeavyBreathing":
+		player.travel_locomotion("StandingLocomotion")
 
 
 ## Stop "jumping".
