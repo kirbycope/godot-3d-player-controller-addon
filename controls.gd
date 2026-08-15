@@ -561,58 +561,66 @@ func _ready() -> void:
 	if not InputMap.has_action("ui_accept"):
 		# Add the [ui_accept] action to the Input Map
 		InputMap.add_action("ui_accept", 0.5)
-		# Microsoft Ⓐ, Nintendo Ⓑ, Sony Ⓧ
-		var joystick_event = InputEventJoypadButton.new()
-		joystick_event.button_index = JOY_BUTTON_A
-		InputMap.action_add_event("ui_accept", joystick_event)
-		# Keyboard [Enter]
-		var key_event = InputEventKey.new()
-		key_event.keycode = KEY_ENTER
-		InputMap.action_add_event("ui_accept", key_event)
-		# Keyboard [Numpad Enter]
-		key_event = InputEventKey.new()
-		key_event.keycode = KEY_KP_ENTER
-		InputMap.action_add_event("ui_accept", key_event)
-		# Keyboard [Space]
-		key_event = InputEventKey.new()
-		key_event.physical_keycode = KEY_SPACE
-		InputMap.action_add_event("ui_accept", key_event)
+	# Microsoft Ⓐ, Nintendo Ⓑ, Sony Ⓧ
+	var ui_accept_joypad = InputEventJoypadButton.new()
+	ui_accept_joypad.button_index = JOY_BUTTON_A
+	if not InputMap.action_has_event("ui_accept", ui_accept_joypad):
+		InputMap.action_add_event("ui_accept", ui_accept_joypad)
+	# Keyboard [Enter]
+	var ui_accept_enter = InputEventKey.new()
+	ui_accept_enter.keycode = KEY_ENTER
+	if not InputMap.action_has_event("ui_accept", ui_accept_enter):
+		InputMap.action_add_event("ui_accept", ui_accept_enter)
+	# Keyboard [Numpad Enter]
+	var ui_accept_kp_enter = InputEventKey.new()
+	ui_accept_kp_enter.keycode = KEY_KP_ENTER
+	if not InputMap.action_has_event("ui_accept", ui_accept_kp_enter):
+		InputMap.action_add_event("ui_accept", ui_accept_kp_enter)
+	# Keyboard [Space]
+	var ui_accept_space = InputEventKey.new()
+	ui_accept_space.physical_keycode = KEY_SPACE
+	if not InputMap.action_has_event("ui_accept", ui_accept_space):
+		InputMap.action_add_event("ui_accept", ui_accept_space)
 
 	# "ui_left" { Controller: DPad Left }
 	if not InputMap.has_action("ui_left"):
 		# Add the [ui_left] action to the Input Map
 		InputMap.add_action("ui_left", 0.5)
-		# Controller DPad Left
-		var joystick_event = InputEventJoypadButton.new()
-		joystick_event.button_index = JOY_BUTTON_DPAD_LEFT
-		InputMap.action_add_event("ui_left", joystick_event)
+	# Controller DPad Left
+	var ui_left_joypad = InputEventJoypadButton.new()
+	ui_left_joypad.button_index = JOY_BUTTON_DPAD_LEFT
+	if not InputMap.action_has_event("ui_left", ui_left_joypad):
+		InputMap.action_add_event("ui_left", ui_left_joypad)
 
 	# "ui_right" { Controller: DPad Right }
 	if not InputMap.has_action("ui_right"):
 		# Add the [ui_right] action to the Input Map
 		InputMap.add_action("ui_right", 0.5)
-		# Controller DPad Right
-		var joystick_event = InputEventJoypadButton.new()
-		joystick_event.button_index = JOY_BUTTON_DPAD_RIGHT
-		InputMap.action_add_event("ui_right", joystick_event)
+	# Controller DPad Right
+	var ui_right_joypad = InputEventJoypadButton.new()
+	ui_right_joypad.button_index = JOY_BUTTON_DPAD_RIGHT
+	if not InputMap.action_has_event("ui_right", ui_right_joypad):
+		InputMap.action_add_event("ui_right", ui_right_joypad)
 
 	# "ui_up" { Controller: DPad Up }
 	if not InputMap.has_action("ui_up"):
 		# Add the [ui_up] action to the Input Map
 		InputMap.add_action("ui_up", 0.5)
-		# Controller DPad Up
-		var joystick_event = InputEventJoypadButton.new()
-		joystick_event.button_index = JOY_BUTTON_DPAD_UP
-		InputMap.action_add_event("ui_up", joystick_event)
+	# Controller DPad Up
+	var ui_up_joypad = InputEventJoypadButton.new()
+	ui_up_joypad.button_index = JOY_BUTTON_DPAD_UP
+	if not InputMap.action_has_event("ui_up", ui_up_joypad):
+		InputMap.action_add_event("ui_up", ui_up_joypad)
 
 	# "ui_down" { Controller: DPad Down }
 	if not InputMap.has_action("ui_down"):
 		# Add the [ui_down] action to the Input Map
 		InputMap.add_action("ui_down", 0.5)
-		# Controller DPad Down
-		var joystick_event = InputEventJoypadButton.new()
-		joystick_event.button_index = JOY_BUTTON_DPAD_DOWN
-		InputMap.action_add_event("ui_down", joystick_event)
+	# Controller DPad Down
+	var ui_down_joypad = InputEventJoypadButton.new()
+	ui_down_joypad.button_index = JOY_BUTTON_DPAD_DOWN
+	if not InputMap.action_has_event("ui_down", ui_down_joypad):
+		InputMap.action_add_event("ui_down", ui_down_joypad)
 
 	# "emote" { Keyboard: [M] }
 	if not InputMap.has_action("emote"):

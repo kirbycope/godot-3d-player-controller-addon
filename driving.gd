@@ -12,6 +12,10 @@ extends NodeStateMachine
 @export var pad_brake_action: StringName = &"focus"
 @export var pad_exit_action: StringName = &"jump"
 
+@export_group("Steering Tuning")
+@export var max_steering_angle: float = 30.0
+@export var steering_speed: float = 3.5
+
 var _this_state := NodeStateMachine.States.DRIVING
 
 
@@ -165,7 +169,8 @@ func _physics_process(delta: float) -> void:
 			car.steering = 0.0
 		else:
 			var steer_input := Input.get_axis("move_right", "move_left")
-			car.steering = steer_input * deg_to_rad(30.0)
+			var target_steering := steer_input * deg_to_rad(max_steering_angle)
+			car.steering = move_toward(car.steering, target_steering, delta * steering_speed)
 
 
 ## Start "driving".
