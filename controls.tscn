@@ -327,7 +327,6 @@ shape = SubResource("ConvexPolygonShape2D_rs4nb")
 action = "seeker"
 
 [node name="Label" type="Label" parent="BottomLeft/JoypadButton11" unique_id=724217657]
-visible = false
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
@@ -348,7 +347,6 @@ shape = SubResource("ConvexPolygonShape2D_kwisa")
 action = "whistle"
 
 [node name="Label" type="Label" parent="BottomLeft/JoypadButton12" unique_id=1859234343]
-visible = false
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
@@ -570,7 +568,6 @@ shape = SubResource("RectangleShape2D_sp4yc")
 action = "seeker"
 
 [node name="Label" type="Label" parent="BottomLeft/KeyI" unique_id=1517276430]
-visible = false
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
@@ -613,13 +610,12 @@ shape = SubResource("RectangleShape2D_sp4yc")
 action = "whistle"
 
 [node name="Label" type="Label" parent="BottomLeft/KeyK" unique_id=1993763106]
-visible = false
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = 19.5
+offset_left = -28.5
 offset_top = 57.5
-offset_right = 77.5
+offset_right = 29.5
 offset_bottom = 80.5
 grow_horizontal = 2
 text = "Whistle"

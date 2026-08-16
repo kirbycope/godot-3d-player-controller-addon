@@ -631,15 +631,6 @@ func _ready() -> void:
 		key_event.physical_keycode = KEY_M
 		InputMap.action_add_event("emote", key_event)
 
-	# "unequip" { Keyboard: [Q] }
-	if not InputMap.has_action("unequip"):
-		# Add the [unequip] action to the Input Map
-		InputMap.add_action("unequip", 0.2)
-		# Keyboard [Q]
-		var key_event = InputEventKey.new()
-		key_event.physical_keycode = KEY_Q
-		InputMap.action_add_event("unequip", key_event)
-
 	# "debug" { Keyboard: [F3] }
 	if not InputMap.has_action("debug"):
 		# Add the [debug] action to the Input Map
@@ -702,6 +693,14 @@ func set_labels(label_texts: Dictionary) -> void:
 		final_texts[key_s_label] = final_texts[left_joystick_label]
 	if right_joystick_label in final_texts and not key_down_label in final_texts:
 		final_texts[key_down_label] = final_texts[right_joystick_label]
+	if joypad_button_12_label in final_texts and not key_k_label in final_texts:
+		final_texts[key_k_label] = final_texts[joypad_button_12_label]
+	if key_k_label in final_texts and not joypad_button_12_label in final_texts:
+		final_texts[joypad_button_12_label] = final_texts[key_k_label]
+	if joypad_button_11_label in final_texts and not key_i_label in final_texts:
+		final_texts[key_i_label] = final_texts[joypad_button_11_label]
+	if key_i_label in final_texts and not joypad_button_11_label in final_texts:
+		final_texts[joypad_button_11_label] = final_texts[key_i_label]
 
 	for label: Variant in _label_texts.keys():
 		if label:

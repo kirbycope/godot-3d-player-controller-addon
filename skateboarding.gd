@@ -1,6 +1,19 @@
 class_name Skateboarding
 extends NodeStateMachine
 
+@export_category("Skateboarding Controls")
+@export_group("Keyboard/Mouse Actions")
+@export var keyboard_dismount_action: StringName = &"whistle"
+@export var keyboard_jump_action: StringName = &"jump"
+@export var keyboard_sprint_action: StringName = &"sprint"
+@export var keyboard_kick_push_action: StringName = &"move_up"
+
+@export_group("Controller/Touch Actions")
+@export var pad_dismount_action: StringName = &"whistle"
+@export var pad_jump_action: StringName = &"jump"
+@export var pad_sprint_action: StringName = &"sprint"
+@export var pad_kick_push_action: StringName = &"move_up"
+
 const SKATEBOARD_ACCELERATION: float = 12.0
 const SKATEBOARD_MAX_SPEED: float = 8.0
 const SKATEBOARD_FRICTION: float = 5.0
@@ -18,8 +31,17 @@ func _input(event: InputEvent) -> void:
 	# Do nothing if the player is not set or is paused/ragdolling
 	if not player or player.is_paused or player.is_ragdolling: return
 
+	var input_type: int = player.controls.current_input_type if player and player.controls else 0
+	var current_dismount_action: StringName = keyboard_dismount_action if input_type == 0 else pad_dismount_action
+	var current_jump_action: StringName = keyboard_jump_action if input_type == 0 else pad_jump_action
+
+	# Dismount
+	if event.is_action_pressed(current_dismount_action) and not event.is_echo():
+		player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
+		return
+
 	# Jump
-	if Input.is_action_just_pressed("jump") \
+	if event.is_action_pressed(current_jump_action) \
 	and not player.is_jumping \
 	and not player.is_jump_queued \
 	and player.locomotion_state.get_current_node() != "SkateboardingKickPush":
@@ -32,8 +54,12 @@ func _physics_process(delta: float) -> void:
 	# Do nothing if the player is not set
 	if not player: return
 
+	var input_type: int = player.controls.current_input_type if player and player.controls else 0
+	var current_sprint_action: StringName = keyboard_sprint_action if input_type == 0 else pad_sprint_action
+	var current_kick_push_action: StringName = keyboard_kick_push_action if input_type == 0 else pad_kick_push_action
+
 	var target_motion: Vector2 = player.player_input.motion
-	if Input.is_action_pressed("sprint") and not player.is_exhausted and target_motion.y > 0.0:
+	if Input.is_action_pressed(current_sprint_action) and not player.is_exhausted and target_motion.y > 0.0:
 		target_motion.y = 1.1
 	var current_h_vel: Vector3 = player.velocity.slide(player.up_direction)
 	var speed_ratio: float = clamp(current_h_vel.length() / SKATEBOARD_MAX_SPEED, 0.0, 1.0)
@@ -55,7 +81,7 @@ func _physics_process(delta: float) -> void:
 			var side_velocity: Vector3 = side_dir * current_h_vel.dot(side_dir)
 			current_h_vel = forward_velocity + (side_velocity * SKATEBOARD_SIDE_VELOCITY_FACTOR)
 
-	if Input.is_action_just_pressed("move_up") \
+	if Input.is_action_just_pressed(current_kick_push_action) \
 	and current_h_vel.length() <= SKATEBOARD_KICK_PUSH_SPEED_THRESHOLD \
 	and player.locomotion_state.get_current_node() != "SkateboardingKickPush":
 		player.locomotion_state.travel("SkateboardingKickPush")
@@ -117,3 +143,24 @@ func stop() -> void:
 	# Hide the skateboard
 	if player.skateboard:
 		player.skateboard.hide()
+
+
+func get_contextual_controls(input_type: int) -> Dictionary:
+	if not player or not player.controls: return {}
+
+	var controls = {
+		player.controls.joypad_button_4_label: "Perspective",
+		player.controls.joypad_button_15_label: "Screenshot",
+		player.controls.joypad_button_6_label: "Pause Menu",
+		player.controls.left_joystick_label: "Steer",
+		player.controls.right_joystick_label: "Camera",
+		player.controls.joypad_button_3_label: "Ollie",
+	}
+	if input_type == 0: # KEYBOARD_MOUSE
+		controls[player.controls.key_k_label] = "Dismount"
+		controls[player.controls.joypad_button_1_label] = "Fast Push"
+	else:
+		controls[player.controls.joypad_button_12_label] = "Dismount"
+		controls[player.controls.joypad_button_1_label] = "Fast Push"
+	
+	return controls

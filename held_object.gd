@@ -14,9 +14,10 @@ const CONNECTOR_RINGS: int = 16 ## Rings along the connector tube (more = smooth
 const CONNECTOR_RADIAL_SEGMENTS: int = 8 ## Vertices around each connector tube ring.
 
 @export var player: Player
+@export var connector_origin: Node3D
 @export var throw_force: float = 5.0 ## Impulse strength applied to thrown [RigidBody3D] objects.
 @export var connector_radius: float = 0.08 ## Connector tube radius at its widest (mid) point.
-@export var connector_origin_height: float = 1.0 ## Connector start height above the Player origin.
+@export var connector_origin_height: float = 1.0 ## Fallback height when connector_origin is unset.
 @export var connector_lag: float = 6.0 ## Midpoint catch-up speed (lower = more bend when turning).
 @export var connector_wave_amplitude: float = 0.06 ## Sideways wobble strength along the tube.
 @export var connector_wave_frequency: float = 2.0 ## Wobble cycles along the tube length.
@@ -38,6 +39,9 @@ var _connector_immediate_mesh: ImmediateMesh
 var _connector_mid: Vector3 = Vector3.ZERO
 var _is_connector_mid_initialized: bool = false
 var _connector_wave_time: float = 0.0
+var _original_look_at_target: NodePath
+var _original_look_at_active: bool = false
+var _owns_look_at_modifier: bool = false
 
 
 ## Called when the node enters the scene tree for the first time.
@@ -102,6 +106,8 @@ func _physics_process(delta: float) -> void:
 			throw_power = MAX_THROW_POWER
 			execute_throw()
 
+	_update_ultrahand_emote()
+	_update_ultrahand_look_at()
 	_update_connector_mesh(delta)
 
 
@@ -218,6 +224,7 @@ func execute_throw() -> void:
 func drop_held_rigidbody() -> void:
 	if not is_instance_valid(held_rigidbody):
 		held_rigidbody = null
+		_stop_ultrahand_look_at()
 		return
 
 	var drop_body: RigidBody3D = held_rigidbody
@@ -317,6 +324,8 @@ func _pickup_rigidbody(body: RigidBody3D) -> void:
 	body.reparent(player.item_spring_arm, true)
 	body.transform = Transform3D()
 	body.position = Vector3.ZERO
+	_start_ultrahand_emote()
+	_start_ultrahand_look_at()
 
 
 ## Restores the collision and freeze state recorded when the body was picked up.
@@ -327,6 +336,79 @@ func _restore_held_rigidbody_state(body: RigidBody3D) -> void:
 	body.remove_collision_exception_with(player)
 	player.remove_collision_exception_with(body)
 	held_rigidbody = null
+	_stop_ultrahand_emote()
+	_stop_ultrahand_look_at()
+
+
+func _start_ultrahand_emote() -> void:
+	var emote_state: AnimationNodeStateMachinePlayback = player.animation_tree.get(
+		Player.EMOTE_STATE_PLAYBACK_PATH
+	)
+	if emote_state == null:
+		return
+
+	player.animation_tree.set("parameters/EmoteSpineBlend2/blend_amount", 1.0)
+	emote_state.start("ReadyToCastSpell")
+	player.is_emoting = true
+	player.has_started_emoting = false
+
+
+func _update_ultrahand_emote() -> void:
+	if not is_instance_valid(held_rigidbody) or is_throwing:
+		return
+
+	var emote_state: AnimationNodeStateMachinePlayback = player.animation_tree.get(
+		Player.EMOTE_STATE_PLAYBACK_PATH
+	)
+	if emote_state and emote_state.get_current_node() != "ReadyToCastSpell":
+		_start_ultrahand_emote()
+
+
+func _stop_ultrahand_emote() -> void:
+	var emote_state: AnimationNodeStateMachinePlayback = player.animation_tree.get(
+		Player.EMOTE_STATE_PLAYBACK_PATH
+	)
+	if emote_state == null or emote_state.get_current_node() != "ReadyToCastSpell":
+		return
+
+	emote_state.start("Idle")
+	player.animation_tree.set("parameters/EmoteSpineBlend2/blend_amount", 0.0)
+	player.is_emoting = false
+	player.has_started_emoting = false
+
+
+func _start_ultrahand_look_at() -> void:
+	var look_at_modifier: LookAtModifier3D = player.look_at_modifier as LookAtModifier3D
+	if look_at_modifier == null or not is_instance_valid(held_rigidbody):
+		return
+
+	if not _owns_look_at_modifier:
+		_original_look_at_target = look_at_modifier.target_node
+		_original_look_at_active = look_at_modifier.active
+		_owns_look_at_modifier = true
+
+	look_at_modifier.target_node = held_rigidbody.get_path()
+	look_at_modifier.active = true
+
+
+func _update_ultrahand_look_at() -> void:
+	if not is_instance_valid(held_rigidbody):
+		_stop_ultrahand_look_at()
+		return
+
+	_start_ultrahand_look_at()
+
+
+func _stop_ultrahand_look_at() -> void:
+	if not _owns_look_at_modifier:
+		return
+
+	var look_at_modifier: LookAtModifier3D = player.look_at_modifier as LookAtModifier3D
+	if look_at_modifier:
+		look_at_modifier.target_node = _original_look_at_target
+		look_at_modifier.active = _original_look_at_active
+
+	_owns_look_at_modifier = false
 
 
 ## Creates the throw charge bar lazily the first time a charge starts.
@@ -391,8 +473,12 @@ func _update_connector_mesh(delta: float) -> void:
 		return
 
 	_connector_wave_time += delta
-	var player_up: Vector3 = player.up_direction.normalized()
-	var start_position: Vector3 = player.global_position + player_up * connector_origin_height
+	var start_position: Vector3
+	if is_instance_valid(connector_origin):
+		start_position = connector_origin.global_position
+	else:
+		var player_up: Vector3 = player.up_direction.normalized()
+		start_position = player.global_position + player_up * connector_origin_height
 	var end_position: Vector3 = held_rigidbody.global_position
 	var connector_vector: Vector3 = end_position - start_position
 	var connector_length: float = connector_vector.length()

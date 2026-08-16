@@ -432,10 +432,6 @@ func _physics_process(delta: float) -> void:
 			is_emoting = true
 			has_started_emoting = false
 
-	## DEBUG: Remove all equipment for testing purposes.
-	if not is_paused and not is_ragdolling and Input.is_action_just_pressed("unequip"):
-		inventory.debug_unequip_all()
-
 
 # https://github.com/godotengine/tps-demo/blob/master/player/gd#L86
 func apply_input(delta: float) -> void:
