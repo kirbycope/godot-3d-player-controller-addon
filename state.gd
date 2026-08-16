@@ -74,9 +74,18 @@ func travel(from_state: States, to_state: States) -> void:
 			push_error("State %s missing start()" % str(to_state_name))
 		else:
 			if player and player.controls:
-				if not player.controls.input_type_changed.is_connected(to_state_node._on_input_type_changed):
-					player.controls.input_type_changed.connect(to_state_node._on_input_type_changed)
-				to_state_node._on_input_type_changed(player.controls.current_input_type)
+				var is_using_ultrahand: bool = player.held_object \
+						and player.held_object.is_using_ultrahand()
+				if is_using_ultrahand:
+					player.held_object.refresh_contextual_controls()
+				else:
+					if not player.controls.input_type_changed.is_connected(
+						to_state_node._on_input_type_changed
+					):
+						player.controls.input_type_changed.connect(
+							to_state_node._on_input_type_changed
+						)
+					to_state_node._on_input_type_changed(player.controls.current_input_type)
 			to_state_node.call("start")
 	else:
 		push_warning("Invalid to_state: %s" % str(to_state))

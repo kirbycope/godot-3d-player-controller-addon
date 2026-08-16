@@ -22,6 +22,14 @@ const CONNECTOR_RADIAL_SEGMENTS: int = 8 ## Vertices around each connector tube 
 @export var connector_wave_amplitude: float = 0.06 ## Sideways wobble strength along the tube.
 @export var connector_wave_frequency: float = 2.0 ## Wobble cycles along the tube length.
 @export var connector_wave_speed: float = 1.5 ## Wobble scroll speed along the tube.
+@export_group("Ultrahand Controls")
+@export var ultrahand_move_speed: float = 1.5
+@export var ultrahand_joypad_move_multiplier: float = 0.65
+@export var ultrahand_depth_speed: float = 1.5
+@export var ultrahand_rotation_speed: float = 90.0
+@export var ultrahand_min_distance: float = 0.5
+@export var ultrahand_max_distance: float = 5.0
+@export var ultrahand_max_offset: Vector2 = Vector2(1.5, 1.0)
 
 var is_throw_queued: bool = false ## Is a throw waiting on the animation call track or charge timeout?
 var is_throwing: bool = false ## Is the throw wind-up currently active?
@@ -42,6 +50,10 @@ var _connector_wave_time: float = 0.0
 var _original_look_at_target: NodePath
 var _original_look_at_active: bool = false
 var _owns_look_at_modifier: bool = false
+var _owns_contextual_controls: bool = false
+var _ultrahand_distance: float = 2.0
+var _ultrahand_offset: Vector2 = Vector2.ZERO
+var _is_ultrahand_rotation_mode: bool = false
 
 
 ## Called when the node enters the scene tree for the first time.
@@ -56,6 +68,17 @@ func _ready() -> void:
 func _input(event: InputEvent) -> void:
 	if player == null or player.is_paused or player.is_ragdolling:
 		return
+
+	if is_holding_rigidbody() and _is_ultrahand_control_event(event):
+		if event.is_action_pressed("focus") and not event.is_echo():
+			_lay_held_rigidbody_flat()
+		if event.is_action_pressed("throw") and not event.is_echo():
+			_is_ultrahand_rotation_mode = true
+			refresh_contextual_controls()
+		elif event.is_action_released("throw"):
+			_is_ultrahand_rotation_mode = false
+			refresh_contextual_controls()
+		get_viewport().set_input_as_handled()
 
 	if event.is_action_pressed("action") and not event.is_echo():
 		if is_holding_rigidbody():
@@ -106,6 +129,7 @@ func _physics_process(delta: float) -> void:
 			throw_power = MAX_THROW_POWER
 			execute_throw()
 
+	_update_ultrahand_transform(delta)
 	_update_ultrahand_emote()
 	_update_ultrahand_look_at()
 	_update_connector_mesh(delta)
@@ -117,6 +141,16 @@ func is_holding_rigidbody() -> bool:
 		return false
 	var held_node: Node = player.item_spring_arm.get_child(0)
 	return held_node is RigidBody3D
+
+
+## True while shared controls belong exclusively to Ultrahand.
+func is_using_ultrahand() -> bool:
+	return is_instance_valid(held_rigidbody)
+
+
+## Returns the held-object spring length requested by Ultrahand.
+func get_ultrahand_distance(fallback_distance: float) -> float:
+	return _ultrahand_distance if is_using_ultrahand() else fallback_distance
 
 
 ## Starts charging a throw when the shoot button is pressed.
@@ -225,6 +259,7 @@ func drop_held_rigidbody() -> void:
 	if not is_instance_valid(held_rigidbody):
 		held_rigidbody = null
 		_stop_ultrahand_look_at()
+		_stop_ultrahand_contextual_controls()
 		return
 
 	var drop_body: RigidBody3D = held_rigidbody
@@ -324,8 +359,16 @@ func _pickup_rigidbody(body: RigidBody3D) -> void:
 	body.reparent(player.item_spring_arm, true)
 	body.transform = Transform3D()
 	body.position = Vector3.ZERO
+	_ultrahand_distance = clampf(
+		player.item_spring_arm.spring_length,
+		ultrahand_min_distance,
+		ultrahand_max_distance,
+	)
+	_ultrahand_offset = Vector2.ZERO
+	_is_ultrahand_rotation_mode = false
 	_start_ultrahand_emote()
 	_start_ultrahand_look_at()
+	_start_ultrahand_contextual_controls()
 
 
 ## Restores the collision and freeze state recorded when the body was picked up.
@@ -336,8 +379,10 @@ func _restore_held_rigidbody_state(body: RigidBody3D) -> void:
 	body.remove_collision_exception_with(player)
 	player.remove_collision_exception_with(body)
 	held_rigidbody = null
+	_is_ultrahand_rotation_mode = false
 	_stop_ultrahand_emote()
 	_stop_ultrahand_look_at()
+	_stop_ultrahand_contextual_controls()
 
 
 func _start_ultrahand_emote() -> void:
@@ -409,6 +454,160 @@ func _stop_ultrahand_look_at() -> void:
 		look_at_modifier.active = _original_look_at_active
 
 	_owns_look_at_modifier = false
+
+
+func _start_ultrahand_contextual_controls() -> void:
+	if player.controls == null:
+		return
+
+	var state_node: Node = _get_current_state_node()
+	if state_node and player.controls.input_type_changed.is_connected(
+		state_node._on_input_type_changed
+	):
+		player.controls.input_type_changed.disconnect(state_node._on_input_type_changed)
+	if not player.controls.input_type_changed.is_connected(_on_input_type_changed):
+		player.controls.input_type_changed.connect(_on_input_type_changed)
+	_owns_contextual_controls = true
+	refresh_contextual_controls()
+
+
+func _stop_ultrahand_contextual_controls() -> void:
+	if not _owns_contextual_controls or player.controls == null:
+		return
+
+	if player.controls.input_type_changed.is_connected(_on_input_type_changed):
+		player.controls.input_type_changed.disconnect(_on_input_type_changed)
+	player.controls.reset_labels()
+	_owns_contextual_controls = false
+
+	var state_node: Node = _get_current_state_node()
+	if state_node:
+		if not player.controls.input_type_changed.is_connected(state_node._on_input_type_changed):
+			player.controls.input_type_changed.connect(state_node._on_input_type_changed)
+		state_node._on_input_type_changed(player.controls.current_input_type)
+
+
+func refresh_contextual_controls() -> void:
+	if not _owns_contextual_controls or player.controls == null:
+		return
+
+	_on_input_type_changed(player.controls.current_input_type)
+
+
+func _on_input_type_changed(input_type: int) -> void:
+	player.controls.set_labels(get_contextual_controls(input_type))
+
+
+func get_contextual_controls(input_type: int) -> Dictionary:
+	if player == null or player.controls == null:
+		return {}
+
+	var controls: Dictionary = {
+		player.controls.joypad_button_0_label: "Drop",
+		player.controls.joypad_button_4_label: "Perspective",
+		player.controls.joypad_button_6_label: "Pause Menu",
+		player.controls.joypad_button_10_label: "Rotate",
+		player.controls.joypad_button_15_label: "Screenshot",
+		player.controls.joypad_axis_4_plus_label: "Lay Flat",
+		player.controls.joypad_axis_5_plus_label: "Throw",
+		player.controls.left_joystick_label: "Move",
+		player.controls.right_joystick_label: "Move Item",
+	}
+	if input_type == player.controls.InputType.KEYBOARD_MOUSE:
+		if _is_ultrahand_rotation_mode:
+			controls[player.controls.key_i_label] = "Rotate Up"
+			controls[player.controls.key_j_label] = "Rotate Left"
+			controls[player.controls.key_k_label] = "Rotate Down"
+			controls[player.controls.key_l_label] = "Rotate Right"
+		else:
+			controls[player.controls.key_i_label] = "Farther"
+			controls[player.controls.key_k_label] = "Closer"
+	else:
+		if _is_ultrahand_rotation_mode:
+			controls[player.controls.joypad_button_11_label] = "Rotate Up"
+			controls[player.controls.joypad_button_12_label] = "Rotate Down"
+			controls[player.controls.joypad_button_13_label] = "Rotate Left"
+			controls[player.controls.joypad_button_14_label] = "Rotate Right"
+		else:
+			controls[player.controls.joypad_button_11_label] = "Farther"
+			controls[player.controls.joypad_button_12_label] = "Closer"
+
+	return controls
+
+
+func _get_current_state_node() -> Node:
+	if player.current_state not in NodeStateMachine.States.values():
+		return null
+
+	var state_name: StringName = NodeStateMachine.get_state_name(player.current_state)
+	return player.state_machine.get_node_or_null(NodePath(state_name))
+
+
+func _update_ultrahand_transform(delta: float) -> void:
+	if not is_using_ultrahand() or is_throwing:
+		return
+
+	var is_rotating: bool = Input.is_action_pressed("throw")
+	var dpad_input: Vector2 = Input.get_vector(
+		"last_weapon",
+		"next_weapon",
+		"seeker",
+		"whistle",
+	)
+	if is_rotating:
+		var rotation_delta: Vector2 = dpad_input * ultrahand_rotation_speed * delta
+		held_rigidbody.rotate_object_local(Vector3.RIGHT, deg_to_rad(rotation_delta.y))
+		held_rigidbody.rotate_object_local(Vector3.UP, deg_to_rad(-rotation_delta.x))
+	else:
+		_ultrahand_distance = clampf(
+			_ultrahand_distance - dpad_input.y * ultrahand_depth_speed * delta,
+			ultrahand_min_distance,
+			ultrahand_max_distance,
+		)
+
+	var move_input: Vector2 = Input.get_vector("look_left", "look_right", "look_up", "look_down")
+	var move_multiplier: float = 1.0
+	if player.controls.current_input_type != player.controls.InputType.KEYBOARD_MOUSE:
+		move_multiplier = ultrahand_joypad_move_multiplier
+	_ultrahand_offset += move_input * ultrahand_move_speed * move_multiplier * delta
+	_ultrahand_offset.x = clampf(
+		_ultrahand_offset.x,
+		-ultrahand_max_offset.x,
+		ultrahand_max_offset.x,
+	)
+	_ultrahand_offset.y = clampf(
+		_ultrahand_offset.y,
+		-ultrahand_max_offset.y,
+		ultrahand_max_offset.y,
+	)
+	held_rigidbody.position.x = -_ultrahand_offset.x
+	held_rigidbody.position.y = -_ultrahand_offset.y
+
+
+func _lay_held_rigidbody_flat() -> void:
+	if not is_using_ultrahand():
+		return
+
+	var player_up: Vector3 = player.up_direction.normalized()
+	var camera_forward: Vector3 = -player.camera.global_transform.basis.z
+	camera_forward = camera_forward.slide(player_up).normalized()
+	if camera_forward.length_squared() <= 0.001:
+		camera_forward = player.global_transform.basis.z.slide(player_up).normalized()
+	var flat_basis: Basis = Basis.looking_at(camera_forward, player_up)
+	held_rigidbody.global_basis = flat_basis.rotated(flat_basis.x, -PI * 0.5)
+
+
+func _is_ultrahand_control_event(event: InputEvent) -> bool:
+	return event.is_action("seeker") \
+		or event.is_action("whistle") \
+		or event.is_action("last_weapon") \
+		or event.is_action("next_weapon") \
+		or event.is_action("look_left") \
+		or event.is_action("look_right") \
+		or event.is_action("look_up") \
+		or event.is_action("look_down") \
+		or event.is_action("throw") \
+		or event.is_action("focus")
 
 
 ## Creates the throw charge bar lazily the first time a charge starts.

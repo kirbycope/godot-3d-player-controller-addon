@@ -15,6 +15,11 @@ var _next_weapon_press_pending: bool = false
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if player and player.held_object and player.held_object.is_using_ultrahand():
+		_last_weapon_press_pending = false
+		_next_weapon_press_pending = false
+		return
+
 	if event.is_action_pressed("next_weapon"):
 		_next_weapon_press_time = Time.get_ticks_msec()
 		_next_weapon_press_pending = true

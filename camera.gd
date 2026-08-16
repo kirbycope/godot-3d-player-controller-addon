@@ -15,6 +15,7 @@ const CAMERA_FOLLOW_DELAY: float = 2.0
 @export var third_person_item_spring_length: float = 2.0 ## Held-item spring length in third-person.
 @export var interaction_distance: float = 3.0 ## The maximum distance the player can reach to interact with objects.
 @export var joypad_sensitivity: float = 100.0
+@export var ultrahand_joypad_look_multiplier: float = 0.45
 @export var mouse_sensitivity: float = 0.1
 @export var perspective: Perspective = Perspective.THIRD_PERSON ## What perspective should the Camera use?
 @export var player: Player
@@ -70,6 +71,8 @@ func _input(event: InputEvent) -> void:
 
 	# With a visible cursor, holding right-click temporarily captures the mouse so rotation feels normal.
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT:
+		if player.held_object and player.held_object.is_using_ultrahand():
+			return
 		if event.pressed and Input.mouse_mode == Input.MOUSE_MODE_VISIBLE:
 			is_temporarily_captured = true
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -120,7 +123,10 @@ func _process(delta: float) -> void:
 	and not player.is_focusing \
 	and not is_radial_menu_open():
 		# Rotate the camera based on the joypad motion input event
-		rotate_camera_using_joypad_motion(delta)
+		var look_multiplier: float = 1.0
+		if player.held_object and player.held_object.is_using_ultrahand():
+			look_multiplier = ultrahand_joypad_look_multiplier
+		rotate_camera_using_joypad_motion(delta * look_multiplier)
 		# Add a delay before the camera starts following the player again
 		if player.is_skateboarding or player.is_driving:
 			defer_camera_follow()
@@ -208,10 +214,14 @@ func _sync_item_spring_arm() -> void:
 		# so SpringArm extension remains in front of the first-person camera.
 		item_spring_arm.global_basis = global_basis * item_spring_arm_initial_transform.basis
 		item_spring_arm.global_position = global_position
-		item_spring_arm.spring_length = first_person_item_spring_length
+		item_spring_arm.spring_length = player.held_object.get_ultrahand_distance(
+			first_person_item_spring_length
+		) if player.held_object else first_person_item_spring_length
 	else:
 		item_spring_arm.transform = item_spring_arm_initial_transform
-		item_spring_arm.spring_length = third_person_item_spring_length
+		item_spring_arm.spring_length = player.held_object.get_ultrahand_distance(
+			third_person_item_spring_length
+		) if player.held_object else third_person_item_spring_length
 
 
 ## Updates the [RayCast3D] position and target_position based on current perspective/depth.
