@@ -33,8 +33,8 @@ func _ready() -> void:
 		timer.timeout.connect(_on_timer_timeout)
 
 
-## Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
+## Called every physics frame. 'delta' is the elapsed time since the previous frame.
+func _physics_process(delta: float) -> void:
 	if not player.enable_stamina:
 		stamina = max_value
 		player.is_exhausted = false
@@ -43,14 +43,18 @@ func _process(delta: float) -> void:
 
 	# Determine which stamina-draining activity (if any) the player is doing
 	var climbing_moving: bool = player.is_climbing and player.velocity.length() > 0.1
-	var swimming_moving: bool = player.is_swimming and player.velocity.length() > 0.1
+	var swimming_moving: bool = player.is_swimming \
+			and (player.velocity.length() > 0.1 or player.player_input.motion.length() > 0.0 or player.smoothed_motion.length() > 0.0)
+	var swimming_fast: bool = swimming_moving and player.is_sprinting
+	var swimming_normal: bool = swimming_moving and not player.is_sprinting
+
 	# Sprinting in place costs nothing — drain requires actual movement input
 	var sprinting_on_land: bool = player.is_sprinting \
 			and player.player_input.motion.length() > 0.0 \
 			and not player.is_climbing \
 			and not player.is_swimming \
 			and not player.is_paragliding
-	var draining: bool = sprinting_on_land or climbing_moving or swimming_moving \
+	var draining: bool = sprinting_on_land or climbing_moving or swimming_fast \
 			or player.is_paragliding
 
 	# Drain stamina while doing a draining activity
@@ -61,8 +65,8 @@ func _process(delta: float) -> void:
 		var drain_rate: float = drain_sprint
 		if climbing_moving:
 			drain_rate = drain_climb * (sprint_multiplier if player.is_sprinting else 1.0)
-		elif swimming_moving:
-			drain_rate = drain_swim * (sprint_multiplier if player.is_sprinting else 1.0)
+		elif swimming_fast:
+			drain_rate = drain_swim * sprint_multiplier
 		elif player.is_paragliding:
 			drain_rate = drain_paraglide
 		stamina -= drain_rate * delta
@@ -70,9 +74,9 @@ func _process(delta: float) -> void:
 		if stamina <= min_value:
 			player.is_exhausted = true
 
-	# Regenerate stamina when not draining (slowly while falling or in water)
-	# Idle climbing holds stamina instead of regenerating (BotW); hanging still regens
-	elif stamina < max_value and not player.is_climbing:
+	# Regenerate stamina when not draining (slowly while falling or treading water)
+	# Idle climbing and normal-speed swimming hold stamina instead of regenerating
+	elif stamina < max_value and not player.is_climbing and not swimming_normal:
 		show()
 		if not timer.is_stopped():
 			timer.stop()
