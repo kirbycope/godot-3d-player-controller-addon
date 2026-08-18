@@ -268,6 +268,7 @@ var skateboard: Node3D
 @onready var sfx_footsteps_slide: AudioStreamPlayer3D = $SFX_Footsteps_Slide
 @onready var sfx_footsteps_stone: AudioStreamPlayer3D = $SFX_Footsteps_Stone
 @onready var sfx_footsteps_wood: AudioStreamPlayer3D = $SFX_Footsteps_Wood
+@onready var steam_persona_name: Label3D = $SteamPersonaName
 
 
 ## Called when the node enters the scene tree for the first time.
@@ -348,6 +349,14 @@ func _ready() -> void:
 		for child in skateboard.find_children("*", "CollisionShape3D", true, false):
 			if child is CollisionShape3D:
 				child.disabled = true
+
+	# Update Steam persona name if Steam is enabled
+	var steamworks: Node = get_node_or_null("/root/Steamworks")
+	if steamworks and steamworks.get("steam_id") != 0 and ClassDB.class_exists("Steam"):
+		var persona_name: String = Steam.getPersonaName()
+		if not persona_name.is_empty():
+			steam_persona_name.text = persona_name
+			steam_persona_name.show()
 
 
 ## Called when there is an unhandled input event.
