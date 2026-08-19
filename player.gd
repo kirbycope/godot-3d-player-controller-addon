@@ -353,10 +353,10 @@ func _ready() -> void:
 	# Update Steam persona name if Steam is enabled
 	var steamworks: Node = get_node_or_null("/root/Steamworks")
 	if steamworks and steamworks.get("steam_id") != 0 and ClassDB.class_exists("Steam"):
-		var persona_name: String = Steam.getPersonaName()
-		if not persona_name.is_empty():
-			steam_persona_name.text = persona_name
-			steam_persona_name.show()
+		var lobby_update_callback: Callable = _on_steam_lobby_chat_update
+		if not Steam.is_connected("lobby_chat_update", lobby_update_callback):
+			Steam.connect("lobby_chat_update", lobby_update_callback)
+		_update_steam_persona_name()
 
 
 ## Called when there is an unhandled input event.
@@ -686,6 +686,35 @@ func start_charging_throw() -> void:
 func release_charging_throw() -> void:
 	if held_object:
 		held_object.release_charging_throw()
+
+
+## Updates the Steam persona label for the current lobby size.
+func _update_steam_persona_name() -> void:
+	steam_persona_name.hide()
+	var steamworks: Node = get_node_or_null("/root/Steamworks")
+	if steamworks == null or steamworks.get("steam_id") == 0 \
+			or not ClassDB.class_exists("Steam"):
+		return
+	var lobby_id: int = steamworks.get("lobby_id")
+	if lobby_id == 0 or Steam.getNumLobbyMembers(lobby_id) <= 1:
+		return
+	var persona_name: String = Steam.getPersonaName()
+	if not persona_name.is_empty():
+		steam_persona_name.text = persona_name
+		steam_persona_name.show()
+
+
+## Refreshes the Steam persona label when a lobby member joins or leaves.
+func _on_steam_lobby_chat_update(
+		lobby_id: int,
+		_changed_id: int,
+		_making_change_id: int,
+		_chat_state: int,
+) -> void:
+	var steamworks: Node = get_node_or_null("/root/Steamworks")
+	if steamworks == null or steamworks.get("lobby_id") != lobby_id:
+		return
+	_update_steam_persona_name()
 
 
 ## Called by throw animation(s) using "Call Method Track" to throw the held object at the right frame.
