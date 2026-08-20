@@ -352,10 +352,11 @@ func _ready() -> void:
 
 	# Update Steam persona name if Steam is enabled
 	var steamworks: Node = get_node_or_null("/root/Steamworks")
-	if steamworks and steamworks.get("steam_id") != 0 and ClassDB.class_exists("Steam"):
+	if steamworks and steamworks.get("steam_id") != 0 and Engine.has_singleton("Steam"):
+		var steam_singleton: Object = Engine.get_singleton("Steam")
 		var lobby_update_callback: Callable = _on_steam_lobby_chat_update
-		if not Steam.is_connected("lobby_chat_update", lobby_update_callback):
-			Steam.connect("lobby_chat_update", lobby_update_callback)
+		if not steam_singleton.is_connected("lobby_chat_update", lobby_update_callback):
+			steam_singleton.connect("lobby_chat_update", lobby_update_callback)
 		_update_steam_persona_name()
 
 
@@ -691,14 +692,16 @@ func release_charging_throw() -> void:
 ## Updates the Steam persona label for the current lobby size.
 func _update_steam_persona_name() -> void:
 	steam_persona_name.hide()
+	if OS.has_feature("web") or not Engine.has_singleton("Steam"):
+		return
 	var steamworks: Node = get_node_or_null("/root/Steamworks")
-	if steamworks == null or steamworks.get("steam_id") == 0 \
-			or not ClassDB.class_exists("Steam"):
+	if steamworks == null or steamworks.get("steam_id") == 0:
 		return
+	var steam_singleton: Object = Engine.get_singleton("Steam")
 	var lobby_id: int = steamworks.get("lobby_id")
-	if lobby_id == 0 or Steam.getNumLobbyMembers(lobby_id) <= 1:
+	if lobby_id == 0 or steam_singleton.getNumLobbyMembers(lobby_id) <= 1:
 		return
-	var persona_name: String = Steam.getPersonaName()
+	var persona_name: String = steam_singleton.getPersonaName()
 	if not persona_name.is_empty():
 		steam_persona_name.text = persona_name
 		steam_persona_name.show()
