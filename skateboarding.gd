@@ -30,7 +30,7 @@ var _this_state := NodeStateMachine.States.SKATEBOARDING
 func _input(event: InputEvent) -> void:
 	# Do nothing if the player is not set or is paused/ragdolling
 	if not player or player.is_paused or player.is_ragdolling: return
-	if player.held_object and player.held_object.is_using_ultrahand(): return
+	if player.held_object and player.held_object.is_holding_object(): return
 
 	var input_type: int = player.controls.current_input_type if player and player.controls else 0
 	var current_dismount_action: StringName = keyboard_dismount_action if input_type == 0 else pad_dismount_action

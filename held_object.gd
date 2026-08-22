@@ -9,27 +9,19 @@ const CHARGE_START_DELAY: float = 0.2 ## Seconds "shoot" must be held before a c
 const CHARGE_DURATION: float = 0.6 ## Seconds from charge start to full throw power.
 const MIN_THROW_POWER: float = 0.25 ## Throw power multiplier for a quick tap.
 const MAX_THROW_POWER: float = 1.0 ## Throw power multiplier at full charge.
-const CONNECTOR_MATERIAL: Material = preload("res://assets/ultrahand.tres")
-const CONNECTOR_RINGS: int = 16 ## Rings along the connector tube (more = smoother curve).
-const CONNECTOR_RADIAL_SEGMENTS: int = 8 ## Vertices around each connector tube ring.
-
+@export_file("*.tscn") var connector_scene: String
 @export var player: Player
 @export var connector_origin: Node3D
 @export var throw_force: float = 5.0 ## Impulse strength applied to thrown [RigidBody3D] objects.
-@export var connector_radius: float = 0.08 ## Connector tube radius at its widest (mid) point.
 @export var connector_origin_height: float = 1.0 ## Fallback height when connector_origin is unset.
-@export var connector_lag: float = 6.0 ## Midpoint catch-up speed (lower = more bend when turning).
-@export var connector_wave_amplitude: float = 0.06 ## Sideways wobble strength along the tube.
-@export var connector_wave_frequency: float = 2.0 ## Wobble cycles along the tube length.
-@export var connector_wave_speed: float = 1.5 ## Wobble scroll speed along the tube.
-@export_group("Ultrahand Controls")
-@export var ultrahand_move_speed: float = 1.5
-@export var ultrahand_joypad_move_multiplier: float = 0.65
-@export var ultrahand_depth_speed: float = 1.5
-@export var ultrahand_rotation_speed: float = 90.0
-@export var ultrahand_min_distance: float = 0.5
-@export var ultrahand_max_distance: float = 5.0
-@export var ultrahand_max_offset: Vector2 = Vector2(1.5, 1.0)
+@export_group("Held Object Controls")
+@export var held_move_speed: float = 1.5
+@export var held_joypad_move_multiplier: float = 0.65
+@export var held_depth_speed: float = 1.5
+@export var held_rotation_speed: float = 90.0
+@export var held_min_distance: float = 0.5
+@export var held_max_distance: float = 5.0
+@export var held_max_offset: Vector2 = Vector2(1.5, 1.0)
 
 var is_throw_queued: bool = false ## Is a throw waiting on the animation call track or charge timeout?
 var is_throwing: bool = false ## Is the throw wind-up currently active?
@@ -42,18 +34,14 @@ var held_rigidbody: RigidBody3D = null
 var _original_collision_layer: int = 0
 var _original_collision_mask: int = 0
 var _original_freeze: bool = false
-var _connector_mesh: MeshInstance3D
-var _connector_immediate_mesh: ImmediateMesh
-var _connector_mid: Vector3 = Vector3.ZERO
-var _is_connector_mid_initialized: bool = false
-var _connector_wave_time: float = 0.0
+var _connector_node: Node3D
 var _original_look_at_target: NodePath
 var _original_look_at_active: bool = false
 var _owns_look_at_modifier: bool = false
 var _owns_contextual_controls: bool = false
-var _ultrahand_distance: float = 2.0
-var _ultrahand_offset: Vector2 = Vector2.ZERO
-var _is_ultrahand_rotation_mode: bool = false
+var _held_distance: float = 2.0
+var _held_offset: Vector2 = Vector2.ZERO
+var _is_held_rotation_mode: bool = false
 
 
 ## Called when the node enters the scene tree for the first time.
@@ -61,7 +49,7 @@ func _ready() -> void:
 	set_process(is_multiplayer_authority())
 	set_physics_process(is_multiplayer_authority())
 	set_process_input(is_multiplayer_authority())
-	_create_connector_mesh()
+	_create_connector_node()
 
 
 ## Called when there is an input event.
@@ -69,14 +57,14 @@ func _input(event: InputEvent) -> void:
 	if player == null or player.is_paused or player.is_ragdolling:
 		return
 
-	if is_holding_rigidbody() and _is_ultrahand_control_event(event):
+	if is_holding_rigidbody() and _is_held_object_control_event(event):
 		if event.is_action_pressed("focus") and not event.is_echo():
 			_lay_held_rigidbody_flat()
 		if event.is_action_pressed("throw") and not event.is_echo():
-			_is_ultrahand_rotation_mode = true
+			_is_held_rotation_mode = true
 			refresh_contextual_controls()
 		elif event.is_action_released("throw"):
-			_is_ultrahand_rotation_mode = false
+			_is_held_rotation_mode = false
 			refresh_contextual_controls()
 		get_viewport().set_input_as_handled()
 
@@ -129,10 +117,10 @@ func _physics_process(delta: float) -> void:
 			throw_power = MAX_THROW_POWER
 			execute_throw()
 
-	_update_ultrahand_transform(delta)
-	_update_ultrahand_emote()
-	_update_ultrahand_look_at()
-	_update_connector_mesh(delta)
+	_update_held_object_transform(delta)
+	_update_held_object_emote()
+	_update_held_object_look_at()
+	_update_connector_node(delta)
 
 
 ## True if the item spring arm currently holds a [RigidBody3D].
@@ -143,14 +131,14 @@ func is_holding_rigidbody() -> bool:
 	return held_node is RigidBody3D
 
 
-## True while shared controls belong exclusively to Ultrahand.
-func is_using_ultrahand() -> bool:
+## True while shared controls belong exclusively to the held object manipulator.
+func is_holding_object() -> bool:
 	return is_instance_valid(held_rigidbody)
 
 
-## Returns the held-object spring length requested by Ultrahand.
-func get_ultrahand_distance(fallback_distance: float) -> float:
-	return _ultrahand_distance if is_using_ultrahand() else fallback_distance
+## Returns the held-object spring length requested by held object controls.
+func get_held_distance(fallback_distance: float) -> float:
+	return _held_distance if is_holding_object() else fallback_distance
 
 
 ## Starts charging a throw when the shoot button is pressed.
@@ -208,7 +196,7 @@ func queue_throw(throw_direction: Vector3) -> void:
 	if throw_direction.length_squared() <= 0.001:
 		throw_direction = _get_crosshair_throw_direction()
 		if throw_direction.length_squared() <= 0.001:
-			throw_direction = -player.global_transform.basis.z.normalized()
+			throw_direction = - player.global_transform.basis.z.normalized()
 
 	is_throw_queued = true
 	is_throwing = true
@@ -258,8 +246,8 @@ func execute_throw() -> void:
 func drop_held_rigidbody() -> void:
 	if not is_instance_valid(held_rigidbody):
 		held_rigidbody = null
-		_stop_ultrahand_look_at()
-		_stop_ultrahand_contextual_controls()
+		_stop_held_object_look_at()
+		_stop_held_object_contextual_controls()
 		return
 
 	var drop_body: RigidBody3D = held_rigidbody
@@ -359,16 +347,16 @@ func _pickup_rigidbody(body: RigidBody3D) -> void:
 	body.reparent(player.item_spring_arm, true)
 	body.transform = Transform3D()
 	body.position = Vector3.ZERO
-	_ultrahand_distance = clampf(
+	_held_distance = clampf(
 		player.item_spring_arm.spring_length,
-		ultrahand_min_distance,
-		ultrahand_max_distance,
+		held_min_distance,
+		held_max_distance,
 	)
-	_ultrahand_offset = Vector2.ZERO
-	_is_ultrahand_rotation_mode = false
-	_start_ultrahand_emote()
-	_start_ultrahand_look_at()
-	_start_ultrahand_contextual_controls()
+	_held_offset = Vector2.ZERO
+	_is_held_rotation_mode = false
+	_start_held_object_emote()
+	_start_held_object_look_at()
+	_start_held_object_contextual_controls()
 
 
 ## Restores the collision and freeze state recorded when the body was picked up.
@@ -379,13 +367,13 @@ func _restore_held_rigidbody_state(body: RigidBody3D) -> void:
 	body.remove_collision_exception_with(player)
 	player.remove_collision_exception_with(body)
 	held_rigidbody = null
-	_is_ultrahand_rotation_mode = false
-	_stop_ultrahand_emote()
-	_stop_ultrahand_look_at()
-	_stop_ultrahand_contextual_controls()
+	_is_held_rotation_mode = false
+	_stop_held_object_emote()
+	_stop_held_object_look_at()
+	_stop_held_object_contextual_controls()
 
 
-func _start_ultrahand_emote() -> void:
+func _start_held_object_emote() -> void:
 	var emote_state: AnimationNodeStateMachinePlayback = player.animation_tree.get(
 		Player.EMOTE_STATE_PLAYBACK_PATH
 	)
@@ -398,7 +386,7 @@ func _start_ultrahand_emote() -> void:
 	player.has_started_emoting = false
 
 
-func _update_ultrahand_emote() -> void:
+func _update_held_object_emote() -> void:
 	if not is_instance_valid(held_rigidbody) or is_throwing:
 		return
 
@@ -406,10 +394,10 @@ func _update_ultrahand_emote() -> void:
 		Player.EMOTE_STATE_PLAYBACK_PATH
 	)
 	if emote_state and emote_state.get_current_node() != "ReadyToCastSpell":
-		_start_ultrahand_emote()
+		_start_held_object_emote()
 
 
-func _stop_ultrahand_emote() -> void:
+func _stop_held_object_emote() -> void:
 	var emote_state: AnimationNodeStateMachinePlayback = player.animation_tree.get(
 		Player.EMOTE_STATE_PLAYBACK_PATH
 	)
@@ -422,7 +410,7 @@ func _stop_ultrahand_emote() -> void:
 	player.has_started_emoting = false
 
 
-func _start_ultrahand_look_at() -> void:
+func _start_held_object_look_at() -> void:
 	var look_at_modifier: LookAtModifier3D = player.look_at_modifier as LookAtModifier3D
 	if look_at_modifier == null or not is_instance_valid(held_rigidbody):
 		return
@@ -436,15 +424,15 @@ func _start_ultrahand_look_at() -> void:
 	look_at_modifier.active = true
 
 
-func _update_ultrahand_look_at() -> void:
+func _update_held_object_look_at() -> void:
 	if not is_instance_valid(held_rigidbody):
-		_stop_ultrahand_look_at()
+		_stop_held_object_look_at()
 		return
 
-	_start_ultrahand_look_at()
+	_start_held_object_look_at()
 
 
-func _stop_ultrahand_look_at() -> void:
+func _stop_held_object_look_at() -> void:
 	if not _owns_look_at_modifier:
 		return
 
@@ -456,7 +444,7 @@ func _stop_ultrahand_look_at() -> void:
 	_owns_look_at_modifier = false
 
 
-func _start_ultrahand_contextual_controls() -> void:
+func _start_held_object_contextual_controls() -> void:
 	if player.controls == null:
 		return
 
@@ -471,7 +459,7 @@ func _start_ultrahand_contextual_controls() -> void:
 	refresh_contextual_controls()
 
 
-func _stop_ultrahand_contextual_controls() -> void:
+func _stop_held_object_contextual_controls() -> void:
 	if not _owns_contextual_controls or player.controls == null:
 		return
 
@@ -514,7 +502,7 @@ func get_contextual_controls(input_type: int) -> Dictionary:
 		player.controls.right_joystick_label: "Move Item",
 	}
 	if input_type == player.controls.InputType.KEYBOARD_MOUSE:
-		if _is_ultrahand_rotation_mode:
+		if _is_held_rotation_mode:
 			controls[player.controls.key_i_label] = "Rotate Up"
 			controls[player.controls.key_j_label] = "Rotate Left"
 			controls[player.controls.key_k_label] = "Rotate Down"
@@ -523,7 +511,7 @@ func get_contextual_controls(input_type: int) -> Dictionary:
 			controls[player.controls.key_i_label] = "Farther"
 			controls[player.controls.key_k_label] = "Closer"
 	else:
-		if _is_ultrahand_rotation_mode:
+		if _is_held_rotation_mode:
 			controls[player.controls.joypad_button_11_label] = "Rotate Up"
 			controls[player.controls.joypad_button_12_label] = "Rotate Down"
 			controls[player.controls.joypad_button_13_label] = "Rotate Left"
@@ -543,8 +531,8 @@ func _get_current_state_node() -> Node:
 	return player.state_machine.get_node_or_null(NodePath(state_name))
 
 
-func _update_ultrahand_transform(delta: float) -> void:
-	if not is_using_ultrahand() or is_throwing:
+func _update_held_object_transform(delta: float) -> void:
+	if not is_holding_object() or is_throwing:
 		return
 
 	var is_rotating: bool = Input.is_action_pressed("throw")
@@ -555,41 +543,41 @@ func _update_ultrahand_transform(delta: float) -> void:
 		"whistle",
 	)
 	if is_rotating:
-		var rotation_delta: Vector2 = dpad_input * ultrahand_rotation_speed * delta
+		var rotation_delta: Vector2 = dpad_input * held_rotation_speed * delta
 		held_rigidbody.rotate_object_local(Vector3.RIGHT, deg_to_rad(rotation_delta.y))
 		held_rigidbody.rotate_object_local(Vector3.UP, deg_to_rad(-rotation_delta.x))
 	else:
-		_ultrahand_distance = clampf(
-			_ultrahand_distance - dpad_input.y * ultrahand_depth_speed * delta,
-			ultrahand_min_distance,
-			ultrahand_max_distance,
+		_held_distance = clampf(
+			_held_distance - dpad_input.y * held_depth_speed * delta,
+			held_min_distance,
+			held_max_distance,
 		)
 
 	var move_input: Vector2 = Input.get_vector("look_left", "look_right", "look_up", "look_down")
 	var move_multiplier: float = 1.0
 	if player.controls.current_input_type != player.controls.InputType.KEYBOARD_MOUSE:
-		move_multiplier = ultrahand_joypad_move_multiplier
-	_ultrahand_offset += move_input * ultrahand_move_speed * move_multiplier * delta
-	_ultrahand_offset.x = clampf(
-		_ultrahand_offset.x,
-		-ultrahand_max_offset.x,
-		ultrahand_max_offset.x,
+		move_multiplier = held_joypad_move_multiplier
+	_held_offset += move_input * held_move_speed * move_multiplier * delta
+	_held_offset.x = clampf(
+		_held_offset.x,
+		- held_max_offset.x,
+		held_max_offset.x,
 	)
-	_ultrahand_offset.y = clampf(
-		_ultrahand_offset.y,
-		-ultrahand_max_offset.y,
-		ultrahand_max_offset.y,
+	_held_offset.y = clampf(
+		_held_offset.y,
+		- held_max_offset.y,
+		held_max_offset.y,
 	)
-	held_rigidbody.position.x = -_ultrahand_offset.x
-	held_rigidbody.position.y = -_ultrahand_offset.y
+	held_rigidbody.position.x = - _held_offset.x
+	held_rigidbody.position.y = - _held_offset.y
 
 
 func _lay_held_rigidbody_flat() -> void:
-	if not is_using_ultrahand():
+	if not is_holding_object():
 		return
 
 	var player_up: Vector3 = player.up_direction.normalized()
-	var camera_forward: Vector3 = -player.camera.global_transform.basis.z
+	var camera_forward: Vector3 = - player.camera.global_transform.basis.z
 	camera_forward = camera_forward.slide(player_up).normalized()
 	if camera_forward.length_squared() <= 0.001:
 		camera_forward = player.global_transform.basis.z.slide(player_up).normalized()
@@ -597,7 +585,7 @@ func _lay_held_rigidbody_flat() -> void:
 	held_rigidbody.global_basis = flat_basis.rotated(flat_basis.x, -PI * 0.5)
 
 
-func _is_ultrahand_control_event(event: InputEvent) -> bool:
+func _is_held_object_control_event(event: InputEvent) -> bool:
 	return event.is_action("seeker") \
 		or event.is_action("whistle") \
 		or event.is_action("last_weapon") \
@@ -652,26 +640,25 @@ func _ensure_throw_charge_bar() -> void:
 	player.controls.add_child(throw_charge_bar)
 
 
-func _create_connector_mesh() -> void:
-	_connector_immediate_mesh = ImmediateMesh.new()
-	_connector_mesh = MeshInstance3D.new()
-	_connector_mesh.name = "HeldObjectConnector"
-	_connector_mesh.mesh = _connector_immediate_mesh
-	_connector_mesh.material_override = CONNECTOR_MATERIAL
-	_connector_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	_connector_mesh.visible = false
-	add_child(_connector_mesh)
+func _create_connector_node() -> void:
+	if connector_scene.is_empty():
+		return
+	var scene_res := load(connector_scene) as PackedScene
+	if scene_res:
+		_connector_node = scene_res.instantiate() as Node3D
+		if _connector_node:
+			_connector_node.name = "HeldObjectConnector"
+			_connector_node.visible = false
+			add_child(_connector_node)
 
 
-func _update_connector_mesh(delta: float) -> void:
-	if not is_instance_valid(_connector_mesh):
+func _update_connector_node(_delta: float) -> void:
+	if not is_instance_valid(_connector_node):
 		return
 	if player == null or not is_instance_valid(held_rigidbody):
-		_connector_mesh.visible = false
-		_is_connector_mid_initialized = false
+		_connector_node.visible = false
 		return
 
-	_connector_wave_time += delta
 	var start_position: Vector3
 	if is_instance_valid(connector_origin):
 		start_position = connector_origin.global_position
@@ -682,70 +669,14 @@ func _update_connector_mesh(delta: float) -> void:
 	var connector_vector: Vector3 = end_position - start_position
 	var connector_length: float = connector_vector.length()
 	if connector_length <= 0.001:
-		_connector_mesh.visible = false
+		_connector_node.visible = false
 		return
 
-	# The midpoint lags behind the true center, bending the tube while the Player turns.
-	var target_mid: Vector3 = start_position + connector_vector * 0.5
-	if not _is_connector_mid_initialized:
-		_connector_mid = target_mid
-		_is_connector_mid_initialized = true
-	var smoothing_weight: float = 1.0 - exp(-connector_lag * delta)
-	_connector_mid = _connector_mid.lerp(target_mid, smoothing_weight)
-
-	_rebuild_connector_tube(start_position, _connector_mid, end_position)
-	_connector_mesh.global_transform = Transform3D.IDENTITY
-	_connector_mesh.visible = true
-
-
-## Rebuilds the connector tube mesh along a quadratic bezier through the lagged midpoint.
-func _rebuild_connector_tube(p0: Vector3, p1: Vector3, p2: Vector3) -> void:
-	var reference_axis: Vector3 = player.global_transform.basis.x
-	var chord_direction: Vector3 = (p2 - p0).normalized()
-	if absf(reference_axis.dot(chord_direction)) > 0.99:
-		reference_axis = player.global_transform.basis.z
-
-	var vertices: Array[Vector3] = []
-	var normals: Array[Vector3] = []
-	var uvs: Array[Vector2] = []
-
-	for ring_index in CONNECTOR_RINGS + 1:
-		var t: float = float(ring_index) / float(CONNECTOR_RINGS)
-		var one_minus_t: float = 1.0 - t
-		var ring_center: Vector3 = p0 * (one_minus_t * one_minus_t) \
-				+ p1 * (2.0 * one_minus_t * t) \
-				+ p2 * (t * t)
-		var tangent: Vector3 = ((p1 - p0) * one_minus_t + (p2 - p1) * t).normalized()
-		var ring_normal: Vector3 = reference_axis.cross(tangent).normalized()
-		var ring_binormal: Vector3 = tangent.cross(ring_normal).normalized()
-
-		# Anchor factor pins both ends while the middle wobbles and bulges.
-		var anchor: float = sin(PI * t)
-		var wave_phase: float = TAU * (t * connector_wave_frequency \
-				- _connector_wave_time * connector_wave_speed)
-		var wave_offset: Vector3 = (ring_normal * sin(wave_phase) \
-				+ ring_binormal * cos(wave_phase)) * connector_wave_amplitude * anchor
-		ring_center += wave_offset
-		var ring_radius: float = connector_radius * (0.35 + 0.65 * anchor)
-
-		for radial_index in CONNECTOR_RADIAL_SEGMENTS + 1:
-			var angle: float = TAU * float(radial_index) / float(CONNECTOR_RADIAL_SEGMENTS)
-			var radial_direction: Vector3 = ring_normal * cos(angle) + ring_binormal * sin(angle)
-			vertices.append(ring_center + radial_direction * ring_radius)
-			normals.append(radial_direction)
-			uvs.append(Vector2(float(radial_index) / float(CONNECTOR_RADIAL_SEGMENTS), t))
-
-	_connector_immediate_mesh.clear_surfaces()
-	_connector_immediate_mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
-	var ring_stride: int = CONNECTOR_RADIAL_SEGMENTS + 1
-	for ring_index in CONNECTOR_RINGS:
-		for radial_index in CONNECTOR_RADIAL_SEGMENTS:
-			var index_a: int = ring_index * ring_stride + radial_index
-			var index_b: int = index_a + 1
-			var index_c: int = index_a + ring_stride
-			var index_d: int = index_c + 1
-			for vertex_index: int in [index_a, index_c, index_b, index_b, index_c, index_d]:
-				_connector_immediate_mesh.surface_set_normal(normals[vertex_index])
-				_connector_immediate_mesh.surface_set_uv(uvs[vertex_index])
-				_connector_immediate_mesh.surface_add_vertex(vertices[vertex_index])
-	_connector_immediate_mesh.surface_end()
+	_connector_node.global_position = start_position
+	var look_direction: Vector3 = connector_vector / connector_length
+	var up_vec: Vector3 = player.up_direction.normalized() if player else Vector3.UP
+	if absf(look_direction.dot(up_vec)) > 0.99:
+		up_vec = player.global_transform.basis.x if player else Vector3.RIGHT
+	_connector_node.look_at(end_position, up_vec)
+	_connector_node.scale = Vector3(1.0, 1.0, connector_length / 10.0)
+	_connector_node.visible = true

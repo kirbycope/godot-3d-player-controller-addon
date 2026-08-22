@@ -158,7 +158,7 @@ var is_focusing: bool: ## Is the Player currently focusing (forward or on a targ
 	get:
 		if not is_multiplayer_authority() or is_driving:
 			return false
-		if held_object and held_object.is_using_ultrahand():
+		if held_object and held_object.is_holding_object():
 			return false
 		# While the cursor is visible, right-click is reserved for camera rotation.
 		if Input.mouse_mode == Input.MOUSE_MODE_VISIBLE:
@@ -207,7 +207,7 @@ var is_shooting: bool: ## Is the Player currently shooting?
 	get:
 		if not is_multiplayer_authority() or is_driving or inventory == null:
 			return false
-		if held_object and held_object.is_using_ultrahand():
+		if held_object and held_object.is_holding_object():
 			return false
 		return Input.is_action_pressed("shoot") and inventory.can_player_shoot
 var is_sitting: bool = false ## Is the Player currently sitting?

@@ -15,7 +15,7 @@ var _next_weapon_press_pending: bool = false
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if player and player.held_object and player.held_object.is_using_ultrahand():
+	if player and player.held_object and player.held_object.is_holding_object():
 		_last_weapon_press_pending = false
 		_next_weapon_press_pending = false
 		return

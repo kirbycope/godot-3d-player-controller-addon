@@ -74,9 +74,9 @@ func travel(from_state: States, to_state: States) -> void:
 			push_error("State %s missing start()" % str(to_state_name))
 		else:
 			if player and player.controls:
-				var is_using_ultrahand: bool = player.held_object \
-						and player.held_object.is_using_ultrahand()
-				if is_using_ultrahand:
+				var is_holding_object: bool = player.held_object \
+						and player.held_object.is_holding_object()
+				if is_holding_object:
 					player.held_object.refresh_contextual_controls()
 				else:
 					if not player.controls.input_type_changed.is_connected(
