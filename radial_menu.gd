@@ -14,6 +14,10 @@ class_name RadialMenu
 var weapons: Array = []
 var hovered_index: int = -1
 
+var custom_item_provider: Callable = Callable()
+var custom_item_selected: Callable = Callable()
+var custom_item_is_equipped: Callable = Callable()
+
 @onready var inventory: Inventory = get_parent()
 @onready var tooltip_label: Label = $TooltipLabel
 
@@ -83,12 +87,16 @@ func _process(delta: float) -> void:
 							var hovered_item = weapons[hovered_index]
 							var text_name = "Unknown"
 							if hovered_item is Dictionary:
-								text_name = hovered_item.get("display_name", "Unarmed")
+								text_name = hovered_item.get("display_name", hovered_item.get("name", "Unarmed"))
 							else:
 								if "display_name" in hovered_item and hovered_item.display_name != "":
 									text_name = hovered_item.display_name
+								elif "station_name" in hovered_item and hovered_item.station_name != "":
+									text_name = hovered_item.station_name
 								elif "equipment_type" in hovered_item:
 									text_name = Equipment.EquipmentType.keys()[hovered_item.equipment_type].capitalize()
+								elif hovered_item.has_method("get_full_title"):
+									text_name = hovered_item.get_full_title()
 							tooltip_label.text = text_name
 					queue_redraw()
 			else:
@@ -110,12 +118,16 @@ func _process(delta: float) -> void:
 								var hovered_item = weapons[hovered_index]
 								var text_name = "Unknown"
 								if hovered_item is Dictionary:
-									text_name = hovered_item.get("display_name", "Unarmed")
+									text_name = hovered_item.get("display_name", hovered_item.get("name", "Unarmed"))
 								else:
 									if "display_name" in hovered_item and hovered_item.display_name != "":
 										text_name = hovered_item.display_name
+									elif "station_name" in hovered_item and hovered_item.station_name != "":
+										text_name = hovered_item.station_name
 									elif "equipment_type" in hovered_item:
 										text_name = Equipment.EquipmentType.keys()[hovered_item.equipment_type].capitalize()
+									elif hovered_item.has_method("get_full_title"):
+										text_name = hovered_item.get_full_title()
 								tooltip_label.text = text_name
 						queue_redraw()
 		else:
@@ -131,6 +143,11 @@ func _process(delta: float) -> void:
 			weapons.clear()
 
 func update_items() -> void:
+	if custom_item_provider.is_valid():
+		weapons = custom_item_provider.call()
+		queue_redraw()
+		return
+
 	if not inventory:
 		return
 	
@@ -144,6 +161,12 @@ func update_items() -> void:
 	queue_redraw()
 
 func equip_item(index: int) -> void:
+	if index < 0 or index >= weapons.size():
+		return
+	if custom_item_selected.is_valid():
+		custom_item_selected.call(weapons[index], index)
+		return
+
 	var item = weapons[index]
 	if item is Dictionary and item.get("is_unarmed"):
 		inventory.unequip_all()
@@ -179,10 +202,12 @@ func _draw() -> void:
 		
 		var is_equipped = false
 		var item = weapons[i]
-		if item is Dictionary and item.get("is_unarmed"):
-			is_equipped = inventory.equipment.is_empty()
+		if custom_item_is_equipped.is_valid():
+			is_equipped = custom_item_is_equipped.call(item, i)
+		elif item is Dictionary and item.get("is_unarmed"):
+			is_equipped = inventory.equipment.is_empty() if inventory else false
 		elif item is Node3D:
-			is_equipped = inventory.equipment.has(item)
+			is_equipped = inventory.equipment.has(item) if inventory else false
 			
 		if is_equipped:
 			var outer_points = PackedVector2Array()
@@ -209,9 +234,11 @@ func _draw() -> void:
 		# Draw Icon
 		var item_icon = null
 		if item is Dictionary:
-			item_icon = item.get("icon")
+			item_icon = item.get("icon", item.get("logo", null))
 		elif "icon" in item:
 			item_icon = item.icon
+		elif "logo" in item:
+			item_icon = item.logo
 			
 		if item_icon:
 			var mid_angle = start_angle + (i + 0.5) * segment_angle

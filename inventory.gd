@@ -7,6 +7,7 @@ var can_player_attack: bool = true ## Does the currently equipped item allow the
 var can_player_shoot: bool = false ## Does the currently equipped item allow the Player to shoot?
 @export var player: Player
 
+var custom_cycle_handler: Callable = Callable()
 
 var _last_weapon_press_time: int = 0
 var _last_weapon_press_pending: bool = false
@@ -40,6 +41,10 @@ func _unhandled_input(event: InputEvent) -> void:
 				cycle_weapon(-1)
 
 func cycle_weapon(direction: int) -> void:
+	if custom_cycle_handler.is_valid():
+		custom_cycle_handler.call(direction)
+		return
+
 	var all_weapons = [null]
 	all_weapons.append_array(get_all_weapons())
 	if all_weapons.size() <= 1:
