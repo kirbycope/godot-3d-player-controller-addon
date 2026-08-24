@@ -288,6 +288,8 @@ var skateboard: Node3D
 @onready var sfx_footsteps_wood: AudioStreamPlayer3D = $SFX_Footsteps_Wood
 @onready var steam_persona_name: Label3D = $SteamPersonaName
 
+var current_water_area: Area3D = null
+
 
 ## Called when the node enters the scene tree for the first time.
 func _ready() -> void:
@@ -297,6 +299,7 @@ func _ready() -> void:
 		set_physics_process(false)
 		set_process_input(false)
 		return
+
 
 	# Pre-initialize orientation transform.
 	orientation = player_model.global_transform
@@ -379,9 +382,10 @@ func _ready() -> void:
 
 
 ## Called when there is an unhandled input event.
-func _input(event: InputEvent) -> void:
+func _unhandled_input(event: InputEvent) -> void:
 	# Do nothing if not the authority
 	if is_paused or is_ragdolling: return
+
 
 	# Toggle mouse capture
 	if event.is_action_pressed("ui_cancel") and not pause.visible and not settings.visible:
@@ -900,3 +904,23 @@ func update_movement_and_rotation(delta: float) -> void:
 		var rotated_basis: Basis = model_facing_basis * initial_separation_ray_transform.basis
 		var rotated_origin: Vector3 = global_position + (model_facing_basis * initial_separation_ray_transform.origin)
 		separation_ray_shape.global_transform = Transform3D(rotated_basis, rotated_origin)
+
+
+## Called by a water Area3D when the player enters water.
+func enter_water(water_area: Area3D = null) -> void:
+	current_water_area = water_area
+	if not is_swimming and not is_driving and is_driving_in == null and not is_entering_vehicle and not is_exiting_vehicle and not is_ragdolling:
+		if state_machine:
+			state_machine.travel(current_state, NodeStateMachine.States.SWIMMING)
+
+
+## Called by a water Area3D when the player exits water.
+func exit_water(water_area: Area3D = null) -> void:
+	if water_area == null or water_area == current_water_area:
+		current_water_area = null
+		if is_swimming:
+			is_swimming = false
+			if state_machine:
+				state_machine.travel(NodeStateMachine.States.SWIMMING, NodeStateMachine.States.STANDING if is_on_floor() else NodeStateMachine.States.FALLING)
+
+

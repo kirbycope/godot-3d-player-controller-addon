@@ -3,7 +3,19 @@ extends GutTest
 ## Purpose: To test that throwing a held object while having a bow equipped does not trigger bow draw sound/state.
 
 const PLAYER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player.tscn")
-const LITTLE_BUDDY_SCENE: PackedScene = preload("res://scenes/little_buddy.tscn")
+
+class MockHeldCharacter extends CharacterBody3D:
+	var player: Player
+	var is_held: bool = false
+	
+	func pick_up() -> void:
+		if not player or not player.item_spring_arm:
+			return
+		is_held = true
+		if get_parent():
+			get_parent().remove_child(self)
+		player.item_spring_arm.add_child(self)
+		position = Vector3.ZERO
 
 var root: Node3D
 var player: Player
@@ -69,8 +81,8 @@ func test_holding_little_buddy_with_bow_equipped_blocks_bow_draw():
 	player.inventory.can_player_shoot = true
 	assert_true(player.equipped_bow, "Bow should be equipped.")
 
-	# Pick up Little Buddy
-	var buddy = LITTLE_BUDDY_SCENE.instantiate() as CharacterBody3D
+	# Pick up Mock Held Character
+	var buddy = MockHeldCharacter.new()
 	root.add_child(buddy)
 	buddy.player = player
 	buddy.pick_up()

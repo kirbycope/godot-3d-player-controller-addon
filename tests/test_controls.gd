@@ -226,3 +226,31 @@ class TestUIActions:
 		var dpad_down = InputEventJoypadButton.new()
 		dpad_down.button_index = JOY_BUTTON_DPAD_DOWN
 		assert_true(InputMap.action_has_event("ui_down", dpad_down), "ui_down should contain JOY_BUTTON_DPAD_DOWN")
+
+
+## Tests related to the Demo scene instantiation.
+class TestPlayerControllerDemoScene:
+	extends GutTest
+
+	func test_demo_scene_instantiation():
+		var scene = load("res://addons/3d_player_controller/scenes/demo/demo.tscn")
+		assert_not_null(scene)
+		var demo = scene.instantiate()
+		assert_not_null(demo)
+		add_child_autofree(demo)
+		assert_not_null(demo.player)
+		assert_not_null(demo.marker_tower)
+		assert_not_null(demo.marker_courtyard)
+		assert_not_null(demo.marker_pool)
+		assert_not_null(demo.marker_wall)
+		assert_true(demo.player.enable_stamina)
+		
+		# Test Teleport
+		demo._teleport_player(demo.marker_tower)
+		assert_almost_eq(demo.player.global_position.x, demo.marker_tower.global_position.x, 0.1)
+
+		# Test Water Pool Teleport & Swimming Entry
+		demo._teleport_player(demo.marker_pool)
+		await wait_physics_frames(2)
+		assert_eq(demo.player.current_state, NodeStateMachine.States.SWIMMING, "Player should enter SWIMMING state when in the water pool")
+		assert_true(demo.player.is_swimming, "Player is_swimming flag should be true")

@@ -71,8 +71,8 @@ func _physics_process(delta: float) -> void:
 	# Stop "swimming" if the player has been flagged as not "swimming" (e.g. by exiting the pool)
 	if not player.is_swimming \
 	and player.locomotion_state.get_current_node() != "BracedHangClimbingOn":
-		# Start "standing"
-		player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
+		# Start "standing" or "falling"
+		player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING if player.is_on_floor() else NodeStateMachine.States.FALLING)
 		return
 
 	# Ledge detection [Raycast]
@@ -186,32 +186,44 @@ func get_water_surface_along_up() -> float:
 	if not player or not player.is_inside_tree():
 		return NAN
 
+	# Fast path: use active water area if set
+	if is_instance_valid(player.current_water_area):
+		var collision_shape := player.current_water_area.get_node_or_null("CollisionShape3D") as CollisionShape3D
+		if collision_shape and collision_shape.shape is BoxShape3D:
+			var box_shape := collision_shape.shape as BoxShape3D
+			var up_in_local: Vector3 = collision_shape.global_basis.inverse() * player.up_direction
+			var half_size: Vector3 = box_shape.size * 0.5
+			var half_extent_along_up: float = abs(up_in_local.x) * half_size.x \
+				+ abs(up_in_local.y) * half_size.y \
+				+ abs(up_in_local.z) * half_size.z
+			var local_surface: Vector3 = up_in_local.normalized() * half_extent_along_up
+			var world_surface: Vector3 = collision_shape.to_global(local_surface)
+			return player.up_direction.dot(world_surface)
+
 	var tree := player.get_tree()
 	if not tree:
 		return NAN
 
 	var has_surface := false
 	var highest_surface_along_up := 0.0
-	
 	var water_nodes := tree.get_nodes_in_group("WATER")
 
 	for node in water_nodes:
 		var water_area := node as Area3D
 		if not water_area:
 			continue
-		
-		# Check overlap or proximity
-		var overlapping := water_area.overlaps_body(player)
-		if not overlapping:
-			continue
 
 		var collision_shape := water_area.get_node_or_null("CollisionShape3D") as CollisionShape3D
-		if not collision_shape:
+		if not collision_shape or not (collision_shape.shape is BoxShape3D):
 			continue
 
 		var box_shape := collision_shape.shape as BoxShape3D
-		if not box_shape:
-			continue
+		var overlapping := water_area.overlaps_body(player)
+		if not overlapping:
+			var local_pos: Vector3 = collision_shape.to_local(player.global_position)
+			var half_size_box: Vector3 = box_shape.size * 0.5
+			if abs(local_pos.x) > half_size_box.x or abs(local_pos.z) > half_size_box.z or local_pos.y < -half_size_box.y or local_pos.y > half_size_box.y + 2.0:
+				continue
 
 		var up_in_local: Vector3 = collision_shape.global_basis.inverse() * player.up_direction
 		var half_size: Vector3 = box_shape.size * 0.5
@@ -231,4 +243,5 @@ func get_water_surface_along_up() -> float:
 		return NAN
 
 	return highest_surface_along_up
+
 
