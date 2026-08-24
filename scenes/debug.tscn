@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://cwb6b4lbm2i0d"]
 
-[ext_resource type="Script" uid="uid://bkanfpbod6cqc" path="res://addons/3d_player_controller/debug.gd" id="1_86eym"]
+[ext_resource type="Script" uid="uid://bkanfpbod6cqc" path="res://addons/3d_player_controller/scripts/debug.gd" id="1_86eym"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_senyo"]
 outline_size = 6

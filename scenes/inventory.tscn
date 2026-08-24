@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://d3807jlpj5vsl"]
 
-[ext_resource type="Script" uid="uid://chqp2ljg754vp" path="res://addons/3d_player_controller/inventory.gd" id="1_nsbb7"]
-[ext_resource type="Script" uid="uid://pf887aykhnd0" path="res://addons/3d_player_controller/radial_menu.gd" id="2_radmn"]
+[ext_resource type="Script" uid="uid://chqp2ljg754vp" path="res://addons/3d_player_controller/scripts/inventory.gd" id="1_nsbb7"]
+[ext_resource type="Script" uid="uid://pf887aykhnd0" path="res://addons/3d_player_controller/scripts/radial_menu.gd" id="2_radmn"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_7l55x"]
 font_size = 20

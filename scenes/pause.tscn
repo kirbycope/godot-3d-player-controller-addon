@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://dgslo5b1yxrd0"]
 
-[ext_resource type="Script" uid="uid://xsm265x8qs6f" path="res://addons/3d_player_controller/pause.gd" id="1_7mqg8"]
+[ext_resource type="Script" uid="uid://xsm265x8qs6f" path="res://addons/3d_player_controller/scripts/pause.gd" id="1_7mqg8"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_7mqg8"]
 
