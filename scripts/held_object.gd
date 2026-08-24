@@ -125,7 +125,7 @@ func _physics_process(delta: float) -> void:
 
 ## True if the item spring arm currently holds a [RigidBody3D].
 func is_holding_rigidbody() -> bool:
-	if player.item_spring_arm.get_child_count() == 0:
+	if player == null or player.item_spring_arm == null or player.item_spring_arm.get_child_count() == 0:
 		return false
 	var held_node: Node = player.item_spring_arm.get_child(0)
 	return held_node is RigidBody3D
@@ -133,7 +133,7 @@ func is_holding_rigidbody() -> bool:
 
 ## True while shared controls belong exclusively to the held object manipulator.
 func is_holding_object() -> bool:
-	return is_instance_valid(held_rigidbody)
+	return is_instance_valid(held_rigidbody) or (player != null and player.item_spring_arm != null and player.item_spring_arm.get_child_count() > 0)
 
 
 ## Returns the held-object spring length requested by held object controls.
@@ -143,13 +143,14 @@ func get_held_distance(fallback_distance: float) -> float:
 
 ## Starts charging a throw when the shoot button is pressed.
 func start_charging_throw() -> void:
-	if player.item_spring_arm.get_child_count() == 0:
+	if player == null or player.item_spring_arm == null or player.item_spring_arm.get_child_count() == 0:
 		return
 
 	_ensure_throw_charge_bar()
 	is_charging_throw = true
 	throw_charge_time = 0.0
 	throw_power = MIN_THROW_POWER
+	player.requires_shoot_release_after_throw = true
 	player.rotate_model_to_direction(_get_crosshair_throw_direction())
 
 
@@ -178,13 +179,14 @@ func release_charging_throw() -> void:
 
 ## Executes an instant throw without animation wind-up (for quick taps).
 func execute_instant_throw(throw_dir: Vector3, power: float) -> void:
-	if player.item_spring_arm.get_child_count() == 0:
+	if player == null or player.item_spring_arm == null or player.item_spring_arm.get_child_count() == 0:
 		return
 
 	player.rotate_model_to_direction(throw_dir)
 	var held_node: Node = player.item_spring_arm.get_child(0)
 	clear_throw_queue()
 	is_charging_throw = false
+	is_throwing = false
 	if throw_charge_bar:
 		throw_charge_bar.visible = false
 
@@ -220,9 +222,10 @@ func clear_throw_queue() -> void:
 func execute_throw() -> void:
 	if not is_throw_queued and not is_charging_throw:
 		return
-	if player.item_spring_arm.get_child_count() == 0:
+	if player == null or player.item_spring_arm == null or player.item_spring_arm.get_child_count() == 0:
 		clear_throw_queue()
 		is_charging_throw = false
+		is_throwing = false
 		if throw_charge_bar:
 			throw_charge_bar.visible = false
 		return
@@ -236,6 +239,8 @@ func execute_throw() -> void:
 	var power: float = throw_power
 	clear_throw_queue()
 	is_charging_throw = false
+	if not (player and player.is_emoting):
+		is_throwing = false
 	if throw_charge_bar:
 		throw_charge_bar.visible = false
 
@@ -532,7 +537,7 @@ func _get_current_state_node() -> Node:
 
 
 func _update_held_object_transform(delta: float) -> void:
-	if not is_holding_object() or is_throwing:
+	if not is_instance_valid(held_rigidbody) or is_throwing:
 		return
 
 	var is_rotating: bool = Input.is_action_pressed("throw")
@@ -573,7 +578,7 @@ func _update_held_object_transform(delta: float) -> void:
 
 
 func _lay_held_rigidbody_flat() -> void:
-	if not is_holding_object():
+	if not is_instance_valid(held_rigidbody):
 		return
 
 	var player_up: Vector3 = player.up_direction.normalized()

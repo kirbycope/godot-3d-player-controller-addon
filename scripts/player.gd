@@ -123,11 +123,20 @@ var is_attacking_3: bool: # Attack Sequence: 3 of n
 	get: return current_locomotion_node in ["GreatSwordPowerSlash", "ShieldPowerSlash"] if is_multiplayer_authority() and animation_tree else false
 # Bow and Arrow
 var is_aiming_bow: bool:
-	get: return current_locomotion_node == "ArcheryLocomotion" if is_multiplayer_authority() and equipped_bow else false
+	get:
+		if held_object and (held_object.is_holding_object() or held_object.is_charging_throw or held_object.is_throwing):
+			return false
+		return current_locomotion_node == "ArcheryLocomotion" if is_multiplayer_authority() and equipped_bow else false
 var is_drawing_arrow: bool:
-	get: return current_locomotion_node == "BowDrawArrow" if is_multiplayer_authority() and equipped_bow else false
+	get:
+		if held_object and (held_object.is_holding_object() or held_object.is_charging_throw or held_object.is_throwing):
+			return false
+		return current_locomotion_node == "BowDrawArrow" if is_multiplayer_authority() and equipped_bow else false
 var is_firing_arrow: bool:
-	get: return current_locomotion_node == "BowFireArrow" if is_multiplayer_authority() and equipped_bow else false
+	get:
+		if held_object and (held_object.is_holding_object() or held_object.is_charging_throw or held_object.is_throwing):
+			return false
+		return current_locomotion_node == "BowFireArrow" if is_multiplayer_authority() and equipped_bow else false
 # Climbing
 var is_climbing: bool = false ## Is the Player currently climbing?
 var is_climbing_on: bool = false ## Is the Player currently climbing on to a ledge?
@@ -203,12 +212,21 @@ var is_navigating: bool = false ## Is the Player currently navigating (click to 
 var is_paragliding: bool = false ## Is the Player currently paragliding?
 var is_paused: bool = false ## Is the Player currently paused?
 var is_ragdolling: bool = false ## Is the Player currently ragdolling?
+var requires_shoot_release_after_throw: bool = false ## Set during a throw to require releasing the shoot button before shooting weapons.
 var is_shooting: bool: ## Is the Player currently shooting?
 	get:
 		if not is_multiplayer_authority() or is_driving or inventory == null:
 			return false
-		if held_object and held_object.is_holding_object():
+		if is_throwing:
 			return false
+		if held_object:
+			if held_object.is_holding_object() or held_object.is_charging_throw or held_object.is_throw_queued or held_object.is_throwing:
+				return false
+		if requires_shoot_release_after_throw:
+			if Input.is_action_pressed("shoot"):
+				return false
+			else:
+				requires_shoot_release_after_throw = false
 		return Input.is_action_pressed("shoot") and inventory.can_player_shoot
 var is_sitting: bool = false ## Is the Player currently sitting?
 var is_skateboarding: bool = false ## Is the Player currently skateboarding?

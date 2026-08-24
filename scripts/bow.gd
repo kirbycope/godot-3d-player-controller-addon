@@ -18,8 +18,9 @@ func _physics_process(delta: float) -> void:
 		var was_firing_arrow: bool = _was_firing_arrow
 
 		var has_bow: bool = player.inventory.has_equipment(Equipment.EquipmentType.BOW)
-		var is_drawing_arrow_now: bool = player.is_drawing_arrow
-		var is_firing_arrow_now: bool = player.is_firing_arrow
+		var is_holding_throwable: bool = player.is_throwing or (player.held_object and player.held_object.is_holding_object())
+		var is_drawing_arrow_now: bool = player.is_drawing_arrow and not is_holding_throwable
+		var is_firing_arrow_now: bool = player.is_firing_arrow and not is_holding_throwable
 		if not player.is_aiming_bow and not player.is_drawing_arrow:
 			_draw_arrow_rumble_request_id += 1
 		var bow: Node3D = player.inventory.get_equipment_by_type(Equipment.EquipmentType.BOW)
@@ -33,6 +34,7 @@ func _physics_process(delta: float) -> void:
 				set_collision_shapes_disabled(arrow_node, true)
 				# Show the arrow when "aiming" but not drawing or firing
 				if player.is_shooting \
+				and not is_holding_throwable \
 				and not player.is_drawing_arrow \
 				and not player.is_firing_arrow:
 					arrow_node.show()
@@ -40,7 +42,7 @@ func _physics_process(delta: float) -> void:
 					arrow_node.hide()
 
 		# Have the player look at the crosshair when aiming
-		if player.is_aiming_bow:
+		if player.is_aiming_bow and not is_holding_throwable:
 			player.look_at_modifier.target_node = player.look_at_target.get_path()
 			player.look_at_modifier.active = true
 		# Reset the look at modifier when not aiming
