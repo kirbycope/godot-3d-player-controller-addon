@@ -18,7 +18,7 @@ func _ready() -> void:
 	set_physics_process(is_multiplayer_authority())
 	set_process_input(is_multiplayer_authority())
 	settings_res = PlayerSettingsResource.load_or_create()
-	settings_res.apply_audio_settings()
+	settings_res.apply_audio_settings(player)
 	_init_volume_sliders()
 
 
@@ -109,6 +109,8 @@ func _on_menu_volume_plus_touch_screen_button_pressed() -> void:
 
 func _on_music_volume_slider_value_changed(value: float) -> void:
 	_set_bus_volume("Music", value)
+	if player and player.has_method("update_music_volume"):
+		player.update_music_volume(value)
 	if settings_res:
 		settings_res.music_volume = value
 		settings_res.save()
@@ -132,6 +134,8 @@ func _on_music_volume_plus_touch_screen_button_pressed() -> void:
 
 func _on_sfx_volume_slider_value_changed(value: float) -> void:
 	_set_bus_volume("SFX", value)
+	if player and player.has_method("update_sfx_volume"):
+		player.update_sfx_volume(value)
 	if settings_res:
 		settings_res.sfx_volume = value
 		settings_res.save()

@@ -190,6 +190,7 @@ var current_input_type: InputType = InputType.TOUCH:
 			input_type_changed.emit(value)
 
 var all_buttons: Array[TouchScreenButton] = []
+var _base_normal_textures: Dictionary = {}
 var _label_texts: Dictionary = {}
 var _normal_textures: Dictionary = {}
 
@@ -200,9 +201,6 @@ func _ready() -> void:
 	set_physics_process(is_multiplayer_authority())
 	set_process_input(is_multiplayer_authority())
 
-	# Connect the input_type_changed signal to the update_input_ui function
-	input_type_changed.connect(update_input_ui)
-
 	all_buttons = [
 		joypad_button_0, joypad_button_1, joypad_button_2, joypad_button_3,
 		joypad_button_4, joypad_button_15, joypad_button_6, joypad_button_7,
@@ -212,15 +210,18 @@ func _ready() -> void:
 		key_l, key_up, key_left, key_down, key_right,
 	]
 
-	# Cache the [Label] initial `.text` values
+	# Cache the initial normal textures and label texts
 	for button in all_buttons:
-		if button.has_node("Label"):
-			var label = button.get_node("Label") as Label
-			_label_texts[label] = label.text
+		if button != null:
+			_base_normal_textures[button] = button.texture_normal
+			if button.has_node("Label"):
+				var label = button.get_node("Label") as Label
+				_label_texts[label] = label.text
 	_label_texts[left_joystick_label] = left_joystick_label.text
 	_label_texts[right_joystick_label] = right_joystick_label.text
 
-	update_input_ui(current_input_type)
+	# Connect the input_type_changed signal to the update_input_ui function
+	input_type_changed.connect(update_input_ui)
 
 	# "move_up" { Controller: (left-stick) forward, Keyboard: [W] }
 	if not InputMap.has_action("move_up"):
@@ -640,6 +641,8 @@ func _ready() -> void:
 		key_event.keycode = KEY_F3
 		InputMap.action_add_event("debug", key_event)
 
+	update_input_ui(current_input_type)
+
 
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:
@@ -701,6 +704,14 @@ func set_labels(label_texts: Dictionary) -> void:
 		final_texts[key_i_label] = final_texts[joypad_button_11_label]
 	if key_i_label in final_texts and not joypad_button_11_label in final_texts:
 		final_texts[joypad_button_11_label] = final_texts[key_i_label]
+	if joypad_button_13_label in final_texts and not key_j_label in final_texts:
+		final_texts[key_j_label] = final_texts[joypad_button_13_label]
+	if key_j_label in final_texts and not joypad_button_13_label in final_texts:
+		final_texts[joypad_button_13_label] = final_texts[key_j_label]
+	if joypad_button_14_label in final_texts and not key_l_label in final_texts:
+		final_texts[key_l_label] = final_texts[joypad_button_14_label]
+	if key_l_label in final_texts and not joypad_button_14_label in final_texts:
+		final_texts[joypad_button_14_label] = final_texts[key_l_label]
 
 	for label: Variant in _label_texts.keys():
 		if label:
@@ -713,6 +724,17 @@ func set_labels(label_texts: Dictionary) -> void:
 
 
 func update_input_ui(input_type: InputType) -> void:
+	reset_labels()
+
+	# Reset non-swappable buttons (D-pad and keyboard keys) to their pristine normal textures
+	for btn: TouchScreenButton in [
+		joypad_button_11, joypad_button_12, joypad_button_13, joypad_button_14,
+		key_w, key_a, key_s, key_d, key_i, key_j, key_k, key_l,
+		key_up, key_left, key_down, key_right,
+	]:
+		if btn != null and btn in _base_normal_textures:
+			btn.texture_normal = _base_normal_textures[btn]
+
 	if input_type == InputType.KEYBOARD_MOUSE:
 		joypad_button_0.texture_normal = keyboard_mouse_button_0_normal
 		joypad_button_0.texture_pressed = keyboard_mouse_button_0_pressed
@@ -867,3 +889,13 @@ func update_input_ui(input_type: InputType) -> void:
 	for btn in all_buttons:
 		if btn != null:
 			_normal_textures[btn] = btn.texture_normal
+
+	# Sync current pressed state with active actions
+	for btn in all_buttons:
+		if btn == null or btn.action.is_empty():
+			continue
+		if InputMap.has_action(btn.action) and Input.is_action_pressed(btn.action):
+			if btn.texture_pressed != null:
+				btn.texture_normal = btn.texture_pressed
+		else:
+			btn.texture_normal = _normal_textures[btn]

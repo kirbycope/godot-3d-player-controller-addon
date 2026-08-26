@@ -254,3 +254,46 @@ class TestPlayerControllerDemoScene:
 		await wait_physics_frames(2)
 		assert_eq(demo.player.current_state, NodeStateMachine.States.SWIMMING, "Player should enter SWIMMING state when in the water pool")
 		assert_true(demo.player.is_swimming, "Player is_swimming flag should be true")
+
+
+## Tests related to swapping input types, label resetting, and texture state.
+class TestInputTypeSwapping:
+	extends ControlsTestBase
+
+	func test_swapping_input_types_resets_custom_labels():
+		var controls = player_instance.controls
+		# Custom label override
+		controls.set_labels({ controls.joypad_button_0_label: "CustomAction" })
+		assert_eq(controls.joypad_button_0_label.text, "CustomAction")
+		assert_eq(controls.joypad_button_1_label.text, "")
+
+		# Swap input type to Keyboard/Mouse -> should reset all labels to defaults
+		controls.current_input_type = controls.InputType.KEYBOARD_MOUSE
+		assert_eq(controls.joypad_button_0_label.text, "Action", "Label should reset to default upon swapping input type")
+		assert_eq(controls.key_s_label.text, "Move", "Key S label should reset to default Move")
+		assert_eq(controls.key_i_label.text, "Seeker", "Key I label should reset to default Seeker")
+
+	func test_dpad_texture_resets_to_outline_after_input_swap():
+		var controls = player_instance.controls
+		var dpad_up = controls.joypad_button_11
+		var outline_texture = dpad_up.texture_normal
+
+		# Simulate pressing DPad Up (action: "seeker")
+		var press_event = InputEventAction.new()
+		press_event.action = "seeker"
+		press_event.pressed = true
+		controls._input(press_event)
+		assert_eq(dpad_up.texture_normal, dpad_up.texture_pressed, "Texture should switch to pressed texture when held")
+
+		# Bump mouse (swap to Keyboard/Mouse)
+		controls.current_input_type = controls.InputType.KEYBOARD_MOUSE
+
+		# Release DPad Up action
+		var release_event = InputEventAction.new()
+		release_event.action = "seeker"
+		release_event.pressed = false
+		controls._input(release_event)
+
+		# Swap back to controller
+		controls.current_input_type = controls.InputType.MICROSOFT
+		assert_eq(dpad_up.texture_normal, outline_texture, "DPad Up texture should return to outline texture when released after input swap")

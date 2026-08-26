@@ -284,10 +284,7 @@ var skateboard: Node3D
 @onready var spring_arm: SpringArm3D = $CameraMount/CameraSpringArm
 @onready var camera: Camera3D = $CameraMount/CameraSpringArm/Camera3D
 @onready var state_machine: NodeStateMachine = $NodeStateMachine ## Enables/Disables the scripts that run when various States are entered/exited.
-@onready var sfx_footsteps_grass: AudioStreamPlayer3D = $SFX_Footsteps_Grass
-@onready var sfx_footsteps_slide: AudioStreamPlayer3D = $SFX_Footsteps_Slide
-@onready var sfx_footsteps_stone: AudioStreamPlayer3D = $SFX_Footsteps_Stone
-@onready var sfx_footsteps_wood: AudioStreamPlayer3D = $SFX_Footsteps_Wood
+@onready var audio: Audio = $Audio
 @onready var steam_persona_name: Label3D = $SteamPersonaName
 
 var current_water_area: Area3D = null
@@ -308,7 +305,7 @@ func _ready() -> void:
 	orientation.origin = Vector3()
 
 	# Apply persistent user settings
-	PlayerSettingsResource.load_or_create().apply_all(get_viewport())
+	PlayerSettingsResource.load_or_create().apply_all(get_viewport(), self)
 
 	# Record the initial collision shape height and position for crouching and sliding.
 	initial_collision_shape_height = collision_shape.shape.height
@@ -844,22 +841,16 @@ func get_facing_direction() -> Vector3:
 func sfx_footsteps_play():
 	if is_on_floor() and paraglider_raycast.is_colliding() and not is_ragdolling:
 		var collider := paraglider_raycast.get_collider() as Node3D
-		if collider:
-			if (collider.is_in_group("DIRT") or collider.is_in_group("GRASS")):
-				sfx_footsteps_grass.play()
-			elif (collider.is_in_group("COBBLESTONE") or collider.is_in_group("CONCRETE") or collider.is_in_group("STONE")):
-				sfx_footsteps_stone.play()
-			elif collider.is_in_group("WOOD"):
-				sfx_footsteps_wood.play()
+		if audio:
+			audio.play_footstep(collider)
 
 
 ## Called by the animation(s) using "Call Method Track" to play sliding footstep sound effects at the right time.
 func sfx_footsteps_slide_play():
 	if is_on_floor() and paraglider_raycast.is_colliding():
 		var collider := paraglider_raycast.get_collider() as Node3D
-		if collider:
-			if collider.is_in_group("GRASS"):
-				sfx_footsteps_slide.play()
+		if audio:
+			audio.play_slide(collider)
 
 
 ## Reset the attack sequence when the attack sequence timer times out.
@@ -929,3 +920,20 @@ func exit_water(water_area: Area3D = null) -> void:
 				state_machine.travel(NodeStateMachine.States.SWIMMING, NodeStateMachine.States.STANDING if is_on_floor() else NodeStateMachine.States.FALLING)
 
 
+## Update volume on all SFX footstep AudioStreamPlayer3D nodes under player.
+func update_sfx_volume(value: float) -> void:
+	if audio:
+		audio.set_sfx_volume(value)
+
+
+## Update volume on RadiOtPlayer3D node under player.
+func update_music_volume(value: float) -> void:
+	if audio:
+		audio.set_music_volume(value)
+	else:
+		var db = linear_to_db(value / 100.0) if value > 0.0 else -80.0
+		var radio = get_node_or_null("RadiOtPlayer3D")
+		if not radio:
+			radio = find_child("RadiOtPlayer3D", true, false)
+		if radio and "volume_db" in radio:
+			radio.volume_db = db

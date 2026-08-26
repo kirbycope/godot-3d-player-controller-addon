@@ -65,6 +65,11 @@ Organized state machine architecture separating primary lower-body locomotion st
   - **Video Settings** (`VideoSettings`): Controls for `VSYNC`, `MSAA`, `SSAA`, `FXAA`, `SSRL`, `TAA`, and `FSR`.
 - **Persistent User Settings**: All audio and video preferences are automatically saved to and loaded from `user://settings.tres` via `PlayerSettingsResource`.
 
+### 8. Audio Component System (`Audio`)
+- Modular 3D audio subsystem (`audio.tscn` paired with `audio.gd`) encapsulating surface-aware footstep audio streams (`Dirt`, `Grass`, `Stone`, `Wood`, `Water`, `Slide`).
+- Dynamic surface detection via physics collider group tagging and raycasting.
+- Centralized volume scaling for SFX footstep audio players and vehicle music radio (`RadiOtPlayer3D`).
+
 ---
 
 ## 📦 Installation

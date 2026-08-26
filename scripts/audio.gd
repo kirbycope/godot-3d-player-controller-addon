@@ -1,23 +1,14 @@
+class_name Audio
 extends Node3D
 
 @export var player: Player
 
-@onready var footstep_grass: AudioStreamPlayer3D = $FootstepGrass
-@onready var footstep_metal: AudioStreamPlayer3D = $FootstepMetal
-@onready var footstep_mud: AudioStreamPlayer3D = $FootstepMud
-@onready var footstep_sand: AudioStreamPlayer3D = $FootstepSand
-@onready var footstep_stone: AudioStreamPlayer3D = $FootstepStone
-@onready var footstep_water: AudioStreamPlayer3D = $FootstepWater
-@onready var footstep_wood: AudioStreamPlayer3D = $FootstepWood
-@onready var sneak_step: AudioStreamPlayer3D = $SneakStep
-@onready var voice_male_effort_grunt: AudioStreamPlayer3D = $VoiceMaleEffortGrunt
-@onready var voice_male_breathing_jog: AudioStreamPlayer3D = $VoiceMaleBreathingJog
-@onready var voice_male_breathing_run: AudioStreamPlayer3D = $VoiceMaleBreathingRun
-@onready var voice_male_breathing_walk: AudioStreamPlayer3D = $VoiceMaleBreathingWalk
-@onready var voice_male_grunt_pain: AudioStreamPlayer3D = $VoiceMaleGruntPain
-
-var cached_velocity: Vector3
-var was_on_the_floor: bool
+@onready var sfx_footsteps_dirt: AudioStreamPlayer3D = $SFX_Footsteps_Dirt
+@onready var sfx_footsteps_grass: AudioStreamPlayer3D = $SFX_Footsteps_Grass
+@onready var sfx_footsteps_slide: AudioStreamPlayer3D = $SFX_Footsteps_Slide
+@onready var sfx_footsteps_stone: AudioStreamPlayer3D = $SFX_Footsteps_Stone
+@onready var sfx_footsteps_water: AudioStreamPlayer3D = $SFX_Footsteps_Water
+@onready var sfx_footsteps_wood: AudioStreamPlayer3D = $SFX_Footsteps_Wood
 
 
 ## Called when the node enters the scene tree for the first time.
@@ -25,65 +16,74 @@ func _ready() -> void:
 	set_process(is_multiplayer_authority())
 	set_physics_process(is_multiplayer_authority())
 	set_process_input(is_multiplayer_authority())
-	pass # Replace with function body.
 
 
-## Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
+## Play surface-aware footstep audio based on collider groups or meta.
+func play_footstep(collider: Node3D = null) -> void:
+	if not collider and player and player.paraglider_raycast and player.paraglider_raycast.is_colliding():
+		collider = player.paraglider_raycast.get_collider() as Node3D
 
-	if player.is_exhausted:
-		if abs(player.velocity.length()) > 0.2:
-			if not voice_male_breathing_run.playing:
-				voice_male_breathing_run.play()
-			if voice_male_breathing_walk.playing:
-				voice_male_breathing_walk.stop()
+	if collider:
+		if collider.is_in_group("DIRT") or collider.is_in_group("GRASS"):
+			sfx_footsteps_grass.play()
+		elif collider.is_in_group("COBBLESTONE") or collider.is_in_group("CONCRETE") or collider.is_in_group("STONE"):
+			sfx_footsteps_stone.play()
+		elif collider.is_in_group("WOOD"):
+			sfx_footsteps_wood.play()
+		elif collider.is_in_group("WATER"):
+			sfx_footsteps_water.play()
 		else:
-			if not voice_male_breathing_walk.playing:
-				voice_male_breathing_walk.play()
-			if voice_male_breathing_run.playing:
-				voice_male_breathing_run.stop()
+			sfx_footsteps_stone.play()
 	else:
-		if voice_male_breathing_run.playing:
-			voice_male_breathing_run.stop()
-		if voice_male_breathing_walk.playing:
-			voice_male_breathing_walk.stop()
-
-	if not was_on_the_floor and player.is_on_floor():
-		if not voice_male_grunt_pain.playing \
-		and abs(cached_velocity.length()) > 10:
-			voice_male_grunt_pain.play()
-
-	was_on_the_floor = player.is_on_floor()
-	cached_velocity = player.velocity
+		sfx_footsteps_stone.play()
 
 
-func check_under_player():
-	if was_on_the_floor and cached_velocity.length() > 0.2:
-		if player.raycast_below_step.is_colliding():
-			if player.is_crouching:
-				stop_all_footstep_sounds()
-				sneak_step.play()
+## Play slide footstep sound.
+func play_slide(_collider: Node3D = null) -> void:
+	sfx_footsteps_slide.play()
+
+
+## Update volume on all footstep AudioStreamPlayer3D nodes and vehicles.
+func set_sfx_volume(value: float) -> void:
+	var db = linear_to_db(value / 100.0) if value > 0.0 else -80.0
+	for child in get_children():
+		if child is AudioStreamPlayer3D:
+			child.volume_db = db
+
+	if is_inside_tree():
+		for vehicle in get_tree().get_nodes_in_group("vehicles"):
+			if vehicle.has_method("set_sfx_volume"):
+				vehicle.set_sfx_volume(value)
 			else:
-				var stepping_on = player.raycast_below_step.get_collider()
-				if stepping_on.has_meta("step_sound"):
-					var step_sound = stepping_on.get_meta("step_sound")
-					if step_sound:
-						stop_all_footstep_sounds()
-						if step_sound.to_lower() == "grass":
-							footstep_grass.play()
-						elif step_sound.to_lower() == "stone":
-							footstep_stone.play()
-				else:
-					# Stop all footstep sounds if none is defined for the surface
-					stop_all_footstep_sounds()
+				for player_node in vehicle.find_children("*", "AudioStreamPlayer3D", true, false):
+					if player_node is AudioStreamPlayer3D:
+						player_node.volume_db = db
 
 
-func stop_all_footstep_sounds():
-	footstep_grass.stop()
-	footstep_metal.stop()
-	footstep_mud.stop()
-	footstep_sand.stop()
-	footstep_stone.stop()
-	footstep_water.stop()
-	footstep_wood.stop()
-	sneak_step.stop()
+## Update volume on RadiOtPlayer3D node under player or in scene tree.
+func set_music_volume(value: float) -> void:
+	var linear_vol: float = clampf(value / 100.0, 0.0, 1.0)
+	var db: float = linear_to_db(linear_vol) if linear_vol > 0.0 else -80.0
+
+	var radio_nodes: Array[Node] = []
+	if player:
+		var radio = player.get_node_or_null("RadiOtPlayer3D")
+		if not radio:
+			radio = player.find_child("RadiOtPlayer3D", true, false)
+		if radio:
+			radio_nodes.append(radio)
+
+	if is_inside_tree():
+		for r in get_tree().root.find_children("*", "RadiOtPlayer3D", true, false):
+			if not r in radio_nodes:
+				radio_nodes.append(r)
+
+	for radio in radio_nodes:
+		if radio.has_method("set_volume"):
+			radio.set_volume(linear_vol)
+		else:
+			if "volume_db" in radio:
+				radio.volume_db = db
+			var streamer = radio.get_node_or_null("RadiOtStreamer")
+			if streamer and streamer.has_method("set_volume"):
+				streamer.set_volume(linear_vol)

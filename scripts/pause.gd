@@ -25,7 +25,7 @@ func show_menu() -> void:
 	show()
 	player.is_paused = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	$Panel/VBoxContainer/Restart.grab_focus()
+	$Panel/VBoxContainer/Resume.grab_focus()
 
 
 func hide_menu() -> void:
@@ -34,12 +34,12 @@ func hide_menu() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
-func _on_quit_pressed() -> void:
-	get_tree().quit()
+func _on_resume_pressed() -> void:
+	hide_menu()
 
 
-func _on_quit_touch_screen_button_pressed() -> void:
-	_on_quit_pressed()
+func _on_resume_touch_screen_button_pressed() -> void:
+	_on_resume_pressed()
 
 
 func _on_restart_pressed() -> void:
@@ -59,10 +59,6 @@ func _on_settings_touch_screen_button_pressed() -> void:
 	_on_settings_pressed()
 
 
-func _on_unstuck_touch_screen_button_pressed() -> void:
-	_on_unstuck_pressed()
-
-
 func _on_unstuck_pressed() -> void:
 	if player:
 		player.global_transform = player.initial_transform
@@ -71,3 +67,15 @@ func _on_unstuck_pressed() -> void:
 		player.orientation = Transform3D(player.initial_transform.basis, Vector3.ZERO)
 		player.player_model.transform = player.initial_player_model_transform
 		player.collision_shape.transform = player.initial_collision_shape_transform
+
+
+func _on_unstuck_touch_screen_button_pressed() -> void:
+	_on_unstuck_pressed()
+
+
+func _on_quit_pressed() -> void:
+	get_tree().quit()
+
+
+func _on_quit_touch_screen_button_pressed() -> void:
+	_on_quit_pressed()

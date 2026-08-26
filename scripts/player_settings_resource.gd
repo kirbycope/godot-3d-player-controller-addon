@@ -31,11 +31,16 @@ func save() -> void:
 	ResourceSaver.save(self, SAVE_PATH)
 
 
-func apply_audio_settings() -> void:
+func apply_audio_settings(player: Node = null) -> void:
 	_set_bus_volume("Dialog", dialog_volume)
 	_set_bus_volume("Menu", menu_volume)
 	_set_bus_volume("Music", music_volume)
 	_set_bus_volume("SFX", sfx_volume)
+	if player:
+		if player.has_method("update_sfx_volume"):
+			player.update_sfx_volume(sfx_volume)
+		if player.has_method("update_music_volume"):
+			player.update_music_volume(music_volume)
 
 
 func _set_bus_volume(bus_name: String, value: float) -> void:
@@ -84,7 +89,7 @@ func apply_video_settings(viewport: Viewport) -> void:
 	viewport.scaling_3d_mode = fsr_index
 
 
-func apply_all(viewport: Viewport) -> void:
-	apply_audio_settings()
+func apply_all(viewport: Viewport, player: Node = null) -> void:
+	apply_audio_settings(player)
 	if viewport:
 		apply_video_settings(viewport)
