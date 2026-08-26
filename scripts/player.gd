@@ -258,6 +258,8 @@ var skateboard: Node3D
 @onready var navigation_agent: NavigationAgent3D = $NavigationAgent3D
 @onready var pause: CanvasLayer = $Pause
 @onready var settings: CanvasLayer = $Settings
+@onready var audio_settings: CanvasLayer = $AudioSettings
+@onready var video_settings: CanvasLayer = $VideoSettings
 @onready var stamina: TextureProgressBar = $Stamina
 @onready var initial_transform: Transform3D = global_transform
 @onready var falling_raycast: RayCast3D = $FallingRaycast
@@ -304,6 +306,9 @@ func _ready() -> void:
 	# Pre-initialize orientation transform.
 	orientation = player_model.global_transform
 	orientation.origin = Vector3()
+
+	# Apply persistent user settings
+	PlayerSettingsResource.load_or_create().apply_all(get_viewport())
 
 	# Record the initial collision shape height and position for crouching and sliding.
 	initial_collision_shape_height = collision_shape.shape.height
@@ -388,7 +393,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 	# Toggle mouse capture
-	if event.is_action_pressed("ui_cancel") and not pause.visible and not settings.visible:
+	if event.is_action_pressed("ui_cancel") and not pause.visible and not settings.visible and not audio_settings.visible and not video_settings.visible:
 		# Check if the mouse is currently captured
 		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 			# Set the mouse mode to visible to show the mouse cursor
@@ -401,7 +406,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	## DEBUG: [N] toggles the cursor visibility for testing click-to-move navigation.
 	if event is InputEventKey and event.pressed and not event.echo \
 			and event.keycode == KEY_N \
-			and not pause.visible and not settings.visible:
+			and not pause.visible and not settings.visible and not audio_settings.visible and not video_settings.visible:
 		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		else:
@@ -411,7 +416,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouse \
 			and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) \
 			and Input.mouse_mode == Input.MOUSE_MODE_VISIBLE \
-			and not pause.visible and not settings.visible:
+			and not pause.visible and not settings.visible and not audio_settings.visible and not video_settings.visible:
 		# Find out where the click lands on the player's movement plane
 		var mouse_event: InputEventMouse = event
 		var from: Vector3 = camera.project_ray_origin(mouse_event.position)

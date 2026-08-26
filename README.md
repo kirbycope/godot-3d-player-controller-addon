@@ -58,9 +58,12 @@ Organized state machine architecture separating primary lower-body locomotion st
 - Exhaustion state with heavy-breathing locomotion recovery.
 - Inspector toggles to enable or disable stamina constraints.
 
-### 7. Debug HUD & In-Game Settings (`Debug`, `Settings`)
-- Real-time state visualizer, active perspective indicator, and live FPS counter (toggle with `F3`).
-- Audio bus volume controls, mouse sensitivity sliders, and keybindings menu.
+### 7. Debug HUD & In-Game Settings (`Debug`, `Settings`, `AudioSettings`, `VideoSettings`)
+- **Debug Telemetry**: Real-time state visualizer, active perspective indicator, and live FPS counter (toggle with `F3`).
+- **Split Settings Menu**:
+  - **Audio Settings** (`AudioSettings`): Volume sliders and step buttons for `Dialog`, `Menu`, `Music`, and `SFX` buses.
+  - **Video Settings** (`VideoSettings`): Controls for `VSYNC`, `MSAA`, `SSAA`, `FXAA`, `SSRL`, `TAA`, and `FSR`.
+- **Persistent User Settings**: All audio and video preferences are automatically saved to and loaded from `user://settings.tres` via `PlayerSettingsResource`.
 
 ---
 

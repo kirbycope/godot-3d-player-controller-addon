@@ -223,6 +223,8 @@
 [ext_resource type="Texture2D" uid="uid://dsy7pc3ak6vqf" path="res://addons/3d_player_controller/assets/kenney_nl/2D assets/Game Icons/PNG/White/2x/down.png" id="174_07say"]
 [ext_resource type="AudioStream" uid="uid://bbkbl4was5dlc" path="res://addons/3d_player_controller/assets/tommusic/fantasy_sfx/Footsteps/Dirt/Dirt Chain Run 2.ogg" id="174_xw6m8"]
 [ext_resource type="PackedScene" uid="uid://2crtfw6co0ss" path="res://addons/3d_player_controller/scenes/settings.tscn" id="174_xwibx"]
+[ext_resource type="PackedScene" uid="uid://caww8bymbfsli" path="res://addons/3d_player_controller/scenes/audio_settings.tscn" id="174_audio"]
+[ext_resource type="PackedScene" uid="uid://bsmatt41d3g3p" path="res://addons/3d_player_controller/scenes/video_settings.tscn" id="174_video"]
 [ext_resource type="AudioStream" uid="uid://dblp7ljrbb5ht" path="res://addons/3d_player_controller/assets/tommusic/fantasy_sfx/Footsteps/Dirt/Dirt Chain Run 3.ogg" id="175_07say"]
 [ext_resource type="AudioStream" uid="uid://ds8wlmq30o228" path="res://addons/3d_player_controller/assets/tommusic/fantasy_sfx/Footsteps/Dirt/Dirt Chain Run 4.ogg" id="176_0cxoa"]
 [ext_resource type="PackedScene" uid="uid://6n6s0hg75now" path="res://addons/3d_player_controller/scenes/driving_ui.tscn" id="176_gqdy8"]
@@ -3812,6 +3814,14 @@ visible = false
 player = NodePath("..")
 
 [node name="Settings" parent="." unique_id=955686872 node_paths=PackedStringArray("player") instance=ExtResource("174_xwibx")]
+visible = false
+player = NodePath("..")
+
+[node name="AudioSettings" parent="." unique_id=1733087110 node_paths=PackedStringArray("player") instance=ExtResource("174_audio")]
+visible = false
+player = NodePath("..")
+
+[node name="VideoSettings" parent="." unique_id=1733087111 node_paths=PackedStringArray("player") instance=ExtResource("174_video")]
 visible = false
 player = NodePath("..")
 
