@@ -149,10 +149,11 @@ func _physics_process(delta: float) -> void:
 		var is_car_disabled: bool = car.get("is_on_fire") == true or car.get("has_exploded") == true or player.is_paused or player.is_ragdolling
 		
 		if is_car_disabled:
+			var parked_brake: float = car.get("max_brake_force") if car.get("max_brake_force") != null else 1800.0
 			for child in car.get_children():
 				if child is VehicleWheel3D:
 					child.engine_force = 0.0
-					child.brake = 0.0
+					child.brake = parked_brake
 			car.steering = 0.0
 		else:
 			var accelerate_pressed: bool = is_accelerate_pressed()
