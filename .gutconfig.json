@@ -2,14 +2,10 @@
 	"background_color": "262626ff",
 	"compact_mode": false,
 	"configured_dirs": [
-		"res://addons/3d_player_controller/tests",
-		"res://test/unit",
-		"res://test/integration"
+		"res://addons/3d_player_controller/tests"
 	],
 	"dirs": [
-		"res://addons/3d_player_controller/tests",
-		"res://test/unit",
-		"res://test/integration"
+		"res://addons/3d_player_controller/tests"
 	],
 	"disable_colors": false,
 	"double_strategy": 1,
