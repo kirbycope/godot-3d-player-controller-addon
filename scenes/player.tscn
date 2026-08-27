@@ -197,6 +197,7 @@
 [ext_resource type="Script" uid="uid://bn76eia2dihta" path="res://addons/3d_player_controller/scripts/falling.gd" id="144_108j8"]
 [ext_resource type="Script" uid="uid://d3yrab3eiq4j0" path="res://addons/3d_player_controller/scripts/crouching.gd" id="144_x0r6x"]
 [ext_resource type="Script" uid="uid://7oyjxd1xp6wx" path="res://addons/3d_player_controller/scripts/paragliding.gd" id="145_8f4nr"]
+[ext_resource type="Script" uid="uid://dpu8h1ngv3sta" path="res://addons/3d_player_controller/scripts/pushing.gd" id="146_pshng"]
 [ext_resource type="AnimationLibrary" uid="uid://beoyakfbpowyp" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Treading Water.glb" id="145_sy08r"]
 [ext_resource type="AnimationLibrary" uid="uid://clvln650ter4p" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Shove Reaction.glb" id="147_pxmv8"]
 [ext_resource type="Script" uid="uid://cfolkbq3v2mtf" path="res://addons/3d_player_controller/scripts/sliding.gd" id="147_x0r6x"]
@@ -2401,6 +2402,7 @@ advance_mode = 2
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_bq1jl"]
 advance_mode = 2
+advance_expression = "not is_pushing"
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_7kob7"]
 switch_mode = 2
@@ -2408,6 +2410,7 @@ advance_mode = 2
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_cxdcn"]
 advance_mode = 2
+advance_expression = "not is_pushing"
 
 [sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_ikfak"]
 states/Backflip/node = SubResource("AnimationNodeAnimation_pxmv8")
@@ -3833,6 +3836,11 @@ player = NodePath("../..")
 [node name="Paragliding" type="Node" parent="NodeStateMachine" unique_id=1245808360 node_paths=PackedStringArray("player")]
 process_mode = 4
 script = ExtResource("145_8f4nr")
+player = NodePath("../..")
+
+[node name="Pushing" type="Node" parent="NodeStateMachine" unique_id=1918273645 node_paths=PackedStringArray("player")]
+process_mode = 4
+script = ExtResource("146_pshng")
 player = NodePath("../..")
 
 [node name="Ragdolling" type="Node" parent="NodeStateMachine" unique_id=1826584439 node_paths=PackedStringArray("player")]

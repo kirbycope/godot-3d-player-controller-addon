@@ -170,6 +170,36 @@ class TestSprintingTransitions:
 		sender.action_up("move_up")
 		player.smoothed_motion = Vector2.ZERO
 
+class TestPushingTransitions:
+	extends FsmTestBase
+
+	func test_standing_to_pushing_and_back():
+		assert_eq(player.current_state, NodeStateMachine.States.STANDING, "Player should start in STANDING state.")
+
+		player.smoothed_motion = Vector2(0, 1.0)
+		var sender = InputSender.new(Input)
+		sender.set_auto_flush_input(true)
+		sender.action_down("move_up")
+
+		# Walk forward until the player presses into the surrounding wall
+		var frames_waited: int = 0
+		while player.current_state != NodeStateMachine.States.PUSHING and frames_waited < 180:
+			await wait_physics_frames(5)
+			frames_waited += 5
+
+		assert_eq(player.current_state, NodeStateMachine.States.PUSHING, "Player should transition to PUSHING when moving into a wall.")
+		assert_true(player.is_pushing, "Player should be flagged as pushing.")
+
+		await wait_physics_frames(30)
+		assert_true(player.current_locomotion_node in ["PushingStart", "Pushing"], "Pushing animation should become active, got %s." % player.current_locomotion_node)
+
+		sender.action_up("move_up")
+		player.smoothed_motion = Vector2.ZERO
+		await wait_physics_frames(5)
+
+		assert_eq(player.current_state, NodeStateMachine.States.STANDING, "Player should transition back to STANDING when input stops.")
+		assert_false(player.is_pushing, "Player should not be flagged as pushing.")
+
 class TestAirborneTransitions:
 	extends FsmTestBase
 	

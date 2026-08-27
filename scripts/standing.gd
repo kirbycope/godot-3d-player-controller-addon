@@ -53,6 +53,15 @@ func _physics_process(delta: float) -> void:
 		player.state_machine.travel(_this_state, NodeStateMachine.States.SPRINTING)
 		return
 
+	# Check if the player is moving into a wall while unarmed and unencumbered
+	if player.get_grounded_locomotion_state() == &"StandingLocomotion" \
+	and not player.is_focusing \
+	and not (player.held_object and player.held_object.is_holding_object()) \
+	and is_player_pushing_into_wall():
+		# Start "pushing"
+		player.state_machine.travel(_this_state, NodeStateMachine.States.PUSHING)
+		return
+
 	# Keep grounded locomotion state updated (e.g. HeavyBreathing when idle & exhausted)
 	var target_locomotion: String = String(player.get_grounded_locomotion_state())
 	var root_node: String = String(player.locomotion_state.get_current_node()) if player.locomotion_state else ""

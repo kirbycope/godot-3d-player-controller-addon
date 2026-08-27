@@ -211,6 +211,7 @@ var is_logging: bool: ## Is the Player currently logging?
 var is_navigating: bool = false ## Is the Player currently navigating (click to move)?
 var is_paragliding: bool = false ## Is the Player currently paragliding?
 var is_paused: bool = false ## Is the Player currently paused?
+var is_pushing: bool = false ## Is the Player currently pushing?
 var is_ragdolling: bool = false ## Is the Player currently ragdolling?
 var requires_shoot_release_after_throw: bool = false ## Set during a throw to require releasing the shoot button before shooting weapons.
 var is_shooting: bool: ## Is the Player currently shooting?

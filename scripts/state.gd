@@ -11,6 +11,7 @@ enum States {
 	HANGING,
 	JUMPING,
 	PARAGLIDING,
+	PUSHING,
 	RAGDOLLING,
 	SITTING,
 	SKATEBOARDING,
@@ -107,6 +108,27 @@ func _is_state_enabled(state: States) -> bool:
 
 
 
+
+
+## True if the player is moving into a wall (or heavy object) they are facing.
+func is_player_pushing_into_wall() -> bool:
+	if not player.has_move_input or not player.is_on_wall():
+		return false
+	var facing: Vector3 = player.get_facing_direction()
+	if facing == Vector3.ZERO:
+		return false
+	for i in player.get_slide_collision_count():
+		var collision: KinematicCollision3D = player.get_slide_collision(i)
+		if collision.get_collider() is CharacterBody3D:
+			continue
+		var normal: Vector3 = collision.get_normal()
+		# Skip floor/ceiling contacts
+		if absf(normal.dot(player.up_direction)) > 0.3:
+			continue
+		# get_facing_direction() aligns with the pushed wall's normal (PlayerModel forward is +Z).
+		if facing.dot(normal) > 0.8:
+			return true
+	return false
 
 
 func _on_input_type_changed(input_type: int) -> void:
