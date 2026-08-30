@@ -93,7 +93,7 @@ var equipped_sword_2h: bool:
 		return inventory != null and inventory.has_equipment(Equipment.EquipmentType.SWORD_2H)
 var has_move_input: bool:
 	get:
-		return player_input != null and player_input.motion.length_squared() > 0.0
+		return player_input != null and player_input.motion.length_squared() > 0.001
 var uses_equipment_jump_variants: bool:
 	get:
 		return equipped_axe_1h \
@@ -239,7 +239,7 @@ var drawn_weapon_group: String = "" ## Locomotion group whose draw animation alr
 var last_fall_speed: float = 0.0 ## The downward vertical fall speed right before movement update.
 var initial_collision_shape_height: float
 var initial_collision_shape_position: Vector3
-var initial_parent: Node3D
+var initial_parent: Node
 var orientation := Transform3D()
 var root_motion := Transform3D()
 var smoothed_motion: Vector2 = Vector2.ZERO

@@ -5,6 +5,7 @@ extends GutTest
 class TestParagliderContrails:
 	extends GutTest
 
+	const Contrail3D = preload("res://scenes/contrail_3d.gd")
 	var paraglider_scene = preload("res://scenes/paraglider.tscn")
 	var paraglider: Node3D
 
@@ -18,30 +19,30 @@ class TestParagliderContrails:
 		var right_wing = paraglider.get_node_or_null("RightWing")
 		assert_not_null(left_wing, "LeftWing node should exist.")
 		assert_not_null(right_wing, "RightWing node should exist.")
-		assert_is(left_wing, Trail3D, "LeftWing should be a Trail3D node.")
-		assert_is(right_wing, Trail3D, "RightWing should be a Trail3D node.")
+		assert_is(left_wing, Contrail3D, "LeftWing should be a Contrail3D node.")
+		assert_is(right_wing, Contrail3D, "RightWing should be a Contrail3D node.")
 
 	func test_trail_properties_configured() -> void:
-		var left_wing: Trail3D = paraglider.get_node("LeftWing") as Trail3D
-		var right_wing: Trail3D = paraglider.get_node("RightWing") as Trail3D
+		var left_wing: Contrail3D = paraglider.get_node("LeftWing") as Contrail3D
+		var right_wing: Contrail3D = paraglider.get_node("RightWing") as Contrail3D
 		
 		assert_false(left_wing.emitting, "LeftWing trail should not emit by default.")
 		assert_false(right_wing.emitting, "RightWing trail should not emit by default.")
-		assert_eq(left_wing.width, 0.05, "LeftWing width should match configuration.")
-		assert_eq(right_wing.width, 0.05, "RightWing width should match configuration.")
-		assert_eq(left_wing.lifetime, 1.0, "LeftWing lifetime should be 1.0.")
-		assert_eq(right_wing.lifetime, 1.0, "RightWing lifetime should be 1.0.")
-		assert_eq(left_wing.min_section_length, 0.06, "LeftWing min section length should be 0.06.")
+		assert_almost_eq(left_wing.width, 0.05, 0.001)
+		assert_almost_eq(right_wing.width, 0.05, 0.001)
+		assert_almost_eq(left_wing.lifetime, 1.0, 0.001)
+		assert_almost_eq(right_wing.lifetime, 1.0, 0.001)
+		assert_almost_eq(left_wing.min_section_length, 0.06, 0.001)
 		assert_not_null(left_wing.color_gradient, "LeftWing should have a color gradient.")
 		assert_not_null(left_wing.width_curve, "LeftWing should have a width curve.")
 
 	func test_paraglider_state_toggles_trail_emitting() -> void:
-		var left_wing: Trail3D = paraglider.get_node("LeftWing") as Trail3D
-		var right_wing: Trail3D = paraglider.get_node("RightWing") as Trail3D
+		var left_wing: Contrail3D = paraglider.get_node("LeftWing") as Contrail3D
+		var right_wing: Contrail3D = paraglider.get_node("RightWing") as Contrail3D
 
-		# Mock a player object
-		var mock_player = Node.new()
-		mock_player.set_script(load("res://addons/3d_player_controller/scripts/player.gd"))
+		# Mock a player object using player.tscn
+		var player_scene = preload("res://addons/3d_player_controller/scenes/player.tscn")
+		var mock_player: CharacterBody3D = player_scene.instantiate()
 		add_child_autofree(mock_player)
 		paraglider.player = mock_player
 

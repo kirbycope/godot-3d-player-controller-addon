@@ -2,7 +2,7 @@ class_name Pushing
 extends NodeStateMachine
 
 ## Grace period for momentary loss of wall contact (root motion can pulse the collision).
-const STOP_GRACE_TIME: float = 0.4
+const STOP_GRACE_TIME: float = 0.15
 
 var _this_state: NodeStateMachine.States = NodeStateMachine.States.PUSHING
 var _stop_grace_remaining: float = 0.0
@@ -20,14 +20,15 @@ func _physics_process(delta: float) -> void:
 		player.state_machine.travel(_this_state, NodeStateMachine.States.FALLING)
 		return
 
-	# Check if the player has stopped moving
-	if not player.has_move_input:
+	# Check if the player has stopped moving or input motion is at or near 0
+	if not player.has_move_input or (player.player_input and player.player_input.motion.length_squared() < 0.01):
 		# Start "standing"
 		player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
 		return
 
-	# Check if the player has lost wall contact (with a grace period for root motion pulses)
-	if player.is_on_wall():
+	# Check if the player is pushing into a wall (or raycast is colliding)
+	var has_wall_contact: bool = is_player_pushing_into_wall() or (player.ledge_detection_horizontal and player.ledge_detection_horizontal.is_colliding())
+	if has_wall_contact:
 		_stop_grace_remaining = STOP_GRACE_TIME
 	else:
 		_stop_grace_remaining -= delta
