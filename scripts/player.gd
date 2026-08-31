@@ -261,6 +261,7 @@ var skateboard: Node3D
 @onready var settings: CanvasLayer = $Settings
 @onready var audio_settings: CanvasLayer = $AudioSettings
 @onready var video_settings: CanvasLayer = $VideoSettings
+@onready var lobby_manager: CanvasLayer = get_node_or_null("LobbyManager") as CanvasLayer
 @onready var stamina: TextureProgressBar = $Stamina
 @onready var initial_transform: Transform3D = global_transform
 @onready var falling_raycast: RayCast3D = $FallingRaycast

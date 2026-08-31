@@ -2,6 +2,16 @@ extends CanvasLayer
 
 @export var player: Player
 
+@onready var project_rendering_method = ProjectSettings.get_setting("rendering/renderer/rendering_method")
+@onready var lobby: Button = get_node_or_null("Panel/VBoxContainer/Lobby") as Button
+
+
+## Called when the node enters the scene tree for the first time.
+func _ready() -> void:
+	if lobby:
+		var is_gl_compatibility: bool = project_rendering_method not in ["forward_plus", "mobile"] or OS.has_feature("gl_compatibility") or OS.has_feature("web") or not Engine.has_singleton("Steam")
+		lobby.disabled = is_gl_compatibility
+
 
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:
@@ -32,6 +42,18 @@ func hide_menu() -> void:
 	hide()
 	player.is_paused = false
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+
+func _on_lobby_pressed() -> void:
+	if lobby and lobby.disabled:
+		return
+	hide()
+	if player and player.lobby_manager:
+		player.lobby_manager.show_menu()
+
+
+func _on_lobby_touch_screen_button_pressed() -> void:
+	_on_lobby_pressed()
 
 
 func _on_resume_pressed() -> void:

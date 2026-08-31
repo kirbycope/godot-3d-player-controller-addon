@@ -1,0 +1,114 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://addons/3d_player_controller/scripts/lobby_manager.gd" id="1_lobbymgr"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_lobbymgr"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_info"]
+font_size = 14
+font_color = Color(0.8, 0.8, 0.8, 1)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_btn"]
+size = Vector2(72, 30)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_back"]
+size = Vector2(193, 24)
+
+[node name="LobbyManager" type="CanvasLayer" unique_id=1733087115]
+script = ExtResource("1_lobbymgr")
+
+[node name="Panel" type="Panel" parent="." unique_id=465508985]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -100.0
+offset_top = -105.0
+offset_right = 100.0
+offset_bottom = 105.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel" unique_id=1458528850]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -100.0
+offset_top = -105.0
+offset_right = 100.0
+offset_bottom = 105.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="Panel" parent="Panel/VBoxContainer" unique_id=1830860479]
+custom_minimum_size = Vector2(200, 31)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Panel/VBoxContainer/Panel" unique_id=1497883081]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -60.0
+offset_top = -11.5
+offset_right = 60.0
+offset_bottom = 11.5
+grow_horizontal = 2
+grow_vertical = 2
+text = "LOBBY"
+label_settings = SubResource("LabelSettings_lobbymgr")
+horizontal_alignment = 1
+vertical_alignment = 1
+uppercase = true
+
+[node name="InfoLabel" type="Label" parent="Panel/VBoxContainer" unique_id=1982746123]
+layout_mode = 2
+text = "Host: Player
+Players: 1/4"
+label_settings = SubResource("LabelSettings_info")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Invite" type="Button" parent="Panel/VBoxContainer" unique_id=1359266295]
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+text = "Invite"
+
+[node name="InviteTouchScreenButton" type="TouchScreenButton" parent="Panel/VBoxContainer/Invite" unique_id=820870155]
+position = Vector2(36, 15)
+shape = SubResource("RectangleShape2D_btn")
+
+[node name="Leave" type="Button" parent="Panel/VBoxContainer" unique_id=694630801]
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+text = "Leave"
+
+[node name="LeaveTouchScreenButton" type="TouchScreenButton" parent="Panel/VBoxContainer/Leave" unique_id=890439010]
+position = Vector2(36, 15)
+shape = SubResource("RectangleShape2D_btn")
+
+[node name="BACK" type="Button" parent="Panel/VBoxContainer" unique_id=967526644]
+layout_mode = 2
+size_flags_vertical = 10
+text = "BACK"
+
+[node name="BACKTouchScreenButton" type="TouchScreenButton" parent="Panel/VBoxContainer/BACK" unique_id=29710146]
+position = Vector2(100, 16)
+shape = SubResource("RectangleShape2D_back")
+
+[connection signal="pressed" from="Panel/VBoxContainer/Invite" to="." method="_on_invite_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Invite/InviteTouchScreenButton" to="." method="_on_invite_touch_screen_button_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Leave" to="." method="_on_leave_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Leave/LeaveTouchScreenButton" to="." method="_on_leave_touch_screen_button_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/BACK" to="." method="_on_back_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/BACK/BACKTouchScreenButton" to="." method="_on_back_touch_screen_button_pressed"]

@@ -213,6 +213,7 @@
 [ext_resource type="PackedScene" uid="uid://df238kae0f5ab" path="res://addons/3d_player_controller/scenes/audio.tscn" id="174_audio_comp"]
 [ext_resource type="PackedScene" uid="uid://bsmatt41d3g3p" path="res://addons/3d_player_controller/scenes/video_settings.tscn" id="174_video"]
 [ext_resource type="PackedScene" uid="uid://2crtfw6co0ss" path="res://addons/3d_player_controller/scenes/settings.tscn" id="174_xwibx"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/lobby_manager.tscn" id="174_lobbymgr"]
 [ext_resource type="PackedScene" uid="uid://6n6s0hg75now" path="res://addons/3d_player_controller/scenes/driving_ui.tscn" id="176_gqdy8"]
 [ext_resource type="Script" uid="uid://cm78iyhyfxf3b" path="res://addons/3d_player_controller/scripts/driving.gd" id="177_gfa47"]
 [ext_resource type="Script" uid="uid://r6smcoty1yhi" path="res://addons/3d_player_controller/scripts/skateboarding.gd" id="182_3eyle"]
@@ -3847,6 +3848,10 @@ visible = false
 player = NodePath("..")
 
 [node name="VideoSettings" parent="." unique_id=1733087111 node_paths=PackedStringArray("player") instance=ExtResource("174_video")]
+visible = false
+player = NodePath("..")
+
+[node name="LobbyManager" parent="." unique_id=1733087115 node_paths=PackedStringArray("player") instance=ExtResource("174_lobbymgr")]
 visible = false
 player = NodePath("..")
 
