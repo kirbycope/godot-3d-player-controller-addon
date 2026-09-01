@@ -218,6 +218,7 @@
 [ext_resource type="Script" uid="uid://cm78iyhyfxf3b" path="res://addons/3d_player_controller/scripts/driving.gd" id="177_gfa47"]
 [ext_resource type="Script" uid="uid://r6smcoty1yhi" path="res://addons/3d_player_controller/scripts/skateboarding.gd" id="182_3eyle"]
 [ext_resource type="Script" uid="uid://cq5xkylmgvf27" path="res://addons/3d_player_controller/scripts/swimming.gd" id="185_sp0uh"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/water_splash.tscn" id="186_splash"]
 [ext_resource type="Script" uid="uid://b1xkqkj2u8i3a" path="res://addons/3d_player_controller/scripts/flying.gd" id="187_8fd3h"]
 [ext_resource type="Script" uid="uid://baqowy6lh7qu0" path="res://addons/3d_player_controller/scripts/standing.gd" id="187_c5lmm"]
 [ext_resource type="Script" uid="uid://de52b2wmdepsr" path="res://addons/3d_player_controller/scripts/ragdolling.gd" id="188_ah825"]
@@ -4136,6 +4137,7 @@ player = NodePath("../..")
 process_mode = 4
 script = ExtResource("185_sp0uh")
 player = NodePath("../..")
+splash_scene = ExtResource("186_splash")
 
 [node name="UnderwaterOverlay" type="CanvasLayer" parent="."]
 layer = -1

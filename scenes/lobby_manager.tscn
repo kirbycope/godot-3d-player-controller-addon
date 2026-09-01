@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://c7k68q6a3mvdg"]
 
 [ext_resource type="Script" path="res://addons/3d_player_controller/scripts/lobby_manager.gd" id="1_lobbymgr"]
+[ext_resource type="PackedScene" uid="uid://c6lbyplritm3d" path="res://addons/3d_player_controller/scenes/lobby_player_item.tscn" id="2_playeritem"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_lobbymgr"]
 
@@ -16,6 +17,7 @@ size = Vector2(210, 26)
 
 [node name="LobbyManager" type="CanvasLayer"]
 script = ExtResource("1_lobbymgr")
+lobby_player_item_scene = ExtResource("2_playeritem")
 
 [node name="Panel" type="Panel" parent="."]
 anchors_preset = 8

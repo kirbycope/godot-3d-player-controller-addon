@@ -20,7 +20,7 @@ extends NodeStateMachine
 @export var dive_model_pitch_speed: float = 6.0 ## Interpolation speed of the dive body pitch.
 
 @export_group("Water Effects")
-@export var splash_scene: PackedScene = preload("res://addons/3d_player_controller/scenes/water_splash.tscn") ## One-shot splash spawned on water entry.
+@export var splash_scene: PackedScene ## One-shot splash spawned on water entry (assign water_splash.tscn in the scene).
 @export var splash_min_impact_speed: float = 2.5 ## Minimum downward entry speed (m/s) that triggers a splash.
 @export var enable_underwater_overlay: bool = true ## Fullscreen underwater filter while the camera is submerged.
 
@@ -429,5 +429,3 @@ func get_water_surface_along_up() -> float:
 		return NAN
 
 	return highest_surface_along_up
-
-

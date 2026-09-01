@@ -433,8 +433,9 @@ func _ready() -> void:
 	# Initialize voice audio player playback
 	if voice_audio_player:
 		var generator: AudioStreamGenerator = voice_audio_player.stream as AudioStreamGenerator
-		if generator and Engine.has_singleton("Steam") and Steam.isSteamRunning():
-			var optimal_rate: int = Steam.getVoiceOptimalSampleRate()
+		var steam: Object = _get_steam_running()
+		if generator and steam:
+			var optimal_rate: int = steam.getVoiceOptimalSampleRate()
 			if optimal_rate > 0:
 				generator.mix_rate = float(optimal_rate)
 		if not voice_audio_player.playing:
@@ -498,11 +499,12 @@ func _unhandled_input(event: InputEvent) -> void:
 func _process(_delta: float) -> void:
 	_update_updraft_vfx()
 
-	if is_multiplayer_authority() and is_broadcasting and Engine.has_singleton("Steam") and Steam.isSteamRunning():
-		var available_voice: Dictionary = Steam.getAvailableVoice()
-		if available_voice.get("result") == Steam.VOICE_RESULT_OK and available_voice.get("written", 0) > 0:
-			var voice_data: Dictionary = Steam.getVoice()
-			if voice_data.get("result") == Steam.VOICE_RESULT_OK:
+	var steam: Object = _get_steam_running() if is_multiplayer_authority() and is_broadcasting else null
+	if steam:
+		var available_voice: Dictionary = steam.getAvailableVoice()
+		if available_voice.get("result") == STEAM_VOICE_RESULT_OK and available_voice.get("written", 0) > 0:
+			var voice_data: Dictionary = steam.getVoice()
+			if voice_data.get("result") == STEAM_VOICE_RESULT_OK:
 				var buffer: PackedByteArray = voice_data.get("buffer", PackedByteArray())
 				if not buffer.is_empty() and multiplayer.has_multiplayer_peer() and multiplayer.get_peers().size() > 0:
 					_receive_voice_packet.rpc(buffer)
@@ -1152,16 +1154,28 @@ func update_music_volume(value: float) -> void:
 			radio.volume_db = db
 
 
+const STEAM_VOICE_RESULT_OK: int = 0 ## Mirrors Steam.VOICE_RESULT_OK (Steam class is absent on web exports).
+
+
+## Returns the Steam singleton when present and running, otherwise null.
+func _get_steam_running() -> Object:
+	if not Engine.has_singleton("Steam"):
+		return null
+	var steam: Object = Engine.get_singleton("Steam")
+	return steam if steam.isSteamRunning() else null
+
+
 ## Start push-to-talk voice broadcasting
 func start_broadcasting() -> void:
 	is_broadcasting = true
 	if voice_chat_indicator:
 		voice_chat_indicator.show()
-	if Engine.has_singleton("Steam") and Steam.isSteamRunning():
-		Steam.startVoiceRecording()
-		var my_id: int = Steam.getSteamID()
+	var steam: Object = _get_steam_running()
+	if steam:
+		steam.startVoiceRecording()
+		var my_id: int = steam.getSteamID()
 		if my_id > 0:
-			Steam.setInGameVoiceSpeaking(my_id, true)
+			steam.setInGameVoiceSpeaking(my_id, true)
 	if multiplayer.has_multiplayer_peer() and multiplayer.get_peers().size() > 0:
 		_set_voice_indicator.rpc(true)
 
@@ -1171,24 +1185,26 @@ func stop_broadcasting() -> void:
 	is_broadcasting = false
 	if voice_chat_indicator:
 		voice_chat_indicator.hide()
-	if Engine.has_singleton("Steam") and Steam.isSteamRunning():
-		Steam.stopVoiceRecording()
-		var my_id: int = Steam.getSteamID()
+	var steam: Object = _get_steam_running()
+	if steam:
+		steam.stopVoiceRecording()
+		var my_id: int = steam.getSteamID()
 		if my_id > 0:
-			Steam.setInGameVoiceSpeaking(my_id, false)
+			steam.setInGameVoiceSpeaking(my_id, false)
 	if multiplayer.has_multiplayer_peer() and multiplayer.get_peers().size() > 0:
 		_set_voice_indicator.rpc(false)
 
 
 @rpc("any_peer", "call_remote", "unreliable_ordered")
 func _receive_voice_packet(compressed_buffer: PackedByteArray) -> void:
-	if not Engine.has_singleton("Steam") or not Steam.isSteamRunning() or compressed_buffer.is_empty():
+	var steam: Object = _get_steam_running()
+	if steam == null or compressed_buffer.is_empty():
 		return
-	var sample_rate: int = Steam.getVoiceOptimalSampleRate()
+	var sample_rate: int = steam.getVoiceOptimalSampleRate()
 	if sample_rate <= 0:
 		sample_rate = 48000
-	var decompressed: Dictionary = Steam.decompressVoice(compressed_buffer, sample_rate)
-	if decompressed.get("result") == Steam.VOICE_RESULT_OK:
+	var decompressed: Dictionary = steam.decompressVoice(compressed_buffer, sample_rate)
+	if decompressed.get("result") == STEAM_VOICE_RESULT_OK:
 		var uncompressed: PackedByteArray = decompressed.get("uncompressed", PackedByteArray())
 		if uncompressed.is_empty():
 			return

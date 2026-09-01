@@ -4,6 +4,9 @@ signal join_requested(lobby_id: int)
 
 var lobby_id: int = 0 : set = set_lobby_id
 
+## Steam singleton when the GodotSteam extension is present, otherwise null.
+var _steam: Object = Engine.get_singleton("Steam") if Engine.has_singleton("Steam") else null
+
 @onready var name_label: Label = %NameLabel
 @onready var count_label: Label = %CountLabel
 @onready var join_button: Button = %JoinButton
@@ -22,25 +25,25 @@ func set_lobby_id(new_id: int) -> void:
 
 
 func _update_entry() -> void:
-	if not Engine.has_singleton("Steam"):
+	if _steam == null:
 		if name_label:
 			name_label.text = "Lobby %d" % lobby_id
 		if count_label:
 			count_label.text = "1/4"
 		return
 
-	var lobby_name: String = Steam.getLobbyData(lobby_id, "lobby_name")
+	var lobby_name: String = _steam.getLobbyData(lobby_id, "lobby_name")
 	if lobby_name.is_empty():
-		lobby_name = Steam.getLobbyData(lobby_id, "name")
+		lobby_name = _steam.getLobbyData(lobby_id, "name")
 	if lobby_name.is_empty():
-		var owner_id: int = Steam.getLobbyOwner(lobby_id)
+		var owner_id: int = _steam.getLobbyOwner(lobby_id)
 		if owner_id > 0:
-			lobby_name = "%s's Lobby" % Steam.getFriendPersonaName(owner_id)
+			lobby_name = "%s's Lobby" % _steam.getFriendPersonaName(owner_id)
 		else:
 			lobby_name = "Lobby %d" % lobby_id
 
-	var member_count: int = Steam.getNumLobbyMembers(lobby_id)
-	var max_members: int = Steam.getLobbyMemberLimit(lobby_id)
+	var member_count: int = _steam.getNumLobbyMembers(lobby_id)
+	var max_members: int = _steam.getLobbyMemberLimit(lobby_id)
 	if max_members <= 0:
 		max_members = 4
 

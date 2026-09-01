@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://addons/3d_player_controller/scripts/lobby_explorer.gd" id="1_explorer"]
 [ext_resource type="PackedScene" uid="uid://cs1ytkq7kgqdu" path="res://scenes/loading.tscn" id="2_loading"]
+[ext_resource type="PackedScene" uid="uid://df7h3wqp5lxy1" path="res://addons/3d_player_controller/scenes/lobby_explorer_entry.tscn" id="3_entry"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_title"]
 font_size = 26
@@ -21,6 +22,7 @@ size = Vector2(580, 52)
 
 [node name="LobbyExplorer" type="CanvasLayer"]
 script = ExtResource("1_explorer")
+lobby_explorer_entry_scene = ExtResource("3_entry")
 
 [node name="Panel" type="Panel" parent="."]
 anchors_preset = 8

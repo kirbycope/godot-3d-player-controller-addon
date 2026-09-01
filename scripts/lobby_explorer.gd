@@ -1,6 +1,9 @@
 extends CanvasLayer
 
-const LOBBY_EXPLORER_ENTRY = preload("res://addons/3d_player_controller/scenes/lobby_explorer_entry.tscn")
+@export var lobby_explorer_entry_scene: PackedScene ## Assigned in the scene so it ships as a scene dependency.
+
+## Steam singleton when the GodotSteam extension is present, otherwise null.
+var _steam: Object = Engine.get_singleton("Steam") if Engine.has_singleton("Steam") else null
 
 @export_file("*.tscn") var world_scene: String = "res://scenes/world.tscn"
 @export_file("*.tscn") var title_scene: String = "res://scenes/main.tscn"
@@ -22,7 +25,7 @@ func _ready() -> void:
 	_connect_signals()
 	_connect_steam_signals()
 
-	if not Engine.has_singleton("Steam") or not Steam.isSteamRunning():
+	if _steam == null or not _steam.isSteamRunning():
 		status_label.text = "Steam is not running. Lobby features disabled."
 		host_button.disabled = true
 		refresh_button.disabled = true
@@ -62,24 +65,24 @@ func _connect_signals() -> void:
 
 
 func _connect_steam_signals() -> void:
-	if not Engine.has_singleton("Steam"):
+	if _steam == null:
 		return
 	_steam_callback_wrapper("lobby_match_list", "_on_lobby_match_list")
 	_steam_callback_wrapper("lobby_joined", "_on_lobby_joined")
 
 
 func refresh_lobbies() -> void:
-	if not Engine.has_singleton("Steam") or not Steam.isSteamRunning():
+	if _steam == null or not _steam.isSteamRunning():
 		return
 
 	_clear_lobby_list()
 	status_label.text = "Searching for lobbies..."
 
 	var distance_filter: int = distance_option.selected if distance_option else 1
-	Steam.addRequestLobbyListDistanceFilter(distance_filter)
-	Steam.addRequestLobbyListFilterSlotsAvailable(1)
-	Steam.addRequestLobbyListResultCountFilter(50)
-	Steam.requestLobbyList()
+	_steam.addRequestLobbyListDistanceFilter(distance_filter)
+	_steam.addRequestLobbyListFilterSlotsAvailable(1)
+	_steam.addRequestLobbyListResultCountFilter(50)
+	_steam.requestLobbyList()
 
 
 func _clear_lobby_list() -> void:
@@ -120,8 +123,8 @@ func _on_touch_back_pressed() -> void:
 
 func _on_join_lobby_requested(lobby_id: int) -> void:
 	status_label.text = "Joining lobby %d..." % lobby_id
-	if Engine.has_singleton("Steam"):
-		Steam.joinLobby(lobby_id)
+	if _steam != null:
+		_steam.joinLobby(lobby_id)
 
 
 #region Steam Callbacks
@@ -134,8 +137,10 @@ func _on_lobby_match_list(lobbies: Array) -> void:
 
 	status_label.text = "Found %d active lobbies" % lobbies.size()
 
+	if lobby_explorer_entry_scene == null:
+		return
 	for lobby_id in lobbies:
-		var entry = LOBBY_EXPLORER_ENTRY.instantiate()
+		var entry = lobby_explorer_entry_scene.instantiate()
 		lobby_list.add_child(entry)
 		entry.lobby_id = lobby_id
 		entry.join_requested.connect(_on_join_lobby_requested)
@@ -157,7 +162,7 @@ func _on_lobby_joined(lobby_id: int, _permissions: int, _locked: int, response: 
 
 
 func _steam_callback_wrapper(this_signal: String, this_function: String) -> void:
-	var callback_connect: int = Steam.connect(this_signal, Callable(self, this_function))
+	var callback_connect: int = _steam.connect(this_signal, Callable(self, this_function))
 	if callback_connect > OK:
 		printerr("Connecting callback %s to %s failed: %s" % [this_signal, this_function, callback_connect])
 #endregion

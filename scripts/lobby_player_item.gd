@@ -6,6 +6,9 @@ signal player_kicked(steam_id: int)
 
 var steam_id: int = 0 : set = set_steam_id
 
+## Steam singleton when the GodotSteam extension is present, otherwise null.
+var _steam: Object = Engine.get_singleton("Steam") if Engine.has_singleton("Steam") else null
+
 @onready var avatar: SteamAvatarRect = %Avatar
 @onready var host_icon: TextureRect = %HostIcon
 @onready var username_label: SteamUsername = %Username
@@ -47,16 +50,16 @@ func set_steam_id(new_steam_id: int) -> void:
 
 
 func _update_player_state() -> void:
-	var is_steam_active: bool = Engine.has_singleton("Steam") and Steam.isSteamRunning()
+	var is_steam_active: bool = _steam != null and _steam.isSteamRunning()
 	var steamworks = get_node_or_null("/root/Steamworks")
 	var active_lobby_id: int = steamworks.lobby_id if steamworks else 0
-	var local_steam_id: int = Steamworks.steam_id if steamworks and "steam_id" in steamworks else (Steam.getSteamID() if is_steam_active else 0)
+	var local_steam_id: int = steamworks.steam_id if steamworks and "steam_id" in steamworks else (_steam.getSteamID() if is_steam_active else 0)
 
 	var is_owner: bool = false
 	var am_i_host: bool = false
 
 	if is_steam_active and active_lobby_id > 0:
-		var owner_id: int = Steam.getLobbyOwner(active_lobby_id)
+		var owner_id: int = _steam.getLobbyOwner(active_lobby_id)
 		is_owner = (steam_id == owner_id)
 		am_i_host = (local_steam_id == owner_id)
 
@@ -79,20 +82,20 @@ func _on_options_toggled(toggled_on: bool) -> void:
 
 
 func _on_profile_pressed() -> void:
-	if Engine.has_singleton("Steam") and steam_id > 0:
-		Steam.activateGameOverlayToUser("steamid", steam_id)
+	if _steam != null and steam_id > 0:
+		_steam.activateGameOverlayToUser("steamid", steam_id)
 
 
 func _on_achievements_pressed() -> void:
-	if Engine.has_singleton("Steam") and steam_id > 0:
-		Steam.activateGameOverlayToUser("achievements", steam_id)
+	if _steam != null and steam_id > 0:
+		_steam.activateGameOverlayToUser("achievements", steam_id)
 
 
 func _on_promote_pressed() -> void:
 	var steamworks = get_node_or_null("/root/Steamworks")
 	var active_lobby_id: int = steamworks.lobby_id if steamworks else 0
-	if Engine.has_singleton("Steam") and active_lobby_id > 0 and steam_id > 0:
-		Steam.setLobbyOwner(active_lobby_id, steam_id)
+	if _steam != null and active_lobby_id > 0 and steam_id > 0:
+		_steam.setLobbyOwner(active_lobby_id, steam_id)
 		player_promoted.emit(steam_id)
 		_update_player_state()
 
@@ -100,6 +103,6 @@ func _on_promote_pressed() -> void:
 func _on_kick_pressed() -> void:
 	var steamworks = get_node_or_null("/root/Steamworks")
 	var active_lobby_id: int = steamworks.lobby_id if steamworks else 0
-	if Engine.has_singleton("Steam") and active_lobby_id > 0 and steam_id > 0:
-		Steam.sendLobbyChatMsg(active_lobby_id, "/kick %s" % steam_id)
+	if _steam != null and active_lobby_id > 0 and steam_id > 0:
+		_steam.sendLobbyChatMsg(active_lobby_id, "/kick %s" % steam_id)
 		player_kicked.emit(steam_id)
