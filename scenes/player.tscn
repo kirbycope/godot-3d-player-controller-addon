@@ -228,6 +228,11 @@
 [ext_resource type="Texture2D" uid="uid://clfmrpwxhmva" path="res://addons/3d_player_controller/assets/kenney_nl/2D assets/Game Icons/PNG/White/2x/audioOn.png" id="215_krtyc"]
 [ext_resource type="Texture2D" uid="uid://ckmfjtaa1iw2p" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/PlayStation Series/Vector/playstation_button_circle_filled.svg" id="216_os6bm"]
 [ext_resource type="Script" uid="uid://ck08322tms20v" path="res://addons/3d_player_controller/scripts/stamina.gd" id="217_bidj8"]
+[ext_resource type="Shader" path="res://addons/3d_player_controller/assets/shaders/underwater_overlay.gdshader" id="218_uwshd"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_underwater"]
+render_priority = 0
+shader = ExtResource("218_uwshd")
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_voice"]
 transparency = 1
@@ -4131,6 +4136,19 @@ player = NodePath("../..")
 process_mode = 4
 script = ExtResource("185_sp0uh")
 player = NodePath("../..")
+
+[node name="UnderwaterOverlay" type="CanvasLayer" parent="."]
+layer = -1
+visible = false
+
+[node name="ColorRect" type="ColorRect" parent="UnderwaterOverlay"]
+material = SubResource("ShaderMaterial_underwater")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 
 [connection signal="timeout" from="AttackSequenceTimer" to="." method="_on_attack_sequence_timer_timeout"]
 
