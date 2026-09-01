@@ -17,6 +17,10 @@ const CAMERA_FOLLOW_DELAY: float = 2.0
 @export var joypad_sensitivity: float = 100.0
 @export var held_joypad_look_multiplier: float = 0.45
 @export var mouse_sensitivity: float = 0.1
+@export var default_fov: float = 75.0 ## Base third-person FOV.
+@export var aim_fov: float = 58.0 ## Narrowed FOV when aiming/shooting (over-the-shoulder).
+@export var default_h_offset: float = 0.0 ## Base horizontal offset.
+@export var aim_h_offset: float = 0.25 ## Over-the-right-shoulder offset when aiming/shooting.
 @export var perspective: Perspective = Perspective.THIRD_PERSON ## What perspective should the Camera use?
 @export var player: Player
 
@@ -25,14 +29,35 @@ var first_person_bone_attachment: BoneAttachment3D
 var is_temporarily_captured: bool = false ## Cursor captured only while right-click rotating; released back to visible.
 var looking_at: Node3D = null
 
+const FOCUS_AIM_WORLD_RADIUS: float = 0.5 ## World-space radius in units/meters that the aim can deviate from the target center.
+var focus_aim_offset: Vector2 = Vector2.ZERO ## Current aim offset applied on top of the focused lock-on target.
+
 @onready var camera_initial_transform: Transform3D = transform
 @onready var camera_ray_cast: RayCast3D = $CameraRayCast
 @onready var item_spring_arm: SpringArm3D = $"../../ItemSpringArm"
 @onready var item_spring_arm_initial_transform: Transform3D = item_spring_arm.transform
 
 
+## Returns the maximum angular aim offset (in radians) based on distance to target.
+## Uses atan2(FOCUS_AIM_WORLD_RADIUS, distance) so the angular window shrinks with distance.
+func get_max_focus_aim_angle() -> float:
+	var dist: float = 5.0
+	if player:
+		if is_instance_valid(player.current_focus_target):
+			var target_pos: Vector3 = Focus.get_focus_target_position(player.current_focus_target)
+			dist = maxf(camera_mount.global_position.distance_to(target_pos), 1.0)
+		elif player.focus and player.focus.target_detection:
+			var col: CollisionShape3D = player.focus.target_detection.get_node_or_null("CollisionShape3D") as CollisionShape3D
+			if col and col.shape is SphereShape3D:
+				dist = (col.shape as SphereShape3D).radius
+	return atan2(FOCUS_AIM_WORLD_RADIUS, dist)
+
+
 ## Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+	default_fov = fov
+	default_h_offset = h_offset
+
 	set_process(is_multiplayer_authority())
 	set_physics_process(is_multiplayer_authority())
 	set_process_input(is_multiplayer_authority())
@@ -52,8 +77,12 @@ func _ready() -> void:
 
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:
-	# Do nothing if player is paused
-	if player and player.is_paused: return
+	# Do nothing if the player is not set or is paused/ragdolling
+	if not player or player.is_paused or player.is_ragdolling: return
+
+	# Look at interactable objects under the mouse cursor while it is visible.
+	if Input.mouse_mode == Input.MOUSE_MODE_VISIBLE:
+		_update_raycast()
 
 	# Check if the player is interacting with an equipment item and has pressed "action" to interact
 	if looking_at and event.is_action_pressed("action") and looking_at.has_method("equip"):
@@ -82,14 +111,20 @@ func _input(event: InputEvent) -> void:
 
 	# Rotate the [Camera3D]'s [SpringArm3D] using the mouse motion input event
 	if event is InputEventMouseMotion \
-	and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED \
+	and (DisplayServer.get_name() == "headless" or Input.mouse_mode == Input.MOUSE_MODE_CAPTURED) \
 	and (not player.is_driving or perspective == Perspective.THIRD_PERSON) \
-	and not player.is_focusing \
 	and not is_radial_menu_open():
-		rotate_camera_using_mouse_motion(event)
-		if (player.is_driving or player.is_skateboarding) \
-		and event.relative.length_squared() > 0.0:
-			defer_camera_follow()
+		if player.is_focusing and not player.has_firearm_equipped:
+			if player.is_shooting:
+				var mouse_motion_input: Vector2 = event.relative
+				focus_aim_offset.x += deg_to_rad(-mouse_motion_input.x * mouse_sensitivity)
+				focus_aim_offset.y += deg_to_rad(-mouse_motion_input.y * mouse_sensitivity)
+				focus_aim_offset = focus_aim_offset.limit_length(get_max_focus_aim_angle())
+		else:
+			rotate_camera_using_mouse_motion(event)
+			if (player.is_driving or player.is_skateboarding) \
+			and event.relative.length_squared() > 0.0:
+				defer_camera_follow()
 
 	# Only continue if the perspective is third-person
 	if perspective == Perspective.THIRD_PERSON:
@@ -120,16 +155,21 @@ func _process(delta: float) -> void:
 	and not player.is_paused \
 	and not player.is_ragdolling \
 	and (not player.is_driving or perspective == Perspective.THIRD_PERSON) \
-	and not player.is_focusing \
 	and not is_radial_menu_open():
-		# Rotate the camera based on the joypad motion input event
-		var look_multiplier: float = 1.0
-		if player.held_object and player.held_object.is_holding_object():
-			look_multiplier = held_joypad_look_multiplier
-		rotate_camera_using_joypad_motion(delta * look_multiplier)
-		# Add a delay before the camera starts following the player again
-		if player.is_skateboarding or player.is_driving:
-			defer_camera_follow()
+		if player.is_focusing and not player.has_firearm_equipped:
+			if player.is_shooting:
+				focus_aim_offset.x += deg_to_rad(-joypad_motion_input.x * joypad_sensitivity * delta)
+				focus_aim_offset.y -= deg_to_rad(joypad_motion_input.y * joypad_sensitivity * delta)
+				focus_aim_offset = focus_aim_offset.limit_length(get_max_focus_aim_angle())
+		else:
+			# Rotate the camera based on the joypad motion input event
+			var look_multiplier: float = 1.0
+			if player.held_object and player.held_object.is_holding_object():
+				look_multiplier = held_joypad_look_multiplier
+			rotate_camera_using_joypad_motion(delta * look_multiplier)
+			# Add a delay before the camera starts following the player again
+			if player.is_skateboarding or player.is_driving:
+				defer_camera_follow()
 
 	# Decrement the camera follow delay
 	if camera_follow_delay_remaining > 0.0:
@@ -138,12 +178,45 @@ func _process(delta: float) -> void:
 				0.0
 		)
 
+	# Smoothly interpolate FOV and shoulder offset when aiming/shooting (BotW/TotK over-the-shoulder framing)
+	if perspective == Perspective.THIRD_PERSON:
+		var is_aiming_now: bool = false
+		if player != null:
+			if player.has_firearm_equipped:
+				is_aiming_now = player.is_focusing
+			elif player.has_bow_equipped:
+				is_aiming_now = player.is_shooting or player.is_drawing_arrow or player.is_aiming_bow
+			else:
+				is_aiming_now = player.is_shooting or player.is_drawing_arrow or player.is_aiming_bow
+		var target_fov: float = aim_fov if is_aiming_now else default_fov
+		var target_h_offset: float = aim_h_offset if is_aiming_now else default_h_offset
+		fov = lerpf(fov, target_fov, delta * 10.0)
+		h_offset = lerpf(h_offset, target_h_offset, delta * 10.0)
+
 	# Lerp camera to face the player's direction when focusing, driving, or skateboarding (and the follow delay has expired).
 	if perspective == Perspective.THIRD_PERSON:
-		if player.is_focusing \
-		or (player.is_driving and camera_follow_delay_remaining <= 0.0) \
-		or (player.is_skateboarding and camera_follow_delay_remaining <= 0.0):
-			camera_mount.rotation.y = lerp_angle(camera_mount.rotation.y, player.player_model.rotation.y + PI, delta * 8.0)
+		if player.is_focusing and not player.has_firearm_equipped:
+			var max_angle: float = get_max_focus_aim_angle()
+			focus_aim_offset = focus_aim_offset.limit_length(max_angle)
+			if not player.is_shooting:
+				focus_aim_offset = focus_aim_offset.move_toward(Vector2.ZERO, delta * 4.0)
+
+			if is_instance_valid(player.current_focus_target):
+				var target_pos: Vector3 = Focus.get_focus_target_position(player.current_focus_target)
+				var to_target: Vector3 = target_pos - camera_mount.global_position
+				var target_yaw: float = atan2(-to_target.x, -to_target.z) + focus_aim_offset.x
+				var horiz_dist: float = Vector2(to_target.x, to_target.z).length()
+				var target_pitch: float = clampf(atan2(to_target.y, horiz_dist) + focus_aim_offset.y, deg_to_rad(-80.0), deg_to_rad(80.0))
+				camera_mount.rotation.y = lerp_angle(camera_mount.rotation.y, target_yaw, delta * 8.0)
+				camera_mount.rotation.x = lerp_angle(camera_mount.rotation.x, target_pitch, delta * 8.0)
+			else:
+				camera_mount.rotation.y = lerp_angle(camera_mount.rotation.y, player.player_model.rotation.y + PI + focus_aim_offset.x, delta * 8.0)
+				camera_mount.rotation.x = lerp_angle(camera_mount.rotation.x, deg_to_rad(-15.0) + focus_aim_offset.y, delta * 8.0)
+		else:
+			focus_aim_offset = Vector2.ZERO
+			if (player.is_driving and camera_follow_delay_remaining <= 0.0) \
+			or (player.is_skateboarding and camera_follow_delay_remaining <= 0.0):
+				camera_mount.rotation.y = lerp_angle(camera_mount.rotation.y, player.player_model.rotation.y + PI, delta * 8.0)
 
 	_sync_item_spring_arm()
 

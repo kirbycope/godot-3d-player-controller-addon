@@ -22,6 +22,8 @@ const MAX_THROW_POWER: float = 1.0 ## Throw power multiplier at full charge.
 @export var held_min_distance: float = 0.5
 @export var held_max_distance: float = 5.0
 @export var held_max_offset: Vector2 = Vector2(1.5, 1.0)
+@export var rotation_snap_angle: float = 45.0 ## Degrees to rotate per discrete D-pad press in rotation mode.
+@export var use_discrete_rotation_snap: bool = true ## When true, D-pad presses snap rotation in discrete 45-degree increments.
 
 var is_throw_queued: bool = false ## Is a throw waiting on the animation call track or charge timeout?
 var is_throwing: bool = false ## Is the throw wind-up currently active?
@@ -66,6 +68,18 @@ func _input(event: InputEvent) -> void:
 		elif event.is_action_released("throw"):
 			_is_held_rotation_mode = false
 			refresh_contextual_controls()
+
+		# Discrete 45-degree rotation snapping on D-pad press in rotation mode
+		if _is_held_rotation_mode and use_discrete_rotation_snap and event.is_pressed() and not event.is_echo():
+			if event.is_action("last_weapon"):
+				held_rigidbody.rotate_object_local(Vector3.UP, deg_to_rad(rotation_snap_angle))
+			elif event.is_action("next_weapon"):
+				held_rigidbody.rotate_object_local(Vector3.UP, deg_to_rad(-rotation_snap_angle))
+			elif event.is_action("seeker"):
+				held_rigidbody.rotate_object_local(Vector3.RIGHT, deg_to_rad(-rotation_snap_angle))
+			elif event.is_action("whistle"):
+				held_rigidbody.rotate_object_local(Vector3.RIGHT, deg_to_rad(rotation_snap_angle))
+
 		get_viewport().set_input_as_handled()
 
 	if event.is_action_pressed("action") and not event.is_echo():

@@ -170,7 +170,7 @@ var is_focusing: bool: ## Is the Player currently focusing (forward or on a targ
 		if held_object and held_object.is_holding_object():
 			return false
 		# While the cursor is visible, right-click is reserved for camera rotation.
-		if Input.mouse_mode == Input.MOUSE_MODE_VISIBLE:
+		if DisplayServer.get_name() != "headless" and Input.mouse_mode == Input.MOUSE_MODE_VISIBLE:
 			return false
 		# Also suppressed during the temporary right-click capture used for camera rotation.
 		if camera is Camera and (camera as Camera).is_temporarily_captured:
@@ -198,6 +198,30 @@ var held_rigidbody: RigidBody3D: ## The [RigidBody3D] currently carried, if any.
 var current_focus_target: Node3D: ## The body currently locked on to, if any. (Delegates to [Focus].)
 	get:
 		return focus.current_focus_target if focus else null
+
+
+## Returns the 3D focus target position (resolving Marker3D_FocusTarget on the target body if present).
+func get_focus_target_position() -> Vector3:
+	if not is_instance_valid(current_focus_target):
+		return global_position
+	return Focus.get_focus_target_position(current_focus_target)
+
+var has_firearm_equipped: bool: ## Is a firearm (Pistol, Rifle) currently equipped?
+	get:
+		return inventory != null and inventory.has_firearm_equipped()
+
+var has_bow_equipped: bool: ## Is a bow currently equipped?
+	get:
+		return inventory != null and inventory.has_bow_equipped()
+
+var is_aiming_firearm: bool: ## Is the Player currently aiming with a firearm (Pistol, Rifle)?
+	get:
+		if not is_multiplayer_authority() or is_driving or inventory == null:
+			return false
+		if held_object and (held_object.is_holding_object() or held_object.is_charging_throw or held_object.is_throwing):
+			return false
+		return is_focusing and has_firearm_equipped
+
 var is_mining: bool: ## Is the Player currently mining?
 	get:
 		if not is_multiplayer_authority() or animation_tree == null:
@@ -234,6 +258,7 @@ var is_skateboarding: bool = false ## Is the Player currently skateboarding?
 var is_sliding: bool = false ## Is the Player currently sliding?
 var is_sprinting: bool = false ## Is the Player currently sprinting?
 var is_standing: bool = false ## Is the Player currently standing?
+var last_safe_shore_position: Vector3 = Vector3.ZERO ## Last known grounded position on dry land.
 var is_swimming: bool = false ## Is the Player currently swimming?
 var drawn_weapon_group: String = "" ## Locomotion group whose draw animation already played; its Start skips the redraw.
 var last_fall_speed: float = 0.0 ## The downward vertical fall speed right before movement update.
@@ -288,17 +313,40 @@ var skateboard: Node3D
 @onready var state_machine: NodeStateMachine = $NodeStateMachine ## Enables/Disables the scripts that run when various States are entered/exited.
 @onready var audio: Audio = $Audio
 @onready var steam_persona_name: Label3D = $SteamPersonaName
+@onready var voice_chat_indicator: MeshInstance3D = get_node_or_null("VoiceChatIndicator") as MeshInstance3D
+@onready var voice_audio_player: AudioStreamPlayer3D = get_node_or_null("VoiceAudioPlayer") as AudioStreamPlayer3D
+@onready var player_synchronizer: MultiplayerSynchronizer = get_node_or_null("PlayerSynchronizer") as MultiplayerSynchronizer
 
+@export var sync_locomotion_node: String = "":
+	set(value):
+		sync_locomotion_node = value
+		if not is_multiplayer_authority() and animation_tree and is_node_ready():
+			_apply_synced_locomotion_node(value)
+
+@export var sync_blend_position: Vector2 = Vector2.ZERO:
+	set(value):
+		sync_blend_position = value
+		if not is_multiplayer_authority() and animation_tree and is_node_ready():
+			_apply_synced_blend_position(value)
+
+var voice_playback: AudioStreamGeneratorPlayback = null
+var is_broadcasting: bool = false
 var current_water_area: Area3D = null
 
 
 ## Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+	# Ensure AnimationTree is active so animations render on authority and puppets
+	if animation_tree:
+		animation_tree.active = true
+		animation_tree.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_PHYSICS
+
 	# Do nothing if not the authority
 	if not is_multiplayer_authority():
 		set_process(false)
 		set_physics_process(false)
 		set_process_input(false)
+		set_process_unhandled_input(false)
 		return
 
 
@@ -316,16 +364,10 @@ func _ready() -> void:
 	# Record the initial parent for re-parenting after driving.
 	initial_parent = get_parent()
 
-	# Ensure the AnimationTree is active so that root motion is applied in the first frame.
-	animation_tree.active = true
-
 	# Improve traction on spheres/slopes
 	floor_snap_length = 0.5
 	floor_max_angle = deg_to_rad(60.0)
 	floor_constant_speed = true
-
-	# Keep animation sampling in physics domainD to match root-motion consumption in _physics_process.
-	animation_tree.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_PHYSICS
 
 	# Ensure the projectile RayCast3D doesn't collide with the player
 	projectile_raycast.add_exception(self)
@@ -384,6 +426,17 @@ func _ready() -> void:
 			steam_singleton.connect("lobby_chat_update", lobby_update_callback)
 		_update_steam_persona_name()
 
+	# Initialize voice audio player playback
+	if voice_audio_player:
+		var generator: AudioStreamGenerator = voice_audio_player.stream as AudioStreamGenerator
+		if generator and Engine.has_singleton("Steam") and Steam.isSteamRunning():
+			var optimal_rate: int = Steam.getVoiceOptimalSampleRate()
+			if optimal_rate > 0:
+				generator.mix_rate = float(optimal_rate)
+		if not voice_audio_player.playing:
+			voice_audio_player.play()
+		voice_playback = voice_audio_player.get_stream_playback() as AudioStreamGeneratorPlayback
+
 
 ## Called when there is an unhandled input event.
 func _unhandled_input(event: InputEvent) -> void:
@@ -428,10 +481,23 @@ func _unhandled_input(event: InputEvent) -> void:
 			if debug.visible:
 				debug.draw_navigation_marker(cursor_position)
 
+	# Push-to-talk voice broadcasting (action="broadcast", key="T")
+	if event.is_action_pressed("broadcast") and not pause.visible and not settings.visible and not audio_settings.visible and not video_settings.visible:
+		start_broadcasting()
+	elif event.is_action_released("broadcast"):
+		stop_broadcasting()
+
 
 ## Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta: float) -> void:
-	pass
+	if is_multiplayer_authority() and is_broadcasting and Engine.has_singleton("Steam") and Steam.isSteamRunning():
+		var available_voice: Dictionary = Steam.getAvailableVoice()
+		if available_voice.get("result") == Steam.VOICE_RESULT_OK and available_voice.get("written", 0) > 0:
+			var voice_data: Dictionary = Steam.getVoice()
+			if voice_data.get("result") == Steam.VOICE_RESULT_OK:
+				var buffer: PackedByteArray = voice_data.get("buffer", PackedByteArray())
+				if not buffer.is_empty() and multiplayer.has_multiplayer_peer() and multiplayer.get_peers().size() > 0:
+					_receive_voice_packet.rpc(buffer)
 
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
@@ -461,6 +527,17 @@ func _physics_process(delta: float) -> void:
 			is_emoting = false
 			has_started_emoting = false
 			is_throwing = false
+
+	# Update network animation sync properties on authority
+	if is_multiplayer_authority():
+		var curr_loco := current_locomotion_node
+		if curr_loco != sync_locomotion_node and not curr_loco.is_empty():
+			sync_locomotion_node = curr_loco
+		var blend_to_sync := Vector2(0.0, smoothed_motion.length())
+		if is_focusing or is_shooting or is_boxing:
+			blend_to_sync = smoothed_motion
+		if blend_to_sync != sync_blend_position:
+			sync_blend_position = blend_to_sync
 
 	## DEBUG: Toggle emote state for testing purposes.
 	if not is_paused and not is_ragdolling and Input.is_action_just_pressed("emote"):
@@ -515,8 +592,8 @@ func apply_input(delta: float) -> void:
 			var look_dir: Vector3 = Vector3.ZERO
 			
 			if is_focusing and is_instance_valid(current_focus_target):
-				look_dir = (current_focus_target.global_position - global_position).slide(up_direction)
-			elif is_shooting or not is_focusing or is_first_person:
+				look_dir = (get_focus_target_position() - global_position).slide(up_direction)
+			else:
 				var camera_basis := spring_arm.global_transform.basis
 				look_dir = - camera_basis.z
 				look_dir = look_dir.slide(up_direction)
@@ -532,8 +609,10 @@ func apply_input(delta: float) -> void:
 						focus_weight = 1.0
 					orientation.basis = Basis(q_from.slerp(q_to, focus_weight))
 				else:
-					var rotate_weight: float = clampf(delta * rotation_interpolate_speed, 0.0, 1.0)
+					var rotate_speed: float = rotation_interpolate_speed * 2.0 if is_aiming_firearm else rotation_interpolate_speed
+					var rotate_weight: float = clampf(delta * rotate_speed, 0.0, 1.0)
 					orientation.basis = Basis(q_from.slerp(q_to, rotate_weight))
+
 		if is_crouching:
 			animation_tree.set(CROUCHING_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 		else:
@@ -600,7 +679,7 @@ func apply_input(delta: float) -> void:
 	
 	# Override h_velocity when targeting so tangential root motion follows an exact circular arc.
 	if is_focusing and is_instance_valid(current_focus_target):
-		var to_target: Vector3 = (current_focus_target.global_position - global_position).slide(up_direction)
+		var to_target: Vector3 = (get_focus_target_position() - global_position).slide(up_direction)
 		var orbit_radius: float = to_target.length()
 		if orbit_radius > 0.1:
 			var target_dir: Vector3 = to_target / orbit_radius
@@ -883,6 +962,9 @@ func update_movement_and_rotation(delta: float) -> void:
 					var effective_mass := (mass * rb.mass) / (mass + rb.mass)
 					rb.apply_impulse(push_dir * relative_velocity_proj * effective_mass * push_force, c.get_position() - rb.global_position)
 
+	if is_on_floor() and not is_swimming and not is_falling:
+		last_safe_shore_position = global_position
+
 
 	orientation.origin = Vector3() # Clear accumulated root motion displacement (was applied to speed).
 	orientation = orientation.orthonormalized() # Orthonormalize orientation.
@@ -939,3 +1021,115 @@ func update_music_volume(value: float) -> void:
 			radio = find_child("RadiOtPlayer3D", true, false)
 		if radio and "volume_db" in radio:
 			radio.volume_db = db
+
+
+## Start push-to-talk voice broadcasting
+func start_broadcasting() -> void:
+	is_broadcasting = true
+	if voice_chat_indicator:
+		voice_chat_indicator.show()
+	if Engine.has_singleton("Steam") and Steam.isSteamRunning():
+		Steam.startVoiceRecording()
+		var my_id: int = Steam.getSteamID()
+		if my_id > 0:
+			Steam.setInGameVoiceSpeaking(my_id, true)
+	if multiplayer.has_multiplayer_peer() and multiplayer.get_peers().size() > 0:
+		_set_voice_indicator.rpc(true)
+
+
+## Stop push-to-talk voice broadcasting
+func stop_broadcasting() -> void:
+	is_broadcasting = false
+	if voice_chat_indicator:
+		voice_chat_indicator.hide()
+	if Engine.has_singleton("Steam") and Steam.isSteamRunning():
+		Steam.stopVoiceRecording()
+		var my_id: int = Steam.getSteamID()
+		if my_id > 0:
+			Steam.setInGameVoiceSpeaking(my_id, false)
+	if multiplayer.has_multiplayer_peer() and multiplayer.get_peers().size() > 0:
+		_set_voice_indicator.rpc(false)
+
+
+@rpc("any_peer", "call_remote", "unreliable_ordered")
+func _receive_voice_packet(compressed_buffer: PackedByteArray) -> void:
+	if not Engine.has_singleton("Steam") or not Steam.isSteamRunning() or compressed_buffer.is_empty():
+		return
+	var sample_rate: int = Steam.getVoiceOptimalSampleRate()
+	if sample_rate <= 0:
+		sample_rate = 48000
+	var decompressed: Dictionary = Steam.decompressVoice(compressed_buffer, sample_rate)
+	if decompressed.get("result") == Steam.VOICE_RESULT_OK:
+		var uncompressed: PackedByteArray = decompressed.get("uncompressed", PackedByteArray())
+		if uncompressed.is_empty():
+			return
+		if voice_playback == null and voice_audio_player:
+			if not voice_audio_player.playing:
+				voice_audio_player.play()
+			voice_playback = voice_audio_player.get_stream_playback() as AudioStreamGeneratorPlayback
+		if voice_playback:
+			var sample_count: int = uncompressed.size() / 2
+			var frames = PackedVector2Array()
+			frames.resize(sample_count)
+			for i in range(sample_count):
+				var sample_val: float = float(uncompressed.decode_s16(i * 2)) / 32768.0
+				frames[i] = Vector2(sample_val, sample_val)
+			var frames_available: int = voice_playback.get_frames_available()
+			if frames.size() > frames_available:
+				frames = frames.slice(0, frames_available)
+			if not frames.is_empty():
+				voice_playback.push_buffer(frames)
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _set_voice_indicator(is_speaking: bool) -> void:
+	if voice_chat_indicator:
+		voice_chat_indicator.visible = is_speaking
+
+
+## Applies synchronized locomotion state name on puppet AnimationTree
+func _apply_synced_locomotion_node(node_name: String) -> void:
+	if node_name.is_empty() or animation_tree == null:
+		return
+	var root_playback: AnimationNodeStateMachinePlayback = animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH)
+	if root_playback == null:
+		return
+	for group in LOCOMOTION_GROUPS:
+		var inner_playback: AnimationNodeStateMachinePlayback = animation_tree.get("parameters/LocomotionStateMachine/" + group + "/playback")
+		if inner_playback:
+			if root_playback.get_current_node() != group:
+				root_playback.travel(group)
+			if inner_playback.get_current_node() != node_name:
+				inner_playback.travel(node_name)
+			return
+	if root_playback.get_current_node() != node_name:
+		root_playback.travel(node_name)
+
+
+## Applies synchronized blend coordinates to puppet AnimationTree blend spaces
+func _apply_synced_blend_position(blend_pos: Vector2) -> void:
+	if animation_tree == null:
+		return
+	if is_crouching:
+		animation_tree.set(CROUCHING_LOCOMOTION_BLEND_POSITION_PATH, blend_pos)
+	elif inventory and inventory.has_equipment(Equipment.EquipmentType.BOW):
+		if is_shooting:
+			animation_tree.set(ARCHERY_LOCOMOTION_BLEND_POSITION_PATH, blend_pos)
+		else:
+			animation_tree.set(BOW_LOCOMOTION_BLEND_POSITION_PATH, blend_pos)
+	elif inventory and inventory.has_one_handed_or_shield_equipped():
+		animation_tree.set(SHIELD_LOCOMOTION_BLEND_POSITION_PATH, blend_pos)
+	elif inventory and inventory.has_heavy_weapon_equipped():
+		animation_tree.set(GREATSWORD_LOCOMOTION_BLEND_POSITION_PATH, blend_pos)
+	elif inventory and inventory.has_equipment(Equipment.EquipmentType.PISTOL):
+		animation_tree.set(PISTOL_LOCOMOTION_BLEND_POSITION_PATH, blend_pos)
+	elif inventory and inventory.has_equipment(Equipment.EquipmentType.RIFLE):
+		animation_tree.set(RIFLE_LOCOMOTION_BLEND_POSITION_PATH, blend_pos)
+	elif inventory and inventory.is_unarmed() and is_boxing:
+		animation_tree.set(BOXING_LOCOMOTION_BLEND_POSITION_PATH, blend_pos)
+	elif is_swimming:
+		animation_tree.set(SWIMMING_LOCOMOTION_BLEND_POSITION_PATH, blend_pos.y if blend_pos.y != 0.0 else blend_pos.length())
+	elif is_skateboarding:
+		animation_tree.set(SKATEBOARDING_LOCOMOTION_BLEND_POSITION_PATH, blend_pos.y)
+	else:
+		animation_tree.set(STANDING_LOCOMOTION_BLEND_POSITION_PATH, blend_pos)

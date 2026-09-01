@@ -229,6 +229,20 @@
 [ext_resource type="Texture2D" uid="uid://ckmfjtaa1iw2p" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/PlayStation Series/Vector/playstation_button_circle_filled.svg" id="216_os6bm"]
 [ext_resource type="Script" uid="uid://ck08322tms20v" path="res://addons/3d_player_controller/scripts/stamina.gd" id="217_bidj8"]
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_voice"]
+transparency = 1
+shading_mode = 0
+albedo_texture = ExtResource("215_krtyc")
+billboard_mode = 1
+
+[sub_resource type="QuadMesh" id="QuadMesh_voice"]
+material = SubResource("StandardMaterial3D_voice")
+size = Vector2(0.4, 0.4)
+
+[sub_resource type="AudioStreamGenerator" id="AudioStreamGenerator_voice"]
+mix_rate = 48000.0
+buffer_length = 0.5
+
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_ym3ug"]
 radius = 0.009999072
 height = 0.099990726
@@ -2509,10 +2523,11 @@ shading_mode = 0
 albedo_color = Color(1, 1, 0, 1)
 albedo_texture = ExtResource("174_07say")
 billboard_mode = 1
+no_depth_test = true
 
 [sub_resource type="QuadMesh" id="QuadMesh_5xw05"]
 material = SubResource("StandardMaterial3D_0cxoa")
-size = Vector2(0.2, 0.2)
+size = Vector2(0.35, 0.35)
 
 [sub_resource type="Animation" id="Animation_0cxoa"]
 length = 0.001
@@ -2575,6 +2590,116 @@ region = Rect2(4, 75, 52, 52)
 properties/0/path = NodePath("InputSynchronizer:motion")
 properties/0/spawn = true
 properties/0/replication_mode = 1
+
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_player"]
+properties/0/path = NodePath(".:position")
+properties/0/spawn = true
+properties/0/replication_mode = 1
+properties/1/path = NodePath(".:rotation")
+properties/1/spawn = true
+properties/1/replication_mode = 1
+properties/2/path = NodePath("PlayerModel:position")
+properties/2/spawn = true
+properties/2/replication_mode = 1
+properties/3/path = NodePath("PlayerModel:rotation")
+properties/3/spawn = true
+properties/3/replication_mode = 1
+properties/4/path = NodePath(".:sync_locomotion_node")
+properties/4/spawn = true
+properties/4/replication_mode = 2
+properties/5/path = NodePath(".:sync_blend_position")
+properties/5/spawn = true
+properties/5/replication_mode = 1
+properties/6/path = NodePath(".:current_state")
+properties/6/spawn = true
+properties/6/replication_mode = 2
+properties/7/path = NodePath(".:is_jumping")
+properties/7/spawn = true
+properties/7/replication_mode = 2
+properties/8/path = NodePath(".:is_falling")
+properties/8/spawn = true
+properties/8/replication_mode = 2
+properties/9/path = NodePath(".:is_sprinting")
+properties/9/spawn = true
+properties/9/replication_mode = 2
+properties/10/path = NodePath(".:is_crouching")
+properties/10/spawn = true
+properties/10/replication_mode = 2
+properties/11/path = NodePath(".:is_attacking")
+properties/11/spawn = true
+properties/11/replication_mode = 2
+properties/12/path = NodePath(".:is_swimming")
+properties/12/spawn = true
+properties/12/replication_mode = 2
+properties/13/path = NodePath(".:is_climbing")
+properties/13/spawn = true
+properties/13/replication_mode = 2
+properties/14/path = NodePath(".:is_paragliding")
+properties/14/spawn = true
+properties/14/replication_mode = 2
+properties/15/path = NodePath(".:is_flying")
+properties/15/spawn = true
+properties/15/replication_mode = 2
+properties/16/path = NodePath(".:is_skateboarding")
+properties/16/spawn = true
+properties/16/replication_mode = 2
+properties/17/path = NodePath(".:is_sliding")
+properties/17/spawn = true
+properties/17/replication_mode = 2
+properties/18/path = NodePath(".:is_pushing")
+properties/18/spawn = true
+properties/18/replication_mode = 2
+properties/19/path = NodePath(".:is_hanging_braced")
+properties/19/spawn = true
+properties/19/replication_mode = 2
+properties/20/path = NodePath(".:is_hanging_free")
+properties/20/spawn = true
+properties/20/replication_mode = 2
+properties/21/path = NodePath(".:is_driving")
+properties/21/spawn = true
+properties/21/replication_mode = 2
+properties/22/path = NodePath(".:is_sitting")
+properties/22/spawn = true
+properties/22/replication_mode = 2
+properties/23/path = NodePath(".:is_ragdolling")
+properties/23/spawn = true
+properties/23/replication_mode = 2
+properties/24/path = NodePath(".:is_emoting")
+properties/24/spawn = true
+properties/24/replication_mode = 2
+properties/25/path = NodePath(".:is_boxing")
+properties/25/spawn = true
+properties/25/replication_mode = 2
+properties/26/path = NodePath(".:is_shooting")
+properties/26/spawn = true
+properties/26/replication_mode = 2
+properties/27/path = NodePath(".:is_aiming_bow")
+properties/27/spawn = true
+properties/27/replication_mode = 2
+properties/28/path = NodePath(".:is_drawing_arrow")
+properties/28/spawn = true
+properties/28/replication_mode = 2
+properties/29/path = NodePath(".:is_firing_arrow")
+properties/29/spawn = true
+properties/29/replication_mode = 2
+properties/30/path = NodePath(".:is_casting_line")
+properties/30/spawn = true
+properties/30/replication_mode = 2
+properties/31/path = NodePath(".:is_reeling_line")
+properties/31/spawn = true
+properties/31/replication_mode = 2
+properties/32/path = NodePath(".:is_mining")
+properties/32/spawn = true
+properties/32/replication_mode = 2
+properties/33/path = NodePath(".:is_logging")
+properties/33/spawn = true
+properties/33/replication_mode = 2
+properties/34/path = NodePath(".:is_throwing")
+properties/34/spawn = true
+properties/34/replication_mode = 2
+properties/35/path = NodePath(".:is_front_flipping")
+properties/35/spawn = true
+properties/35/replication_mode = 2
 
 [node name="Player" type="CharacterBody3D" unique_id=548622605 node_paths=PackedStringArray("animation_tree")]
 script = ExtResource("1_ho2o7")
@@ -3816,7 +3941,12 @@ shape = SubResource("SphereShape3D_5xw05")
 [node name="VoiceChatIndicator" type="MeshInstance3D" parent="." unique_id=1500520104]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.3000002, 0)
 visible = false
-mesh = SubResource("PlaneMesh_5xw05")
+mesh = SubResource("QuadMesh_voice")
+
+[node name="VoiceAudioPlayer" type="AudioStreamPlayer3D" parent="." unique_id=190455525]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 0)
+stream = SubResource("AudioStreamGenerator_voice")
+autoplay = true
 
 [node name="AttackSequenceTimer" type="Timer" parent="." unique_id=724736604]
 wait_time = 0.4
@@ -3895,6 +4025,9 @@ player = NodePath("..")
 [node name="InputSynchronizer" type="MultiplayerSynchronizer" parent="." unique_id=1044493989]
 replication_config = SubResource("SceneReplicationConfig_x4u5g")
 script = ExtResource("8_wyssh")
+
+[node name="PlayerSynchronizer" type="MultiplayerSynchronizer" parent="." unique_id=1044493990]
+replication_config = SubResource("SceneReplicationConfig_player")
 
 [node name="Focus" type="Node" parent="." unique_id=252522396 node_paths=PackedStringArray("player", "target_detection", "focus_target_marker")]
 script = ExtResource("208_focus")

@@ -27,16 +27,28 @@ func _input(event: InputEvent) -> void:
 	if event.is_action_pressed(current_drop_action):
 		# Stop "hanging" and start "falling"
 		player.state_machine.travel(_this_state, NodeStateMachine.States.FALLING)
+		get_viewport().set_input_as_handled()
 		return
 
-	# Hanging, Climbing-On [Input]
+	# Hanging, Climbing-On / Back-Eject Leap [Input]
 	if event.is_action_pressed(current_climb_up_action) and not event.is_echo():
+		if player.player_input.motion.y < -0.1 and abs(player.player_input.motion.y) > abs(player.player_input.motion.x):
+			var wall_normal: Vector3 = player.player_model.global_transform.basis.z.slide(player.up_direction).normalized()
+			player.velocity = (wall_normal * 5.0) + (player.up_direction * 3.5)
+			player.is_hanging_braced = false
+			player.is_hanging_free = false
+			player.is_climbing_on = false
+			player.state_machine.travel(_this_state, NodeStateMachine.States.FALLING)
+			get_viewport().set_input_as_handled()
+			return
 		if player.is_hanging_braced:
 			player.locomotion_state.travel("BracedHangClimbingOn")
 			player.is_climbing_on = true
+			get_viewport().set_input_as_handled()
 		elif player.is_hanging_free:
 			player.locomotion_state.travel("FreeHangingClimbingOn")
 			player.is_climbing_on = true
+			get_viewport().set_input_as_handled()
 
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
@@ -101,6 +113,12 @@ func start() -> void:
 	process_mode = Node.PROCESS_MODE_INHERIT
 	# Set the player's new state
 	player.current_state = _this_state
+	# Stop airborne momentum
+	player.velocity = Vector3.ZERO
+	player.is_jumping = false
+	player.is_falling = false
+	player.is_climbing = false
+	player.is_climbing_on = false
 	# Determine if the player can hang braced
 	if player.hanging_braced_detection.is_colliding():
 		# Travel to the "hanging" (braced) locomotion state

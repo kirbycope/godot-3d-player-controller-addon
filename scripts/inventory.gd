@@ -117,6 +117,9 @@ func rebuild_equipment_cache() -> void:
 		if "can_shoot" in item and item.can_shoot:
 			can_player_shoot = true
 
+	if player and player.controls:
+		player.controls.reset_labels()
+
 
 func set_equipment_visibility(is_visible: bool) -> void:
 	for item in equipment:
@@ -135,6 +138,14 @@ func get_equipment_by_type(type: int) -> Node3D:
 
 func has_equipment(type: int) -> bool:
 	return equipment_by_type.has(type)
+
+## Returns true if the player has a firearm equipped (Pistol, Rifle).
+func has_firearm_equipped() -> bool:
+	return has_equipment(Equipment.EquipmentType.PISTOL) or has_equipment(Equipment.EquipmentType.RIFLE)
+
+## Returns true if the player has a bow equipped.
+func has_bow_equipped() -> bool:
+	return has_equipment(Equipment.EquipmentType.BOW)
 
 func has_equipment_in_backpack(type: int, bone_name: String) -> bool:
 	for item in get_all_weapons():

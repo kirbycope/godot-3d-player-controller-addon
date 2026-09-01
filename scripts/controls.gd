@@ -10,6 +10,7 @@ enum InputType {
 	TOUCH,
 }
 
+@export var player: Player
 @export var input_deadzone: float = 0.05 ## Address joystick drift by setting a deadzone threshold for joystick motion inputs
 @export_category("Keyboard and Mouse Textures")
 @export var keyboard_mouse_button_0_normal: Texture2D ## Keyboard [E] key (Normal)
@@ -197,6 +198,9 @@ var _normal_textures: Dictionary = {}
 
 ## Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+	if player == null and get_parent() is Player:
+		player = get_parent() as Player
+
 	set_process(is_multiplayer_authority())
 	set_physics_process(is_multiplayer_authority())
 	set_process_input(is_multiplayer_authority())
@@ -558,6 +562,15 @@ func _ready() -> void:
 		key_event.physical_keycode = KEY_L
 		InputMap.action_add_event("next_weapon", key_event)
 
+	# "broadcast" { Keyboard: [T] }
+	if not InputMap.has_action("broadcast"):
+		# Add the [broadcast] action to the Input Map
+		InputMap.add_action("broadcast")
+		# Keyboard [T]
+		var key_event = InputEventKey.new()
+		key_event.physical_keycode = KEY_T
+		InputMap.action_add_event("broadcast", key_event)
+
 	# "ui_accept" { Microsoft: Ⓐ, Keyboard: [Enter], [Numpad Enter], [Space] }
 	if not InputMap.has_action("ui_accept"):
 		# Add the [ui_accept] action to the Input Map
@@ -688,6 +701,10 @@ func reset_labels() -> void:
 	for label: Variant in _label_texts.keys():
 		if label:
 			label.text = _label_texts[label]
+
+	if player != null and player.has_firearm_equipped:
+		if joypad_axis_4_plus_label:
+			joypad_axis_4_plus_label.text = "Aim"
 
 
 func set_labels(label_texts: Dictionary) -> void:

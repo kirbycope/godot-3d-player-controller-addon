@@ -376,6 +376,8 @@ func stop() -> void:
 		player.current_state = -1
 	# Flag the player as not "driving"
 	player.is_driving = false
+	if player.is_driving_in and player.is_driving_in.has_method("set_driver"):
+		player.is_driving_in.set_driver(null)
 	player.is_driving_in = null
 	player.is_entering_vehicle = false
 	player.is_exiting_vehicle = false

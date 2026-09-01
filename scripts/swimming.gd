@@ -40,6 +40,18 @@ func _physics_process(delta: float) -> void:
 	# Do nothing if the player is not set
 	if not player: return
 
+	# Water exhaustion check - respawn at safe shore position
+	if player.is_exhausted and (player.is_swimming or player.current_state == _this_state):
+		if player.last_safe_shore_position != Vector3.ZERO:
+			player.global_position = player.last_safe_shore_position
+		player.velocity = Vector3.ZERO
+		player.is_swimming = false
+		if player.stamina:
+			player.stamina.value = player.stamina.max_value * 0.35
+			player.is_exhausted = false
+		player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
+		return
+
 	# Water depth check
 	var water_surface_along_up := get_water_surface_along_up()
 	if not is_nan(water_surface_along_up):

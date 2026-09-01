@@ -16,15 +16,6 @@ func _physics_process(delta: float) -> void:
 		if not has_rifle:
 			return
 
-		# Have the player look at the crosshair when aiming
-		#if player.is_shooting and player.debug.visible:
-		#	player.look_at_modifier.target_node = player.look_at_target.get_path()
-		#	player.look_at_modifier.active = true
-		# Reset the look at modifier when not aiming
-		#else:
-		#	player.look_at_modifier.target_node = NodePath("")
-		#	player.look_at_modifier.active = false
-
 		var emote_state = player.animation_tree.get(player.EMOTE_STATE_PLAYBACK_PATH)
 
 		# Play the "RifleFiringStanding" animation using Emote Blend
