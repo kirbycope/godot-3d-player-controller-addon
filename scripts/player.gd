@@ -260,6 +260,10 @@ var is_sprinting: bool = false ## Is the Player currently sprinting?
 var is_standing: bool = false ## Is the Player currently standing?
 var last_safe_shore_position: Vector3 = Vector3.ZERO ## Last known grounded position on dry land.
 var is_swimming: bool = false ## Is the Player currently swimming?
+var is_diving: bool = false ## Is the Player currently diving underwater (submerged swimming)?
+var swim_vertical_speed: float = 0.0 ## Vertical swim speed (m/s along up_direction) applied while swimming/diving.
+var model_pitch: float = 0.0 ## Local pitch (radians) applied to the player model, used while diving.
+@export var model_pitch_pivot_height: float = 0.9 ## Height (m) above the model origin the dive pitch pivots around (hips), so the body doesn't sweep through walls.
 var drawn_weapon_group: String = "" ## Locomotion group whose draw animation already played; its Start skips the redraw.
 var last_fall_speed: float = 0.0 ## The downward vertical fall speed right before movement update.
 var initial_collision_shape_height: float
@@ -437,6 +441,8 @@ func _ready() -> void:
 			voice_audio_player.play()
 		voice_playback = voice_audio_player.get_stream_playback() as AudioStreamGeneratorPlayback
 
+	_setup_updraft_vfx()
+
 
 ## Called when there is an unhandled input event.
 func _unhandled_input(event: InputEvent) -> void:
@@ -490,6 +496,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 ## Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta: float) -> void:
+	_update_updraft_vfx()
+
 	if is_multiplayer_authority() and is_broadcasting and Engine.has_singleton("Steam") and Steam.isSteamRunning():
 		var available_voice: Dictionary = Steam.getAvailableVoice()
 		if available_voice.get("result") == Steam.VOICE_RESULT_OK and available_voice.get("written", 0) > 0:
@@ -714,7 +722,7 @@ func apply_input(delta: float) -> void:
 		vertical_speed = h_velocity.dot(up_direction)
 	elif is_swimming:
 		# While swimming, vertical movement is driven by root motion/input, not gravity.
-		vertical_speed = h_velocity.dot(up_direction)
+		vertical_speed = h_velocity.dot(up_direction) + swim_vertical_speed
 	else:
 		vertical_speed += get_gravity().dot(up_direction) * 1.5 * delta
 	velocity = h_velocity.slide(up_direction) + (up_direction * vertical_speed)
@@ -909,6 +917,118 @@ func is_group_equipment_equipped(group_name: String) -> bool:
 	return false
 
 
+static var _weather_fx_script: Script = null
+static var _weather_fx_checked: bool = false
+
+## Soft WeatherFX interop: returns the global precipitation strength, or 0.0 when the addon is absent.
+func get_precipitation_strength() -> float:
+	if not _weather_fx_checked:
+		_weather_fx_checked = true
+		var weather_fx_path := "res://addons/weather_fx/scripts/weather_fx.gd"
+		if ResourceLoader.exists(weather_fx_path):
+			_weather_fx_script = load(weather_fx_path) as Script
+	if _weather_fx_script:
+		return _weather_fx_script.get_precipitation_strength()
+	return 0.0
+
+
+## Returns true if the player is currently inside an updraft or thermal air column.
+func is_in_updraft() -> bool:
+	if not is_inside_tree():
+		return false
+	var tree := get_tree()
+	if tree == null:
+		return false
+
+	var pool: Array[Node] = []
+	pool.append_array(tree.get_nodes_in_group("Updraft"))
+	pool.append_array(tree.get_nodes_in_group("Thermal"))
+
+	for node in pool:
+		if node is Area3D:
+			var area := node as Area3D
+			# Skip burned-out/disabled thermals so ghost updrafts never grant lift
+			if not area.monitoring:
+				continue
+			if area.overlaps_body(self):
+				return true
+			var col_shape: CollisionShape3D = area.find_child("CollisionShape3D", true, false) as CollisionShape3D
+			if col_shape and col_shape.shape:
+				var local_p := area.to_local(global_position)
+				if col_shape.shape is BoxShape3D:
+					var box := col_shape.shape as BoxShape3D
+					var half := box.size * 0.5
+					if abs(local_p.x) <= half.x and abs(local_p.y) <= half.y and abs(local_p.z) <= half.z:
+						return true
+				elif col_shape.shape is CylinderShape3D:
+					var cyl := col_shape.shape as CylinderShape3D
+					var half_h := cyl.height * 0.5
+					var horiz_d := Vector2(local_p.x, local_p.z).length()
+					if abs(local_p.y) <= half_h and horiz_d <= cyl.radius:
+						return true
+				elif col_shape.shape is CapsuleShape3D:
+					var cap := col_shape.shape as CapsuleShape3D
+					var half_h := cap.height * 0.5
+					var horiz_d := Vector2(local_p.x, local_p.z).length()
+					if abs(local_p.y) <= half_h and horiz_d <= cap.radius:
+						return true
+			elif area.global_position.distance_to(global_position) < 8.0:
+				return true
+	return false
+
+
+## Returns the distance in meters to the nearest active updraft or thermal air source.
+func get_nearest_updraft_distance() -> float:
+	if not is_inside_tree():
+		return 999.0
+	var tree := get_tree()
+	if tree == null:
+		return 999.0
+
+	var min_d: float = 999.0
+	var pool: Array[Node] = []
+	pool.append_array(tree.get_nodes_in_group("Updraft"))
+	pool.append_array(tree.get_nodes_in_group("Thermal"))
+
+	for node in pool:
+		if node is Area3D:
+			var area := node as Area3D
+			if area.monitoring or area.monitorable:
+				var d := area.global_position.distance_to(global_position)
+				if d < min_d:
+					min_d = d
+	return min_d
+
+
+var updraft_aura_vfx: Node3D = null
+
+func _setup_updraft_vfx() -> void:
+	var vfx_scene_path := "res://addons/weather_fx/assets/vfx/wind/Scenes/VFX_AirFlowUP.tscn"
+	if ResourceLoader.exists(vfx_scene_path):
+		var scene := load(vfx_scene_path) as PackedScene
+		if scene:
+			updraft_aura_vfx = scene.instantiate() as Node3D
+			updraft_aura_vfx.name = "UpdraftAuraVFX"
+			updraft_aura_vfx.visible = false
+			updraft_aura_vfx.scale = Vector3(1.2, 1.6, 1.2)
+			add_child(updraft_aura_vfx)
+			for p in updraft_aura_vfx.find_children("*", "GPUParticles3D", true, false):
+				if p is GPUParticles3D:
+					p.emitting = false
+
+
+func _update_updraft_vfx() -> void:
+	if not is_instance_valid(updraft_aura_vfx):
+		return
+
+	var should_show: bool = is_in_updraft() or get_nearest_updraft_distance() <= 5.0
+	if updraft_aura_vfx.visible != should_show:
+		updraft_aura_vfx.visible = should_show
+		for p in updraft_aura_vfx.find_children("*", "GPUParticles3D", true, false):
+			if p is GPUParticles3D:
+				p.emitting = should_show
+
+
 ## Gets the player's forward direction projected onto the movement plane.
 func get_facing_direction() -> Vector3:
 	var facing_direction := -player_model.global_transform.basis.z
@@ -979,7 +1099,16 @@ func update_movement_and_rotation(delta: float) -> void:
 
 	# Rotate the Player Model (unless entering/exiting a vehicle or ragdolling)
 	if not (is_driving and (is_entering_vehicle or is_exiting_vehicle)) and not is_ragdolling:
-		player_model.global_transform.basis = orientation.basis
+		if is_zero_approx(model_pitch):
+			player_model.global_transform.basis = orientation.basis
+			player_model.transform.origin = initial_player_model_transform.origin
+		else:
+			# Pitch about a hip-height pivot so the body doesn't sweep around the feet like a ball
+			var pitched_basis: Basis = orientation.basis * Basis(Vector3.RIGHT, model_pitch)
+			var pivot_local := Vector3(0.0, model_pitch_pivot_height, 0.0)
+			var base_origin: Vector3 = to_global(initial_player_model_transform.origin)
+			var pivot_global: Vector3 = base_origin + (orientation.basis * pivot_local)
+			player_model.global_transform = Transform3D(pitched_basis, pivot_global - (pitched_basis * pivot_local))
 		var model_facing_basis: Basis = orientation.basis.rotated(up_direction, PI)
 		var rotated_basis: Basis = model_facing_basis * initial_separation_ray_transform.basis
 		var rotated_origin: Vector3 = global_position + (model_facing_basis * initial_separation_ray_transform.origin)

@@ -5,6 +5,7 @@ extends TextureProgressBar
 @export var drain_paraglide: float = 12.0
 @export var drain_climb: float = 5.0
 @export var drain_swim: float = 8.0
+@export var drain_dive: float = 4.0 ## Constant drain while diving underwater (acts as the breath meter).
 @export var sprint_multiplier: float = 1.5 ## Drain multiplier when sprinting while climbing/swimming
 @export var regen_rate: float = 15.0
 @export var regen_rate_falling: float = 3.0
@@ -47,6 +48,7 @@ func _physics_process(delta: float) -> void:
 			and (player.velocity.length() > 0.1 or player.player_input.motion.length() > 0.0 or player.smoothed_motion.length() > 0.0)
 	var swimming_fast: bool = swimming_moving and player.is_sprinting
 	var swimming_normal: bool = swimming_moving and not player.is_sprinting
+	var diving: bool = player.is_diving
 
 	# Sprinting in place costs nothing — drain requires actual movement input
 	var sprinting_on_land: bool = player.is_sprinting \
@@ -54,7 +56,7 @@ func _physics_process(delta: float) -> void:
 			and not player.is_climbing \
 			and not player.is_swimming \
 			and not player.is_paragliding
-	var draining: bool = sprinting_on_land or climbing_moving or swimming_fast \
+	var draining: bool = sprinting_on_land or climbing_moving or swimming_fast or diving \
 			or player.is_paragliding
 
 	# Drain stamina while doing a draining activity
@@ -65,6 +67,9 @@ func _physics_process(delta: float) -> void:
 		var drain_rate: float = drain_sprint
 		if climbing_moving:
 			drain_rate = drain_climb * (sprint_multiplier if player.is_sprinting else 1.0)
+		elif diving:
+			# Diving drains as a breath meter; fast swimming underwater costs extra
+			drain_rate = drain_dive + (drain_swim * sprint_multiplier if swimming_fast else 0.0)
 		elif swimming_fast:
 			drain_rate = drain_swim * sprint_multiplier
 		elif player.is_paragliding:

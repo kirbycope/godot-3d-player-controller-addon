@@ -12,9 +12,18 @@ extends NodeStateMachine
 @export var pad_sprint_action: StringName = &"sprint"
 @export var pad_crouch_action: StringName = &"crouch"
 
+@export_group("Diving")
+@export var enable_diving: bool = true ## Allows diving below the surface by holding the crouch action.
+@export var dive_vertical_speed: float = 2.5 ## Vertical swim speed while descending/ascending (m/s).
+@export var dive_entry_depth: float = 1.2 ## Depth below the surface (m) at which surface swimming becomes diving.
+@export var dive_buoyancy_factor: float = 0.6 ## Passive float-back-up speed factor when shallow and not descending.
+@export var dive_model_pitch_speed: float = 6.0 ## Interpolation speed of the dive body pitch.
+
 var _this_state := NodeStateMachine.States.SWIMMING
+var _vertical_swim_effort: float = 0.0 ## 0-1 stroke effort from active vertical dive input (drives the swim blend without stick input).
 
 const WATER_SURFACE_SNAP_RATIO := 0.75
+const SURFACE_EPSILON := 0.05 ## Depth (m) below which the player counts as being at the surface.
 
 
 ## Called when there is an input event.
@@ -46,25 +55,67 @@ func _physics_process(delta: float) -> void:
 			player.global_position = player.last_safe_shore_position
 		player.velocity = Vector3.ZERO
 		player.is_swimming = false
+		_reset_diving()
 		if player.stamina:
 			player.stamina.value = player.stamina.max_value * 0.35
 			player.is_exhausted = false
 		player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
 		return
 
+	var input_type: int = player.controls.current_input_type if player.controls else 0
+	var current_climb_out_action: StringName = keyboard_climb_out_action if input_type == 0 else pad_climb_out_action
+	var current_sprint_action: StringName = keyboard_sprint_action if input_type == 0 else pad_sprint_action
+	var current_crouch_action: StringName = keyboard_crouch_action if input_type == 0 else pad_crouch_action
+
 	# Water depth check
 	var water_surface_along_up := get_water_surface_along_up()
 	if not is_nan(water_surface_along_up):
 		var current_position_along_up := player.up_direction.dot(player.global_position)
-		var swim_depth_threshold = current_position_along_up + (player.collision_shape.shape.height * 0.5)
+		var swim_depth_threshold: float = current_position_along_up + (_get_collision_height() * 0.5)
 		if water_surface_along_up > swim_depth_threshold:
 			if not player.is_swimming and not player.is_driving and player.is_driving_in == null and not player.is_entering_vehicle and not player.is_exiting_vehicle:
 				player.state_machine.travel(player.current_state, NodeStateMachine.States.SWIMMING)
 		else:
 			if player.is_swimming:
 				player.is_swimming = false
+
+		# Diving [Vertical Swim Control]
+		var shoulder_offset: float = _get_collision_height() * WATER_SURFACE_SNAP_RATIO
+		var depth_below_surface: float = water_surface_along_up - (current_position_along_up + shoulder_offset)
+		var was_diving: bool = player.is_diving
+		player.is_diving = enable_diving and player.is_swimming and depth_below_surface > dive_entry_depth
+		var vertical_input: float = 0.0
+		_vertical_swim_effort = 0.0
+		if player.is_swimming and not player.is_climbing_on:
+			if enable_diving and Input.is_action_pressed(current_crouch_action):
+				vertical_input = -1.0
+				_vertical_swim_effort = 1.0
+			elif depth_below_surface > SURFACE_EPSILON and Input.is_action_pressed(current_climb_out_action):
+				vertical_input = 1.0
+				_vertical_swim_effort = 1.0
+			elif not player.is_diving and depth_below_surface > SURFACE_EPSILON:
+				# Gentle buoyancy floats the player back up to the surface line
+				vertical_input = dive_buoyancy_factor
+			# Never swim up through the surface
+			if vertical_input > 0.0 and depth_below_surface <= SURFACE_EPSILON:
+				vertical_input = 0.0
+				_vertical_swim_effort = 0.0
+		player.swim_vertical_speed = vertical_input * dive_vertical_speed
+
+		# Pitch the player model while diving so the body follows the swim direction (camera stays level)
+		var target_pitch: float = 0.0
+		if player.is_diving:
+			var h_speed: float = player.velocity.slide(player.up_direction).length()
+			# Model mesh faces +Z of the orientation basis, so descending needs a positive X rotation
+			target_pitch = atan2(-player.swim_vertical_speed, maxf(h_speed, 1.0))
+		player.model_pitch = lerp_angle(player.model_pitch, target_pitch, clampf(delta * dive_model_pitch_speed, 0.0, 1.0))
+
+		# Refresh contextual HUD controls when the dive state flips
+		if was_diving != player.is_diving:
+			_on_input_type_changed(input_type)
 	elif player.is_swimming:
 		player.is_swimming = false
+		_reset_diving()
 
 	# Swimming, Climbing On [Status]
 	if player.is_climbing_on:
@@ -83,6 +134,7 @@ func _physics_process(delta: float) -> void:
 	# Stop "swimming" if the player has been flagged as not "swimming" (e.g. by exiting the pool)
 	if not player.is_swimming \
 	and player.locomotion_state.get_current_node() != "BracedHangClimbingOn":
+		_reset_diving()
 		# Start "standing" or "falling"
 		player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING if player.is_on_floor() else NodeStateMachine.States.FALLING)
 		return
@@ -99,20 +151,6 @@ func _physics_process(delta: float) -> void:
 	if not player.locomotion_state.get_current_node() in ["SwimmingAtEdge", "SwimmingToEdge"] \
 	and ledge_detected:
 		player.locomotion_state.travel("SwimmingToEdge")
-
-	var input_type = player.controls.current_input_type if player.controls else 0
-	var current_climb_out_action = keyboard_climb_out_action if input_type == 0 else pad_climb_out_action
-	var current_sprint_action = keyboard_sprint_action if input_type == 0 else pad_sprint_action
-	var current_crouch_action = keyboard_crouch_action if input_type == 0 else pad_crouch_action
-
-	# Swimming, Up
-	if not player.is_on_wall() \
-	and Input.is_action_just_pressed(current_climb_out_action):
-		pass
-
-	# Swimming, Down
-	if Input.is_action_just_pressed(current_crouch_action):
-		pass
 
 	# Swimming, Speed [Input]
 	var has_swim_movement: bool = (player.smoothed_motion.y > 0.0 if player.is_focusing else player.smoothed_motion.length() > 0.0)
@@ -136,11 +174,12 @@ func _physics_process(delta: float) -> void:
 	and not player.is_climbing_on:
 		player.locomotion_state.travel("SwimmingLocomotion")
 	# Feed the BlendSpace1D only while in normal swimming locomotion.
+	# Vertical dive/ascend effort counts as stroke movement so diving animates without stick input.
 	if current_swimming_node == "SwimmingLocomotion":
 		if player.is_focusing: # or player.is_shooting:
-			player.animation_tree.set(player.SWIMMING_LOCOMOTION_BLEND_POSITION_PATH, player.smoothed_motion.y)
+			player.animation_tree.set(player.SWIMMING_LOCOMOTION_BLEND_POSITION_PATH, maxf(player.smoothed_motion.y, _vertical_swim_effort))
 		else:
-			player.animation_tree.set(player.SWIMMING_LOCOMOTION_BLEND_POSITION_PATH, player.smoothed_motion.length())
+			player.animation_tree.set(player.SWIMMING_LOCOMOTION_BLEND_POSITION_PATH, maxf(player.smoothed_motion.length(), _vertical_swim_effort))
 
 
 ## Start "swimming".
@@ -155,13 +194,7 @@ func start() -> void:
 	var up_direction: Vector3 = player.up_direction.normalized()
 	var water_surface_along_up: float = get_water_surface_along_up()
 	if not is_nan(water_surface_along_up):
-		var shoulder_offset := 0.0
-		if player and player.collision_shape and player.collision_shape.shape:
-			var shape = player.collision_shape.shape
-			if shape is CapsuleShape3D:
-				shoulder_offset = (shape as CapsuleShape3D).height * WATER_SURFACE_SNAP_RATIO
-			elif shape is BoxShape3D:
-				shoulder_offset = (shape as BoxShape3D).size.y * WATER_SURFACE_SNAP_RATIO
+		var shoulder_offset: float = _get_collision_height() * WATER_SURFACE_SNAP_RATIO
 		var target_position_along_up := water_surface_along_up - shoulder_offset
 		var current_position_along_up := up_direction.dot(player.global_position)
 		player.global_position += up_direction * (target_position_along_up - current_position_along_up)
@@ -177,21 +210,53 @@ func stop() -> void:
 	# Flag the player as not "swimming"
 	player.is_swimming = false
 	player.is_sprinting = false
+	_reset_diving()
+
+
+## Clears all diving state (called on exit, exhaustion respawn, and leaving water).
+func _reset_diving() -> void:
+	player.is_diving = false
+	player.swim_vertical_speed = 0.0
+	player.model_pitch = 0.0
+	_vertical_swim_effort = 0.0
+
+
+## Height of the player's collision shape, guarded against missing/atypical shapes.
+func _get_collision_height() -> float:
+	if not is_instance_valid(player.collision_shape) or player.collision_shape.shape == null:
+		return 0.0
+	var shape: Shape3D = player.collision_shape.shape
+	if shape is CapsuleShape3D:
+		return (shape as CapsuleShape3D).height
+	if shape is BoxShape3D:
+		return (shape as BoxShape3D).size.y
+	if shape is CylinderShape3D:
+		return (shape as CylinderShape3D).height
+	return 0.0
 
 
 func get_contextual_controls(input_type: int) -> Dictionary:
 	if not player or not player.controls: return {}
 
-	return {
+	var controls := {
 		player.controls.joypad_button_4_label: "Perspective",
 		player.controls.joypad_button_15_label: "Screenshot",
 		player.controls.joypad_button_6_label: "Pause Menu",
 
-		player.controls.joypad_button_3_label: "Climb Out",
 		player.controls.joypad_button_1_label: "Fast Swim",
 		player.controls.left_joystick_label: "Swim",
 		player.controls.right_joystick_label: "Camera",
 	}
+
+	if player.is_diving:
+		controls[player.controls.joypad_button_3_label] = "Surface"
+		controls[player.controls.joypad_button_7_label] = "Dive Deeper"
+	else:
+		controls[player.controls.joypad_button_3_label] = "Climb Out"
+		if enable_diving:
+			controls[player.controls.joypad_button_7_label] = "Dive"
+
+	return controls
 
 
 func get_water_surface_along_up() -> float:

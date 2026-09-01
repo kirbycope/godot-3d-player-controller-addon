@@ -18,12 +18,12 @@ func _input(event: InputEvent) -> void:
 				player.state_machine.travel(_this_state, NodeStateMachine.States.CLIMBING)
 				get_viewport().set_input_as_handled()
 			return
-		elif player.paraglider_raycast.is_colliding() and not player.is_jump_queued:
-			player.state_machine.travel(_this_state, NodeStateMachine.States.FLYING)
+		elif (not player.paraglider_raycast.is_colliding() or player.is_in_updraft()) and not player.is_exhausted:
+			player.state_machine.travel(_this_state, NodeStateMachine.States.PARAGLIDING)
 			get_viewport().set_input_as_handled()
 			return
-		elif not player.paraglider_raycast.is_colliding() and not player.is_exhausted:
-			player.state_machine.travel(_this_state, NodeStateMachine.States.PARAGLIDING)
+		elif player.paraglider_raycast.is_colliding() and not player.is_jump_queued:
+			player.state_machine.travel(_this_state, NodeStateMachine.States.FLYING)
 			get_viewport().set_input_as_handled()
 			return
 

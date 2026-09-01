@@ -2701,7 +2701,7 @@ properties/35/path = NodePath(".:is_front_flipping")
 properties/35/spawn = true
 properties/35/replication_mode = 2
 
-[node name="Player" type="CharacterBody3D" unique_id=548622605 node_paths=PackedStringArray("animation_tree")]
+[node name="Player" type="CharacterBody3D" unique_id=548622605 groups=["Player"] node_paths=PackedStringArray("animation_tree")]
 script = ExtResource("1_ho2o7")
 animation_tree = NodePath("AnimationTree")
 

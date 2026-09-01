@@ -18,10 +18,11 @@ Organized state machine architecture separating primary lower-body locomotion st
 - **Sprinting**: High-speed locomotion linked to stamina consumption.
 - **Jumping & Falling**: Air control, coyote time, and smooth landing blending.
 - **Crouching & Sliding**: Crouch walking and momentum-based sprinting slides.
-- **Climbing**: Raycast-assisted wall detection, ledge hopping, and wall climbing.
+- **Climbing**: Raycast-assisted wall detection, ledge hopping, and wall climbing. Walls become slippery during rain (BotW style): the climber periodically slides down, sprint climbing is blocked, and the climb animation slows (tunable via the `Rain Slipping` export group).
 - **Hanging & Shimmy**: Braced and free-hang wall gripping with directional shimmy.
 - **Swimming & Fast Swimming**: Water volume detection (`WATER` group), buoyancy, and surface swimming.
-- **Paragliding**: Deployable glider with steering control and mid-air cancel.
+- **Diving**: Hold crouch while swimming to dive below the surface; hold jump to ascend and surface. The player model pitches to follow the swim direction (camera stays level), gentle buoyancy floats you back to the surface when shallow, and stamina drains constantly underwater as a breath meter — exhaustion respawns you at the last safe shore. Contextual HUD controls swap between `Dive`/`Climb Out` and `Dive Deeper`/`Surface` automatically.
+- **Paragliding**: Deployable glider with steering control and mid-air cancel. Thermal updrafts grant an immediate `+6 m/s` catch boost on entry (BotW standard) plus continued lift and stamina recovery; all glide/dive/updraft physics are exported tunables on the `Paragliding` state node.
 - **Skateboarding**: Push acceleration, fast push, jumping, and dismounting.
 - **Flying**: 3D spatial flying with vertical ascending/descending.
 - **Sitting & Ragdoll**: Physical bone ragdoll simulation with get-up recovery.
@@ -54,9 +55,10 @@ Organized state machine architecture separating primary lower-body locomotion st
 - Real-time contextual action labels that adapt dynamically to the player's active locomotion state.
 
 ### 6. Stamina System (`Stamina`)
-- Modular drain and recovery rates for sprinting, climbing, swimming, and gliding.
+- Modular drain and recovery rates for sprinting, climbing, swimming, diving (breath meter), and gliding.
 - Exhaustion state with heavy-breathing locomotion recovery.
 - Inspector toggles to enable or disable stamina constraints.
+- **WeatherFX interop (optional)**: When the `weather_fx` addon is present, precipitation is read via a soft lookup (`Player.get_precipitation_strength()`) — the addon remains fully functional without it. The player scene root belongs to the `Player` group so interoperating addons can find it with an O(1) group lookup.
 
 ### 7. Debug HUD & In-Game Settings (`Debug`, `Settings`, `AudioSettings`, `VideoSettings`)
 - **Debug Telemetry**: Real-time state visualizer, active perspective indicator, and live FPS counter (toggle with `F3`).
