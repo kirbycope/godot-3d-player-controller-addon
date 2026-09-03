@@ -133,8 +133,9 @@ func is_player_pushing_into_wall() -> bool:
 ## Applies this state's contextual control labels (plus the shared Perspective/Screenshot/Pause Menu labels), or the defaults when it has none.
 func _on_input_type_changed(input_type: int) -> void:
 	if player == null or player.controls == null: return
-	# A held object owns the labels while it is held
+	# A held object owns the labels while it is held, and a fishing rod while it is equipped
 	if player.held_object and player.held_object.is_holding_object(): return
+	if player.is_fishing: return
 
 	var controls: Dictionary = get_contextual_controls(input_type)
 	if controls.is_empty():
