@@ -48,7 +48,9 @@ var current_state: int = -1: ## The current state of the Player (from the Node/C
 			return
 		var previous_state: int = current_state
 		current_state = value
-		state_changed.emit(previous_state, value)
+		# Spawn-state replication assigns this while the puppet's children are still entering the tree (not ready yet)
+		if is_node_ready():
+			state_changed.emit(previous_state, value)
 var locomotion_state: ## Gets the [NodeStateMachine] "LocomotionStateMachine"
 	get:
 		return animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH)
@@ -286,6 +288,12 @@ var is_sliding: bool = false ## Is the Player currently sliding?
 var is_sprinting: bool = false ## Is the Player currently sprinting?
 var is_standing: bool = false ## Is the Player currently standing?
 var last_safe_shore_position: Vector3 = Vector3.ZERO ## Last known grounded position on dry land.
+var is_stealthed: bool = false: ## Is the Player hidden by Stealth? Replicated, so puppets fade too and followers ignore them.
+	set(value):
+		is_stealthed = value
+		if skeleton:
+			for mesh: MeshInstance3D in skeleton.find_children("*", "MeshInstance3D"):
+				mesh.transparency = stealth_transparency if is_stealthed else 0.0
 var is_swimming: bool = false ## Is the Player currently swimming?
 var is_diving: bool = false ## Is the Player currently diving underwater (submerged swimming)?
 var swim_vertical_speed: float = 0.0 ## Vertical swim speed (m/s along up_direction) applied while swimming/diving.
@@ -310,6 +318,7 @@ var skateboard: Node3D
 @onready var crosshair: TextureRect = $Crosshair
 @onready var debug: Debug = $Debug
 @onready var inventory: Inventory = $Inventory
+@onready var abilities: Abilities = $Abilities
 @onready var radial_menu: RadialMenu = $Inventory/RadialMenu
 @onready var navigation_agent: NavigationAgent3D = $NavigationAgent3D
 @onready var pause: PlayerMenuLayer = $Pause
@@ -365,6 +374,12 @@ var skateboard: Node3D
 var voice_playback: AudioStreamGeneratorPlayback = null
 var is_broadcasting: bool = false
 var current_water_area: Area3D = null
+
+
+## Spawned players are named by their peer id (see [PlayerSpawner]); that peer owns this copy.
+func _enter_tree() -> void:
+	if str(name).is_valid_int():
+		set_multiplayer_authority(str(name).to_int())
 
 
 ## Called when the node enters the scene tree for the first time.
@@ -1261,6 +1276,7 @@ func set_look_at_target(target: Node3D) -> void:
 
 
 @export_category("Traversal")
+@export var stealth_transparency: float = 0.7 ## How faded the model is while [member is_stealthed].
 @export var lethal_fall_speed: float = 15.0 ## Landing at or above this downward speed (m/s) ragdolls the player.
 @export var wall_leap_horizontal_speed: float = 5.0 ## Horizontal impulse away from the wall on a climbing/hanging back-eject.
 @export var wall_leap_vertical_speed: float = 3.5 ## Vertical impulse on a climbing/hanging back-eject.

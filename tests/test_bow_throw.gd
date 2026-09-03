@@ -139,8 +139,8 @@ func test_arrow_frees_after_lifetime_and_forgets_shooter_exception():
 	arrow.set_script(ARROW_SCRIPT)
 	arrow.is_template = false
 	arrow.lifetime = 0.3
-	arrow.shooter = player
 	root.add_child(arrow)
+	arrow.launch(Transform3D(Basis.IDENTITY, Vector3(0, 5, 0)), Vector3.FORWARD, 10.0, player)
 	assert_true(player in arrow.get_collision_exceptions(), "A fresh arrow ignores its shooter.")
 	await wait_seconds(0.2)
 	assert_false(player in arrow.get_collision_exceptions(), "The shooter exception is dropped after a short delay.")

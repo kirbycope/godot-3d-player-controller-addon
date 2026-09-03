@@ -1,6 +1,6 @@
 class_name RadialMenu
 extends Control
-## Circular item picker opened by holding next/last weapon; releasing equips the hovered wedge.
+## Circular item picker opened by holding [member hold_actions]; releasing equips the hovered wedge.
 ##
 ## Items are Dictionaries with "display_name", "icon" and (for equipment) "item". A
 ## [member custom_item_provider] can supply its own Dictionaries (e.g. radio stations).
@@ -15,6 +15,7 @@ const ICON_SIZE: Vector2 = Vector2(64, 64)
 @export var bg_color: Color = Color(0, 0, 0, 0.5)
 @export var highlight_color: Color = Color(1, 1, 1, 0.3)
 @export var equipped_color: Color = Color(1, 1, 1, 0.6)
+@export var hold_actions: Array[StringName] = [&"last_weapon", &"next_weapon"] ## Actions that keep the wheel open.
 
 var weapons: Array[Dictionary] = []
 var hovered_index: int = -1
@@ -23,7 +24,8 @@ var custom_item_provider: Callable = Callable() ## Returns an Array of item Dict
 var custom_item_selected: Callable = Callable() ## Called with (item, index) when a wedge is picked.
 var custom_item_is_equipped: Callable = Callable() ## Returns true when (item, index) should draw as equipped.
 
-@onready var inventory: Inventory = get_parent()
+@onready var player: Player = get_parent().player ## The Inventory or Abilities owning the wheel points at the Player.
+@onready var inventory: Inventory = get_parent() as Inventory ## Null under the ability wheel, whose custom callbacks take over.
 @onready var tooltip_label: Label = $TooltipLabel
 
 
@@ -52,7 +54,7 @@ func _process(_delta: float) -> void:
 
 
 func is_menu_held() -> bool:
-	return Input.is_action_pressed("last_weapon") or Input.is_action_pressed("next_weapon")
+	return hold_actions.any(func(action: StringName) -> bool: return Input.is_action_pressed(action))
 
 
 func is_open() -> bool:
@@ -66,13 +68,13 @@ func _on_hold_timer_timeout() -> void:
 	update_items()
 	show()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if _is_keyboard_mouse() else Input.MOUSE_MODE_HIDDEN
-	inventory.player.crosshair.hide()
+	player.crosshair.hide()
 
 
 func _close() -> void:
 	hide()
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	inventory.player.crosshair.show()
+	player.crosshair.show()
 	if hovered_index != -1:
 		equip_item(hovered_index)
 	_set_hovered(-1)
@@ -80,7 +82,7 @@ func _close() -> void:
 
 
 func _is_keyboard_mouse() -> bool:
-	return inventory.player.controls.current_input_type == inventory.player.controls.InputType.KEYBOARD_MOUSE
+	return player.controls.current_input_type == player.controls.InputType.KEYBOARD_MOUSE
 
 
 func _set_hovered(index: int) -> void:

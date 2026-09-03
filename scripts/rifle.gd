@@ -1,24 +1,12 @@
 class_name Rifle
-extends Equipment
-## Loops the "RifleFiringStanding" spine emote while the Player holds shoot.
-##
-## Shooting is a held input with no signal, so the equipped copy polls [member Player.is_shooting].
+extends Firearm
+## A [Firearm] that also loops the "RifleFiringStanding" spine emote while the Player holds shoot.
 
 const FIRING_EMOTE: StringName = &"RifleFiringStanding"
 
 
-func _ready() -> void:
-	set_physics_process(false)
-	if player and player.is_multiplayer_authority():
-		player.inventory.equipment_changed.connect(_on_equipment_changed)
-
-
-## Only the equipped rifle drives the emote.
-func _on_equipment_changed() -> void:
-	set_physics_process(player.inventory.equipment.has(self))
-
-
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
+	super(delta)
 	var emote_state: AnimationNodeStateMachinePlayback = player.animation_tree.get(Player.EMOTE_STATE_PLAYBACK_PATH)
 	var emote_node: StringName = emote_state.get_current_node()
 	if player.is_shooting:

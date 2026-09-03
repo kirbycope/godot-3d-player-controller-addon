@@ -230,6 +230,10 @@
 [ext_resource type="Texture2D" uid="uid://ckmfjtaa1iw2p" path="res://addons/3d_player_controller/assets/kenney_nl/Icons/Input Prompts/PlayStation Series/Vector/playstation_button_circle_filled.svg" id="216_os6bm"]
 [ext_resource type="Script" uid="uid://ck08322tms20v" path="res://addons/3d_player_controller/scripts/stamina.gd" id="217_bidj8"]
 [ext_resource type="Shader" path="res://addons/3d_player_controller/assets/shaders/underwater_overlay.gdshader" id="218_uwshd"]
+[ext_resource type="PackedScene" uid="uid://c7abilities001" path="res://addons/3d_player_controller/scenes/abilities.tscn" id="219_abil"]
+[ext_resource type="Script" path="res://addons/3d_player_controller/scripts/ability.gd" id="220_ability"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/abilities/stealth.tres" id="221_stealth"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/abilities/heal.tres" id="222_heal"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_underwater"]
 render_priority = 0
@@ -2710,6 +2714,9 @@ properties/34/replication_mode = 2
 properties/35/path = NodePath(".:is_front_flipping")
 properties/35/spawn = true
 properties/35/replication_mode = 2
+properties/36/path = NodePath(".:is_stealthed")
+properties/36/spawn = true
+properties/36/replication_mode = 2
 
 [node name="Player" type="CharacterBody3D" unique_id=548622605 groups=["Player"] node_paths=PackedStringArray("animation_tree")]
 script = ExtResource("1_ho2o7")
@@ -4114,6 +4121,25 @@ player = NodePath("..")
 [node name="Inventory" parent="." unique_id=509190037 node_paths=PackedStringArray("player") instance=ExtResource("173_0fqn4")]
 player = NodePath("..")
 
+[node name="AbilityFx" type="Node3D" parent="."]
+
+[node name="ChannelingAudio" type="AudioStreamPlayer3D" parent="AbilityFx"]
+bus = &"SFX"
+
+[node name="CastingAudio" type="AudioStreamPlayer3D" parent="AbilityFx"]
+bus = &"SFX"
+
+[node name="ImpactAudio" type="AudioStreamPlayer3D" parent="AbilityFx"]
+bus = &"SFX"
+
+[node name="Abilities" parent="." node_paths=PackedStringArray("player", "fx_root", "channeling_audio", "casting_audio", "impact_audio") instance=ExtResource("219_abil")]
+player = NodePath("..")
+fx_root = NodePath("../AbilityFx")
+channeling_audio = NodePath("../AbilityFx/ChannelingAudio")
+casting_audio = NodePath("../AbilityFx/CastingAudio")
+impact_audio = NodePath("../AbilityFx/ImpactAudio")
+abilities = Array[ExtResource("220_ability")]([ExtResource("221_stealth"), ExtResource("222_heal")])
+
 [node name="Pause" parent="." unique_id=498429169 node_paths=PackedStringArray("player") instance=ExtResource("173_errws")]
 visible = false
 player = NodePath("..")
@@ -4334,3 +4360,6 @@ mouse_filter = 2
 [connection signal="timeout" from="NodeStateMachine/Pushing/StopGraceTimer" to="NodeStateMachine/Pushing" method="_on_stop_grace_timer_timeout"]
 [connection signal="timeout" from="NodeStateMachine/Climbing/RainSlipTimer" to="NodeStateMachine/Climbing" method="_on_rain_slip_timer_timeout"]
 [connection signal="timeout" from="NodeStateMachine/Attacking/BoxingInactivityTimer" to="NodeStateMachine/Attacking" method="_on_boxing_inactivity_timer_timeout"]
+[connection signal="locomotion_node_changed" from="." to="Abilities" method="_on_locomotion_node_changed"]
+[connection signal="state_changed" from="." to="Abilities" method="_on_state_changed"]
+[connection signal="equipment_changed" from="Inventory" to="Abilities" method="_on_equipment_changed"]

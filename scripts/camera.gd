@@ -292,5 +292,5 @@ func _update_raycast() -> void:
 ## Returns whether the RadialMenu is currently open/visible.
 func is_radial_menu_open() -> bool:
 	if player and is_instance_valid(player.radial_menu):
-		return player.radial_menu.is_open()
+		return player.radial_menu.is_open() or player.abilities.radial_menu.is_open()
 	return false

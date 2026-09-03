@@ -25,12 +25,14 @@ extends NodeStateMachine
 @export var enable_underwater_overlay: bool = true ## Fullscreen underwater filter while the camera is submerged.
 
 const WATER_SURFACE_SNAP_RATIO: float = 0.75
+const LEDGE_RAY_DEPTH: float = 0.3 ## While swimming the ledge ray scans this far below the surface, so rims flush with the water still register.
 const SURFACE_EPSILON: float = 0.05 ## Depth (m) below which the player counts as being at the surface.
 
 var _vertical_swim_effort: float = 0.0 ## 0-1 stroke effort from active vertical dive input (drives the swim blend without stick input).
 var _water_material: ShaderMaterial = null ## Water surface material that supports swimmer interaction uniforms.
 var _water_material_resolved: bool = false
 
+var _ledge_ray_default_y: float = 0.0 ## Scene height of the ledge ray, restored when leaving the water.
 @onready var _underwater_overlay: CanvasLayer = player.get_node_or_null(^"UnderwaterOverlay") as CanvasLayer if player else null
 
 
@@ -129,7 +131,10 @@ func _physics_process(delta: float) -> void:
 		player.state_machine.travel(state, States.STANDING if player.is_on_floor() else States.FALLING)
 		return
 
-	# Ledge detection [Raycast]: swim to the edge when a ledge is found, back to open water when it is lost
+	# Ledge detection [Raycast]: swim to the edge when a ledge is found, back to open water when it is lost.
+	# Scan just below the surface: a rim flush with the water sits under the default ray height.
+	if not is_nan(water_surface_along_up):
+		player.ledge_detection_horizontal.position.y = water_surface_along_up - player.up_direction.dot(player.global_position) - LEDGE_RAY_DEPTH
 	var ledge_detected: bool = player.detect_ledge()
 	var current_swimming_node: String = player.current_locomotion_node
 	var is_at_edge: bool = current_swimming_node in ["SwimmingAtEdge", "SwimmingToEdge"]
@@ -177,6 +182,7 @@ func _on_locomotion_node_changed(_state_path: String) -> void:
 ## Start "swimming".
 func start() -> void:
 	super.start()
+	_ledge_ray_default_y = player.ledge_detection_horizontal.position.y
 	# Splash on hard water entry, using the pre-impact fall speed
 	var impact_speed: float = maxf(-player.velocity.dot(player.up_direction), player.last_fall_speed)
 	# Flag the player as "swimming"
@@ -266,6 +272,7 @@ func stop() -> void:
 	player.is_sprinting = false
 	player.is_climbing_on = false
 	player.clear_ledge_visuals()
+	player.ledge_detection_horizontal.position.y = _ledge_ray_default_y
 	_reset_diving()
 
 

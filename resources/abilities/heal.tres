@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="HealAbility" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://addons/3d_player_controller/scripts/heal_ability.gd" id="1_heal"]
+[ext_resource type="Texture2D" path="res://addons/3d_player_controller/assets/icons/heal.svg" id="2_icon"]
+
+[resource]
+script = ExtResource("1_heal")
+display_name = "Heal"
+icon = ExtResource("2_icon")
+cooldown = 8.0
+cast_time = 1.5
+amount = 50.0

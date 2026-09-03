@@ -37,6 +37,8 @@ Organized state machine architecture separating primary lower-body locomotion st
 - Timers are `Timer` children created in `_ready` (physics-time): `Pushing.stop_grace_timer`, `Climbing.rain_slip_timer`, `Attacking.boxing_inactivity_timer`; Flying's double-tap uses a `SceneTreeTimer`.
 - `Player.lethal_fall_speed` (15 m/s) is the shared ragdoll landing threshold for jumping and falling; `Player.wall_leap_horizontal_speed` / `wall_leap_vertical_speed` tune the climbing/hanging back-eject (`Player.leap_off_wall()`), and `Player.face_wall(delta)` / `clear_ledge_visuals()` are shared by the wall states.
 
+- **Swimming ledges**: while swimming, `Swimming` moves the `LedgeDetectionHorizontal` ray to `LEDGE_RAY_DEPTH` (0.3 m) below the water surface and restores its scene height on exit, so rims flush with the water still register and jump at `SwimmingAtEdge` mantles out.
+
 ### 2. First & Third Person Camera (`Camera`)
 - Dynamic toggle between **First-Person** and **Third-Person** perspectives.
 - SpringArm collision avoidance preventing clipping through geometry.
@@ -52,7 +54,10 @@ Organized state machine architecture separating primary lower-body locomotion st
 - **Object Manipulation**: Pick up, carry, aim, rotate, and throw `RigidBody3D` objects or companion bodies. The throw charge bar is the `%ThrowChargeBar` node in `controls.tscn` (exported to `HeldObject.throw_charge_bar`); the optional `connector_scene` is loaded once on ready.
 - **Hit Detection & Combos**: Multi-hit attack combos and damage dispatching. `HitDetection` uses `Area3D` hitboxes, not shape queries: unarmed attacks use the `LeftHandHitbox`/`RightHandHitbox` bone attachments in `player.tscn`; a melee weapon must have a child `Area3D` named **`Hitbox`** (with its `CollisionShape3D`). Hitboxes only `monitoring` during attack locomotion nodes, and any ancestor of a hit body that defines `register_weapon_hit(equipment: Node, hit_node: Node)` is notified once per swing.
 - **Look-at ownership**: `Player.set_look_at_target(target: Node3D)` is the single writer of the spine `LookAtModifier3D` (pass `null` to clear). `HeldObject` calls it on pickup/drop and `Bow` while `Bow/ArcheryLocomotion` is active.
-- **Bow & Rifle**: `Bow` reacts to `Player.locomotion_node_changed` (`Bow/BowDrawArrow` plays the draw sound, `Bow/BowFireArrow` duplicates the template `Arrow` child and launches it along `ProjectileRaycast`). `Arrow` drops its shooter collision exception after 0.15 s and frees itself after `lifetime`. `Rifle` loops the firing spine emote while shoot is held.
+- **Projectiles** (`Projectile`, `scenes/bullet.tscn`): every round is a `RigidBody3D` with real ballistics *and* a swept ray between physics steps, so fast bullets never tunnel through small targets such as balloons. On impact the projectile notifies the nearest ancestor of the collider that defines `register_projectile_hit(projectile, point, normal)` (or `register_weapon_hit(weapon, projectile)` for harvestables), applies `impact_impulse` to `RigidBody3D` targets, emits `hit`, then frees itself (or freezes in place when `sticks_on_hit`, as arrows do). Areas without a hit handler (water, weather zones) are ignored by the sweep. Launch one with `projectile.launch(origin_transform, direction, speed, shooter, weapon)`.
+- **Firearms** (`Firearm`, base of `Rifle`): a gun is an `Equipment` with a child `Muzzle` (`Marker3D`, -Z is the barrel), a one-shot `FireTimer`, an optional `LaserSight` instance and `projectile_scene`; wire them through the `muzzle`, `fire_timer`, `laser_sight` exports. While shoot is held it fires every `fire_interval` (`automatic`), aiming each round from the muzzle at the point where the Player's `ProjectileRaycast` lands. `fire()` returns the spawned projectile and emits `fired`. `fire_sfx` is an optional `AudioStreamPlayer3D`. `Rifle` adds the firing spine emote; the world's pistol uses `Firearm` directly.
+- **Laser sight** (`LaserSight`, `scenes/laser_sight.tscn`): a beam plus surface dot stretched from the muzzle to the aim point with `aim(from, to)`; shown while the Player focuses or shoots.
+- **Bow & Arrow**: `Bow` reacts to `Player.locomotion_node_changed` (`Bow/BowDrawArrow` plays the draw sound, `Bow/BowFireArrow` duplicates the template `Arrow` child and launches it through the projectile API). `Arrow` is a `Projectile` that sticks where it lands, drops its shooter exception after 0.15 s and frees itself after `lifetime`.
 
 ### 4. Inventory & Radial Menu (`Inventory`, `RadialMenu`)
 - Circular weapon/tool selection menu activated by holding assigned keys or controller D-Pad.
@@ -60,6 +65,17 @@ Organized state machine architecture separating primary lower-body locomotion st
 - Extensible custom item provider callback for vehicle radios or contextual menus. Items are Dictionaries with `display_name` and `icon` (plus `item` for equipment); a `custom_item_provider` returns the same shape so the addon never knows about stations.
 - `Inventory.equipment` is a typed `Array[Equipment]`; `get_equipment_by_type(type) -> Equipment`, and `equipment_changed` fires after every change (`cycle_weapon`, `equip_from_backpack`, `unequip_all`, `Equipment.equip`). Each `BoneAttachment3D` holds exactly one `Equipment`; stowed attachments are hidden children of `Inventory`.
 - Hold detection uses the `HoldTimer` in `inventory.tscn` (`wait_time` = hold threshold); a release before timeout cycles, a timeout opens the menu.
+
+### 4b. Abilities (`Abilities`, `Ability`)
+World of Warcraft style spells on the Zelda-style controls, so an action RPG never needs a morphing action bar:
+- **Tap** the `ability` action (`Q` / Left Bumper) to cast the picked ability; **hold** it to open the ability wheel and pick another. The wheel is the same `RadialMenu` scene the inventory uses (`radial_menu.tscn`, with `hold_actions` set to `ability`), and the picked ability's name shows on the Left Bumper label.
+- `Ability` is a `Resource` with `display_name`, `icon`, `cooldown`, `cast_time`, `stamina_cost`, `is_toggle` and `ends_on_attack`; subclass it and override `activate(player) -> bool` (return `false` to refuse, spending nothing) and `deactivate(player)` for toggles. Ship abilities as `.tres` files and list them in the Player's `Abilities.abilities` export.
+- `Abilities` (a `CanvasLayer` child of the Player) handles the rest: the `HoldTimer` splits taps from holds, the `CastTimer` runs cast times while `%CastBar` in `controls.tscn` fills through a tween, and any `state_changed` / `locomotion_node_changed` interrupts the cast. Cooldowns are stored as end times (toggles start theirs when they end), so nothing polls. Signals: `cast_started`, `cast_interrupted`, `ability_activated`, `ability_deactivated`.
+- Every `Ability` carries VFX (`PackedScene`) and SFX (`AudioStream`) for three phases: **channeling** (kept on the caster for the cast time, stopped on interrupt), **casting** (one-shot on the caster when the effect fires) and **impact** (one-shot at `get_impact_position(player)`, the caster by default; override it for ranged spells). VFX are instanced under the Player's `AbilityFx` node and one-shots are freed after `fx_lifetime`; SFX play through the `ChannelingAudio` / `CastingAudio` / `ImpactAudio` players there on the `SFX` bus. Phases are played on every peer through an authority RPC.
+- `target_mode` picks where impact lands: `SELF` (the caster) or `FOCUS` (the locked-on `Focus` target, or the aim point along the projectile ray when nothing is locked). Override `impact(player, target)` to apply damage or buffs to the target when the impact lands.
+- Set `projectile_speed` above 0 and the casting VFX/SFX fly to the target as a `SpellProjectile` (`spell_projectile.tscn`) instead of a bullet or arrow: a plain `Node3D` bolt with no physics that always arrives, homing on a moving target by default (`projectile_homing`). Impact (and `impact()`) lands when the bolt arrives, WoW style; every peer flies its own copy and only the caster's authority lands the impact.
+- Included abilities (`resources/abilities/`): **Stealth** (`StealthAbility`, instant toggle) sets `Player.is_stealthed`, which fades every mesh under the skeleton by `stealth_transparency`, is replicated so other peers see the fade, and makes followers lose the Player; any melee swing, bow shot or firearm `fired` ends it. **Heal** (`HealAbility`, 1.5 s cast) restores stamina, the project's only resource pool. Both ship without VFX/SFX; assign them in the `.tres` files.
+- Only the multiplayer authority reads input and casts; effects that others must see belong on replicated Player properties, as Stealth does.
 
 ### 5. Multi-Platform Contextual Controls (`Controls`)
 - Adaptive input icons and button hints supporting:
@@ -104,6 +120,13 @@ Organized state machine architecture separating primary lower-body locomotion st
 - `loading.tscn` (`Loading`) shows a tip, progress bar and dependency log while `ResourceLoader` loads a scene in a thread; `load_scene(path)` ignores a second request while one is in flight and only polls while loading.
 
 ---
+
+### 10. Multiplayer (`SteamPeer`, `PlayerSpawner`, `ProjectileSpawner`, `SyncedBody`)
+- **Session**: drop a `SteamPeer` node into the world. When the world loads inside a Steam lobby it hosts if the local user owns the lobby and connects to the owner otherwise (`SteamMultiplayerPeer`, reached only through the Steam singleton, so web exports stay inert). Call `host()` yourself after creating a lobby locally.
+- **Players**: a `PlayerSpawner` (`MultiplayerSpawner`) with `player_scene` set to `player.tscn` or a scene inheriting it spawns one player per peer under `spawn_path`, named by peer id, and frees it on disconnect. `Player._enter_tree` takes its multiplayer authority from that name, so input, aiming and firing run only on the owning peer while `PlayerSynchronizer` replicates transform, locomotion path and blend position to everyone else. `local_player_spawned` hands the world the player it controls.
+- **Projectiles**: a `ProjectileSpawner` in the `ProjectileSpawner` group makes `Firearm.fire()` and `Bow.fire_arrow()` (with `arrow_scene`) go through `spawner.fire(scene, origin, direction, speed, shooter, weapon)`. Clients ask the host over RPC; the host spawns with a custom `spawn_function`, so every peer instantiates and launches an identical round from the same data and resolves its own hits. Rounds sit on no collision layer and ignore each other.
+- **World objects**: `SyncedBody` is a `MultiplayerSynchronizer` for physics props; peers that do not own the body freeze it kinematically and take the replicated transform. `resources/rigid_body_replication.tres` and `resources/character_body_replication.tres` are ready-made replication configs. Hit-driven state such as balloons and harvestables should resolve on the server and replicate back (`register_projectile_hit` → RPC to the server → `call_local` broadcast).
+- **Signals and spawn state**: `Player.state_changed` only fires once the node is ready, because the spawner applies replicated spawn state while a puppet's children are still entering the tree.
 
 ## 📦 Installation
 
@@ -176,6 +199,7 @@ res://addons/3d_player_controller/scenes/player.tscn
 | **Attack / Shoot** | `Left Click` | `Right Trigger` |
 | **Aim Bow / Focus** | `Right Click` | `Left Trigger` |
 | **Pick Up / Throw Object** | `E` / `Left Click` | `Right Bumper` / `Right Trigger` |
+| **Cast Ability / Ability Wheel** | `Q` (Tap / Hold) | `Left Bumper` (Tap / Hold) |
 | **Radial Menu / Prev Weapon** | `J` (Hold) | `D-Pad Left` (Hold) |
 | **Radial Menu / Next Weapon** | `L` (Hold) | `D-Pad Right` (Hold) |
 | **Toggle Perspective** | `F5` | `View / Back` |
@@ -229,6 +253,7 @@ godot --headless --path . -s addons/gut/gut_cmdln.gd -gdir=res://addons/3d_playe
 | Folder | Source | License |
 |---|---|---|
 | `assets/game_icons/` | [game-icons.net](https://game-icons.net/) (authors listed in the `.txt` file next to each icon, e.g. Lorc) | CC BY 3.0 |
+| `assets/icons/` (`stealth.svg`, `heal.svg`) | Drawn for this addon | CC0 |
 | `assets/kenney_nl/` (incl. `Lobby Icons/`, copied from Kenney's Game Icons pack) | [Kenney](https://www.kenney.nl/) | CC0 |
 | `assets/quaternius/` | [Quaternius](https://quaternius.com/) | CC0 1.0 |
 | `assets/tommusic/` | [TomMusic](https://tommusic.itch.io/) | Not stated (the pack's `ReadMe.txt` contains no license) |
