@@ -72,18 +72,24 @@ script = ExtResource("1_audio")
 
 [node name="SFX_Footsteps_Dirt" type="AudioStreamPlayer3D" parent="." unique_id=1779186873]
 stream = SubResource("AudioStreamRandomizer_dirt")
+bus = &"SFX"
 
 [node name="SFX_Footsteps_Grass" type="AudioStreamPlayer3D" parent="." unique_id=734951217]
 stream = SubResource("AudioStreamRandomizer_grass")
+bus = &"SFX"
 
 [node name="SFX_Footsteps_Slide" type="AudioStreamPlayer3D" parent="." unique_id=422765804]
 stream = SubResource("AudioStreamRandomizer_stone")
+bus = &"SFX"
 
 [node name="SFX_Footsteps_Stone" type="AudioStreamPlayer3D" parent="." unique_id=2001684523]
 stream = SubResource("AudioStreamRandomizer_stone")
+bus = &"SFX"
 
 [node name="SFX_Footsteps_Water" type="AudioStreamPlayer3D" parent="." unique_id=519547480]
 stream = SubResource("AudioStreamRandomizer_water")
+bus = &"SFX"
 
 [node name="SFX_Footsteps_Wood" type="AudioStreamPlayer3D" parent="." unique_id=1143168822]
 stream = SubResource("AudioStreamRandomizer_wood")
+bus = &"SFX"

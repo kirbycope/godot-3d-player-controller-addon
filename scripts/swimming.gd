@@ -64,7 +64,7 @@ func _physics_process(delta: float) -> void:
 		player.is_swimming = false
 		_reset_diving()
 		if player.stamina:
-			player.stamina.value = player.stamina.max_value * 0.35
+			player.stamina.stamina = player.stamina.max_value * 0.35
 			player.is_exhausted = false
 		player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
 		return

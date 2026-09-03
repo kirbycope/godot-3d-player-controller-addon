@@ -73,10 +73,10 @@ func test_paragliding_thermal_updraft_and_steep_dive() -> void:
 	add_child_autofree(updraft)
 	updraft.global_position = player.global_position
 
-	player.stamina.value = 50.0
+	player.stamina.stamina = 50.0
 	paragliding_node._physics_process(0.5)
 	assert_gt(player.velocity.y, 0.0, "Updraft should provide upward lift")
-	assert_gt(player.stamina.value, 50.0, "Updraft should replenish stamina")
+	assert_gt(player.stamina.stamina, 50.0, "Updraft should replenish stamina through the setter, not just the bar")
 
 	paragliding_node.stop()
 

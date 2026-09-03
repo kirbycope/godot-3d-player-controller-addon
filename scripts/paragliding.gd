@@ -62,7 +62,7 @@ func _physics_process(delta: float) -> void:
 
 	# Check for thermal updraft areas
 	var was_in_updraft: bool = is_in_updraft
-	is_in_updraft = _check_in_updraft()
+	is_in_updraft = player.is_in_updraft()
 
 	var input_type: int = player.controls.current_input_type if player.controls else 0
 	var current_dive_action: StringName = keyboard_dive_action if input_type == 0 else pad_dive_action
@@ -95,7 +95,7 @@ func _physics_process(delta: float) -> void:
 			vertical_speed = maxf(vertical_speed, updraft_catch_boost)
 		vertical_speed = minf(vertical_speed + delta * updraft_lift_acceleration, max_updraft_lift_speed)
 		if player.enable_stamina and player.stamina:
-			player.stamina.value = min(player.stamina.value + delta * updraft_stamina_regen, player.stamina.max_value)
+			player.stamina.stamina += delta * updraft_stamina_regen
 	elif is_diving:
 		# Steep dive downwards
 		vertical_speed = maxf(vertical_speed - delta * dive_acceleration, -max_dive_speed)
@@ -107,12 +107,6 @@ func _physics_process(delta: float) -> void:
 
 	player.velocity = current_h_vel + (player.up_direction * vertical_speed)
 	player.update_movement_and_rotation(delta)
-
-
-func _check_in_updraft() -> bool:
-	if player and player.has_method("is_in_updraft"):
-		return player.is_in_updraft()
-	return false
 
 
 ## Start "paragliding".
@@ -129,7 +123,7 @@ func start() -> void:
 	player.locomotion_state.start("Paragliding")
 
 	# Check if starting inside an active thermal updraft
-	is_in_updraft = _check_in_updraft()
+	is_in_updraft = player.is_in_updraft()
 	var vertical_speed := player.velocity.dot(player.up_direction)
 	if is_in_updraft:
 		# Paraglider catch: immediate upward launch boost, even when deployed near the ground (BotW standard)

@@ -19,8 +19,6 @@ var settings_res: PlayerSettingsResource
 
 ## Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	set_process(is_multiplayer_authority())
-	set_physics_process(is_multiplayer_authority())
 	set_process_input(is_multiplayer_authority())
 
 	settings_res = PlayerSettingsResource.load_or_create()

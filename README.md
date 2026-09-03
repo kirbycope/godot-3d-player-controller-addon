@@ -66,11 +66,13 @@ Organized state machine architecture separating primary lower-body locomotion st
   - **Audio Settings** (`AudioSettings`): Volume sliders and step buttons for `Dialog`, `Menu`, `Music`, and `SFX` buses.
   - **Video Settings** (`VideoSettings`): Controls for `VSYNC`, `MSAA`, `SSAA`, `FXAA`, `SSRL`, `TAA`, and `FSR`.
 - **Persistent User Settings**: All audio and video preferences are automatically saved to and loaded from `user://settings.tres` via `PlayerSettingsResource`.
+- **Multiplayer Animation Sync**: `PlayerSynchronizer` replicates `sync_locomotion_node` (the full `Group/Node` locomotion path) and `sync_blend_position`; puppets travel their AnimationTree to that path and write the blend position into whichever blend space is current.
 
 ### 8. Audio Component System (`Audio`)
 - Modular 3D audio subsystem (`audio.tscn` paired with `audio.gd`) encapsulating surface-aware footstep audio streams (`Dirt`, `Grass`, `Stone`, `Wood`, `Water`, `Slide`).
 - Dynamic surface detection via physics collider group tagging and raycasting.
 - Centralized volume scaling for SFX footstep audio players and vehicle music radio (`RadiOtPlayer3D`).
+- Creates the `Dialog`, `Menu`, `Music`, and `SFX` audio buses at runtime when your project's bus layout lacks them, so the audio settings menu works without editing `default_bus_layout.tres`. Footstep players play on `SFX`.
 
 ---
 
@@ -87,7 +89,6 @@ Organized state machine architecture separating primary lower-body locomotion st
    │       ├── assets/
    │       ├── plugin.cfg
    │       ├── plugin.gd
-   │       ├── resources/
    │       ├── scenes/
    │       │   ├── player.tscn
    │       │   ├── controls.tscn
@@ -178,7 +179,7 @@ The controller includes an automated test suite powered by [GUT (Godot Unit Test
 ### Running Tests Headless (CLI)
 
 ```bash
-godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://addons/3d_player_controller/tests/ -gexit
+godot --headless --path . -s addons/gut/gut_cmdln.gd -gdir=res://addons/3d_player_controller/tests -gexit
 ```
 
 ### Running Tests in Editor

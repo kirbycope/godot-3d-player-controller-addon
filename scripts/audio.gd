@@ -1,6 +1,8 @@
 class_name Audio
 extends Node3D
 
+const BUSES: Array[StringName] = [&"Dialog", &"Menu", &"Music", &"SFX"] ## Buses the settings menus adjust; created at runtime when the project's bus layout lacks them.
+
 @export var player: Player
 
 @onready var sfx_footsteps_dirt: AudioStreamPlayer3D = $SFX_Footsteps_Dirt
@@ -13,9 +15,11 @@ extends Node3D
 
 ## Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	set_process(is_multiplayer_authority())
-	set_physics_process(is_multiplayer_authority())
 	set_process_input(is_multiplayer_authority())
+	for bus_name: StringName in BUSES:
+		if AudioServer.get_bus_index(bus_name) == -1:
+			AudioServer.add_bus()
+			AudioServer.set_bus_name(AudioServer.bus_count - 1, bus_name)
 
 
 ## Play surface-aware footstep audio based on collider groups or meta.
@@ -45,8 +49,8 @@ func play_slide(_collider: Node3D = null) -> void:
 
 ## Update volume on all footstep AudioStreamPlayer3D nodes and vehicles.
 func set_sfx_volume(value: float) -> void:
-	var db = linear_to_db(value / 100.0) if value > 0.0 else -80.0
-	for child in get_children():
+	var db: float = linear_to_db(value / 100.0) if value > 0.0 else -80.0
+	for child: Node in get_children():
 		if child is AudioStreamPlayer3D:
 			child.volume_db = db
 

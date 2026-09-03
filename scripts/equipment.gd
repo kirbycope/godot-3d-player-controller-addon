@@ -59,16 +59,6 @@ func _update_attachment_offsets() -> void:
 		equipment_instance.scale = scale_offset
 
 
-## Returns true if this equipment is a firearm (Pistol, Rifle).
-func is_firearm() -> bool:
-	return equipment_type == EquipmentType.PISTOL or equipment_type == EquipmentType.RIFLE
-
-
-## Returns true if this equipment is a bow.
-func is_bow() -> bool:
-	return equipment_type == EquipmentType.BOW
-
-
 func display_menu(player: Player) -> void:
 	if player.inventory and player.inventory.has_equipment_in_backpack(equipment_type, bone_attachment_bone_name):
 		return

@@ -40,3 +40,32 @@ func test_animation_sync_properties_update() -> void:
 	# Test locomotion node name update
 	player.sync_locomotion_node = "StandingLocomotion"
 	assert_eq(player.sync_locomotion_node, "StandingLocomotion", "sync_locomotion_node should store state name")
+
+
+func _make_puppet() -> Player:
+	var puppet: Player = PLAYER_SCENE.instantiate() as Player
+	puppet.set_multiplayer_authority(2)
+	add_child_autofree(puppet)
+	return puppet
+
+
+func test_puppet_applies_grouped_locomotion_path() -> void:
+	var puppet: Player = _make_puppet()
+	puppet.sync_locomotion_node = "Bow/BowLocomotion"
+	await wait_physics_frames(5)
+	assert_eq(String(puppet.locomotion_state.get_current_node()), "Bow", "Root machine should enter the Bow group")
+	assert_eq(puppet.current_locomotion_node, "BowLocomotion", "Inner machine should reach the synced node")
+
+
+func test_puppet_applies_root_locomotion_node_without_bow_group() -> void:
+	var puppet: Player = _make_puppet()
+	puppet.sync_locomotion_node = "CrouchingLocomotion"
+	await wait_physics_frames(5)
+	assert_eq(String(puppet.locomotion_state.get_current_node()), "CrouchingLocomotion", "Root-level nodes must not be routed through the Bow group")
+
+
+func test_puppet_blend_position_targets_synced_node() -> void:
+	var puppet: Player = _make_puppet()
+	puppet.sync_locomotion_node = "CrouchingLocomotion"
+	puppet.sync_blend_position = Vector2(0.0, 0.7)
+	assert_eq(puppet.animation_tree.get(Player.CROUCHING_LOCOMOTION_BLEND_POSITION_PATH), Vector2(0.0, 0.7))

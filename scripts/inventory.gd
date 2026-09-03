@@ -80,28 +80,6 @@ func remove_equipment(item: Node) -> void:
 	rebuild_equipment_cache()
 
 
-func debug_unequip_all() -> void:
-	equipment.clear()
-	equipment_by_type.clear()
-	can_player_attack = true
-	can_player_shoot = false
-
-	if not player:
-		return
-
-	for child in player.skeleton.get_children():
-		if child is BoneAttachment3D:
-			var has_equipment_child: bool = false
-			for sub_child in child.get_children():
-				if "equipment_type" in sub_child:
-					has_equipment_child = true
-					break
-			if has_equipment_child:
-				child.queue_free()
-
-	player.locomotion_state.travel("StandingLocomotion") # Is this unnecessart? AnimationTree _should_ transition based on bool(s)
-
-
 func rebuild_equipment_cache() -> void:
 	equipment_by_type.clear()
 	can_player_attack = is_unarmed()

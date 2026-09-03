@@ -14,8 +14,6 @@ var settings_res: PlayerSettingsResource
 
 ## Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	set_process(is_multiplayer_authority())
-	set_physics_process(is_multiplayer_authority())
 	set_process_input(is_multiplayer_authority())
 	settings_res = PlayerSettingsResource.load_or_create()
 	settings_res.apply_audio_settings(player)
@@ -54,15 +52,8 @@ func hide_settings() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
-func _set_bus_volume(bus_name: String, value: float) -> void:
-	var bus_index = AudioServer.get_bus_index(bus_name)
-	if bus_index != -1:
-		var volume_db = linear_to_db(value / 100.0) if value > 0 else -80.0
-		AudioServer.set_bus_volume_db(bus_index, volume_db)
-
-
 func _on_dialog_volume_slider_value_changed(value: float) -> void:
-	_set_bus_volume("Dialog", value)
+	PlayerSettingsResource.set_bus_volume(&"Dialog", value)
 	if settings_res:
 		settings_res.dialog_volume = value
 		settings_res.save()
@@ -85,7 +76,7 @@ func _on_dialog_volume_plus_touch_screen_button_pressed() -> void:
 
 
 func _on_menu_volume_slider_value_changed(value: float) -> void:
-	_set_bus_volume("Menu", value)
+	PlayerSettingsResource.set_bus_volume(&"Menu", value)
 	if settings_res:
 		settings_res.menu_volume = value
 		settings_res.save()
@@ -108,7 +99,7 @@ func _on_menu_volume_plus_touch_screen_button_pressed() -> void:
 
 
 func _on_music_volume_slider_value_changed(value: float) -> void:
-	_set_bus_volume("Music", value)
+	PlayerSettingsResource.set_bus_volume(&"Music", value)
 	if player and player.has_method("update_music_volume"):
 		player.update_music_volume(value)
 	if settings_res:
@@ -133,7 +124,7 @@ func _on_music_volume_plus_touch_screen_button_pressed() -> void:
 
 
 func _on_sfx_volume_slider_value_changed(value: float) -> void:
-	_set_bus_volume("SFX", value)
+	PlayerSettingsResource.set_bus_volume(&"SFX", value)
 	if player and player.has_method("update_sfx_volume"):
 		player.update_sfx_volume(value)
 	if settings_res:

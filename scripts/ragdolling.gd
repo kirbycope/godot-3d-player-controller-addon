@@ -1,21 +1,9 @@
 class_name Ragdolling
 extends NodeStateMachine
 
-var _this_state := NodeStateMachine.States.RAGDOLLING
-
-
+var _this_state: NodeStateMachine.States = NodeStateMachine.States.RAGDOLLING
 var _hips_physical_bone: PhysicalBone3D
-
-
-func _ready() -> void:
-	super._ready()
-	# Ensure physical bones collision layer 1 is disabled by default
-	Callable(func():
-		if player and player.physical_bone_simulator:
-			for bone in player.physical_bone_simulator.find_children("*", "PhysicalBone3D", true, false):
-				bone.set_collision_layer_value(1, false)
-				bone.set_collision_mask_value(1, false)
-	).call_deferred()
+var _physical_bones: Array[Node] = []
 
 
 ## Called when there is an input event.
@@ -24,36 +12,21 @@ func _input(event: InputEvent) -> void:
 	if not player or player.is_paused or (player.pause and player.pause.visible): return
 
 	# If the player is ragdolling, pressing the "action" button will stop "ragdolling"
-	if player.is_ragdolling and Input.is_action_just_pressed("action"):
+	if player.is_ragdolling and event.is_action_pressed("action"):
 		player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
 
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
-func _physics_process(delta: float) -> void:
-	# Do nothing if the player is not set
-	if not player: return
-
+func _physics_process(_delta: float) -> void:
 	# Sync player global position to the hips physical bone position while ragdolling
-	if player.is_ragdolling:
-		if not is_instance_valid(_hips_physical_bone) and player and player.physical_bone_simulator:
-			if player.physical_bone_simulator.has_node("Physical Bone Hips"):
-				_hips_physical_bone = player.physical_bone_simulator.get_node("Physical Bone Hips") as PhysicalBone3D
-			else:
-				for bone in player.physical_bone_simulator.find_children("*", "PhysicalBone3D", true, false):
-					if bone is PhysicalBone3D and (bone.bone_name == "Hips" or "Hips" in bone.name):
-						_hips_physical_bone = bone as PhysicalBone3D
-						break
-		if _hips_physical_bone:
-			player.global_position = _hips_physical_bone.global_position
+	if player and player.is_ragdolling and is_instance_valid(_hips_physical_bone):
+		player.global_position = _hips_physical_bone.global_position
 
 
 ## Start "ragdolling".
 func start() -> void:
-	# Enable _this_ state node
 	process_mode = Node.PROCESS_MODE_INHERIT
-	# Set the player's new state
 	player.current_state = _this_state
-	# Flag the player as "ragdolling"
 	player.is_ragdolling = true
 	# Detach player_model transform hierarchy while ragdolling so setting player.global_position does not shift physical bones
 	if player.player_model:
@@ -61,13 +34,10 @@ func start() -> void:
 	# Disable the AnimationTree to prevent animations from continuing and playing audio via method tracks
 	if player.animation_tree:
 		player.animation_tree.active = false
-	# Set collision layer 1 on physical bones
-	if player and player.physical_bone_simulator:
-		for bone in player.physical_bone_simulator.find_children("*", "PhysicalBone3D", true, false):
-			bone.set_collision_layer_value(1, true)
-			bone.set_collision_mask_value(1, true)
-	# Start skeleton physical bones simulation
 	if player.physical_bone_simulator:
+		_hips_physical_bone = player.physical_bone_simulator.find_child("Physical Bone Hips", true, false) as PhysicalBone3D
+		_physical_bones = player.physical_bone_simulator.find_children("*", "PhysicalBone3D", true, false)
+		_set_bone_collision(true)
 		player.physical_bone_simulator.physical_bones_start_simulation()
 	# Disable main collision shape while ragdolling
 	if player.collision_shape:
@@ -76,40 +46,30 @@ func start() -> void:
 
 ## Stop "ragdolling".
 func stop() -> void:
-	# Disable _this_ state node
 	process_mode = Node.PROCESS_MODE_DISABLED
-	# Clear the player's state (if it is currently set to _this_ state)
 	if player.current_state == _this_state:
 		player.current_state = -1
-	# Flag the player as not "ragdolling"
 	player.is_ragdolling = false
 	# Sync position one last time to hips bone position before restoring player_model
-	if not is_instance_valid(_hips_physical_bone) and player and player.physical_bone_simulator:
-		if player.physical_bone_simulator.has_node("Physical Bone Hips"):
-			_hips_physical_bone = player.physical_bone_simulator.get_node("Physical Bone Hips") as PhysicalBone3D
-		else:
-			for bone in player.physical_bone_simulator.find_children("*", "PhysicalBone3D", true, false):
-				if bone is PhysicalBone3D and (bone.bone_name == "Hips" or "Hips" in bone.name):
-					_hips_physical_bone = bone as PhysicalBone3D
-					break
-	if _hips_physical_bone:
+	if is_instance_valid(_hips_physical_bone):
 		player.global_position = _hips_physical_bone.global_position
 	# Re-attach player_model transform hierarchy and restore initial transform
 	if player.player_model:
 		player.player_model.top_level = false
 		player.player_model.transform = player.initial_player_model_transform
-	# Re-enable the AnimationTree
 	if player.animation_tree:
 		player.animation_tree.active = true
-	# Stop skeleton physical bones simulation
 	if player.physical_bone_simulator:
 		player.physical_bone_simulator.physical_bones_stop_simulation()
-	# Remove collision layer 1 from physical bones
-	if player and player.physical_bone_simulator:
-		for bone in player.physical_bone_simulator.find_children("*", "PhysicalBone3D", true, false):
-			bone.set_collision_layer_value(1, false)
-			bone.set_collision_mask_value(1, false)
-	# Re-enable main collision shape
+		_set_bone_collision(false)
 	if player.collision_shape:
 		player.collision_shape.disabled = false
 	_hips_physical_bone = null
+
+
+## Physical bones only collide on layer/mask 1 while the ragdoll simulates; the scene ships them with both cleared.
+func _set_bone_collision(enabled: bool) -> void:
+	for bone: Node in _physical_bones:
+		if is_instance_valid(bone):
+			(bone as PhysicalBone3D).set_collision_layer_value(1, enabled)
+			(bone as PhysicalBone3D).set_collision_mask_value(1, enabled)

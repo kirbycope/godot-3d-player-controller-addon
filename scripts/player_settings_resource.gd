@@ -1,7 +1,7 @@
 class_name PlayerSettingsResource
 extends Resource
 
-const SAVE_PATH = "user://settings.tres"
+const SAVE_PATH: String = "user://settings.tres"
 
 # Audio Settings
 @export var dialog_volume: float = 50.0
@@ -21,7 +21,7 @@ const SAVE_PATH = "user://settings.tres"
 
 static func load_or_create() -> PlayerSettingsResource:
 	if ResourceLoader.exists(SAVE_PATH):
-		var res = ResourceLoader.load(SAVE_PATH)
+		var res: Resource = ResourceLoader.load(SAVE_PATH)
 		if res is PlayerSettingsResource:
 			return res
 	return PlayerSettingsResource.new()
@@ -32,10 +32,10 @@ func save() -> void:
 
 
 func apply_audio_settings(player: Node = null) -> void:
-	_set_bus_volume("Dialog", dialog_volume)
-	_set_bus_volume("Menu", menu_volume)
-	_set_bus_volume("Music", music_volume)
-	_set_bus_volume("SFX", sfx_volume)
+	set_bus_volume(&"Dialog", dialog_volume)
+	set_bus_volume(&"Menu", menu_volume)
+	set_bus_volume(&"Music", music_volume)
+	set_bus_volume(&"SFX", sfx_volume)
 	if player:
 		if player.has_method("update_sfx_volume"):
 			player.update_sfx_volume(sfx_volume)
@@ -43,11 +43,10 @@ func apply_audio_settings(player: Node = null) -> void:
 			player.update_music_volume(music_volume)
 
 
-func _set_bus_volume(bus_name: String, value: float) -> void:
-	var bus_index = AudioServer.get_bus_index(bus_name)
+static func set_bus_volume(bus_name: StringName, value: float) -> void:
+	var bus_index: int = AudioServer.get_bus_index(bus_name)
 	if bus_index != -1:
-		var volume_db = linear_to_db(value / 100.0) if value > 0 else -80.0
-		AudioServer.set_bus_volume_db(bus_index, volume_db)
+		AudioServer.set_bus_volume_db(bus_index, linear_to_db(value / 100.0) if value > 0.0 else -80.0)
 
 
 func apply_video_settings(viewport: Viewport) -> void:
@@ -58,17 +57,17 @@ func apply_video_settings(viewport: Viewport) -> void:
 		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
 
 	# MSAA
-	var msaa_values = [
-		RenderingServer.VIEWPORT_MSAA_DISABLED,
-		RenderingServer.VIEWPORT_MSAA_2X,
-		RenderingServer.VIEWPORT_MSAA_4X,
-		RenderingServer.VIEWPORT_MSAA_8X,
+	var msaa_values: Array[Viewport.MSAA] = [
+		Viewport.MSAA_DISABLED,
+		Viewport.MSAA_2X,
+		Viewport.MSAA_4X,
+		Viewport.MSAA_8X,
 	]
 	if msaa_index >= 0 and msaa_index < msaa_values.size():
 		viewport.set_msaa_3d(msaa_values[msaa_index])
 
 	# SSAA
-	var scale_factors = [1.0, 1.5, 2.0]
+	var scale_factors: Array[float] = [1.0, 1.5, 2.0]
 	if ssaa_index >= 0 and ssaa_index < scale_factors.size():
 		viewport.scaling_3d_mode = Viewport.SCALING_3D_MODE_BILINEAR
 		viewport.scaling_3d_scale = scale_factors[ssaa_index]

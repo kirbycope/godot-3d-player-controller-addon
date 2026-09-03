@@ -97,16 +97,7 @@ func _physics_process(delta: float) -> void:
 				# Rumble when arrow is fired
 				if player.controls.current_input_type not in [player.controls.InputType.KEYBOARD_MOUSE, player.controls.InputType.TOUCH]:
 					Input.start_joy_vibration(0, 0.4, 0.0, 0.5)
-				if not player.projectile_raycast.is_colliding():
-					bow.get_node("Arrow/Swish").play()
-				else:
-					var hit_object := player.projectile_raycast.get_collider()
-					if hit_object and hit_object is RigidBody3D:
-						var collision_point := player.projectile_raycast.get_collision_point()
-						var force_direction := player.projectile_raycast.global_transform.basis.z
-						var force_magnitude := 10.0
-						(hit_object as RigidBody3D).apply_impulse(collision_point - hit_object.global_transform.origin, force_direction * force_magnitude)
-					#bow.get_node("Arrow/Twang").play()
+				bow.get_node("Arrow/Swish").play()
 
 		_was_drawing_arrow = is_drawing_arrow_now
 		_was_firing_arrow = is_firing_arrow_now
