@@ -184,6 +184,7 @@ const ACTIONS: Dictionary = {
 @onready var joypad_button_9: TouchScreenButton = $TopLeft/JoypadButton9 ## Joypad Button 9 (Left Shoulder, Sony L1, XBox L, Nintendo L)
 @onready var joypad_button_9_label: Label = $TopLeft/JoypadButton9/Label
 @onready var cast_bar: ProgressBar = %CastBar ## Fills while an ability with a cast time is cast.
+@onready var cast_label: Label = %CastLabel ## Names the ability being cast on the cast bar.
 @onready var joypad_button_10: TouchScreenButton = $TopRight/JoypadButton10 ## Joypad Button 10 (Right Shoulder, Sony R1, XBox RB, Nintendo R)
 @onready var joypad_button_10_label: Label = $TopRight/JoypadButton10/Label
 @onready var joypad_axis_4_plus: TouchScreenButton = $TopLeft/JoypadAxis4Plus ## Joypad Axis 4 + (Left Trigger, Sony L2, XBox LT, Nintendo ZL)

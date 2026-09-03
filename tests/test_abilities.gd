@@ -113,6 +113,7 @@ func test_heal_casts_over_time_and_restores_stamina() -> void:
 	abilities.cast(heal)
 	assert_eq(abilities.casting, heal)
 	assert_true(player.controls.cast_bar.visible, "A timed cast shows the cast bar")
+	assert_eq(player.controls.cast_label.text, "Heal", "The cast bar names the spell")
 	assert_signal_emitted(abilities, "cast_started")
 	assert_almost_eq(player.stamina.stamina, 20.0, 5.0, "Nothing lands until the cast finishes")
 	await wait_seconds(0.5)

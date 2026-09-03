@@ -86,6 +86,7 @@ func cast(ability: Ability) -> void:
 	casting = ability
 	cast_timer.start(ability.cast_time)
 	var cast_bar: ProgressBar = player.controls.cast_bar
+	player.controls.cast_label.text = ability.display_name
 	cast_bar.value = 0.0
 	cast_bar.show()
 	_cast_tween = create_tween()
