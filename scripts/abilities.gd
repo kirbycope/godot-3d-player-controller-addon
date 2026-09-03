@@ -2,7 +2,9 @@ class_name Abilities
 extends CanvasLayer
 ## World of Warcraft style ability caster: tap "ability" to cast the picked ability, hold it to pick another from the wheel.
 ##
-## Timed casts fill the cast bar and any state or locomotion change interrupts them. Abilities with a
+## Timed casts fill the cast bar; movement input, state and locomotion changes interrupt them unless the
+## ability sets [member Ability.channel_while_moving], and attacks always do. Walking has no signal (the
+## standing blend space absorbs it), so movement input is polled only while such a cast runs. Abilities with a
 ## [member Ability.projectile_speed] send their casting VFX/SFX flying as a [SpellProjectile] and land the
 ## impact on arrival, so nothing depends on physics contacts. Toggles (Stealth)
 ## stay on until cast again or, with [member Ability.ends_on_attack], until the Player attacks or fires.
@@ -42,6 +44,7 @@ var _channeling_vfx: Node3D
 
 
 func _ready() -> void:
+	set_physics_process(false)
 	set_process_unhandled_input(is_multiplayer_authority())
 	if not is_multiplayer_authority():
 		return
@@ -85,6 +88,7 @@ func cast(ability: Ability) -> void:
 		return
 	casting = ability
 	cast_timer.start(ability.cast_time)
+	set_physics_process(not ability.channel_while_moving)
 	var cast_bar: ProgressBar = player.controls.cast_bar
 	player.controls.cast_label.text = ability.display_name
 	cast_bar.value = 0.0
@@ -109,6 +113,7 @@ func interrupt_cast() -> void:
 		return
 	var ability: Ability = casting
 	casting = null
+	set_physics_process(false)
 	cast_timer.stop()
 	_hide_cast_bar()
 	_stop_channeling.rpc()
@@ -167,9 +172,16 @@ func _update_label() -> void:
 	player.controls.joypad_button_9_label.text = active_ability.display_name if active_ability else ""
 
 
+## Only runs during a cast that movement may break.
+func _physics_process(_delta: float) -> void:
+	if player.player_input.motion.length() > 0.0:
+		interrupt_cast()
+
+
 func _on_cast_timer_timeout() -> void:
 	var ability: Ability = casting
 	casting = null
+	set_physics_process(false)
 	_hide_cast_bar()
 	_stop_channeling.rpc()
 	_activate(ability)
@@ -247,16 +259,19 @@ func _is_wheel_item_active(item: Dictionary, _index: int) -> bool:
 	return item["item"] == active_ability
 
 
-## Wired to the Player's state_changed; movement of any kind breaks a cast.
+## Wired to the Player's state_changed; movement breaks a cast unless the ability channels while moving.
 func _on_state_changed(_from_state: int, _to_state: int) -> void:
-	interrupt_cast()
+	if casting and not casting.channel_while_moving:
+		interrupt_cast()
 
 
-## Wired to the Player's locomotion_node_changed; attacks also end toggles that end on attack.
+## Wired to the Player's locomotion_node_changed; attacks always interrupt and end toggles that end on attack.
 func _on_locomotion_node_changed(state_path: String) -> void:
-	interrupt_cast()
 	var node_name: String = state_path.get_file()
-	if node_name in Attacking.ATTACK_NODES or node_name == "BowFireArrow":
+	var is_attack: bool = node_name in Attacking.ATTACK_NODES or node_name == "BowFireArrow"
+	if casting and (is_attack or not casting.channel_while_moving):
+		interrupt_cast()
+	if is_attack:
 		_end_attack_toggles()
 
 

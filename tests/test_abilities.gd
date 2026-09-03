@@ -142,6 +142,37 @@ func test_moving_interrupts_a_cast() -> void:
 	assert_almost_eq(player.stamina.stamina, 20.0, 5.0, "An interrupted heal lands nothing")
 
 
+func test_walking_input_interrupts_a_cast() -> void:
+	player.stamina.stamina = 20.0
+	heal.cast_time = 2.0
+	abilities.cast(heal)
+	assert_true(abilities.is_physics_processing(), "Movement is polled only while a breakable cast runs")
+	sender.action_down("move_up")
+	await wait_physics_frames(3)
+	sender.action_up("move_up")
+	assert_null(abilities.casting, "Walking breaks the cast even though the standing blend space keeps the locomotion node")
+	assert_false(abilities.is_physics_processing())
+
+
+func test_channel_while_moving_survives_movement_but_not_attacks() -> void:
+	watch_signals(abilities)
+	player.stamina.stamina = 20.0
+	heal.cast_time = 2.0
+	heal.channel_while_moving = true
+	abilities.cast(heal)
+	assert_false(abilities.is_physics_processing(), "A channel-while-moving cast polls nothing")
+	sender.action_down("move_up")
+	await wait_physics_frames(3)
+	sender.action_up("move_up")
+	player.locomotion_node_changed.emit("Walking")
+	player.state_changed.emit(NodeStateMachine.States.STANDING, NodeStateMachine.States.JUMPING)
+	assert_eq(abilities.casting, heal, "Moving keeps a channel-while-moving cast going")
+	assert_signal_not_emitted(abilities, "cast_interrupted")
+	player.locomotion_node_changed.emit("ShortHeadJab")
+	assert_null(abilities.casting, "Attacking still interrupts")
+	assert_signal_emitted_with_parameters(abilities, "cast_interrupted", [heal])
+
+
 func test_cooldown_gates_recasts() -> void:
 	stealth.cooldown = 0.2
 	abilities.cast(stealth)

@@ -14,6 +14,7 @@ enum Target { SELF, FOCUS } ## SELF lands on the caster; FOCUS lands on the lock
 @export var cooldown: float = 0.0 ## Seconds before the ability can be cast again.
 @export var cast_time: float = 0.0 ## Seconds the Player must stand still before the effect lands; 0 is instant.
 @export var stamina_cost: float = 0.0 ## Stamina spent when the effect lands; the cast is refused with less.
+@export var channel_while_moving: bool = false ## Keeps a timed cast going while the Player moves; off, any movement interrupts it as in WoW. Attacks always interrupt.
 @export var is_toggle: bool = false ## Stays active until cast again or [method deactivate] is called.
 @export var ends_on_attack: bool = false ## Active toggles end when the Player attacks or fires a weapon.
 @export var fx_lifetime: float = 3.0 ## Seconds a one-shot casting or impact VFX instance stays before it is freed.
