@@ -42,22 +42,20 @@ class TestParagliderContrails:
 
 		# Mock a player object using player.tscn
 		var player_scene = preload("res://addons/3d_player_controller/scenes/player.tscn")
-		var mock_player: CharacterBody3D = player_scene.instantiate()
+		var mock_player: Player = player_scene.instantiate() as Player
 		add_child_autofree(mock_player)
 		paraglider.player = mock_player
 
 		# Simulate paragliding started
-		mock_player.is_paragliding = true
 		paraglider.visible = false
-		paraglider._physics_process(0.016)
+		mock_player.current_state = NodeStateMachine.States.PARAGLIDING
 
 		assert_true(paraglider.visible, "Paraglider should be visible when paragliding.")
 		assert_true(left_wing.emitting, "LeftWing trail should emit when paragliding.")
 		assert_true(right_wing.emitting, "RightWing trail should emit when paragliding.")
 
 		# Simulate paragliding stopped
-		mock_player.is_paragliding = false
-		paraglider._physics_process(0.016)
+		mock_player.current_state = NodeStateMachine.States.STANDING
 
 		assert_false(paraglider.visible, "Paraglider should be hidden when not paragliding.")
 		assert_false(left_wing.emitting, "LeftWing trail should not emit when not paragliding.")

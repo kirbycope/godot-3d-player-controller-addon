@@ -12,10 +12,6 @@ extends NodeStateMachine
 @export var pad_hop_action: StringName = &"jump"
 @export var pad_sprint_action: StringName = &"sprint"
 
-@export_group("Wall Leap")
-@export var wall_leap_horizontal_speed: float = 5.0 ## Horizontal impulse away from the wall on back-eject.
-@export var wall_leap_vertical_speed: float = 3.5 ## Vertical impulse on back-eject.
-
 @export_group("Rain Slipping")
 @export var rain_slip_enabled: bool = true ## BotW-style slipping on wet walls during rain.
 @export var rain_slip_precipitation_threshold: float = 0.4 ## Precipitation strength at which walls become slippery.
@@ -26,8 +22,7 @@ extends NodeStateMachine
 ## Minimum stick/key deflection for climbing hop direction input.
 const HOP_INPUT_DEADZONE: float = 0.1
 
-var _this_state := NodeStateMachine.States.CLIMBING
-var _rain_slip_timer: float = 0.0
+@onready var rain_slip_timer: Timer = $RainSlipTimer ## Repeats every [member rain_slip_interval] while the wall is wet; each timeout slips the climber down.
 
 
 ## Called when there is an input event.
@@ -36,43 +31,31 @@ func _input(event: InputEvent) -> void:
 	# Do nothing if the player is not set or is paused/ragdolling
 	if not player or player.is_paused or player.is_ragdolling: return
 
-	var input_type: int = player.controls.current_input_type if player.controls else 0
-	var current_drop_action: StringName = keyboard_drop_action if input_type == 0 else pad_drop_action
-	var current_hop_action: StringName = keyboard_hop_action if input_type == 0 else pad_hop_action
-
 	# Drop / Let go
-	if event.is_action_pressed(current_drop_action):
+	if event.is_action_pressed(action(keyboard_drop_action, pad_drop_action)):
 		# Start "falling"
-		player.state_machine.travel(_this_state, NodeStateMachine.States.FALLING)
+		player.state_machine.travel(state, States.FALLING)
 		get_viewport().set_input_as_handled()
 		return
 
 	# Climbing, Hopping [Input]
-	var current_loco = player.locomotion_state.get_current_node() if player.locomotion_state else ""
 	if not player.is_on_floor() \
-	and event.is_action_pressed(current_hop_action) \
+	and event.is_action_pressed(action(keyboard_hop_action, pad_hop_action)) \
 	and not event.is_echo() \
-	and current_loco in ["ClimbingLocomotion", "BracedHangLocomotion"]:
+	and player.current_locomotion_node in ["ClimbingLocomotion", "BracedHangLocomotion"]:
+		var motion: Vector2 = player.player_input.motion
 		# Check: Down/Back input past deadzone -> Wall Leap / Back-Eject off wall
-		var leap_back: bool = player.player_input.motion.y < -HOP_INPUT_DEADZONE and abs(player.player_input.motion.y) > abs(player.player_input.motion.x)
+		var leap_back: bool = motion.y < -HOP_INPUT_DEADZONE and absf(motion.y) > absf(motion.x)
 		# Check: Left input past deadzone, and |x| > |y| ensures horizontal input dominance (<45° angle to -X).
-		var hop_left: bool = player.player_input.motion.x < -HOP_INPUT_DEADZONE and abs(player.player_input.motion.x) > abs(player.player_input.motion.y)
+		var hop_left: bool = motion.x < -HOP_INPUT_DEADZONE and absf(motion.x) > absf(motion.y)
 		# Check: Right input past deadzone, and |x| > |y| ensures horizontal input dominance (<45° angle to +X).
-		var hop_right: bool = player.player_input.motion.x > HOP_INPUT_DEADZONE and abs(player.player_input.motion.x) > abs(player.player_input.motion.y)
+		var hop_right: bool = motion.x > HOP_INPUT_DEADZONE and absf(motion.x) > absf(motion.y)
 		# Check: Up input past deadzone, and |y| > |x| ensures vertical input dominance (<45° angle to +Y).
-		var hop_up: bool = player.player_input.motion == Vector2.ZERO or (player.player_input.motion.y > HOP_INPUT_DEADZONE and abs(player.player_input.motion.y) > abs(player.player_input.motion.x))
+		var hop_up: bool = motion == Vector2.ZERO or (motion.y > HOP_INPUT_DEADZONE and absf(motion.y) > absf(motion.x))
 		# Determine which hop direction to take based on input
 		if leap_back:
-			var wall_normal: Vector3 = player.player_model.global_transform.basis.z.slide(player.up_direction).normalized()
-			player.velocity = (wall_normal * wall_leap_horizontal_speed) + (player.up_direction * wall_leap_vertical_speed)
-			player.is_climbing = false
-			player.is_hanging_braced = false
-			player.is_hanging_free = false
-			player.is_climbing_on = false
-			player.is_climbing_hopping_left = false
-			player.is_climbing_hopping_right = false
-			player.is_climbing_hopping_up = false
-			player.state_machine.travel(_this_state, NodeStateMachine.States.FALLING)
+			player.leap_off_wall()
+			player.state_machine.travel(state, States.FALLING)
 			get_viewport().set_input_as_handled()
 			return
 		elif hop_left:
@@ -121,26 +104,23 @@ func _physics_process(delta: float) -> void:
 	# Check if the player has reached the floor
 	if player.is_on_floor():
 		# Start "standing"
-		player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
+		player.state_machine.travel(state, States.STANDING)
 		return
 
 	# Check if the player is exhausted — let go of the wall
 	if player.is_exhausted and not player.is_climbing_on:
 		# Start "falling"
-		player.state_machine.travel(_this_state, NodeStateMachine.States.FALLING)
+		player.state_machine.travel(state, States.FALLING)
 		return
 
 	# Rain slipping [Weather]: wet walls periodically slide the player down (BotW style)
 	var wall_is_wet: bool = rain_slip_enabled \
 			and player.is_climbing \
 			and player.get_precipitation_strength() >= rain_slip_precipitation_threshold
-	if wall_is_wet:
-		_rain_slip_timer += delta
-		if _rain_slip_timer >= rain_slip_interval:
-			_rain_slip_timer = 0.0
-			player.global_position -= player.up_direction * rain_slip_distance
-	else:
-		_rain_slip_timer = 0.0
+	if not wall_is_wet:
+		rain_slip_timer.stop()
+	elif rain_slip_timer.is_stopped():
+		rain_slip_timer.start(rain_slip_interval)
 
 	# Ledge detection [Raycast]
 	var ledge_detected: bool = player.detect_ledge()
@@ -151,39 +131,14 @@ func _physics_process(delta: float) -> void:
 		# Check if the player's top position has reached or exceeded the ledge detection marker's Y-position
 		if player_top_position >= player.ledge_detection_marker.global_position.y:
 			# Start "hanging"
-			player.state_machine.travel(_this_state, NodeStateMachine.States.HANGING)
+			player.state_machine.travel(state, States.HANGING)
 			return
-
-	# Climbing, Hopping [Status]
-	if player.is_climbing or player.is_hanging_braced or player.is_climbing_hopping_left or player.is_climbing_hopping_right or player.is_climbing_hopping_up:
-		var was_hopping := player.is_climbing_hopping_left or player.is_climbing_hopping_right or player.is_climbing_hopping_up
-		var current_node = player.animation_tree.get(player.LOCOMOTION_STATE_PLAYBACK_PATH).get_current_node()
-		player.is_climbing_hopping_left = current_node == "BracedHangHopLeft"
-		player.is_climbing_hopping_right = current_node == "BracedHangHopRight"
-		player.is_climbing_hopping_up = current_node == "BracedHangHopUp"
-		if was_hopping and not (player.is_climbing_hopping_left or player.is_climbing_hopping_right or player.is_climbing_hopping_up):
-			player.is_climbing = player.is_hopping_from_climbing
-			player.is_hanging_braced = not player.is_hopping_from_climbing
-			player.is_hanging_free = false
-			player.is_hopping_from_climbing = false
-
-	# Climbing, Climbing On [Status]
-	if player.is_climbing_on:
-		var was_climbing_on = player.is_climbing_on
-		player.is_climbing_on = player.animation_tree.get(player.LOCOMOTION_STATE_PLAYBACK_PATH).get_current_node() in ["BracedHangClimbingOn", "FreeHangingClimbingOn"]
-		if was_climbing_on and not player.is_climbing_on:
-			player.global_position = player.climbing_on_target
-			player.is_climbing_on = false
-
-	var input_type: int = player.controls.current_input_type if player.controls else 0
-	var current_sprint_action: StringName = keyboard_sprint_action if input_type == 0 else pad_sprint_action
-
 
 	# Climbing, Speed Up [Input] — sprint climbing is blocked on wet walls
 	if player.is_climbing \
 	and not player.is_exhausted \
 	and not wall_is_wet \
-	and Input.is_action_pressed(current_sprint_action):
+	and Input.is_action_pressed(action(keyboard_sprint_action, pad_sprint_action)):
 		player.animation_tree.set("parameters/LocomotionTimeScale/scale", 1.5)
 		player.is_sprinting = true
 	else:
@@ -191,31 +146,46 @@ func _physics_process(delta: float) -> void:
 		player.is_sprinting = false
 
 	# Keep (rotate towards) facing the wall surface
-	if player.ledge_detection_horizontal and player.ledge_detection_horizontal.is_colliding():
-		var normal := player.ledge_detection_horizontal.get_collision_normal()
-		var wall_dir := -normal
-		wall_dir = wall_dir.slide(player.up_direction)
-		if wall_dir.length_squared() > 0.001:
-			wall_dir = wall_dir.normalized()
-			var q_from: Quaternion = player.orientation.basis.get_rotation_quaternion()
-			var q_to: Quaternion = Basis.looking_at(-wall_dir, player.up_direction).get_rotation_quaternion()
-			player.orientation.basis = Basis(q_from.slerp(q_to, delta * player.rotation_interpolate_speed))
-	
+	player.face_wall(delta)
+
 	if player.is_climbing:
 		player.animation_tree.set(player.CLIMBING_LOCOMOTION_BLEND_POSITION_PATH, player.smoothed_motion)
 
 
+## Tracks hop and climb-on animations: hops end back in climbing/hanging, climbing on ends on top of the ledge.
+func _on_locomotion_node_changed(_state_path: String) -> void:
+	if process_mode != Node.PROCESS_MODE_INHERIT: return
+
+	var current_node: String = player.current_locomotion_node
+	# Climbing, Hopping [Status]
+	var was_hopping: bool = player.is_climbing_hopping_left or player.is_climbing_hopping_right or player.is_climbing_hopping_up
+	player.is_climbing_hopping_left = current_node == "BracedHangHopLeft"
+	player.is_climbing_hopping_right = current_node == "BracedHangHopRight"
+	player.is_climbing_hopping_up = current_node == "BracedHangHopUp"
+	if was_hopping and not (player.is_climbing_hopping_left or player.is_climbing_hopping_right or player.is_climbing_hopping_up):
+		player.is_climbing = player.is_hopping_from_climbing
+		player.is_hanging_braced = not player.is_hopping_from_climbing
+		player.is_hanging_free = false
+		player.is_hopping_from_climbing = false
+
+	# Climbing, Climbing On [Status]
+	if player.is_climbing_on and current_node not in ["BracedHangClimbingOn", "FreeHangingClimbingOn"]:
+		player.is_climbing_on = false
+		player.global_position = player.climbing_on_target
+
+
+## The wet wall slips the climber down.
+func _on_rain_slip_timer_timeout() -> void:
+	player.global_position -= player.up_direction * rain_slip_distance
+
+
 ## Start "climbing".
 func start() -> void:
-	# Enable _this_ state node
-	process_mode = Node.PROCESS_MODE_INHERIT
-	# Set the player's new state
-	player.current_state = _this_state
+	super.start()
 	# Stop airborne momentum
 	player.velocity = Vector3.ZERO
 	player.is_jumping = false
 	player.is_falling = false
-	_rain_slip_timer = 0.0
 	# Flag the player as "climbing"
 	player.is_climbing = true
 	player.is_hanging_braced = false
@@ -230,37 +200,25 @@ func start() -> void:
 
 ## Stop "climbing".
 func stop() -> void:
-	# Disable _this_ state node
-	process_mode = Node.PROCESS_MODE_DISABLED
-	# Clear the player's state (if it is currently set to _this_ state)
-	if player.current_state == _this_state:
-		player.current_state = -1
-	# Flag the player as not "climbing"
+	super.stop()
+	rain_slip_timer.stop()
+	# Flag the player as not "climbing" and reset the hop/climb-on/hang flags it drives
 	player.is_climbing = false
-	_rain_slip_timer = 0.0
-	# Reset state variables
 	player.is_climbing_hopping_left = false
 	player.is_climbing_hopping_right = false
 	player.is_climbing_hopping_up = false
 	player.is_climbing_on = false
+	player.is_hanging_braced = false
+	player.is_hanging_free = false
+	player.is_hopping_from_climbing = false
 	# Reset timescale in case "sprint" action is still pressed
 	player.animation_tree.set("parameters/LocomotionTimeScale/scale", 1.0)
 	player.is_sprinting = false
-	player.is_hopping_from_climbing = false
-	# Clear ledge detection visuals
-	player.ledge_detection_vertical.position = Vector3(0, 0, -1) # Reset to default
-	player.ledge_detection_horizontal.hide()
-	player.ledge_detection_marker.hide()
+	player.clear_ledge_visuals()
 
 
-func get_contextual_controls(input_type: int) -> Dictionary:
-	if not player or not player.controls: return {}
-
+func get_contextual_controls(_input_type: int) -> Dictionary:
 	return {
-		player.controls.joypad_button_4_label: "Perspective",
-		player.controls.joypad_button_15_label: "Screenshot",
-		player.controls.joypad_button_6_label: "Pause Menu",
-
 		player.controls.joypad_button_3_label: "Hop",
 		player.controls.joypad_button_1_label: "Fast Climb",
 		player.controls.joypad_button_7_label: "Drop",

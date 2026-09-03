@@ -1,5 +1,9 @@
 class_name Equipment
 extends Node3D
+## A pick-up-able item attached to a Player skeleton bone when equipped.
+##
+## Melee weapons that should register hits need a child [Area3D] named "Hitbox"; [HitDetection]
+## enables its monitoring during attack swings.
 
 enum EquipmentType {
 	AXE_1H,
@@ -39,123 +43,56 @@ enum EquipmentType {
 		scale_offset = val
 		_update_attachment_offsets()
 
-var equipment_instance: Node3D
+var equipment_instance: Equipment ## The equipped copy of this item, once [method equip] has run.
 var menu_displayed: bool = false
 var player: Player
 
-@onready var action_prompt: Node3D = get_node_or_null("ActionPrompt")
+@onready var action_prompt: Node3D = get_node_or_null("ActionPrompt") as Node3D
 
 
 func _update_attachment_offsets() -> void:
-	if not is_inside_tree():
+	if not is_inside_tree() or equipment_instance == null:
 		return
-	if equipment_instance:
-		equipment_instance.position = position_offset
-		equipment_instance.rotation = Vector3(
-			deg_to_rad(rotation_offset_degrees.x),
-			deg_to_rad(rotation_offset_degrees.y),
-			deg_to_rad(rotation_offset_degrees.z)
-		)
-		equipment_instance.scale = scale_offset
+	equipment_instance.position = position_offset
+	equipment_instance.rotation_degrees = rotation_offset_degrees
+	equipment_instance.scale = scale_offset
 
 
-func display_menu(player: Player) -> void:
-	if player.inventory and player.inventory.has_equipment_in_backpack(equipment_type, bone_attachment_bone_name):
+func display_menu(target_player: Player) -> void:
+	if target_player.inventory.has_equipment_in_backpack(equipment_type, bone_attachment_bone_name):
 		return
 
-	if action_prompt:
-		action_prompt.show()
-		action_prompt.get_node("KeyboardMouse").hide()
-		action_prompt.get_node("Microsoft").hide()
-		action_prompt.get_node("Nintendo").hide()
-		action_prompt.get_node("Sony").hide()
-		if player.controls.current_input_type == player.controls.InputType.KEYBOARD_MOUSE:
-			action_prompt.get_node("KeyboardMouse").show()
-		elif player.controls.current_input_type == player.controls.InputType.MICROSOFT:
-			action_prompt.get_node("Microsoft").show()
-		elif player.controls.current_input_type == player.controls.InputType.NINTENDO:
-			action_prompt.get_node("Nintendo").show()
-		elif player.controls.current_input_type == player.controls.InputType.SONY:
-			action_prompt.get_node("Sony").show()
+	# The prompt scene is project-side (scenes/action_prompt.gd), so this stays duck typed.
+	if action_prompt and action_prompt.has_method("show_for"):
+		action_prompt.call("show_for", target_player)
 	menu_displayed = true
 
 
-func equip(player: Player) -> void:
+## Duplicates this item onto a new [BoneAttachment3D] on the player's skeleton and registers it with the inventory.
+func equip(target_player: Player) -> void:
 	hide_menu()
-
-	if not bone_attachment_bone_name or not player:
-		return
-	if not player.inventory:
-		push_error("Inventory not found on player!")
+	if target_player == null or bone_attachment_bone_name.is_empty() \
+			or target_player.inventory.has_equipment_in_backpack(equipment_type, bone_attachment_bone_name):
 		return
 
-	if player.inventory.has_equipment_in_backpack(equipment_type, bone_attachment_bone_name):
-		return
+	target_player.inventory.stow_conflicting(bone_attachment_bone_name, is_exclusive)
 
-	# 1. Find the Skeleton3D on the player (adjust the node path if needed)
-	var skeleton: Skeleton3D = player.get_node_or_null("PlayerModel/Armature/GeneralSkeleton")
-	if not skeleton:
-		push_error("Skeleton3D not found on player!")
-		return
+	var attachment: BoneAttachment3D = BoneAttachment3D.new()
+	attachment.bone_name = bone_attachment_bone_name
+	target_player.skeleton.add_child(attachment)
 
-	# 2. Handle existing and conflicting attachments
-	for child in skeleton.get_children():
-		if child is BoneAttachment3D:
-			var is_equipment_attachment: bool = false
-			var is_exclusive_attachment: bool = false
-			for sub_child in child.get_children():
-				if "equipment_type" in sub_child:
-					is_equipment_attachment = true
-				if "is_exclusive" in sub_child and sub_child.is_exclusive:
-					is_exclusive_attachment = true
-					break
-
-			# Ignore built-in bone attachments (e.g. paraglider/camera anchors)
-			# that do not currently hold equipped items.
-			if not is_equipment_attachment:
-				continue
-
-			# Remove any existing attachment on this specific bone,
-			# OR unequip all other equipment types if equipping an exclusive/two-handed weapon,
-			# OR unequip exclusive/two-handed weapons if equipping any new item.
-			if child.bone_name == bone_attachment_bone_name or is_exclusive or is_exclusive_attachment:
-				for sub_child in child.get_children():
-					if "equipment_type" in sub_child:
-						player.inventory.remove_equipment(sub_child)
-				skeleton.remove_child(child)
-				player.inventory.add_child(child)
-				child.hide()
-
-	# 3. Create a new BoneAttachment3D and configure it
-	var new_attachment = BoneAttachment3D.new()
-	new_attachment.bone_name = bone_attachment_bone_name
-	skeleton.add_child(new_attachment)
-
-	# 4. Duplicate this weapon and add it to the attachment
-	equipment_instance = duplicate()
-	equipment_instance.player = player
-	new_attachment.add_child(equipment_instance)
-	_disable_collisions(equipment_instance)
+	equipment_instance = duplicate() as Equipment
+	equipment_instance.player = target_player
+	attachment.add_child(equipment_instance)
+	# Disable world collision but keep the "Hitbox" shapes so HitDetection can monitor them.
+	for shape: Node in equipment_instance.find_children("*", "CollisionShape3D", true, false):
+		(shape as CollisionShape3D).disabled = shape.get_parent().name != "Hitbox"
+	for tree: Node in equipment_instance.find_children("*", "AnimationTree", true, false):
+		(tree as AnimationTree).active = true
+		(tree as AnimationTree).advance_expression_base_node = tree.get_path_to(equipment_instance)
 	_update_attachment_offsets()
-	_configure_animation_trees(equipment_instance, equipment_instance)
 
-	# 5. Add a reference to this equipment to the player
-	player.inventory.add_equipment(equipment_instance)
-
-
-func _disable_collisions(node: Node) -> void:
-	if node is CollisionShape3D:
-		node.disabled = true
-	for child in node.get_children():
-		_disable_collisions(child)
-
-
-func _configure_animation_trees(node: Node, base_node: Node) -> void:
-	if node is AnimationTree:
-		node.active = true
-		node.advance_expression_base_node = node.get_path_to(base_node)
-	for child in node.get_children():
-		_configure_animation_trees(child, base_node)
+	target_player.inventory.add_equipment(equipment_instance)
 
 
 func hide_menu() -> void:

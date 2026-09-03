@@ -282,7 +282,7 @@ text = "Press [F3] for full Debug HUD"
 
 [connection signal="body_entered" from="Structures/PoolBasin/WaterPool" to="." method="_on_water_pool_body_entered"]
 [connection signal="body_exited" from="Structures/PoolBasin/WaterPool" to="." method="_on_water_pool_body_exited"]
-[connection signal="pressed" from="HUD/TeleportPanel/VBox/Grid/TeleportCourtyard" to="." method="_on_teleport_courtyard_pressed"]
-[connection signal="pressed" from="HUD/TeleportPanel/VBox/Grid/TeleportTower" to="." method="_on_teleport_tower_pressed"]
-[connection signal="pressed" from="HUD/TeleportPanel/VBox/Grid/TeleportPool" to="." method="_on_teleport_pool_pressed"]
-[connection signal="pressed" from="HUD/TeleportPanel/VBox/Grid/TeleportWall" to="." method="_on_teleport_wall_pressed"]
+[connection signal="pressed" from="HUD/TeleportPanel/VBox/Grid/TeleportCourtyard" to="." method="_on_teleport_pressed" binds= [NodePath("Markers/Courtyard")]]
+[connection signal="pressed" from="HUD/TeleportPanel/VBox/Grid/TeleportTower" to="." method="_on_teleport_pressed" binds= [NodePath("Markers/Tower")]]
+[connection signal="pressed" from="HUD/TeleportPanel/VBox/Grid/TeleportPool" to="." method="_on_teleport_pressed" binds= [NodePath("Markers/Pool")]]
+[connection signal="pressed" from="HUD/TeleportPanel/VBox/Grid/TeleportWall" to="." method="_on_teleport_pressed" binds= [NodePath("Markers/ClimbingWall")]]

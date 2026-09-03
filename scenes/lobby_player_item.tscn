@@ -1,15 +1,12 @@
 [gd_scene format=3 uid="uid://c6lbyplritm3d"]
 
 [ext_resource type="Script" uid="uid://b0w2o0n0ctlfg" path="res://addons/3d_player_controller/scripts/lobby_player_item.gd" id="1_item"]
-[ext_resource type="Texture2D" uid="uid://c5cm6165mpvlx" path="res://addons/godotsteamkit/ui/avatar_default.png" id="2_avatar"]
-[ext_resource type="Script" uid="uid://bgb8xqe2fjqll" path="res://addons/godotsteamkit/avatars/steam_avatar_rect.gd" id="3_avatar_script"]
-[ext_resource type="Texture2D" uid="uid://co6s4nyjdlutx" path="res://addons/godotsteamkit/ui/kenney/lobby_host.png" id="4_host"]
-[ext_resource type="Script" uid="uid://b6mpq8sbkkqo6" path="res://addons/godotsteamkit/usernames/steam_username.gd" id="5_username_script"]
-[ext_resource type="Texture2D" uid="uid://c84r1eec5hj6n" path="res://addons/godotsteamkit/ui/kenney/profile.png" id="6_profile"]
-[ext_resource type="Texture2D" uid="uid://2whihy7rprqo" path="res://addons/godotsteamkit/ui/kenney/achievements.png" id="7_achievements"]
-[ext_resource type="Texture2D" uid="uid://b80kv8sopp0f0" path="res://addons/godotsteamkit/ui/kenney/promote.png" id="8_promote"]
-[ext_resource type="Texture2D" uid="uid://bbwy3t2gjpjgq" path="res://addons/godotsteamkit/ui/kenney/kick.png" id="9_kick"]
-[ext_resource type="Texture2D" uid="uid://2ibf8fv4iiyy" path="res://addons/godotsteamkit/ui/kenney/more.png" id="10_options"]
+[ext_resource type="Texture2D" uid="uid://bdr11murkrfrf" path="res://addons/3d_player_controller/assets/kenney_nl/Lobby Icons/lobby_host.png" id="4_host"]
+[ext_resource type="Texture2D" uid="uid://bclisbn2sbq11" path="res://addons/3d_player_controller/assets/kenney_nl/Lobby Icons/profile.png" id="6_profile"]
+[ext_resource type="Texture2D" uid="uid://pduwpw21t6rk" path="res://addons/3d_player_controller/assets/kenney_nl/Lobby Icons/achievements.png" id="7_achievements"]
+[ext_resource type="Texture2D" uid="uid://b3gy4vpuskw60" path="res://addons/3d_player_controller/assets/kenney_nl/Lobby Icons/promote.png" id="8_promote"]
+[ext_resource type="Texture2D" uid="uid://e8utnmf1i7py" path="res://addons/3d_player_controller/assets/kenney_nl/Lobby Icons/kick.png" id="9_kick"]
+[ext_resource type="Texture2D" uid="uid://blood6uy0p1cg" path="res://addons/3d_player_controller/assets/kenney_nl/Lobby Icons/more.png" id="10_options"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_item"]
 font_size = 13
@@ -38,10 +35,8 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(28, 28)
 layout_mode = 2
 size_flags_vertical = 4
-texture = ExtResource("2_avatar")
+texture = ExtResource("6_profile")
 expand_mode = 1
-script = ExtResource("3_avatar_script")
-custom_size = 28
 
 [node name="HostIcon" type="TextureRect" parent="MarginContainer/HBoxContainer/Avatar" unique_id=840990143]
 unique_name_in_owner = true
@@ -68,7 +63,6 @@ text = "Player"
 label_settings = SubResource("LabelSettings_item")
 vertical_alignment = 1
 clip_text = true
-script = ExtResource("5_username_script")
 
 [node name="ActionsContainer" type="HBoxContainer" parent="MarginContainer/HBoxContainer" unique_id=153913808]
 unique_name_in_owner = true
@@ -129,3 +123,9 @@ toggle_mode = true
 icon = ExtResource("10_options")
 icon_alignment = 1
 expand_icon = true
+
+[connection signal="pressed" from="MarginContainer/HBoxContainer/ActionsContainer/ProfileButton" to="." method="_on_profile_pressed"]
+[connection signal="pressed" from="MarginContainer/HBoxContainer/ActionsContainer/AchievementsButton" to="." method="_on_achievements_pressed"]
+[connection signal="pressed" from="MarginContainer/HBoxContainer/ActionsContainer/PromoteButton" to="." method="_on_promote_pressed"]
+[connection signal="pressed" from="MarginContainer/HBoxContainer/ActionsContainer/KickButton" to="." method="_on_kick_pressed"]
+[connection signal="toggled" from="MarginContainer/HBoxContainer/OptionsButton" to="." method="_on_options_toggled"]

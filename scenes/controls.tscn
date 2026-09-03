@@ -192,6 +192,20 @@ radius = 24.0
 [sub_resource type="CircleShape2D" id="CircleShape2D_q7kt0"]
 radius = 24.0
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_throw_bg"]
+bg_color = Color(0.1, 0.1, 0.1, 0.7)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_throw_fill"]
+bg_color = Color(0.2, 0.8, 0.3, 0.9)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
 [node name="Controls" type="CanvasLayer" unique_id=1181235604]
 script = ExtResource("1_f8ygc")
 keyboard_mouse_button_0_normal = ExtResource("2_nckgs")
@@ -1064,3 +1078,21 @@ offset_bottom = 11.5
 grow_vertical = 2
 text = "Shoot"
 horizontal_alignment = 2
+
+[node name="ThrowChargeBar" type="ProgressBar" parent="."]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(200, 24)
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 0.8
+anchor_right = 0.5
+anchor_bottom = 0.8
+offset_left = -100.0
+offset_top = -60.0
+offset_right = 100.0
+offset_bottom = -36.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/background = SubResource("StyleBoxFlat_throw_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_throw_fill")

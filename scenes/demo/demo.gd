@@ -9,13 +9,6 @@ extends Node3D
 ## Detailed player telemetry and toggleable features are available via F3 (Debug HUD).
 
 @onready var player: Player = $Player
-
-# Teleport markers
-@onready var marker_courtyard: Marker3D = $Markers/Courtyard
-@onready var marker_tower: Marker3D = $Markers/Tower
-@onready var marker_pool: Marker3D = $Markers/Pool
-@onready var marker_wall: Marker3D = $Markers/ClimbingWall
-
 @onready var water_pool: Area3D = $Structures/PoolBasin/WaterPool
 
 
@@ -35,36 +28,12 @@ func _on_water_pool_body_exited(body: Node3D) -> void:
 		(body as Player).exit_water(water_pool)
 
 
-func _on_teleport_courtyard_pressed() -> void:
-	if is_instance_valid(%TeleportCourtyard):
-		%TeleportCourtyard.release_focus()
-	_teleport_player(marker_courtyard)
-
-
-func _on_teleport_tower_pressed() -> void:
-	if is_instance_valid(%TeleportTower):
-		%TeleportTower.release_focus()
-	_teleport_player(marker_tower)
-
-
-func _on_teleport_pool_pressed() -> void:
-	if is_instance_valid(%TeleportPool):
-		%TeleportPool.release_focus()
-	_teleport_player(marker_pool)
-
-
-func _on_teleport_wall_pressed() -> void:
-	if is_instance_valid(%TeleportWall):
-		%TeleportWall.release_focus()
-	_teleport_player(marker_wall)
-
-
-func _teleport_player(marker: Marker3D) -> void:
-	if not is_instance_valid(player) or not is_instance_valid(marker):
+## Teleports the player to the marker bound in the scene's button connection.
+func _on_teleport_pressed(marker_path: NodePath) -> void:
+	var marker: Marker3D = get_node(marker_path) as Marker3D
+	if not is_instance_valid(player) or marker == null:
 		return
 	player.is_navigating = false
-	if player.navigation_agent:
-		player.navigation_agent.target_position = marker.global_position
+	player.navigation_agent.target_position = marker.global_position
 	player.global_position = marker.global_position
 	player.velocity = Vector3.ZERO
-

@@ -11,7 +11,13 @@ outline_color = Color(0, 0, 0, 1)
 [node name="Inventory" type="CanvasLayer" unique_id=509190037]
 script = ExtResource("1_nsbb7")
 
+[node name="HoldTimer" type="Timer" parent="."]
+wait_time = 0.2
+one_shot = true
+
 [node name="RadialMenu" type="Control" parent="." unique_id=1536685129]
+process_mode = 3
+visible = false
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -36,3 +42,5 @@ grow_vertical = 2
 label_settings = SubResource("LabelSettings_7l55x")
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[connection signal="timeout" from="HoldTimer" to="RadialMenu" method="_on_hold_timer_timeout"]

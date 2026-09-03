@@ -84,7 +84,7 @@ class TestFlyingControls:
 	func test_flying_contextual_controls_keyboard():
 		var player = player_instance
 		player.enable_flying = true
-		player.controls.current_input_type = 0 # KEYBOARD_MOUSE
+		player.controls.current_input_type = Controls.InputType.KEYBOARD_MOUSE
 		player.state_machine.travel(NodeStateMachine.States.STANDING, NodeStateMachine.States.FLYING)
 
 		assert_eq(player.controls.joypad_button_3_label.text, "Fly Up")
@@ -94,7 +94,7 @@ class TestFlyingControls:
 	func test_flying_contextual_controls_controller():
 		var player = player_instance
 		player.enable_flying = true
-		player.controls.current_input_type = 1 # MICROSOFT controller
+		player.controls.current_input_type = Controls.InputType.MICROSOFT
 		player.state_machine.travel(NodeStateMachine.States.STANDING, NodeStateMachine.States.FLYING)
 
 		assert_eq(player.controls.joypad_button_3_label.text, "Fly Up")
@@ -109,7 +109,7 @@ class TestParaglidingControls:
 	func test_paragliding_contextual_controls_keyboard():
 		var player = player_instance
 		player.enable_paraglider = true
-		player.controls.current_input_type = 0 # KEYBOARD_MOUSE
+		player.controls.current_input_type = Controls.InputType.KEYBOARD_MOUSE
 		player.state_machine.travel(NodeStateMachine.States.STANDING, NodeStateMachine.States.PARAGLIDING)
 
 		assert_eq(player.controls.joypad_button_7_label.text, "Cancel")
@@ -118,7 +118,7 @@ class TestParaglidingControls:
 	func test_paragliding_contextual_controls_controller():
 		var player = player_instance
 		player.enable_paraglider = true
-		player.controls.current_input_type = 1 # MICROSOFT controller
+		player.controls.current_input_type = Controls.InputType.MICROSOFT
 		player.state_machine.travel(NodeStateMachine.States.STANDING, NodeStateMachine.States.PARAGLIDING)
 
 		assert_eq(player.controls.joypad_button_0_label.text, "Cancel")
@@ -131,7 +131,7 @@ class TestClimbingControls:
 
 	func test_climbing_contextual_controls_keyboard():
 		var player = player_instance
-		player.controls.current_input_type = 0 # KEYBOARD_MOUSE
+		player.controls.current_input_type = Controls.InputType.KEYBOARD_MOUSE
 		player.state_machine.travel(NodeStateMachine.States.STANDING, NodeStateMachine.States.CLIMBING)
 
 		assert_eq(player.controls.joypad_button_3_label.text, "Hop")
@@ -141,7 +141,7 @@ class TestClimbingControls:
 
 	func test_climbing_contextual_controls_controller():
 		var player = player_instance
-		player.controls.current_input_type = 1 # MICROSOFT controller
+		player.controls.current_input_type = Controls.InputType.MICROSOFT
 		player.state_machine.travel(NodeStateMachine.States.STANDING, NodeStateMachine.States.CLIMBING)
 
 		assert_eq(player.controls.joypad_button_3_label.text, "Hop")
@@ -156,7 +156,7 @@ class TestHangingControls:
 
 	func test_hanging_contextual_controls_keyboard():
 		var player = player_instance
-		player.controls.current_input_type = 0 # KEYBOARD_MOUSE
+		player.controls.current_input_type = Controls.InputType.KEYBOARD_MOUSE
 		player.state_machine.travel(NodeStateMachine.States.STANDING, NodeStateMachine.States.HANGING)
 
 		assert_eq(player.controls.joypad_button_3_label.text, "Climb Up")
@@ -165,7 +165,7 @@ class TestHangingControls:
 
 	func test_hanging_contextual_controls_controller():
 		var player = player_instance
-		player.controls.current_input_type = 1 # MICROSOFT controller
+		player.controls.current_input_type = Controls.InputType.MICROSOFT
 		player.state_machine.travel(NodeStateMachine.States.STANDING, NodeStateMachine.States.HANGING)
 
 		assert_eq(player.controls.joypad_button_3_label.text, "Climb Up")
@@ -179,7 +179,7 @@ class TestSwimmingControls:
 
 	func test_swimming_contextual_controls_keyboard():
 		var player = player_instance
-		player.controls.current_input_type = 0 # KEYBOARD_MOUSE
+		player.controls.current_input_type = Controls.InputType.KEYBOARD_MOUSE
 		player.state_machine.travel(NodeStateMachine.States.STANDING, NodeStateMachine.States.SWIMMING)
 
 		assert_eq(player.controls.joypad_button_3_label.text, "Climb Out")
@@ -188,7 +188,7 @@ class TestSwimmingControls:
 
 	func test_swimming_contextual_controls_controller():
 		var player = player_instance
-		player.controls.current_input_type = 1 # MICROSOFT controller
+		player.controls.current_input_type = Controls.InputType.MICROSOFT
 		player.state_machine.travel(NodeStateMachine.States.STANDING, NodeStateMachine.States.SWIMMING)
 
 		assert_eq(player.controls.joypad_button_3_label.text, "Climb Out")
@@ -239,18 +239,18 @@ class TestPlayerControllerDemoScene:
 		assert_not_null(demo)
 		add_child_autofree(demo)
 		assert_not_null(demo.player)
-		assert_not_null(demo.marker_tower)
-		assert_not_null(demo.marker_courtyard)
-		assert_not_null(demo.marker_pool)
-		assert_not_null(demo.marker_wall)
+		assert_not_null(demo.get_node("Markers/Tower"))
+		assert_not_null(demo.get_node("Markers/Courtyard"))
+		assert_not_null(demo.get_node("Markers/Pool"))
+		assert_not_null(demo.get_node("Markers/ClimbingWall"))
 		assert_true(demo.player.enable_stamina)
 		
 		# Test Teleport
-		demo._teleport_player(demo.marker_tower)
-		assert_almost_eq(demo.player.global_position.x, demo.marker_tower.global_position.x, 0.1)
+		demo._on_teleport_pressed(^"Markers/Tower")
+		assert_almost_eq(demo.player.global_position.x, demo.get_node("Markers/Tower").global_position.x, 0.1)
 
 		# Test Water Pool Teleport & Swimming Entry
-		demo._teleport_player(demo.marker_pool)
+		demo._on_teleport_pressed(^"Markers/Pool")
 		await wait_physics_frames(2)
 		assert_eq(demo.player.current_state, NodeStateMachine.States.SWIMMING, "Player should enter SWIMMING state when in the water pool")
 		assert_true(demo.player.is_swimming, "Player is_swimming flag should be true")
@@ -297,3 +297,37 @@ class TestInputTypeSwapping:
 		# Swap back to controller
 		controls.current_input_type = controls.InputType.MICROSOFT
 		assert_eq(dpad_up.texture_normal, outline_texture, "DPad Up texture should return to outline texture when released after input swap")
+
+
+## Tests related to the runtime InputMap action table.
+class TestActionTable:
+	extends ControlsTestBase
+
+	func test_every_table_action_is_registered_with_its_bindings():
+		for action_name: String in Controls.ACTIONS:
+			assert_true(InputMap.has_action(action_name), "Action %s should be registered." % action_name)
+			var binding: Dictionary = Controls.ACTIONS[action_name]
+			for key in binding.get("keys", []):
+				var key_event := InputEventKey.new()
+				key_event.physical_keycode = key
+				assert_true(InputMap.action_has_event(action_name, key_event), "%s should have physical key %s." % [action_name, key])
+			for keycode in binding.get("keycodes", []):
+				var key_event := InputEventKey.new()
+				key_event.keycode = keycode
+				assert_true(InputMap.action_has_event(action_name, key_event), "%s should have keycode %s." % [action_name, keycode])
+			for button in binding.get("buttons", []):
+				var button_event := InputEventJoypadButton.new()
+				button_event.button_index = button
+				assert_true(InputMap.action_has_event(action_name, button_event), "%s should have joypad button %s." % [action_name, button])
+			for axis in binding.get("axes", []):
+				var motion_event := InputEventJoypadMotion.new()
+				motion_event.axis = axis[0]
+				motion_event.axis_value = axis[1]
+				assert_true(InputMap.action_has_event(action_name, motion_event), "%s should have joypad axis %s." % [action_name, axis])
+			for mouse_button in binding.get("mouse", []):
+				var mouse_event := InputEventMouseButton.new()
+				mouse_event.button_index = mouse_button
+				assert_true(InputMap.action_has_event(action_name, mouse_event), "%s should have mouse button %s." % [action_name, mouse_button])
+
+	func test_emote_action_is_not_registered():
+		assert_false(Controls.ACTIONS.has("emote"), "The unused emote action should be gone from the table.")

@@ -34,6 +34,7 @@ func before_each() -> void:
 	add_child_autofree(water)
 
 	player.global_position = Vector3(0.0, 3.0, 0.0)
+	player.current_water_area = water
 	swimming_node.start()
 
 

@@ -19,8 +19,9 @@ region = Rect2(355, 52, 32, 32)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_nh3kh"]
 size = Vector2(193, 24)
 
-[node name="AudioSettings" type="CanvasLayer" unique_id=1733087109]
+[node name="AudioSettings" type="CanvasLayer" unique_id=1733087109 node_paths=PackedStringArray("focus_on_show")]
 script = ExtResource("1_kygss")
+focus_on_show = NodePath("Panel/VBoxContainer/BACK")
 
 [node name="Panel" type="Panel" parent="." unique_id=465508985]
 anchors_preset = 8
@@ -297,25 +298,30 @@ text = "BACK"
 position = Vector2(100, 16)
 shape = SubResource("RectangleShape2D_nh3kh")
 
-[connection signal="pressed" from="Panel/VBoxContainer/Dialog/VolumeMinus" to="." method="_on_dialog_volume_minus_pressed"]
+[connection signal="visibility_changed" from="." to="." method="_on_visibility_changed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Dialog/VolumeMinus" to="." method="_on_volume_minus_pressed" binds= [NodePath("Panel/VBoxContainer/Dialog/VolumeSlider")]]
 [connection signal="pressed" from="Panel/VBoxContainer/Dialog/VolumeMinus/TouchScreenButton" to="." method="_on_dialog_volume_minus_touch_screen_button_pressed"]
-[connection signal="value_changed" from="Panel/VBoxContainer/Dialog/VolumeSlider" to="." method="_on_dialog_volume_slider_value_changed"]
-[connection signal="pressed" from="Panel/VBoxContainer/Dialog/VolumePlus" to="." method="_on_dialog_volume_plus_pressed"]
+[connection signal="drag_ended" from="Panel/VBoxContainer/Dialog/VolumeSlider" to="." method="_on_volume_slider_drag_ended"]
+[connection signal="value_changed" from="Panel/VBoxContainer/Dialog/VolumeSlider" to="." method="_on_volume_slider_value_changed" binds= [&"Dialog"]]
+[connection signal="pressed" from="Panel/VBoxContainer/Dialog/VolumePlus" to="." method="_on_volume_plus_pressed" binds= [NodePath("Panel/VBoxContainer/Dialog/VolumeSlider")]]
 [connection signal="pressed" from="Panel/VBoxContainer/Dialog/VolumePlus/TouchScreenButton" to="." method="_on_dialog_volume_plus_touch_screen_button_pressed"]
-[connection signal="pressed" from="Panel/VBoxContainer/Menu/VolumeMinus" to="." method="_on_menu_volume_minus_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Menu/VolumeMinus" to="." method="_on_volume_minus_pressed" binds= [NodePath("Panel/VBoxContainer/Menu/VolumeSlider")]]
 [connection signal="pressed" from="Panel/VBoxContainer/Menu/VolumeMinus/TouchScreenButton" to="." method="_on_menu_volume_minus_touch_screen_button_pressed"]
-[connection signal="value_changed" from="Panel/VBoxContainer/Menu/VolumeSlider" to="." method="_on_menu_volume_slider_value_changed"]
-[connection signal="pressed" from="Panel/VBoxContainer/Menu/VolumePlus" to="." method="_on_menu_volume_plus_pressed"]
+[connection signal="drag_ended" from="Panel/VBoxContainer/Menu/VolumeSlider" to="." method="_on_volume_slider_drag_ended"]
+[connection signal="value_changed" from="Panel/VBoxContainer/Menu/VolumeSlider" to="." method="_on_volume_slider_value_changed" binds= [&"Menu"]]
+[connection signal="pressed" from="Panel/VBoxContainer/Menu/VolumePlus" to="." method="_on_volume_plus_pressed" binds= [NodePath("Panel/VBoxContainer/Menu/VolumeSlider")]]
 [connection signal="pressed" from="Panel/VBoxContainer/Menu/VolumePlus/TouchScreenButton" to="." method="_on_menu_volume_plus_touch_screen_button_pressed"]
-[connection signal="pressed" from="Panel/VBoxContainer/Music/VolumeMinus" to="." method="_on_music_volume_minus_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Music/VolumeMinus" to="." method="_on_volume_minus_pressed" binds= [NodePath("Panel/VBoxContainer/Music/VolumeSlider")]]
 [connection signal="pressed" from="Panel/VBoxContainer/Music/VolumeMinus/TouchScreenButton" to="." method="_on_music_volume_minus_touch_screen_button_pressed"]
-[connection signal="value_changed" from="Panel/VBoxContainer/Music/VolumeSlider" to="." method="_on_music_volume_slider_value_changed"]
-[connection signal="pressed" from="Panel/VBoxContainer/Music/VolumePlus" to="." method="_on_music_volume_plus_pressed"]
+[connection signal="drag_ended" from="Panel/VBoxContainer/Music/VolumeSlider" to="." method="_on_volume_slider_drag_ended"]
+[connection signal="value_changed" from="Panel/VBoxContainer/Music/VolumeSlider" to="." method="_on_volume_slider_value_changed" binds= [&"Music"]]
+[connection signal="pressed" from="Panel/VBoxContainer/Music/VolumePlus" to="." method="_on_volume_plus_pressed" binds= [NodePath("Panel/VBoxContainer/Music/VolumeSlider")]]
 [connection signal="pressed" from="Panel/VBoxContainer/Music/VolumePlus/TouchScreenButton" to="." method="_on_music_volume_plus_touch_screen_button_pressed"]
-[connection signal="pressed" from="Panel/VBoxContainer/SFX/VolumeMinus" to="." method="_on_sfx_volume_minus_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/SFX/VolumeMinus" to="." method="_on_volume_minus_pressed" binds= [NodePath("Panel/VBoxContainer/SFX/VolumeSlider")]]
 [connection signal="pressed" from="Panel/VBoxContainer/SFX/VolumeMinus/TouchScreenButton" to="." method="_on_sfx_volume_minus_touch_screen_button_pressed"]
-[connection signal="value_changed" from="Panel/VBoxContainer/SFX/VolumeSlider" to="." method="_on_sfx_volume_slider_value_changed"]
-[connection signal="pressed" from="Panel/VBoxContainer/SFX/VolumePlus" to="." method="_on_sfx_volume_plus_pressed"]
+[connection signal="drag_ended" from="Panel/VBoxContainer/SFX/VolumeSlider" to="." method="_on_volume_slider_drag_ended"]
+[connection signal="value_changed" from="Panel/VBoxContainer/SFX/VolumeSlider" to="." method="_on_volume_slider_value_changed" binds= [&"SFX"]]
+[connection signal="pressed" from="Panel/VBoxContainer/SFX/VolumePlus" to="." method="_on_volume_plus_pressed" binds= [NodePath("Panel/VBoxContainer/SFX/VolumeSlider")]]
 [connection signal="pressed" from="Panel/VBoxContainer/SFX/VolumePlus/TouchScreenButton" to="." method="_on_sfx_volume_plus_touch_screen_button_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/BACK" to="." method="_on_back_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/BACK/BACKTouchScreenButton" to="." method="_on_back_touch_screen_button_pressed"]

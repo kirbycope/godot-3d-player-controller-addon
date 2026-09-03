@@ -181,10 +181,10 @@ class TestStaminaRegen:
 		player.is_hanging_braced = false
 
 
-class TestSwimmingFastStaminaRequirement:
+class TestExhaustedSwimmerRespawn:
 	extends StaminaTestBase
 
-	func test_cannot_swim_fast_when_exhausted():
+	func test_exhausted_swimmer_respawns_on_shore_with_partial_stamina():
 		var water = Area3D.new()
 		water.add_to_group("WATER")
 		var water_col = CollisionShape3D.new()
@@ -192,24 +192,18 @@ class TestSwimmingFastStaminaRequirement:
 		box.size = Vector3(100, 10, 100)
 		water_col.shape = box
 		water.add_child(water_col)
-		water.position = Vector3(0, 0, 0)
 		root.add_child(water)
 		await wait_physics_frames(2)
 
+		player.last_safe_shore_position = Vector3(5, 0.1, 5)
 		player.state_machine.travel(player.current_state, NodeStateMachine.States.SWIMMING)
 		player.is_swimming = true
 		stamina.stamina = 0.0
 		player.is_exhausted = true
-		player.smoothed_motion = Vector2(0, 1.0)
-		var sender = InputSender.new(Input)
-		sender.set_auto_flush_input(true)
-		sender.action_down("sprint")
-		await wait_physics_frames(5)
+		await wait_physics_frames(2)
 
-		assert_false(player.is_sprinting, "Player should not sprint/swim fast when exhausted.")
-		assert_eq(player.swimming_root_motion_multiplier, 2.0, "Swimming multiplier should be normal (2.0) when exhausted.")
-
-		sender.action_up("sprint")
-		player.is_swimming = false
-		player.is_exhausted = false
+		assert_false(player.is_swimming, "Exhausted swimmer should be pulled out of the water.")
+		assert_false(player.is_exhausted, "Respawn clears exhaustion.")
+		assert_between(stamina.stamina, 35.0, 37.0, "Respawn refills stamina to 35% (plus a frame or two of regen).")
+		assert_almost_eq(player.global_position.x, 5.0, 0.5, "Player should be moved to the last safe shore position.")
 		water.queue_free()

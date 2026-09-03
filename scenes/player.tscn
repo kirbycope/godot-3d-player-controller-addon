@@ -467,6 +467,7 @@ radius = 0.05
 height = 0.1
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_senyo"]
+resource_local_to_scene = true
 radius = 0.3
 height = 1.8
 
@@ -2576,6 +2577,9 @@ _data = {
 [sub_resource type="SphereShape3D" id="SphereShape3D_5xw05"]
 radius = 5.0
 
+[sub_resource type="SphereShape3D" id="SphereShape3D_hand_hitbox"]
+radius = 0.15
+
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cth4h"]
 transparency = 1
 cull_mode = 2
@@ -2841,6 +2845,7 @@ bones/64/skin_scale = Vector3(1, 1, 1)
 bones/65/skin_scale = Vector3(1, 1, 1)
 
 [node name="FirstPersonCameraBoneAttachment" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton" index="2" unique_id=1896825249]
+unique_name_in_owner = true
 bone_name = "Neck"
 bone_idx = 5
 
@@ -3717,6 +3722,30 @@ settings/0/extend_end_bone = false
 bone_name = "RightIndexProximal"
 bone_idx = 40
 
+[node name="LeftHandHitboxAttachment" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton" index="8"]
+bone_name = "LeftHand"
+
+[node name="LeftHandHitbox" type="Area3D" parent="PlayerModel/Armature/GeneralSkeleton/LeftHandHitboxAttachment"]
+collision_layer = 0
+collision_mask = 4294967295
+monitoring = false
+monitorable = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PlayerModel/Armature/GeneralSkeleton/LeftHandHitboxAttachment/LeftHandHitbox"]
+shape = SubResource("SphereShape3D_hand_hitbox")
+
+[node name="RightHandHitboxAttachment" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton" index="9"]
+bone_name = "RightHand"
+
+[node name="RightHandHitbox" type="Area3D" parent="PlayerModel/Armature/GeneralSkeleton/RightHandHitboxAttachment"]
+collision_layer = 0
+collision_mask = 4294967295
+monitoring = false
+monitorable = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PlayerModel/Armature/GeneralSkeleton/RightHandHitboxAttachment/RightHandHitbox"]
+shape = SubResource("SphereShape3D_hand_hitbox")
+
 [node name="AnimationPlayer" parent="PlayerModel" index="1" unique_id=2058321379]
 "libraries/Axe Standing Melee Attack Downward" = ExtResource("4_dtq52")
 "libraries/Axe Standing Melee Attack Horizontal" = ExtResource("5_barxw")
@@ -3999,7 +4028,12 @@ transform = Transform3D(1, 0, 0, 0, 0.99999994, 0, 0, 0, 0.99999994, 0, -1.19209
 target_position = Vector3(0, 0, -3)
 collide_with_areas = true
 
+[node name="CameraFollowTimer" type="Timer" parent="CameraMount/CameraSpringArm/Camera3D"]
+wait_time = 2.0
+one_shot = true
+
 [node name="ItemSpringArm" type="SpringArm3D" parent="CameraMount" unique_id=333552600]
+unique_name_in_owner = true
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
 collision_mask = 0
 spring_length = 2.0
@@ -4024,6 +4058,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 0)
 [node name="FocusTargetMarker" type="Marker3D" parent="." unique_id=932247395]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
 visible = false
+top_level = true
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="FocusTargetMarker" unique_id=1815027829]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
@@ -4061,6 +4096,10 @@ autoplay = true
 [node name="AttackSequenceTimer" type="Timer" parent="." unique_id=724736604]
 wait_time = 0.4
 one_shot = true
+
+[node name="UpdraftVfxTimer" type="Timer" parent="." unique_id=1673872706]
+wait_time = 0.2
+autostart = true
 
 [node name="Controls" parent="." unique_id=1181235604 instance=ExtResource("13_fjdng")]
 
@@ -4112,6 +4151,7 @@ pivot_offset = Vector2(26, 26)
 texture = SubResource("AtlasTexture_fk680")
 
 [node name="Stamina" type="TextureProgressBar" parent="." unique_id=1209274681 node_paths=PackedStringArray("player")]
+visible = false
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
@@ -4123,7 +4163,8 @@ offset_right = -32.0
 offset_bottom = -32.0
 grow_horizontal = 2
 grow_vertical = 2
-value = 50.0
+step = 0.01
+value = 100.0
 rounded = true
 fill_mode = 4
 texture_progress = ExtResource("216_os6bm")
@@ -4131,6 +4172,8 @@ script = ExtResource("217_bidj8")
 player = NodePath("..")
 
 [node name="Timer" type="Timer" parent="Stamina" unique_id=204047444]
+wait_time = 1.0
+one_shot = true
 
 [node name="InputSynchronizer" type="MultiplayerSynchronizer" parent="." unique_id=1044493989]
 replication_config = SubResource("SceneReplicationConfig_x4u5g")
@@ -4139,19 +4182,27 @@ script = ExtResource("8_wyssh")
 [node name="PlayerSynchronizer" type="MultiplayerSynchronizer" parent="." unique_id=1044493990]
 replication_config = SubResource("SceneReplicationConfig_player")
 
-[node name="Focus" type="Node" parent="." unique_id=252522396 node_paths=PackedStringArray("player", "target_detection", "focus_target_marker")]
+[node name="Focus" type="Node" parent="." unique_id=252522396 node_paths=PackedStringArray("player", "target_detection", "focus_target_marker", "target_loss_timer")]
 script = ExtResource("208_focus")
 player = NodePath("..")
 target_detection = NodePath("../TargetDetection")
 focus_target_marker = NodePath("../FocusTargetMarker")
+target_loss_timer = NodePath("TargetLossTimer")
 
-[node name="HeldObject" type="Node" parent="." unique_id=194795531 node_paths=PackedStringArray("player")]
+[node name="TargetLossTimer" type="Timer" parent="Focus"]
+wait_time = 0.5
+one_shot = true
+
+[node name="HeldObject" type="Node" parent="." unique_id=194795531 node_paths=PackedStringArray("player", "throw_charge_bar")]
 script = ExtResource("209_heldobj")
 player = NodePath("..")
+throw_charge_bar = NodePath("../Controls/ThrowChargeBar")
 
-[node name="HitDetection" type="Node" parent="." unique_id=486677887 node_paths=PackedStringArray("player")]
+[node name="HitDetection" type="Node" parent="." unique_id=486677887 node_paths=PackedStringArray("player", "left_hand_hitbox", "right_hand_hitbox")]
 script = ExtResource("210_hitdet")
 player = NodePath("..")
+left_hand_hitbox = NodePath("../PlayerModel/Armature/GeneralSkeleton/LeftHandHitboxAttachment/LeftHandHitbox")
+right_hand_hitbox = NodePath("../PlayerModel/Armature/GeneralSkeleton/RightHandHitboxAttachment/RightHandHitbox")
 
 [node name="NodeStateMachine" type="Node" parent="." unique_id=933239176 node_paths=PackedStringArray("player")]
 script = ExtResource("142_aujnh")
@@ -4162,10 +4213,17 @@ process_mode = 4
 script = ExtResource("143_5j8id")
 player = NodePath("../..")
 
+[node name="BoxingInactivityTimer" type="Timer" parent="NodeStateMachine/Attacking"]
+process_callback = 0
+one_shot = true
+
 [node name="Climbing" type="Node" parent="NodeStateMachine" unique_id=735495711 node_paths=PackedStringArray("player")]
 process_mode = 4
 script = ExtResource("142_barxw")
 player = NodePath("../..")
+
+[node name="RainSlipTimer" type="Timer" parent="NodeStateMachine/Climbing"]
+process_callback = 0
 
 [node name="Crouching" type="Node" parent="NodeStateMachine" unique_id=1537110706 node_paths=PackedStringArray("player")]
 process_mode = 4
@@ -4206,6 +4264,11 @@ player = NodePath("../..")
 process_mode = 4
 script = ExtResource("146_pshng")
 player = NodePath("../..")
+
+[node name="StopGraceTimer" type="Timer" parent="NodeStateMachine/Pushing"]
+process_callback = 0
+wait_time = 0.15
+one_shot = true
 
 [node name="Ragdolling" type="Node" parent="NodeStateMachine" unique_id=1826584439 node_paths=PackedStringArray("player")]
 process_mode = 4
@@ -4259,3 +4322,15 @@ mouse_filter = 2
 [connection signal="timeout" from="AttackSequenceTimer" to="." method="_on_attack_sequence_timer_timeout"]
 
 [editable path="PlayerModel"]
+[connection signal="timeout" from="UpdraftVfxTimer" to="." method="_update_updraft_vfx"]
+[connection signal="locomotion_node_changed" from="." to="HitDetection" method="_on_locomotion_node_changed"]
+[connection signal="state_changed" from="." to="DrivingUI" method="_on_player_state_changed"]
+[connection signal="equipment_changed" from="Inventory" to="Focus" method="_on_equipment_changed"]
+[connection signal="equipment_changed" from="Inventory" to="HitDetection" method="_on_equipment_changed"]
+[connection signal="body_entered" from="TargetDetection" to="Focus" method="_on_target_detection_body_entered"]
+[connection signal="body_exited" from="TargetDetection" to="Focus" method="_on_target_detection_body_exited"]
+[connection signal="timeout" from="Focus/TargetLossTimer" to="Focus" method="_clear_focus_target"]
+[connection signal="timeout" from="Stamina/Timer" to="Stamina" method="hide"]
+[connection signal="timeout" from="NodeStateMachine/Pushing/StopGraceTimer" to="NodeStateMachine/Pushing" method="_on_stop_grace_timer_timeout"]
+[connection signal="timeout" from="NodeStateMachine/Climbing/RainSlipTimer" to="NodeStateMachine/Climbing" method="_on_rain_slip_timer_timeout"]
+[connection signal="timeout" from="NodeStateMachine/Attacking/BoxingInactivityTimer" to="NodeStateMachine/Attacking" method="_on_boxing_inactivity_timer_timeout"]

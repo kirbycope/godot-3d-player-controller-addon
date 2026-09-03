@@ -2,6 +2,10 @@ class_name PlayerSettingsResource
 extends Resource
 
 const SAVE_PATH: String = "user://settings.tres"
+const MSAA_VALUES: Array[Viewport.MSAA] = [Viewport.MSAA_DISABLED, Viewport.MSAA_2X, Viewport.MSAA_4X, Viewport.MSAA_8X] ## Indexed by [member msaa_index].
+const SSAA_SCALES: Array[float] = [1.0, 1.5, 2.0] ## Indexed by [member ssaa_index].
+
+static var _cached: PlayerSettingsResource ## One shared instance so every menu edits and saves the same settings.
 
 # Audio Settings
 @export var dialog_volume: float = 50.0
@@ -12,35 +16,36 @@ const SAVE_PATH: String = "user://settings.tres"
 # Video Settings
 @export var vsync_enabled: bool = true
 @export var msaa_index: int = 0
-@export var ssaa_index: int = 0
+@export var ssaa_index: int = 0 ## Bilinear supersampling; mutually exclusive with [member fsr_index].
 @export var fxaa_enabled: bool = false
 @export var ssrl_enabled: bool = false
 @export var taa_enabled: bool = false
-@export var fsr_index: int = 0
+@export var fsr_index: int = 0 ## [enum Viewport.Scaling3DMode] index; mutually exclusive with [member ssaa_index].
 
 
+## Returns the shared settings instance, loading it from disk the first time.
 static func load_or_create() -> PlayerSettingsResource:
-	if ResourceLoader.exists(SAVE_PATH):
-		var res: Resource = ResourceLoader.load(SAVE_PATH)
-		if res is PlayerSettingsResource:
-			return res
-	return PlayerSettingsResource.new()
+	if _cached == null:
+		if ResourceLoader.exists(SAVE_PATH):
+			_cached = ResourceLoader.load(SAVE_PATH) as PlayerSettingsResource
+		if _cached == null:
+			_cached = PlayerSettingsResource.new()
+	return _cached
 
 
 func save() -> void:
+	_cached = self
 	ResourceSaver.save(self, SAVE_PATH)
 
 
-func apply_audio_settings(player: Node = null) -> void:
+func apply_audio_settings(player: Player = null) -> void:
 	set_bus_volume(&"Dialog", dialog_volume)
 	set_bus_volume(&"Menu", menu_volume)
 	set_bus_volume(&"Music", music_volume)
 	set_bus_volume(&"SFX", sfx_volume)
 	if player:
-		if player.has_method("update_sfx_volume"):
-			player.update_sfx_volume(sfx_volume)
-		if player.has_method("update_music_volume"):
-			player.update_music_volume(music_volume)
+		player.update_sfx_volume(sfx_volume)
+		player.update_music_volume(music_volume)
 
 
 static func set_bus_volume(bus_name: StringName, value: float) -> void:
@@ -50,45 +55,17 @@ static func set_bus_volume(bus_name: StringName, value: float) -> void:
 
 
 func apply_video_settings(viewport: Viewport) -> void:
-	# VSYNC
-	if vsync_enabled:
-		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED)
-	else:
-		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
-
-	# MSAA
-	var msaa_values: Array[Viewport.MSAA] = [
-		Viewport.MSAA_DISABLED,
-		Viewport.MSAA_2X,
-		Viewport.MSAA_4X,
-		Viewport.MSAA_8X,
-	]
-	if msaa_index >= 0 and msaa_index < msaa_values.size():
-		viewport.set_msaa_3d(msaa_values[msaa_index])
-
-	# SSAA
-	var scale_factors: Array[float] = [1.0, 1.5, 2.0]
-	if ssaa_index >= 0 and ssaa_index < scale_factors.size():
-		viewport.scaling_3d_mode = Viewport.SCALING_3D_MODE_BILINEAR
-		viewport.scaling_3d_scale = scale_factors[ssaa_index]
-
-	# FXAA
-	if fxaa_enabled:
-		viewport.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA
-	else:
-		viewport.screen_space_aa = Viewport.SCREEN_SPACE_AA_DISABLED
-
-	# SSRL
+	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if vsync_enabled else DisplayServer.VSYNC_DISABLED)
+	viewport.msaa_3d = MSAA_VALUES[clampi(msaa_index, 0, MSAA_VALUES.size() - 1)]
+	# SSAA and FSR are mutually exclusive: fsr_index 0 is bilinear scaling, which is where the SSAA scale applies.
+	viewport.scaling_3d_mode = fsr_index as Viewport.Scaling3DMode
+	viewport.scaling_3d_scale = SSAA_SCALES[clampi(ssaa_index, 0, SSAA_SCALES.size() - 1)] if fsr_index == 0 else 1.0
+	viewport.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA if fxaa_enabled else Viewport.SCREEN_SPACE_AA_DISABLED
 	RenderingServer.screen_space_roughness_limiter_set_active(ssrl_enabled, 0.25, 0.18)
-
-	# TAA
 	viewport.use_taa = taa_enabled
 
-	# FSR
-	viewport.scaling_3d_mode = fsr_index
 
-
-func apply_all(viewport: Viewport, player: Node = null) -> void:
+func apply_all(viewport: Viewport, player: Player = null) -> void:
 	apply_audio_settings(player)
 	if viewport:
 		apply_video_settings(viewport)

@@ -9,9 +9,12 @@ const CHARGE_START_DELAY: float = 0.2 ## Seconds "shoot" must be held before a c
 const CHARGE_DURATION: float = 0.6 ## Seconds from charge start to full throw power.
 const MIN_THROW_POWER: float = 0.25 ## Throw power multiplier for a quick tap.
 const MAX_THROW_POWER: float = 1.0 ## Throw power multiplier at full charge.
-@export_file("*.tscn") var connector_scene: String
+const HOLD_EMOTE: StringName = &"ReadyToCastSpell" ## Emote pose played while carrying.
+
+@export_file("*.tscn") var connector_scene: String ## Scene stretched from [member connector_origin] to the held object; loaded once.
 @export var player: Player
 @export var connector_origin: Node3D
+@export var throw_charge_bar: ProgressBar ## Charge indicator; hidden whenever a charge ends.
 @export var throw_force: float = 5.0 ## Impulse strength applied to thrown [RigidBody3D] objects.
 @export var connector_origin_height: float = 1.0 ## Fallback height when connector_origin is unset.
 @export_group("Held Object Controls")
@@ -27,34 +30,35 @@ const MAX_THROW_POWER: float = 1.0 ## Throw power multiplier at full charge.
 
 var is_throw_queued: bool = false ## Is a throw waiting on the animation call track or charge timeout?
 var is_throwing: bool = false ## Is the throw wind-up currently active?
-var is_charging_throw: bool = false ## Is the Player currently charging a throw?
+var is_charging_throw: bool = false: ## Is the Player currently charging a throw?
+	set(value):
+		is_charging_throw = value
+		if not value and throw_charge_bar:
+			throw_charge_bar.hide()
 var throw_charge_time: float = 0.0 ## Elapsed charge duration for the current throw.
 var throw_power: float = 1.0 ## Throw power multiplier (MIN_THROW_POWER to MAX_THROW_POWER).
 var queued_throw_direction: Vector3 = Vector3.ZERO ## Direction applied when executing a queued throw.
-var throw_charge_bar: ProgressBar
 var held_rigidbody: RigidBody3D = null
 var _original_collision_layer: int = 0
-var _original_collision_mask: int = 0
 var _original_freeze: bool = false
 var _connector_node: Node3D
-var _original_look_at_target: NodePath
-var _original_look_at_active: bool = false
-var _owns_look_at_modifier: bool = false
-var _owns_contextual_controls: bool = false
 var _held_distance: float = 2.0
 var _held_offset: Vector2 = Vector2.ZERO
 var _is_held_rotation_mode: bool = false
 
 
-## Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	set_process(is_multiplayer_authority())
 	set_physics_process(is_multiplayer_authority())
 	set_process_input(is_multiplayer_authority())
-	_create_connector_node()
+	if connector_scene.is_empty():
+		return
+	var scene: PackedScene = load(connector_scene) as PackedScene
+	if scene:
+		_connector_node = scene.instantiate() as Node3D
+		_connector_node.hide()
+		add_child(_connector_node)
 
 
-## Called when there is an input event.
 func _input(event: InputEvent) -> void:
 	if player == null or player.is_paused or player.is_ragdolling:
 		return
@@ -101,17 +105,14 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
-## Called every physics frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(delta: float) -> void:
 	if player == null:
 		return
 
 	# While the throw wind-up is active, keep aiming at the live crosshair direction.
 	if is_throwing:
-		var crosshair_throw_dir: Vector3 = _get_crosshair_throw_direction()
-		if crosshair_throw_dir.length_squared() > 0.001:
-			queued_throw_direction = crosshair_throw_dir.normalized()
-			player.turn_model_toward_direction(queued_throw_direction, delta)
+		queued_throw_direction = _get_crosshair_throw_direction()
+		player.turn_model_toward_direction(queued_throw_direction, delta)
 
 	if is_charging_throw:
 		throw_charge_time += delta
@@ -124,30 +125,27 @@ func _physics_process(delta: float) -> void:
 			var charge_ratio: float = clampf((throw_charge_time - CHARGE_START_DELAY) / CHARGE_DURATION, 0.0, 1.0)
 			throw_power = lerpf(MIN_THROW_POWER, MAX_THROW_POWER, charge_ratio)
 			if throw_charge_bar:
-				throw_charge_bar.visible = true
+				throw_charge_bar.show()
 				throw_charge_bar.value = charge_ratio * 100.0
 
 		if throw_charge_time >= CHARGE_START_DELAY + CHARGE_DURATION:
 			throw_power = MAX_THROW_POWER
 			execute_throw()
 
-	_update_held_object_transform(delta)
-	_update_held_object_emote()
-	_update_held_object_look_at()
-	_update_connector_node(delta)
+	if is_instance_valid(held_rigidbody) and not is_throwing:
+		_update_held_object_transform(delta)
+		_update_connector_node()
 
 
 ## True if the item spring arm currently holds a [RigidBody3D].
 func is_holding_rigidbody() -> bool:
-	if player == null or player.item_spring_arm == null or player.item_spring_arm.get_child_count() == 0:
-		return false
-	var held_node: Node = player.item_spring_arm.get_child(0)
-	return held_node is RigidBody3D
+	return player != null and player.item_spring_arm.get_child_count() > 0 \
+			and player.item_spring_arm.get_child(0) is RigidBody3D
 
 
 ## True while shared controls belong exclusively to the held object manipulator.
 func is_holding_object() -> bool:
-	return is_instance_valid(held_rigidbody) or (player != null and player.item_spring_arm != null and player.item_spring_arm.get_child_count() > 0)
+	return is_instance_valid(held_rigidbody) or (player != null and player.item_spring_arm.get_child_count() > 0)
 
 
 ## Returns the held-object spring length requested by held object controls.
@@ -157,10 +155,8 @@ func get_held_distance(fallback_distance: float) -> float:
 
 ## Starts charging a throw when the shoot button is pressed.
 func start_charging_throw() -> void:
-	if player == null or player.item_spring_arm == null or player.item_spring_arm.get_child_count() == 0:
+	if not is_holding_object():
 		return
-
-	_ensure_throw_charge_bar()
 	is_charging_throw = true
 	throw_charge_time = 0.0
 	throw_power = MIN_THROW_POWER
@@ -178,32 +174,24 @@ func release_charging_throw() -> void:
 
 	if throw_charge_time < CHARGE_START_DELAY:
 		# Quick tap: instant weak throw without animation wind-up.
-		throw_power = MIN_THROW_POWER
-		execute_instant_throw(throw_dir, throw_power)
+		execute_instant_throw(throw_dir, MIN_THROW_POWER)
 	else:
 		# Long press release: execute the queued throw with charged power.
 		var charge_ratio: float = clampf((throw_charge_time - CHARGE_START_DELAY) / CHARGE_DURATION, 0.0, 1.0)
 		throw_power = lerpf(MIN_THROW_POWER, MAX_THROW_POWER, charge_ratio)
 		execute_throw()
-
 	is_charging_throw = false
-	if throw_charge_bar:
-		throw_charge_bar.visible = false
 
 
 ## Executes an instant throw without animation wind-up (for quick taps).
 func execute_instant_throw(throw_dir: Vector3, power: float) -> void:
-	if player == null or player.item_spring_arm == null or player.item_spring_arm.get_child_count() == 0:
+	if not is_holding_object():
 		return
-
 	player.rotate_model_to_direction(throw_dir)
 	var held_node: Node = player.item_spring_arm.get_child(0)
 	clear_throw_queue()
 	is_charging_throw = false
 	is_throwing = false
-	if throw_charge_bar:
-		throw_charge_bar.visible = false
-
 	_throw_held_node(held_node, throw_dir, power)
 
 
@@ -211,8 +199,6 @@ func execute_instant_throw(throw_dir: Vector3, power: float) -> void:
 func queue_throw(throw_direction: Vector3) -> void:
 	if throw_direction.length_squared() <= 0.001:
 		throw_direction = _get_crosshair_throw_direction()
-		if throw_direction.length_squared() <= 0.001:
-			throw_direction = - player.global_transform.basis.z.normalized()
 
 	is_throw_queued = true
 	is_throwing = true
@@ -236,12 +222,10 @@ func clear_throw_queue() -> void:
 func execute_throw() -> void:
 	if not is_throw_queued and not is_charging_throw:
 		return
-	if player == null or player.item_spring_arm == null or player.item_spring_arm.get_child_count() == 0:
+	if not is_holding_object():
 		clear_throw_queue()
 		is_charging_throw = false
 		is_throwing = false
-		if throw_charge_bar:
-			throw_charge_bar.visible = false
 		return
 
 	var held_node: Node = player.item_spring_arm.get_child(0)
@@ -253,262 +237,35 @@ func execute_throw() -> void:
 	var power: float = throw_power
 	clear_throw_queue()
 	is_charging_throw = false
-	if not (player and player.is_emoting):
+	if not player.is_emoting:
 		is_throwing = false
-	if throw_charge_bar:
-		throw_charge_bar.visible = false
-
 	_throw_held_node(held_node, throw_dir, power)
 
 
 ## Drops the held [RigidBody3D] back into the world without applying an impulse.
 func drop_held_rigidbody() -> void:
-	if not is_instance_valid(held_rigidbody):
-		held_rigidbody = null
-		_stop_held_object_look_at()
-		_stop_held_object_contextual_controls()
-		return
-
-	var drop_body: RigidBody3D = held_rigidbody
-
-	if player.get_parent() != null:
-		drop_body.reparent(player.get_parent(), true)
+	if is_instance_valid(held_rigidbody):
+		_release_held_rigidbody()
 	else:
-		var current_scene: Node = get_tree().current_scene
-		if current_scene:
-			drop_body.reparent(current_scene, true)
-
-	_restore_held_rigidbody_state(drop_body)
-
-	drop_body.linear_velocity = Vector3.ZERO
-	drop_body.angular_velocity = Vector3.ZERO
-	drop_body.sleeping = false
+		held_rigidbody = null
+		_end_hold()
 
 
-## Throws the held node, preferring its own throw methods over a raw impulse.
-func _throw_held_node(held_node: Node, throw_dir: Vector3, power: float) -> void:
-	if held_node.has_method("throw_with_direction"):
-		held_node.call("throw_with_direction", throw_dir, power)
-	elif held_node.has_method("throw"):
-		held_node.call("throw", throw_dir)
-	elif held_node is RigidBody3D:
-		var throw_body: RigidBody3D = held_node as RigidBody3D
-		_restore_held_rigidbody_state(throw_body)
-		throw_body.freeze = false
-		if player.get_parent() != null:
-			throw_body.reparent(player.get_parent(), true)
-		throw_body.sleeping = false
-		throw_body.apply_impulse(throw_dir * throw_force * power, Vector3.ZERO)
-
-
-## Gets the throw direction from the camera crosshair, falling back to the facing direction.
-func _get_crosshair_throw_direction() -> Vector3:
-	if player.camera:
-		return -player.camera.global_transform.basis.z.normalized()
-
-	var facing_direction: Vector3 = player.get_facing_direction()
-	if facing_direction.length_squared() > 0.001:
-		return facing_direction
-
-	return -player.global_transform.basis.z.normalized()
-
-
-## Walks up the tree from a collider to find the owning [RigidBody3D], if any.
-func _find_rigidbody_from_node(start_node: Node) -> RigidBody3D:
-	var current_node: Node = start_node
-	while current_node:
-		if current_node is RigidBody3D:
-			return current_node as RigidBody3D
-		current_node = current_node.get_parent()
-	return null
-
-
-## Attempts to pick up the [RigidBody3D] under the crosshair. Returns true on success.
-func _try_pickup_rigidbody_from_crosshair() -> bool:
-	if not player.camera or not is_instance_valid(player.camera.camera_ray_cast):
-		return false
-	if player.item_spring_arm.get_child_count() > 0:
-		return false
-	if not player.camera.camera_ray_cast.is_colliding():
-		return false
-
-	var collider: Object = player.camera.camera_ray_cast.get_collider()
-	if collider == null or not (collider is Node):
-		return false
-
-	var target_body: RigidBody3D = _find_rigidbody_from_node(collider as Node)
-	if not target_body:
-		return false
-	if target_body is VehicleBody3D:
-		return false
-	if target_body.get_parent() == player.item_spring_arm:
-		return false
-
-	_pickup_rigidbody(target_body)
-	return true
-
-
-## Freezes the body, disables its world collision, and parents it to the item spring arm.
-func _pickup_rigidbody(body: RigidBody3D) -> void:
-	held_rigidbody = body
-	_original_collision_layer = body.collision_layer
-	_original_collision_mask = body.collision_mask
-	_original_freeze = body.freeze
-
-	body.linear_velocity = Vector3.ZERO
-	body.angular_velocity = Vector3.ZERO
-	body.freeze = true
-	body.set_collision_layer_value(1, false)
-	body.set_collision_layer_value(2, true)
-	body.add_collision_exception_with(player)
-	player.add_collision_exception_with(body)
-
-	body.reparent(player.item_spring_arm, true)
-	body.transform = Transform3D()
-	body.position = Vector3.ZERO
-	_held_distance = clampf(
-		player.item_spring_arm.spring_length,
-		held_min_distance,
-		held_max_distance,
-	)
-	_held_offset = Vector2.ZERO
-	_is_held_rotation_mode = false
-	_start_held_object_emote()
-	_start_held_object_look_at()
-	_start_held_object_contextual_controls()
-
-
-## Restores the collision and freeze state recorded when the body was picked up.
-func _restore_held_rigidbody_state(body: RigidBody3D) -> void:
-	body.collision_layer = _original_collision_layer
-	body.collision_mask = _original_collision_mask
-	body.freeze = _original_freeze
-	body.remove_collision_exception_with(player)
-	player.remove_collision_exception_with(body)
-	held_rigidbody = null
-	_is_held_rotation_mode = false
-	_stop_held_object_emote()
-	_stop_held_object_look_at()
-	_stop_held_object_contextual_controls()
-
-
-func _start_held_object_emote() -> void:
-	var emote_state: AnimationNodeStateMachinePlayback = player.animation_tree.get(
-		Player.EMOTE_STATE_PLAYBACK_PATH
-	)
-	if emote_state == null:
-		return
-
-	player.animation_tree.set("parameters/EmoteSpineBlend2/blend_amount", 1.0)
-	emote_state.start("ReadyToCastSpell")
-	player.is_emoting = true
-	player.has_started_emoting = false
-
-
-func _update_held_object_emote() -> void:
-	if not is_instance_valid(held_rigidbody) or is_throwing:
-		return
-
-	var emote_state: AnimationNodeStateMachinePlayback = player.animation_tree.get(
-		Player.EMOTE_STATE_PLAYBACK_PATH
-	)
-	if emote_state and emote_state.get_current_node() != "ReadyToCastSpell":
-		_start_held_object_emote()
-
-
-func _stop_held_object_emote() -> void:
-	var emote_state: AnimationNodeStateMachinePlayback = player.animation_tree.get(
-		Player.EMOTE_STATE_PLAYBACK_PATH
-	)
-	if emote_state == null or emote_state.get_current_node() != "ReadyToCastSpell":
-		return
-
-	emote_state.start("Idle")
-	player.animation_tree.set("parameters/EmoteSpineBlend2/blend_amount", 0.0)
-	player.is_emoting = false
-	player.has_started_emoting = false
-
-
-func _start_held_object_look_at() -> void:
-	var look_at_modifier: LookAtModifier3D = player.look_at_modifier as LookAtModifier3D
-	if look_at_modifier == null or not is_instance_valid(held_rigidbody):
-		return
-
-	if not _owns_look_at_modifier:
-		_original_look_at_target = look_at_modifier.target_node
-		_original_look_at_active = look_at_modifier.active
-		_owns_look_at_modifier = true
-
-	look_at_modifier.target_node = held_rigidbody.get_path()
-	look_at_modifier.active = true
-
-
-func _update_held_object_look_at() -> void:
-	if not is_instance_valid(held_rigidbody):
-		_stop_held_object_look_at()
-		return
-
-	_start_held_object_look_at()
-
-
-func _stop_held_object_look_at() -> void:
-	if not _owns_look_at_modifier:
-		return
-
-	var look_at_modifier: LookAtModifier3D = player.look_at_modifier as LookAtModifier3D
-	if look_at_modifier:
-		look_at_modifier.target_node = _original_look_at_target
-		look_at_modifier.active = _original_look_at_active
-
-	_owns_look_at_modifier = false
-
-
-func _start_held_object_contextual_controls() -> void:
-	if player.controls == null:
-		return
-
-	var state_node: Node = _get_current_state_node()
-	if state_node and player.controls.input_type_changed.is_connected(
-		state_node._on_input_type_changed
-	):
-		player.controls.input_type_changed.disconnect(state_node._on_input_type_changed)
+## Pushes the held-object control labels; states call this on travel while an object is held.
+func refresh_contextual_controls() -> void:
+	# Connected here rather than in _ready: the Player's own @onready references resolve after its children are ready
 	if not player.controls.input_type_changed.is_connected(_on_input_type_changed):
 		player.controls.input_type_changed.connect(_on_input_type_changed)
-	_owns_contextual_controls = true
-	refresh_contextual_controls()
-
-
-func _stop_held_object_contextual_controls() -> void:
-	if not _owns_contextual_controls or player.controls == null:
-		return
-
-	if player.controls.input_type_changed.is_connected(_on_input_type_changed):
-		player.controls.input_type_changed.disconnect(_on_input_type_changed)
-	player.controls.reset_labels()
-	_owns_contextual_controls = false
-
-	var state_node: Node = _get_current_state_node()
-	if state_node:
-		if not player.controls.input_type_changed.is_connected(state_node._on_input_type_changed):
-			player.controls.input_type_changed.connect(state_node._on_input_type_changed)
-		state_node._on_input_type_changed(player.controls.current_input_type)
-
-
-func refresh_contextual_controls() -> void:
-	if not _owns_contextual_controls or player.controls == null:
-		return
-
 	_on_input_type_changed(player.controls.current_input_type)
 
 
+## The state handlers yield the labels while an object is held (see [method NodeStateMachine._on_input_type_changed]).
 func _on_input_type_changed(input_type: int) -> void:
-	player.controls.set_labels(get_contextual_controls(input_type))
+	if is_holding_object():
+		player.controls.set_labels(get_contextual_controls(input_type))
 
 
 func get_contextual_controls(input_type: int) -> Dictionary:
-	if player == null or player.controls == null:
-		return {}
-
 	var controls: Dictionary = {
 		player.controls.joypad_button_0_label: "Drop",
 		player.controls.joypad_button_4_label: "Perspective",
@@ -538,66 +295,136 @@ func get_contextual_controls(input_type: int) -> Dictionary:
 		else:
 			controls[player.controls.joypad_button_11_label] = "Farther"
 			controls[player.controls.joypad_button_12_label] = "Closer"
-
 	return controls
 
 
-func _get_current_state_node() -> Node:
-	if player.current_state not in NodeStateMachine.States.values():
-		return null
+## Throws the held node, preferring its own throw methods over a raw impulse.
+func _throw_held_node(held_node: Node, throw_dir: Vector3, power: float) -> void:
+	if held_node.has_method("throw_with_direction"):
+		held_node.call("throw_with_direction", throw_dir, power)
+	elif held_node.has_method("throw"):
+		held_node.call("throw", throw_dir)
+	elif held_node == held_rigidbody:
+		var body: RigidBody3D = _release_held_rigidbody()
+		body.freeze = false
+		body.apply_impulse(throw_dir * throw_force * power, Vector3.ZERO)
 
-	var state_name: StringName = NodeStateMachine.get_state_name(player.current_state)
-	return player.state_machine.get_node_or_null(NodePath(state_name))
+
+## Gets the throw direction from the camera crosshair, falling back to the facing direction.
+func _get_crosshair_throw_direction() -> Vector3:
+	if player.camera:
+		return -player.camera.global_transform.basis.z.normalized()
+	var facing_direction: Vector3 = player.get_facing_direction()
+	if facing_direction.length_squared() > 0.001:
+		return facing_direction
+	return -player.global_transform.basis.z.normalized()
+
+
+## Attempts to pick up the [RigidBody3D] under the crosshair. Returns true on success.
+func _try_pickup_rigidbody_from_crosshair() -> bool:
+	if not player.camera or not player.camera.camera_ray_cast.is_colliding() or is_holding_object():
+		return false
+
+	# Walk up from the collider to the owning body.
+	var node: Node = player.camera.camera_ray_cast.get_collider() as Node
+	while node and not node is RigidBody3D:
+		node = node.get_parent()
+	if node == null or node is VehicleBody3D:
+		return false
+
+	_pickup_rigidbody(node as RigidBody3D)
+	return true
+
+
+## Freezes the body, disables its world collision, and parents it to the item spring arm.
+func _pickup_rigidbody(body: RigidBody3D) -> void:
+	held_rigidbody = body
+	_original_collision_layer = body.collision_layer
+	_original_freeze = body.freeze
+
+	body.linear_velocity = Vector3.ZERO
+	body.angular_velocity = Vector3.ZERO
+	body.freeze = true
+	body.set_collision_layer_value(1, false)
+	body.set_collision_layer_value(2, true)
+	body.add_collision_exception_with(player)
+	player.add_collision_exception_with(body)
+
+	body.reparent(player.item_spring_arm, true)
+	body.transform = Transform3D()
+	_held_distance = clampf(player.item_spring_arm.spring_length, held_min_distance, held_max_distance)
+	_held_offset = Vector2.ZERO
+	_is_held_rotation_mode = false
+
+	var emote_state: AnimationNodeStateMachinePlayback = player.animation_tree.get(Player.EMOTE_STATE_PLAYBACK_PATH)
+	if emote_state:
+		player.animation_tree.set("parameters/EmoteSpineBlend2/blend_amount", 1.0)
+		emote_state.start(HOLD_EMOTE)
+		player.is_emoting = true
+		player.has_started_emoting = false
+	player.set_look_at_target(body)
+	refresh_contextual_controls()
+
+
+## Returns the held body to the world with the collision and freeze state recorded on pickup.
+func _release_held_rigidbody() -> RigidBody3D:
+	var body: RigidBody3D = held_rigidbody
+	held_rigidbody = null
+	body.collision_layer = _original_collision_layer
+	body.freeze = _original_freeze
+	body.remove_collision_exception_with(player)
+	player.remove_collision_exception_with(body)
+	var world: Node = player.get_parent() if player.get_parent() else get_tree().current_scene
+	if world:
+		body.reparent(world, true)
+	body.linear_velocity = Vector3.ZERO
+	body.angular_velocity = Vector3.ZERO
+	body.sleeping = false
+	_end_hold()
+	return body
+
+
+## Clears the carry pose, look-at, connector and control labels once nothing is held.
+func _end_hold() -> void:
+	_is_held_rotation_mode = false
+	if is_instance_valid(_connector_node):
+		_connector_node.hide()
+	var emote_state: AnimationNodeStateMachinePlayback = player.animation_tree.get(Player.EMOTE_STATE_PLAYBACK_PATH)
+	if emote_state and emote_state.get_current_node() == HOLD_EMOTE:
+		emote_state.start("Idle")
+		player.animation_tree.set("parameters/EmoteSpineBlend2/blend_amount", 0.0)
+		player.is_emoting = false
+		player.has_started_emoting = false
+	player.set_look_at_target(null)
+	# Hand the control labels back to the active state.
+	player.controls.reset_labels()
+	var state_node: NodeStateMachine = player.state_machine.get_node_or_null(NodePath(NodeStateMachine.get_state_name(player.current_state))) as NodeStateMachine
+	if state_node:
+		state_node._on_input_type_changed(player.controls.current_input_type)
 
 
 func _update_held_object_transform(delta: float) -> void:
-	if not is_instance_valid(held_rigidbody) or is_throwing:
-		return
-
-	var is_rotating: bool = Input.is_action_pressed("throw")
-	var dpad_input: Vector2 = Input.get_vector(
-		"last_weapon",
-		"next_weapon",
-		"seeker",
-		"whistle",
-	)
-	if is_rotating:
+	var dpad_input: Vector2 = Input.get_vector("last_weapon", "next_weapon", "seeker", "whistle")
+	if Input.is_action_pressed("throw"):
 		var rotation_delta: Vector2 = dpad_input * held_rotation_speed * delta
 		held_rigidbody.rotate_object_local(Vector3.RIGHT, deg_to_rad(rotation_delta.y))
 		held_rigidbody.rotate_object_local(Vector3.UP, deg_to_rad(-rotation_delta.x))
 	else:
-		_held_distance = clampf(
-			_held_distance - dpad_input.y * held_depth_speed * delta,
-			held_min_distance,
-			held_max_distance,
-		)
+		_held_distance = clampf(_held_distance - dpad_input.y * held_depth_speed * delta, held_min_distance, held_max_distance)
 
 	var move_input: Vector2 = Input.get_vector("look_left", "look_right", "look_up", "look_down")
 	var move_multiplier: float = 1.0
 	if player.controls.current_input_type != player.controls.InputType.KEYBOARD_MOUSE:
 		move_multiplier = held_joypad_move_multiplier
 	_held_offset += move_input * held_move_speed * move_multiplier * delta
-	_held_offset.x = clampf(
-		_held_offset.x,
-		- held_max_offset.x,
-		held_max_offset.x,
-	)
-	_held_offset.y = clampf(
-		_held_offset.y,
-		- held_max_offset.y,
-		held_max_offset.y,
-	)
-	held_rigidbody.position.x = - _held_offset.x
-	held_rigidbody.position.y = - _held_offset.y
+	_held_offset = _held_offset.clamp(-held_max_offset, held_max_offset)
+	held_rigidbody.position.x = -_held_offset.x
+	held_rigidbody.position.y = -_held_offset.y
 
 
 func _lay_held_rigidbody_flat() -> void:
-	if not is_instance_valid(held_rigidbody):
-		return
-
 	var player_up: Vector3 = player.up_direction.normalized()
-	var camera_forward: Vector3 = - player.camera.global_transform.basis.z
-	camera_forward = camera_forward.slide(player_up).normalized()
+	var camera_forward: Vector3 = (-player.camera.global_transform.basis.z).slide(player_up).normalized()
 	if camera_forward.length_squared() <= 0.001:
 		camera_forward = player.global_transform.basis.z.slide(player_up).normalized()
 	var flat_basis: Basis = Basis.looking_at(camera_forward, player_up)
@@ -617,85 +444,23 @@ func _is_held_object_control_event(event: InputEvent) -> bool:
 		or event.is_action("focus")
 
 
-## Creates the throw charge bar lazily the first time a charge starts.
-func _ensure_throw_charge_bar() -> void:
-	if throw_charge_bar or player.controls == null:
-		return
-
-	throw_charge_bar = ProgressBar.new()
-	throw_charge_bar.name = "ThrowChargeBar"
-	throw_charge_bar.custom_minimum_size = Vector2(200, 24)
-	throw_charge_bar.anchors_preset = Control.PRESET_CENTER_BOTTOM
-	throw_charge_bar.anchor_left = 0.5
-	throw_charge_bar.anchor_top = 0.8
-	throw_charge_bar.anchor_right = 0.5
-	throw_charge_bar.anchor_bottom = 0.8
-	throw_charge_bar.offset_left = -100
-	throw_charge_bar.offset_top = -60
-	throw_charge_bar.offset_right = 100
-	throw_charge_bar.offset_bottom = -36
-	throw_charge_bar.show_percentage = true
-	throw_charge_bar.min_value = 0.0
-	throw_charge_bar.max_value = 100.0
-	throw_charge_bar.value = 0.0
-	throw_charge_bar.visible = false
-
-	var bg_style := StyleBoxFlat.new()
-	bg_style.bg_color = Color(0.1, 0.1, 0.1, 0.7)
-	bg_style.corner_radius_top_left = 6
-	bg_style.corner_radius_top_right = 6
-	bg_style.corner_radius_bottom_left = 6
-	bg_style.corner_radius_bottom_right = 6
-
-	var fg_style := StyleBoxFlat.new()
-	fg_style.bg_color = Color(0.2, 0.8, 0.3, 0.9)
-	fg_style.corner_radius_top_left = 6
-	fg_style.corner_radius_top_right = 6
-	fg_style.corner_radius_bottom_left = 6
-	fg_style.corner_radius_bottom_right = 6
-
-	throw_charge_bar.add_theme_stylebox_override("background", bg_style)
-	throw_charge_bar.add_theme_stylebox_override("fill", fg_style)
-	player.controls.add_child(throw_charge_bar)
-
-
-func _create_connector_node() -> void:
-	if connector_scene.is_empty():
-		return
-	var scene_res := load(connector_scene) as PackedScene
-	if scene_res:
-		_connector_node = scene_res.instantiate() as Node3D
-		if _connector_node:
-			_connector_node.name = "HeldObjectConnector"
-			_connector_node.visible = false
-			add_child(_connector_node)
-
-
-func _update_connector_node(_delta: float) -> void:
+## Stretches the connector scene from the origin to the held body.
+func _update_connector_node() -> void:
 	if not is_instance_valid(_connector_node):
 		return
-	if player == null or not is_instance_valid(held_rigidbody):
-		_connector_node.visible = false
-		return
-
-	var start_position: Vector3
-	if is_instance_valid(connector_origin):
-		start_position = connector_origin.global_position
-	else:
-		var player_up: Vector3 = player.up_direction.normalized()
-		start_position = player.global_position + player_up * connector_origin_height
-	var end_position: Vector3 = held_rigidbody.global_position
-	var connector_vector: Vector3 = end_position - start_position
+	var player_up: Vector3 = player.up_direction.normalized()
+	var start_position: Vector3 = connector_origin.global_position if is_instance_valid(connector_origin) \
+			else player.global_position + player_up * connector_origin_height
+	var connector_vector: Vector3 = held_rigidbody.global_position - start_position
 	var connector_length: float = connector_vector.length()
 	if connector_length <= 0.001:
-		_connector_node.visible = false
+		_connector_node.hide()
 		return
 
+	var up_vec: Vector3 = player_up
+	if absf((connector_vector / connector_length).dot(up_vec)) > 0.99:
+		up_vec = player.global_transform.basis.x
 	_connector_node.global_position = start_position
-	var look_direction: Vector3 = connector_vector / connector_length
-	var up_vec: Vector3 = player.up_direction.normalized() if player else Vector3.UP
-	if absf(look_direction.dot(up_vec)) > 0.99:
-		up_vec = player.global_transform.basis.x if player else Vector3.RIGHT
-	_connector_node.look_at(end_position, up_vec)
+	_connector_node.look_at(held_rigidbody.global_position, up_vec)
 	_connector_node.scale = Vector3(1.0, 1.0, connector_length / 10.0)
-	_connector_node.visible = true
+	_connector_node.show()

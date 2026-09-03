@@ -7,8 +7,9 @@
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_senyo"]
 size = Vector2(72, 30)
 
-[node name="Pause" type="CanvasLayer" unique_id=498429169]
+[node name="Pause" type="CanvasLayer" unique_id=498429169 node_paths=PackedStringArray("focus_on_show")]
 script = ExtResource("1_7mqg8")
+focus_on_show = NodePath("Panel/VBoxContainer/Resume")
 
 [node name="Panel" type="Panel" parent="." unique_id=1926347412]
 anchors_preset = 8

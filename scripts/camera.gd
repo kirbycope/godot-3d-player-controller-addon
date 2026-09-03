@@ -1,12 +1,14 @@
 extends Camera3D
 class_name Camera
 
+signal looking_at_changed(previous: Node3D, current: Node3D) ## Emitted when the interactable under the camera ray changes (either may be null).
+
 enum Perspective {
 	FIRST_PERSON, ## Rendered from the viewpoint of the player character
 	THIRD_PERSON, ## Rendered from a fixed distance behind and slightly above the player character.
 }
 
-const CAMERA_FOLLOW_DELAY: float = 2.0
+const FOCUS_AIM_WORLD_RADIUS: float = 0.5 ## World-space radius in units/meters that the aim can deviate from the target center.
 
 @export var camera_mount: Node3D
 @export var camera_spring_arm: SpringArm3D
@@ -24,17 +26,21 @@ const CAMERA_FOLLOW_DELAY: float = 2.0
 @export var perspective: Perspective = Perspective.THIRD_PERSON ## What perspective should the Camera use?
 @export var player: Player
 
-var camera_follow_delay_remaining: float = 0.0
-var first_person_bone_attachment: BoneAttachment3D
-var is_temporarily_captured: bool = false ## Cursor captured only while right-click rotating; released back to visible.
-var looking_at: Node3D = null
-
-const FOCUS_AIM_WORLD_RADIUS: float = 0.5 ## World-space radius in units/meters that the aim can deviate from the target center.
 var focus_aim_offset: Vector2 = Vector2.ZERO ## Current aim offset applied on top of the focused lock-on target.
+var is_temporarily_captured: bool = false ## Cursor captured only while right-click rotating; released back to visible.
+var looking_at: Node3D = null: ## The nearest ancestor of the camera ray's collider that has a `display_menu` method, if any.
+	set(value):
+		if value == looking_at:
+			return
+		var previous: Node3D = looking_at
+		looking_at = value
+		looking_at_changed.emit(previous, value)
 
 @onready var camera_initial_transform: Transform3D = transform
 @onready var camera_ray_cast: RayCast3D = $CameraRayCast
-@onready var item_spring_arm: SpringArm3D = $"../../ItemSpringArm"
+@onready var camera_follow_timer: Timer = $CameraFollowTimer ## Running while the camera holds its manual rotation instead of following the player.
+@onready var first_person_bone_attachment: BoneAttachment3D = %FirstPersonCameraBoneAttachment
+@onready var item_spring_arm: SpringArm3D = %ItemSpringArm
 @onready var item_spring_arm_initial_transform: Transform3D = item_spring_arm.transform
 
 
@@ -55,12 +61,11 @@ func get_max_focus_aim_angle() -> float:
 
 ## Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	default_fov = fov
-	default_h_offset = h_offset
-
 	set_process(is_multiplayer_authority())
 	set_physics_process(is_multiplayer_authority())
-	set_process_input(is_multiplayer_authority())
+	set_process_unhandled_input(is_multiplayer_authority())
+
+	looking_at_changed.connect(_on_looking_at_changed)
 
 	# Ensure the [RayCast3D] doesn't collide with the player
 	camera_ray_cast.add_exception(player)
@@ -68,21 +73,21 @@ func _ready() -> void:
 	# Ensure the Camera's [SpringArm3D] doesn't collide with the player
 	camera_spring_arm.add_excluded_object(player.get_rid())
 
-	# Match the [RayCast3D] offset to the starting perspective (scene offset is for third-person)
-	if perspective == Perspective.FIRST_PERSON:
-		camera_ray_cast.position = Vector3.ZERO
-
-	_sync_item_spring_arm()
+	_update_raycast()
 
 
-## Called when there is an input event.
-func _input(event: InputEvent) -> void:
+## Shows the interaction prompt of the object now under the camera ray and hides the previous one.
+func _on_looking_at_changed(previous: Node3D, current: Node3D) -> void:
+	if is_instance_valid(previous) and previous.has_method("hide_menu"):
+		previous.hide_menu()
+	if is_instance_valid(current):
+		current.display_menu(player)
+
+
+## Called when an input event has not been consumed by the UI.
+func _unhandled_input(event: InputEvent) -> void:
 	# Do nothing if the player is not set or is paused/ragdolling
 	if not player or player.is_paused or player.is_ragdolling: return
-
-	# Look at interactable objects under the mouse cursor while it is visible.
-	if Input.mouse_mode == Input.MOUSE_MODE_VISIBLE:
-		_update_raycast()
 
 	# Check if the player is interacting with an equipment item and has pressed "action" to interact
 	if looking_at and event.is_action_pressed("action") and looking_at.has_method("equip"):
@@ -124,34 +129,31 @@ func _input(event: InputEvent) -> void:
 			rotate_camera_using_mouse_motion(event)
 			if (player.is_driving or player.is_skateboarding) \
 			and event.relative.length_squared() > 0.0:
-				defer_camera_follow()
+				camera_follow_timer.start()
 
 	# Only continue if the perspective is third-person
 	if perspective == Perspective.THIRD_PERSON:
 		# If Mouse scroll wheel up
 		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_WHEEL_UP:
 			# Shorten the camera spring arm, min 1.0
-			camera_spring_arm.spring_length = max(camera_spring_arm.spring_length - 0.1, 1.0)
+			camera_spring_arm.spring_length = maxf(camera_spring_arm.spring_length - 0.1, 1.0)
 			# TODO: If the player tries to zoom in further, switch to first-person perspective instead?
 			_update_raycast()
 
 		# If Mouse scroll wheel down
 		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			# Lengthen the camera spring arm, max 6.0
-			camera_spring_arm.spring_length = min(camera_spring_arm.spring_length + 0.1, 6.0)
+			camera_spring_arm.spring_length = minf(camera_spring_arm.spring_length + 0.1, 6.0)
 			_update_raycast()
 
 
 ## Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
-	# Move camera to player's head if in first-person perspective
-	if perspective == Perspective.FIRST_PERSON:
-		move_camera_to_player_head()
+	if not player: return
 
 	# Rotate the [Camera3D]'s [SpringArm3D] using the joypad motion input event
 	var joypad_motion_input: Vector2 = Input.get_vector("look_left", "look_right", "look_up", "look_down")
 	if joypad_motion_input != Vector2.ZERO \
-	and player \
 	and not player.is_paused \
 	and not player.is_ragdolling \
 	and (not player.is_driving or perspective == Perspective.THIRD_PERSON) \
@@ -169,65 +171,56 @@ func _process(delta: float) -> void:
 			rotate_camera_using_joypad_motion(delta * look_multiplier)
 			# Add a delay before the camera starts following the player again
 			if player.is_skateboarding or player.is_driving:
-				defer_camera_follow()
+				camera_follow_timer.start()
 
-	# Decrement the camera follow delay
-	if camera_follow_delay_remaining > 0.0:
-		camera_follow_delay_remaining = max(
-				camera_follow_delay_remaining - delta,
-				0.0
-		)
+	# Only continue if the perspective is third-person
+	if perspective != Perspective.THIRD_PERSON: return
 
 	# Smoothly interpolate FOV and shoulder offset when aiming/shooting (BotW/TotK over-the-shoulder framing)
-	if perspective == Perspective.THIRD_PERSON:
-		var is_aiming_now: bool = false
-		if player != null:
-			if player.has_firearm_equipped:
-				is_aiming_now = player.is_focusing
-			elif player.has_bow_equipped:
-				is_aiming_now = player.is_shooting or player.is_drawing_arrow or player.is_aiming_bow
-			else:
-				is_aiming_now = player.is_shooting or player.is_drawing_arrow or player.is_aiming_bow
-		var target_fov: float = aim_fov if is_aiming_now else default_fov
-		var target_h_offset: float = aim_h_offset if is_aiming_now else default_h_offset
-		fov = lerpf(fov, target_fov, delta * 10.0)
-		h_offset = lerpf(h_offset, target_h_offset, delta * 10.0)
+	var is_aiming_now: bool = player.is_focusing if player.has_firearm_equipped \
+			else player.is_shooting or player.is_drawing_arrow or player.is_aiming_bow
+	fov = lerpf(fov, aim_fov if is_aiming_now else default_fov, delta * 10.0)
+	h_offset = lerpf(h_offset, aim_h_offset if is_aiming_now else default_h_offset, delta * 10.0)
 
 	# Lerp camera to face the player's direction when focusing, driving, or skateboarding (and the follow delay has expired).
-	if perspective == Perspective.THIRD_PERSON:
-		if player.is_focusing and not player.has_firearm_equipped:
-			var max_angle: float = get_max_focus_aim_angle()
-			focus_aim_offset = focus_aim_offset.limit_length(max_angle)
-			if not player.is_shooting:
-				focus_aim_offset = focus_aim_offset.move_toward(Vector2.ZERO, delta * 4.0)
+	if player.is_focusing and not player.has_firearm_equipped:
+		var max_angle: float = get_max_focus_aim_angle()
+		focus_aim_offset = focus_aim_offset.limit_length(max_angle)
+		if not player.is_shooting:
+			focus_aim_offset = focus_aim_offset.move_toward(Vector2.ZERO, delta * 4.0)
 
-			if is_instance_valid(player.current_focus_target):
-				var target_pos: Vector3 = Focus.get_focus_target_position(player.current_focus_target)
-				var to_target: Vector3 = target_pos - camera_mount.global_position
-				var target_yaw: float = atan2(-to_target.x, -to_target.z) + focus_aim_offset.x
-				var horiz_dist: float = Vector2(to_target.x, to_target.z).length()
-				var target_pitch: float = clampf(atan2(to_target.y, horiz_dist) + focus_aim_offset.y, deg_to_rad(-80.0), deg_to_rad(80.0))
-				camera_mount.rotation.y = lerp_angle(camera_mount.rotation.y, target_yaw, delta * 8.0)
-				camera_mount.rotation.x = lerp_angle(camera_mount.rotation.x, target_pitch, delta * 8.0)
-			else:
-				camera_mount.rotation.y = lerp_angle(camera_mount.rotation.y, player.player_model.rotation.y + PI + focus_aim_offset.x, delta * 8.0)
-				camera_mount.rotation.x = lerp_angle(camera_mount.rotation.x, deg_to_rad(-15.0) + focus_aim_offset.y, delta * 8.0)
+		if is_instance_valid(player.current_focus_target):
+			var target_pos: Vector3 = Focus.get_focus_target_position(player.current_focus_target)
+			var to_target: Vector3 = target_pos - camera_mount.global_position
+			var target_yaw: float = atan2(-to_target.x, -to_target.z) + focus_aim_offset.x
+			var horiz_dist: float = Vector2(to_target.x, to_target.z).length()
+			var target_pitch: float = clampf(atan2(to_target.y, horiz_dist) + focus_aim_offset.y, deg_to_rad(-80.0), deg_to_rad(80.0))
+			camera_mount.rotation.y = lerp_angle(camera_mount.rotation.y, target_yaw, delta * 8.0)
+			camera_mount.rotation.x = lerp_angle(camera_mount.rotation.x, target_pitch, delta * 8.0)
 		else:
-			focus_aim_offset = Vector2.ZERO
-			if (player.is_driving and camera_follow_delay_remaining <= 0.0) \
-			or (player.is_skateboarding and camera_follow_delay_remaining <= 0.0):
-				camera_mount.rotation.y = lerp_angle(camera_mount.rotation.y, player.player_model.rotation.y + PI, delta * 8.0)
-
-	_sync_item_spring_arm()
+			camera_mount.rotation.y = lerp_angle(camera_mount.rotation.y, player.player_model.rotation.y + PI + focus_aim_offset.x, delta * 8.0)
+			camera_mount.rotation.x = lerp_angle(camera_mount.rotation.x, deg_to_rad(-15.0) + focus_aim_offset.y, delta * 8.0)
+	else:
+		focus_aim_offset = Vector2.ZERO
+		if (player.is_driving or player.is_skateboarding) and camera_follow_timer.is_stopped():
+			camera_mount.rotation.y = lerp_angle(camera_mount.rotation.y, player.player_model.rotation.y + PI, delta * 8.0)
 
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(_delta: float) -> void:
+	if not player: return
+
 	# Move camera to player's head if in first-person perspective
 	if perspective == Perspective.FIRST_PERSON:
 		move_camera_to_player_head()
 
 	_sync_item_spring_arm()
+
+	# Resolve the nearest ancestor of the ray's collider that can display an interaction prompt
+	var target: Node = camera_ray_cast.get_collider() as Node if camera_ray_cast.is_colliding() else null
+	while target and not target.has_method("display_menu"):
+		target = target.get_parent()
+	looking_at = target as Node3D
 
 
 ## Rotates the [Camera3D]'s [SpringArm3D] using the input from a joypad motion event, while clamping the vertical rotation to prevent flipping.
@@ -241,9 +234,7 @@ func rotate_camera_using_joypad_motion(delta: float) -> void:
 	if joypad_motion_input.y != 0:
 		var new_rotation_x: float = camera_mount.rotation_degrees.x - joypad_motion_input.y * joypad_sensitivity * delta
 		# Clamp the rotation to prevent flipping
-		new_rotation_x = clamp(new_rotation_x, -89, 89)
-		# Apply the new rotation to the [Camera3D]'s [CameraMount]
-		camera_mount.rotation_degrees.x = new_rotation_x
+		camera_mount.rotation_degrees.x = clampf(new_rotation_x, -89.0, 89.0)
 
 
 ## Rotates the [Camera3D]'s [SpringArm3D] using the input from a mouse motion event, while clamping the vertical rotation to prevent flipping.
@@ -255,21 +246,11 @@ func rotate_camera_using_mouse_motion(event: InputEventMouseMotion) -> void:
 	# Rotate the [Camera3D]'s [CameraMount] vertically using the mouse motion input's y value
 	var new_rotation_x: float = camera_mount.rotation_degrees.x - mouse_motion_input.y * mouse_sensitivity
 	# Clamp the rotation to prevent flipping
-	new_rotation_x = clamp(new_rotation_x, -89, 89)
-	# Apply the new rotation to the [Camera3D]'s [CameraMount]
-	camera_mount.rotation_degrees.x = new_rotation_x
-
-
-## Adds a delay before the camera starts following the player again.
-func defer_camera_follow() -> void:
-	camera_follow_delay_remaining = CAMERA_FOLLOW_DELAY
+	camera_mount.rotation_degrees.x = clampf(new_rotation_x, -89.0, 89.0)
 
 
 ## Update the camera to follow the character head's position (while in "first-person").
 func move_camera_to_player_head() -> void:
-	if first_person_bone_attachment == null:
-		first_person_bone_attachment = player.skeleton.get_node("FirstPersonCameraBoneAttachment") as BoneAttachment3D
-
 	global_position = first_person_bone_attachment.global_position
 	global_rotation = camera_mount.global_rotation
 	global_position += global_transform.basis.z * first_person_offset.z
@@ -299,20 +280,13 @@ func _sync_item_spring_arm() -> void:
 
 ## Updates the [RayCast3D] position and target_position based on current perspective/depth.
 func _update_raycast() -> void:
-	if not is_instance_valid(camera_ray_cast):
-		return
-
 	if perspective == Perspective.FIRST_PERSON:
 		camera_ray_cast.position = Vector3.ZERO
 		camera_ray_cast.target_position = Vector3(0, 0, -interaction_distance)
 	else:
 		camera_ray_cast.position = Vector3(0, 0, -1.0)
-		var length := 2.0
-		if is_instance_valid(camera_spring_arm):
-			length = camera_spring_arm.spring_length
+		var length: float = camera_spring_arm.spring_length if is_instance_valid(camera_spring_arm) else 2.0
 		camera_ray_cast.target_position = Vector3(0, 0, - (length + interaction_distance - 1.0))
-
-	_sync_item_spring_arm()
 
 
 ## Returns whether the RadialMenu is currently open/visible.

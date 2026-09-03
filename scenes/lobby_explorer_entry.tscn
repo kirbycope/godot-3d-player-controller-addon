@@ -62,4 +62,5 @@ text = "Join"
 position = Vector2(42, 18)
 shape = SubResource("RectangleShape2D_join")
 
+[connection signal="pressed" from="MarginContainer/HBoxContainer/JoinButton" to="." method="_on_join_pressed"]
 [connection signal="pressed" from="MarginContainer/HBoxContainer/JoinButton/TouchScreenButton" to="." method="_on_touch_screen_button_pressed"]

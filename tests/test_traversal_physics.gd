@@ -189,7 +189,7 @@ func test_crouch_cancels_paragliding_for_wall_grab() -> void:
 	var player: Player = PLAYER_SCENE.instantiate() as Player
 	player.enable_paraglider = true
 	add_child_autofree(player)
-	player.controls.current_input_type = 0 # KEYBOARD_MOUSE
+	player.controls.current_input_type = Controls.InputType.KEYBOARD_MOUSE
 
 	var paragliding_node: Paragliding = player.get_node("NodeStateMachine/Paragliding") as Paragliding
 	paragliding_node.start()

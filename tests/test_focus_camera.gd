@@ -123,7 +123,7 @@ func test_focus_aim_offset_shrinks_with_distance() -> void:
 	Input.action_press("shoot")
 	var motion_event = InputEventMouseMotion.new()
 	motion_event.relative = Vector2(-500, -500)
-	camera._input(motion_event)
+	camera._unhandled_input(motion_event)
 	assert_almost_eq(camera.focus_aim_offset.length(), far_max_angle, 0.001, "Aim offset should clamp to distance-scaled maximum")
 
 	Input.action_release("shoot")
@@ -236,7 +236,7 @@ func test_firearm_aiming_does_not_lock_on_and_updates_contextual_label() -> void
 	var initial_yaw = camera.camera_mount.rotation.y
 	var motion_event = InputEventMouseMotion.new()
 	motion_event.relative = Vector2(100, 0)
-	camera._input(motion_event)
+	camera._unhandled_input(motion_event)
 	assert_ne(camera.camera_mount.rotation.y, initial_yaw, "Camera should rotate freely with mouse during firearm aim")
 
 	Input.action_release("focus")
@@ -252,3 +252,8 @@ func test_firearm_aiming_does_not_lock_on_and_updates_contextual_label() -> void
 	assert_false(player.has_firearm_equipped, "player.has_firearm_equipped should be false after unequip")
 	assert_true(player.has_bow_equipped, "player.has_bow_equipped should be true")
 	assert_eq(player.controls.joypad_axis_4_plus_label.text, "Focus", "Contextual control label should be 'Focus' for Bow")
+
+
+func after_each() -> void:
+	Input.action_release("focus")
+	Input.action_release("shoot")

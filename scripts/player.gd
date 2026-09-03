@@ -1,6 +1,11 @@
 class_name Player
 extends CharacterBody3D
 
+signal state_changed(from_state: int, to_state: int) ## Emitted when [member current_state] changes.
+signal locomotion_node_changed(state_path: String) ## Emitted when the locomotion path ("Group/Node" or "Node") changes; on puppets this follows replication.
+signal exhausted_changed(is_exhausted: bool) ## Emitted when [member is_exhausted] changes.
+signal navigating_changed(is_navigating: bool) ## Emitted when click-to-move navigation starts or stops.
+
 const EMOTE_STATE_PLAYBACK_PATH: String = "parameters/EmoteStateMachine/playback"
 const LOCOMOTION_STATE_PLAYBACK_PATH: String = "parameters/LocomotionStateMachine/playback"
 const ARCHERY_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/Bow/ArcheryLocomotion/blend_position"
@@ -37,7 +42,13 @@ const LOCOMOTION_GROUPS: Array[String] = ["Bow", "Boxing", "GreatSword", "Pistol
 @export var push_force: float = 1.0
 @export var mass: float = 80.0
 
-var current_state: int = -1 ## The current state of the Player (from the Node/Code [NodeStateMachine], not the AnimationTree NodeStateMachine).
+var current_state: int = -1: ## The current state of the Player (from the Node/Code [NodeStateMachine], not the AnimationTree NodeStateMachine).
+	set(value):
+		if value == current_state:
+			return
+		var previous_state: int = current_state
+		current_state = value
+		state_changed.emit(previous_state, value)
 var locomotion_state: ## Gets the [NodeStateMachine] "LocomotionStateMachine"
 	get:
 		return animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH)
@@ -165,7 +176,11 @@ var is_hanging_free: bool = false ## Is the Player currently hanging (free)?
 var is_crouching: bool = false ## Is the Player currently crouching?
 var is_emoting: bool = false ## Is the Player currently emoting?
 var has_started_emoting: bool = false ## Has the player's emote animation transitioned away from Idle yet?
-var is_exhausted: bool = false ## Is the Player currently exhausted?
+var is_exhausted: bool = false: ## Is the Player currently exhausted?
+	set(value):
+		if value != is_exhausted:
+			is_exhausted = value
+			exhausted_changed.emit(value)
 var is_falling: bool = false ## Is the Player currently falling?
 var is_fishing: bool = false ## Is the Player currently fishing (has a rod equipped)?
 var is_casting_line: bool = false ## Is the Player currently casting a fishing line?
@@ -240,7 +255,11 @@ var is_logging: bool: ## Is the Player currently logging?
 		if not is_multiplayer_authority() or animation_tree == null:
 			return false
 		return is_locomotion_state_active_or_queued("Logging")
-var is_navigating: bool = false ## Is the Player currently navigating (click to move)?
+var is_navigating: bool = false: ## Is the Player currently navigating (click to move)?
+	set(value):
+		if value != is_navigating:
+			is_navigating = value
+			navigating_changed.emit(value)
 var is_paragliding: bool = false ## Is the Player currently paragliding?
 var is_paused: bool = false ## Is the Player currently paused?
 var is_pushing: bool = false ## Is the Player currently pushing?
@@ -289,15 +308,15 @@ var skateboard: Node3D
 @onready var initial_separation_ray_transform: Transform3D = separation_ray_shape.transform
 @onready var controls: CanvasLayer = $Controls
 @onready var crosshair: TextureRect = $Crosshair
-@onready var debug: CanvasLayer = $Debug
+@onready var debug: Debug = $Debug
 @onready var inventory: Inventory = $Inventory
 @onready var radial_menu: RadialMenu = $Inventory/RadialMenu
 @onready var navigation_agent: NavigationAgent3D = $NavigationAgent3D
-@onready var pause: CanvasLayer = $Pause
-@onready var settings: CanvasLayer = $Settings
-@onready var audio_settings: CanvasLayer = $AudioSettings
-@onready var video_settings: CanvasLayer = $VideoSettings
-@onready var lobby_manager: CanvasLayer = get_node_or_null("LobbyManager") as CanvasLayer
+@onready var pause: PlayerMenuLayer = $Pause
+@onready var settings: PlayerMenuLayer = $Settings
+@onready var audio_settings: PlayerMenuLayer = $AudioSettings
+@onready var video_settings: PlayerMenuLayer = $VideoSettings
+@onready var lobby_manager: PlayerMenuLayer = get_node_or_null("LobbyManager") as PlayerMenuLayer
 @onready var stamina: TextureProgressBar = $Stamina
 @onready var initial_transform: Transform3D = global_transform
 @onready var falling_raycast: RayCast3D = $FallingRaycast
@@ -330,9 +349,12 @@ var skateboard: Node3D
 
 @export var sync_locomotion_node: String = "":
 	set(value):
+		if value == sync_locomotion_node:
+			return
 		sync_locomotion_node = value
 		if not is_multiplayer_authority() and animation_tree and is_node_ready():
 			_apply_synced_locomotion_node(value)
+		locomotion_node_changed.emit(value)
 
 @export var sync_blend_position: Vector2 = Vector2.ZERO:
 	set(value):
@@ -492,8 +514,6 @@ func _unhandled_input(event: InputEvent) -> void:
 
 ## Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta: float) -> void:
-	_update_updraft_vfx()
-
 	var steam: Object = _get_steam_running() if is_multiplayer_authority() and is_broadcasting else null
 	if steam:
 		var available_voice: Dictionary = steam.getAvailableVoice()
@@ -735,9 +755,7 @@ func detect_ledge() -> bool:
 		ledge_detection_horizontal.show()
 		ledge_detection_marker.show()
 	else:
-		ledge_detection_vertical.position = Vector3(0, 0, -1) # Reset to default
-		ledge_detection_horizontal.hide()
-		ledge_detection_marker.hide()
+		clear_ledge_visuals()
 
 	return ledge_detected
 
@@ -1230,3 +1248,48 @@ func _apply_synced_blend_position(blend_pos: Vector2) -> void:
 		animation_tree.set(path, blend_pos)
 	elif current is float:
 		animation_tree.set(path, blend_pos.y if blend_pos.y != 0.0 else blend_pos.length())
+
+
+## Points the spine [LookAtModifier3D] at [param target], or clears it when [param target] is null.
+## [HeldObject] (carried body) and [Bow] (crosshair while aiming) are the only callers.
+func set_look_at_target(target: Node3D) -> void:
+	var modifier: LookAtModifier3D = look_at_modifier as LookAtModifier3D
+	if modifier == null:
+		return
+	modifier.target_node = modifier.get_path_to(target) if target else NodePath("")
+	modifier.active = target != null
+
+
+@export_category("Traversal")
+@export var lethal_fall_speed: float = 15.0 ## Landing at or above this downward speed (m/s) ragdolls the player.
+@export var wall_leap_horizontal_speed: float = 5.0 ## Horizontal impulse away from the wall on a climbing/hanging back-eject.
+@export var wall_leap_vertical_speed: float = 3.5 ## Vertical impulse on a climbing/hanging back-eject.
+
+
+## Smoothly turns the model to face the wall hit by the horizontal ledge raycast.
+func face_wall(delta: float) -> void:
+	if ledge_detection_horizontal.is_colliding():
+		turn_model_toward_direction(-ledge_detection_horizontal.get_collision_normal(), delta)
+
+
+## Launches the player away from the wall they are facing (climbing/hanging back-eject).
+func leap_off_wall() -> void:
+	var wall_normal: Vector3 = player_model.global_transform.basis.z.slide(up_direction).normalized()
+	velocity = (wall_normal * wall_leap_horizontal_speed) + (up_direction * wall_leap_vertical_speed)
+
+
+## Hides the ledge detection gizmos and resets the vertical probe to its default offset.
+func clear_ledge_visuals() -> void:
+	ledge_detection_vertical.position = Vector3(0, 0, -1)
+	ledge_detection_horizontal.hide()
+	ledge_detection_marker.hide()
+
+
+## Teleports the Player to the given transform, clearing motion and restoring the model and collision poses.
+func warp_to(target: Transform3D) -> void:
+	global_transform = target
+	velocity = Vector3.ZERO
+	up_direction = target.basis.y.normalized()
+	orientation = Transform3D(target.basis, Vector3.ZERO)
+	player_model.transform = initial_player_model_transform
+	collision_shape.transform = initial_collision_shape_transform

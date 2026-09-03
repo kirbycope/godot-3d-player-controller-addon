@@ -24,13 +24,14 @@ extends NodeStateMachine
 @export var splash_min_impact_speed: float = 2.5 ## Minimum downward entry speed (m/s) that triggers a splash.
 @export var enable_underwater_overlay: bool = true ## Fullscreen underwater filter while the camera is submerged.
 
-var _this_state := NodeStateMachine.States.SWIMMING
+const WATER_SURFACE_SNAP_RATIO: float = 0.75
+const SURFACE_EPSILON: float = 0.05 ## Depth (m) below which the player counts as being at the surface.
+
 var _vertical_swim_effort: float = 0.0 ## 0-1 stroke effort from active vertical dive input (drives the swim blend without stick input).
 var _water_material: ShaderMaterial = null ## Water surface material that supports swimmer interaction uniforms.
 var _water_material_resolved: bool = false
 
-const WATER_SURFACE_SNAP_RATIO := 0.75
-const SURFACE_EPSILON := 0.05 ## Depth (m) below which the player counts as being at the surface.
+@onready var _underwater_overlay: CanvasLayer = player.get_node_or_null(^"UnderwaterOverlay") as CanvasLayer if player else null
 
 
 ## Called when there is an input event.
@@ -39,12 +40,9 @@ func _input(event: InputEvent) -> void:
 	# Do nothing if the player is not set or is paused/ragdolling
 	if not player or player.is_paused or player.is_ragdolling: return
 
-	var input_type = player.controls.current_input_type if player.controls else 0
-	var current_climb_out_action = keyboard_climb_out_action if input_type == 0 else pad_climb_out_action
-
 	# Swimming, Climbing-On [Input]
-	if player.locomotion_state.get_current_node() == "SwimmingAtEdge" \
-	and event.is_action_pressed(current_climb_out_action) \
+	if player.current_locomotion_node == "SwimmingAtEdge" \
+	and event.is_action_pressed(action(keyboard_climb_out_action, pad_climb_out_action)) \
 	and not player.is_climbing_on:
 		player.locomotion_state.travel("BracedHangClimbingOn")
 		player.is_climbing_on = true
@@ -57,7 +55,7 @@ func _physics_process(delta: float) -> void:
 	if not player: return
 
 	# Water exhaustion check - respawn at safe shore position
-	if player.is_exhausted and (player.is_swimming or player.current_state == _this_state):
+	if player.is_exhausted and (player.is_swimming or player.current_state == state):
 		if player.last_safe_shore_position != Vector3.ZERO:
 			player.global_position = player.last_safe_shore_position
 		player.velocity = Vector3.ZERO
@@ -66,25 +64,20 @@ func _physics_process(delta: float) -> void:
 		if player.stamina:
 			player.stamina.stamina = player.stamina.max_value * 0.35
 			player.is_exhausted = false
-		player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
+		player.state_machine.travel(state, States.STANDING)
 		return
 
-	var input_type: int = player.controls.current_input_type if player.controls else 0
-	var current_climb_out_action: StringName = keyboard_climb_out_action if input_type == 0 else pad_climb_out_action
-	var current_sprint_action: StringName = keyboard_sprint_action if input_type == 0 else pad_sprint_action
-	var current_crouch_action: StringName = keyboard_crouch_action if input_type == 0 else pad_crouch_action
-
 	# Water depth check
-	var water_surface_along_up := get_water_surface_along_up()
-	if not is_nan(water_surface_along_up):
-		var current_position_along_up := player.up_direction.dot(player.global_position)
-		var swim_depth_threshold: float = current_position_along_up + (_get_collision_height() * 0.5)
-		if water_surface_along_up > swim_depth_threshold:
-			if not player.is_swimming and not player.is_driving and player.is_driving_in == null and not player.is_entering_vehicle and not player.is_exiting_vehicle:
-				player.state_machine.travel(player.current_state, NodeStateMachine.States.SWIMMING)
-		else:
-			if player.is_swimming:
-				player.is_swimming = false
+	var water_surface_along_up: float = get_water_surface_along_up()
+	if is_nan(water_surface_along_up):
+		if player.is_swimming:
+			player.is_swimming = false
+			_reset_diving()
+	else:
+		var current_position_along_up: float = player.up_direction.dot(player.global_position)
+		# Leave the water once the surface drops below the player's mid-height
+		if water_surface_along_up <= current_position_along_up + (_get_collision_height() * 0.5):
+			player.is_swimming = false
 
 		# Diving [Vertical Swim Control]
 		var shoulder_offset: float = _get_collision_height() * WATER_SURFACE_SNAP_RATIO
@@ -94,10 +87,10 @@ func _physics_process(delta: float) -> void:
 		var vertical_input: float = 0.0
 		_vertical_swim_effort = 0.0
 		if player.is_swimming and not player.is_climbing_on:
-			if enable_diving and Input.is_action_pressed(current_crouch_action):
+			if enable_diving and Input.is_action_pressed(action(keyboard_crouch_action, pad_crouch_action)):
 				vertical_input = -1.0
 				_vertical_swim_effort = 1.0
-			elif depth_below_surface > SURFACE_EPSILON and Input.is_action_pressed(current_climb_out_action):
+			elif depth_below_surface > SURFACE_EPSILON and Input.is_action_pressed(action(keyboard_climb_out_action, pad_climb_out_action)):
 				vertical_input = 1.0
 				_vertical_swim_effort = 1.0
 			elif not player.is_diving and depth_below_surface > SURFACE_EPSILON:
@@ -118,48 +111,31 @@ func _physics_process(delta: float) -> void:
 		player.model_pitch = lerp_angle(player.model_pitch, target_pitch, clampf(delta * dive_model_pitch_speed, 0.0, 1.0))
 
 		_update_water_surface_interaction(depth_below_surface)
-		_update_underwater_overlay(water_surface_along_up)
+
+		# Show the fullscreen underwater filter while the camera is below the water surface
+		if _underwater_overlay:
+			_underwater_overlay.visible = enable_underwater_overlay \
+					and is_instance_valid(player.camera) \
+					and player.up_direction.dot(player.camera.global_position) < water_surface_along_up
 
 		# Refresh contextual HUD controls when the dive state flips
-		if was_diving != player.is_diving:
-			_on_input_type_changed(input_type)
-	elif player.is_swimming:
-		player.is_swimming = false
-		_reset_diving()
-
-	# Swimming, Climbing On [Status]
-	if player.is_climbing_on:
-		var was_climbing_on := player.is_climbing_on
-		player.is_climbing_on = player.animation_tree.get(player.LOCOMOTION_STATE_PLAYBACK_PATH).get_current_node() in ["BracedHangClimbingOn", "FreeHangingClimbingOn"]
-		if was_climbing_on and not player.is_climbing_on:
-			player.global_position = player.climbing_on_target
-			# Hide ledge detection gizmos
-			player.ledge_detection_vertical.position = Vector3(0.0, 0.0, -1.0)
-			player.ledge_detection_horizontal.hide()
-			player.ledge_detection_marker.hide()
-			# Start "standing"
-			player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
-			return
+		if was_diving != player.is_diving and player.controls:
+			_on_input_type_changed(player.controls.current_input_type)
 
 	# Stop "swimming" if the player has been flagged as not "swimming" (e.g. by exiting the pool)
-	if not player.is_swimming \
-	and player.locomotion_state.get_current_node() != "BracedHangClimbingOn":
+	if not player.is_swimming and player.current_locomotion_node != "BracedHangClimbingOn":
 		_reset_diving()
 		# Start "standing" or "falling"
-		player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING if player.is_on_floor() else NodeStateMachine.States.FALLING)
+		player.state_machine.travel(state, States.STANDING if player.is_on_floor() else States.FALLING)
 		return
 
-	# Ledge detection [Raycast]
-	var ledge_detected = player.detect_ledge()
-
-	# Stop "swimming to edge" if the player is no longer colliding with the wall
-	if player.locomotion_state.get_current_node() in ["SwimmingAtEdge", "SwimmingToEdge"] \
-	and not ledge_detected:
+	# Ledge detection [Raycast]: swim to the edge when a ledge is found, back to open water when it is lost
+	var ledge_detected: bool = player.detect_ledge()
+	var current_swimming_node: String = player.current_locomotion_node
+	var is_at_edge: bool = current_swimming_node in ["SwimmingAtEdge", "SwimmingToEdge"]
+	if is_at_edge and not ledge_detected:
 		player.locomotion_state.travel("SwimmingLocomotion")
-
-	# Swimming, To Edge (Raycast)
-	if not player.locomotion_state.get_current_node() in ["SwimmingAtEdge", "SwimmingToEdge"] \
-	and ledge_detected:
+	elif not is_at_edge and ledge_detected:
 		player.locomotion_state.travel("SwimmingToEdge")
 
 	# Swimming, Speed [Input]
@@ -167,7 +143,7 @@ func _physics_process(delta: float) -> void:
 	if player.is_swimming \
 	and not player.is_exhausted \
 	and has_swim_movement \
-	and Input.is_action_pressed(current_sprint_action):
+	and Input.is_action_pressed(action(keyboard_sprint_action, pad_sprint_action)):
 		player.animation_tree.set("parameters/LocomotionTimeScale/scale", 1.5)
 		player.swimming_root_motion_multiplier = 3
 		player.is_sprinting = true
@@ -176,28 +152,31 @@ func _physics_process(delta: float) -> void:
 		player.swimming_root_motion_multiplier = 2
 		player.is_sprinting = false
 
-	# While swimming, keep SwimmingLocomotion active and feed its BlendSpace1D.
-	var current_swimming_node = player.locomotion_state.get_current_node()
-	# Do not force SwimmingLocomotion while swimming to/at an edge or mantling out.
-	if not current_swimming_node in ["BracedHangClimbingOn", "SwimmingAtEdge", "SwimmingToEdge"] \
-	and current_swimming_node != "SwimmingLocomotion" \
-	and not player.is_climbing_on:
+	# While swimming, keep SwimmingLocomotion active (unless swimming to/at an edge or mantling out) and feed its BlendSpace1D.
+	if not is_at_edge and current_swimming_node not in ["BracedHangClimbingOn", "SwimmingLocomotion"] and not player.is_climbing_on:
 		player.locomotion_state.travel("SwimmingLocomotion")
 	# Feed the BlendSpace1D only while in normal swimming locomotion.
 	# Vertical dive/ascend effort counts as stroke movement so diving animates without stick input.
 	if current_swimming_node == "SwimmingLocomotion":
-		if player.is_focusing: # or player.is_shooting:
-			player.animation_tree.set(player.SWIMMING_LOCOMOTION_BLEND_POSITION_PATH, maxf(player.smoothed_motion.y, _vertical_swim_effort))
-		else:
-			player.animation_tree.set(player.SWIMMING_LOCOMOTION_BLEND_POSITION_PATH, maxf(player.smoothed_motion.length(), _vertical_swim_effort))
+		var stroke: float = player.smoothed_motion.y if player.is_focusing else player.smoothed_motion.length()
+		player.animation_tree.set(player.SWIMMING_LOCOMOTION_BLEND_POSITION_PATH, maxf(stroke, _vertical_swim_effort))
+
+
+## Climbing-out animation finished -> stand on the ledge.
+func _on_locomotion_node_changed(_state_path: String) -> void:
+	if process_mode != Node.PROCESS_MODE_INHERIT: return
+
+	if player.is_climbing_on and player.current_locomotion_node not in ["BracedHangClimbingOn", "FreeHangingClimbingOn"]:
+		player.is_climbing_on = false
+		player.global_position = player.climbing_on_target
+		player.clear_ledge_visuals()
+		# Start "standing"
+		player.state_machine.travel(state, States.STANDING)
 
 
 ## Start "swimming".
 func start() -> void:
-	# Enable _this_ state node
-	process_mode = Node.PROCESS_MODE_INHERIT
-	# Set the player's new state
-	player.current_state = _this_state
+	super.start()
 	# Splash on hard water entry, using the pre-impact fall speed
 	var impact_speed: float = maxf(-player.velocity.dot(player.up_direction), player.last_fall_speed)
 	# Flag the player as "swimming"
@@ -207,8 +186,8 @@ func start() -> void:
 	var water_surface_along_up: float = get_water_surface_along_up()
 	if not is_nan(water_surface_along_up):
 		var shoulder_offset: float = _get_collision_height() * WATER_SURFACE_SNAP_RATIO
-		var target_position_along_up := water_surface_along_up - shoulder_offset
-		var current_position_along_up := up_direction.dot(player.global_position)
+		var target_position_along_up: float = water_surface_along_up - shoulder_offset
+		var current_position_along_up: float = up_direction.dot(player.global_position)
 		player.global_position += up_direction * (target_position_along_up - current_position_along_up)
 		if impact_speed >= splash_min_impact_speed:
 			_spawn_entry_splash(water_surface_along_up, impact_speed)
@@ -218,19 +197,17 @@ func start() -> void:
 func _spawn_entry_splash(water_surface_along_up: float, impact_speed: float) -> void:
 	if splash_scene == null or not player.is_inside_tree():
 		return
-	var splash := splash_scene.instantiate() as Node3D
+	var splash: WaterSplash = splash_scene.instantiate() as WaterSplash
 	if splash == null:
 		return
-	if "impact_speed" in splash:
-		splash.set("impact_speed", impact_speed)
+	splash.impact_speed = impact_speed
 	var splash_parent: Node = player.get_parent()
 	if splash_parent == null:
 		splash.free()
 		return
 	splash_parent.add_child(splash)
 	var up_direction: Vector3 = player.up_direction.normalized()
-	var surface_point: Vector3 = player.global_position + up_direction * (water_surface_along_up - up_direction.dot(player.global_position))
-	splash.global_position = surface_point
+	splash.global_position = player.global_position + up_direction * (water_surface_along_up - up_direction.dot(player.global_position))
 
 
 ## Feeds swimmer position/heading/speed to the water surface shader (wake and treading ripples).
@@ -242,7 +219,7 @@ func _update_water_surface_interaction(depth_below_surface: float) -> void:
 		return
 	var h_velocity: Vector3 = player.velocity.slide(player.up_direction)
 	var facing: Vector3 = player.get_facing_direction()
-	var direction := Vector2(facing.x, facing.z)
+	var direction: Vector2 = Vector2(facing.x, facing.z)
 	if h_velocity.length_squared() > 0.04:
 		direction = Vector2(h_velocity.x, h_velocity.z).normalized()
 	# Root-motion velocity pulses each stroke; blend with input intent for a steady wake
@@ -256,61 +233,39 @@ func _update_water_surface_interaction(depth_below_surface: float) -> void:
 	_water_material.set_shader_parameter("swimmer_speed", wake_speed)
 
 
-## Finds a ShaderMaterial with swimmer uniforms on a mesh near the active water area.
+## Finds a ShaderMaterial whose shader declares the swimmer interaction uniforms on a mesh near the active water area.
 func _find_water_material() -> ShaderMaterial:
 	if not is_instance_valid(player.current_water_area):
 		return null
 	var search_root: Node = player.current_water_area.get_parent()
 	if search_root == null:
 		return null
-	for mesh_node in search_root.find_children("*", "MeshInstance3D", true, false):
-		var mesh_instance := mesh_node as MeshInstance3D
+	for mesh_node: Node in search_root.find_children("*", "MeshInstance3D", true, false):
+		var mesh_instance: MeshInstance3D = mesh_node as MeshInstance3D
 		var candidates: Array[Material] = []
 		if mesh_instance.material_override:
 			candidates.append(mesh_instance.material_override)
 		if mesh_instance.mesh:
-			for surface_index in mesh_instance.mesh.get_surface_count():
+			for surface_index: int in mesh_instance.mesh.get_surface_count():
 				var surface_material: Material = mesh_instance.mesh.surface_get_material(surface_index)
 				if surface_material:
 					candidates.append(surface_material)
-		for material in candidates:
-			if material is ShaderMaterial and _material_has_swimmer_uniforms(material as ShaderMaterial):
-				return material as ShaderMaterial
+		for material: Material in candidates:
+			var shader_material: ShaderMaterial = material as ShaderMaterial
+			if shader_material and shader_material.shader \
+			and shader_material.shader.get_shader_uniform_list().any(func(uniform: Dictionary) -> bool: return uniform.name == "swimmer_active"):
+				return shader_material
 	return null
-
-
-## True when the material's shader declares the swimmer interaction uniforms.
-func _material_has_swimmer_uniforms(material: ShaderMaterial) -> bool:
-	if material.shader == null:
-		return false
-	for uniform in material.shader.get_shader_uniform_list():
-		if uniform.name == "swimmer_active":
-			return true
-	return false
-
-
-## Shows the fullscreen underwater filter while the camera is below the water surface.
-func _update_underwater_overlay(water_surface_along_up: float) -> void:
-	var overlay: CanvasLayer = player.get_node_or_null("UnderwaterOverlay") as CanvasLayer
-	if overlay == null:
-		return
-	var camera_submerged: bool = false
-	if enable_underwater_overlay and is_instance_valid(player.camera):
-		camera_submerged = player.up_direction.dot(player.camera.global_position) < water_surface_along_up
-	if overlay.visible != camera_submerged:
-		overlay.visible = camera_submerged
 
 
 ## Stop "swimming".
 func stop() -> void:
-	# Disable _this_ state node
-	process_mode = Node.PROCESS_MODE_DISABLED
-	# Clear the player's state (if it is currently set to _this_ state)
-	if player.current_state == _this_state:
-		player.current_state = -1
-	# Flag the player as not "swimming"
+	super.stop()
+	# Flag the player as not "swimming" (nor mid climb-out)
 	player.is_swimming = false
 	player.is_sprinting = false
+	player.is_climbing_on = false
+	player.clear_ledge_visuals()
 	_reset_diving()
 
 
@@ -320,9 +275,8 @@ func _reset_diving() -> void:
 	player.swim_vertical_speed = 0.0
 	player.model_pitch = 0.0
 	_vertical_swim_effort = 0.0
-	var overlay: CanvasLayer = player.get_node_or_null("UnderwaterOverlay") as CanvasLayer
-	if overlay:
-		overlay.visible = false
+	if _underwater_overlay:
+		_underwater_overlay.visible = false
 	if _water_material:
 		_water_material.set_shader_parameter("swimmer_active", 0.0)
 		_water_material.set_shader_parameter("swimmer_speed", 0.0)
@@ -344,88 +298,30 @@ func _get_collision_height() -> float:
 	return 0.0
 
 
-func get_contextual_controls(input_type: int) -> Dictionary:
-	if not player or not player.controls: return {}
-
-	var controls := {
-		player.controls.joypad_button_4_label: "Perspective",
-		player.controls.joypad_button_15_label: "Screenshot",
-		player.controls.joypad_button_6_label: "Pause Menu",
-
+func get_contextual_controls(_input_type: int) -> Dictionary:
+	var controls: Dictionary = {
 		player.controls.joypad_button_1_label: "Fast Swim",
 		player.controls.left_joystick_label: "Swim",
 		player.controls.right_joystick_label: "Camera",
+		player.controls.joypad_button_3_label: "Surface" if player.is_diving else "Climb Out",
 	}
-
 	if player.is_diving:
-		controls[player.controls.joypad_button_3_label] = "Surface"
 		controls[player.controls.joypad_button_7_label] = "Dive Deeper"
-	else:
-		controls[player.controls.joypad_button_3_label] = "Climb Out"
-		if enable_diving:
-			controls[player.controls.joypad_button_7_label] = "Dive"
-
+	elif enable_diving:
+		controls[player.controls.joypad_button_7_label] = "Dive"
 	return controls
 
 
+## Height of the water surface along up_direction, or NAN when the player is not in a box-shaped water area.
 func get_water_surface_along_up() -> float:
-	if not player or not player.is_inside_tree():
+	if not is_instance_valid(player.current_water_area):
 		return NAN
-
-	# Fast path: use active water area if set
-	if is_instance_valid(player.current_water_area):
-		var collision_shape := player.current_water_area.get_node_or_null("CollisionShape3D") as CollisionShape3D
-		if collision_shape and collision_shape.shape is BoxShape3D:
-			var box_shape := collision_shape.shape as BoxShape3D
-			var up_in_local: Vector3 = collision_shape.global_basis.inverse() * player.up_direction
-			var half_size: Vector3 = box_shape.size * 0.5
-			var half_extent_along_up: float = abs(up_in_local.x) * half_size.x \
-				+ abs(up_in_local.y) * half_size.y \
-				+ abs(up_in_local.z) * half_size.z
-			var local_surface: Vector3 = up_in_local.normalized() * half_extent_along_up
-			var world_surface: Vector3 = collision_shape.to_global(local_surface)
-			return player.up_direction.dot(world_surface)
-
-	var tree := player.get_tree()
-	if not tree:
+	var collision_shape: CollisionShape3D = player.current_water_area.get_node_or_null(^"CollisionShape3D") as CollisionShape3D
+	if collision_shape == null or not collision_shape.shape is BoxShape3D:
 		return NAN
-
-	var has_surface := false
-	var highest_surface_along_up := 0.0
-	var water_nodes := tree.get_nodes_in_group("WATER")
-
-	for node in water_nodes:
-		var water_area := node as Area3D
-		if not water_area:
-			continue
-
-		var collision_shape := water_area.get_node_or_null("CollisionShape3D") as CollisionShape3D
-		if not collision_shape or not (collision_shape.shape is BoxShape3D):
-			continue
-
-		var box_shape := collision_shape.shape as BoxShape3D
-		var overlapping := water_area.overlaps_body(player)
-		if not overlapping:
-			var local_pos: Vector3 = collision_shape.to_local(player.global_position)
-			var half_size_box: Vector3 = box_shape.size * 0.5
-			if abs(local_pos.x) > half_size_box.x or abs(local_pos.z) > half_size_box.z or local_pos.y < -half_size_box.y or local_pos.y > half_size_box.y + 2.0:
-				continue
-
-		var up_in_local: Vector3 = collision_shape.global_basis.inverse() * player.up_direction
-		var half_size: Vector3 = box_shape.size * 0.5
-		var half_extent_along_up: float = abs(up_in_local.x) * half_size.x \
-			+ abs(up_in_local.y) * half_size.y \
-			+ abs(up_in_local.z) * half_size.z
-
-		var local_surface: Vector3 = up_in_local.normalized() * half_extent_along_up
-		var world_surface: Vector3 = collision_shape.to_global(local_surface)
-		var surface_along_up: float = player.up_direction.dot(world_surface)
-
-		if not has_surface or surface_along_up > highest_surface_along_up:
-			has_surface = true
-			highest_surface_along_up = surface_along_up
-
-	if not has_surface:
-		return NAN
-
-	return highest_surface_along_up
+	var up_in_local: Vector3 = collision_shape.global_basis.inverse() * player.up_direction
+	var half_size: Vector3 = (collision_shape.shape as BoxShape3D).size * 0.5
+	var half_extent_along_up: float = absf(up_in_local.x) * half_size.x \
+			+ absf(up_in_local.y) * half_size.y \
+			+ absf(up_in_local.z) * half_size.z
+	return player.up_direction.dot(collision_shape.to_global(up_in_local.normalized() * half_extent_along_up))

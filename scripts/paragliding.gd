@@ -24,7 +24,6 @@ extends NodeStateMachine
 @export var max_updraft_lift_speed: float = 8.5 ## Maximum vertical speed from updraft lift (m/s).
 @export var updraft_stamina_regen: float = 40.0 ## Stamina recovered per second while riding an updraft.
 
-var _this_state := NodeStateMachine.States.PARAGLIDING
 var is_in_updraft: bool = false
 var is_diving: bool = false
 
@@ -34,13 +33,9 @@ func _input(event: InputEvent) -> void:
 	# Do nothing if the player is not set or is paused/ragdolling
 	if not player or player.is_paused or player.is_ragdolling: return
 
-	var input_type: int = player.controls.current_input_type if player.controls else 0
-	var current_stop_action: StringName = keyboard_stop_action if input_type == 0 else pad_stop_action
-
 	# Stop "paragliding" and start "falling"
-	if event.is_action_pressed(current_stop_action) and not event.is_echo():
-		player.state_machine.travel(_this_state, NodeStateMachine.States.FALLING)
-		return
+	if event.is_action_pressed(action(keyboard_stop_action, pad_stop_action)) and not event.is_echo():
+		player.state_machine.travel(state, States.FALLING)
 
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
@@ -51,27 +46,24 @@ func _physics_process(delta: float) -> void:
 	# Check if the player has reached the floor
 	if player.is_on_floor():
 		# Start "standing"
-		player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
+		player.state_machine.travel(state, States.STANDING)
 		return
 
 	# Check if the player is exhausted — close the paraglider
 	if player.is_exhausted:
 		# Start "falling"
-		player.state_machine.travel(_this_state, NodeStateMachine.States.FALLING)
+		player.state_machine.travel(state, States.FALLING)
 		return
 
 	# Check for thermal updraft areas
 	var was_in_updraft: bool = is_in_updraft
 	is_in_updraft = player.is_in_updraft()
-
-	var input_type: int = player.controls.current_input_type if player.controls else 0
-	var current_dive_action: StringName = keyboard_dive_action if input_type == 0 else pad_dive_action
-	is_diving = Input.is_action_pressed(current_dive_action)
+	is_diving = Input.is_action_pressed(action(keyboard_dive_action, pad_dive_action))
 
 	# While paragliding, regular locomotion is blocked and movement is driven directly (below)
 	# Use camera-relative input, then remove any component along up_direction so glide steering stays tangential.
-	var camera_basis = player.spring_arm.global_transform.basis
-	var target_dir = camera_basis * Vector3(player.player_input.motion.x, 0.0, -player.player_input.motion.y)
+	var camera_basis: Basis = player.spring_arm.global_transform.basis
+	var target_dir: Vector3 = camera_basis * Vector3(player.player_input.motion.x, 0.0, -player.player_input.motion.y)
 	target_dir = target_dir.slide(player.up_direction)
 	if target_dir.length_squared() > 0.001 and not player.is_firing_arrow:
 		# Slerp model orientation toward flight direction for smooth, frame-rate independent turning.
@@ -83,7 +75,7 @@ func _physics_process(delta: float) -> void:
 	# Keep horizontal momentum while enforcing a minimum forward glide speed for controllability.
 	var current_h_vel: Vector3 = player.velocity.slide(player.up_direction)
 	var base_speed: float = dive_glide_speed if is_diving else glide_speed
-	var target_glide_speed: float = max(current_h_vel.length(), base_speed)
+	var target_glide_speed: float = maxf(current_h_vel.length(), base_speed)
 	if target_dir.length_squared() > 0.001:
 		current_h_vel = target_dir.normalized() * target_glide_speed
 
@@ -101,7 +93,7 @@ func _physics_process(delta: float) -> void:
 		vertical_speed = maxf(vertical_speed - delta * dive_acceleration, -max_dive_speed)
 	else:
 		# Normal damped descent
-		vertical_speed = min(vertical_speed, 0.0)
+		vertical_speed = minf(vertical_speed, 0.0)
 		vertical_speed += player.get_gravity().dot(player.up_direction) * glide_gravity_factor * delta
 		vertical_speed = maxf(vertical_speed, -max_glide_descent_speed)
 
@@ -111,10 +103,7 @@ func _physics_process(delta: float) -> void:
 
 ## Start "paragliding".
 func start() -> void:
-	# Enable _this_ state node
-	process_mode = Node.PROCESS_MODE_INHERIT
-	# Set the player's new state
-	player.current_state = _this_state
+	super.start()
 	# Flag the player as "paragliding"
 	player.is_paragliding = true
 	# Hide equipped item visuals while gliding to avoid clipping into the paraglider.
@@ -124,22 +113,18 @@ func start() -> void:
 
 	# Check if starting inside an active thermal updraft
 	is_in_updraft = player.is_in_updraft()
-	var vertical_speed := player.velocity.dot(player.up_direction)
+	var vertical_speed: float = player.velocity.dot(player.up_direction)
 	if is_in_updraft:
 		# Paraglider catch: immediate upward launch boost, even when deployed near the ground (BotW standard)
 		vertical_speed = maxf(vertical_speed, updraft_catch_boost)
 	else:
-		vertical_speed = min(vertical_speed, 0.0)
+		vertical_speed = minf(vertical_speed, 0.0)
 	player.velocity = player.velocity.slide(player.up_direction) + (player.up_direction * vertical_speed)
 
 
 ## Stop "paragliding".
 func stop() -> void:
-	# Disable _this_ state node
-	process_mode = Node.PROCESS_MODE_DISABLED
-	# Clear the player's state (if it is currently set to _this_ state)
-	if player.current_state == _this_state:
-		player.current_state = -1
+	super.stop()
 	# Flag the player as not "paragliding"
 	player.is_paragliding = false
 	is_in_updraft = false
@@ -149,21 +134,9 @@ func stop() -> void:
 
 
 func get_contextual_controls(input_type: int) -> Dictionary:
-	if not player or not player.controls: return {}
-
-	var controls = {
-		player.controls.joypad_button_4_label: "Perspective",
-		player.controls.joypad_button_15_label: "Screenshot",
-		player.controls.joypad_button_6_label: "Pause Menu",
+	return {
 		player.controls.left_joystick_label: "Steer",
 		player.controls.right_joystick_label: "Camera",
+		player.controls.joypad_button_1_label: "Dive",
+		player.controls.joypad_button_7_label if input_type == Controls.InputType.KEYBOARD_MOUSE else player.controls.joypad_button_0_label: "Cancel",
 	}
-
-	if input_type == 0:
-		controls[player.controls.joypad_button_7_label] = "Cancel"
-		controls[player.controls.joypad_button_1_label] = "Dive"
-	else:
-		controls[player.controls.joypad_button_0_label] = "Cancel"
-		controls[player.controls.joypad_button_1_label] = "Dive"
-
-	return controls

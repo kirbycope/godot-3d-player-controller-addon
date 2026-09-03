@@ -1,35 +1,18 @@
 class_name Sliding
 extends NodeStateMachine
 
-var _this_state := NodeStateMachine.States.SLIDING
 
+## Stand back up once the RunningSlide animation hands off to another locomotion node.
+func _on_locomotion_node_changed(_state_path: String) -> void:
+	if process_mode != Node.PROCESS_MODE_INHERIT: return
 
-## Called when there is an input event.
-func _input(event: InputEvent) -> void:
-
-	# Do nothing if the player is not set
-	if not player: return
-
-
-## Called every physics frame. 'delta' is the elapsed time since the previous frame.
-func _physics_process(delta: float) -> void:
-
-	# Do nothing if the player is not set
-	if not player: return
-
-	# Check if the player is no longer sliding
-	if player.locomotion_state.get_current_node() != "RunningSlide":
-		# Start "standing"
-		player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
-		return
+	if player.current_locomotion_node != "RunningSlide":
+		player.state_machine.travel(state, States.STANDING)
 
 
 ## Start "sliding".
 func start() -> void:
-	# Enable _this_ state node
-	process_mode = Node.PROCESS_MODE_INHERIT
-	# Set the player's new state
-	player.current_state = _this_state
+	super.start()
 	# Flag the player as "sliding"
 	player.is_sliding = true
 	# Reduce the player's collision shape height and adjust its position to match the sliding posture
@@ -39,11 +22,7 @@ func start() -> void:
 
 ## Stop "sliding".
 func stop() -> void:
-	# Disable _this_ state node
-	process_mode = Node.PROCESS_MODE_DISABLED
-	# Clear the player's state (if it is currently set to _this_ state)
-	if player.current_state == _this_state:
-		player.current_state = -1
+	super.stop()
 	# Flag the player as not "sliding"
 	player.is_sliding = false
 	# Reset the player's collision shape to its initial height and position

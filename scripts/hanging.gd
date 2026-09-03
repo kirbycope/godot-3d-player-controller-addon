@@ -10,8 +10,6 @@ extends NodeStateMachine
 @export var pad_drop_action: StringName = &"crouch"
 @export var pad_climb_up_action: StringName = &"jump"
 
-var _this_state := NodeStateMachine.States.HANGING
-
 
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:
@@ -19,29 +17,20 @@ func _input(event: InputEvent) -> void:
 	# Do nothing if the player is not set or is paused/ragdolling
 	if not player or player.is_paused or player.is_ragdolling: return
 
-	var input_type = player.controls.current_input_type if player.controls else 0
-	var current_drop_action = keyboard_drop_action if input_type == 0 else pad_drop_action
-	var current_climb_up_action = keyboard_climb_up_action if input_type == 0 else pad_climb_up_action
-
-	# Drop / Let go
-	if event.is_action_pressed(current_drop_action):
+	# Drop / Let go (not while already climbing on to the ledge)
+	if event.is_action_pressed(action(keyboard_drop_action, pad_drop_action)) and not player.is_climbing_on:
 		# Stop "hanging" and start "falling"
-		player.state_machine.travel(_this_state, NodeStateMachine.States.FALLING)
+		player.state_machine.travel(state, States.FALLING)
 		get_viewport().set_input_as_handled()
 		return
 
 	# Hanging, Climbing-On / Back-Eject Leap [Input]
-	if event.is_action_pressed(current_climb_up_action) and not event.is_echo():
-		if player.player_input.motion.y < -0.1 and abs(player.player_input.motion.y) > abs(player.player_input.motion.x):
-			var wall_normal: Vector3 = player.player_model.global_transform.basis.z.slide(player.up_direction).normalized()
-			player.velocity = (wall_normal * 5.0) + (player.up_direction * 3.5)
-			player.is_hanging_braced = false
-			player.is_hanging_free = false
-			player.is_climbing_on = false
-			player.state_machine.travel(_this_state, NodeStateMachine.States.FALLING)
+	if event.is_action_pressed(action(keyboard_climb_up_action, pad_climb_up_action)) and not event.is_echo():
+		if player.player_input.motion.y < -0.1 and absf(player.player_input.motion.y) > absf(player.player_input.motion.x):
+			player.leap_off_wall()
+			player.state_machine.travel(state, States.FALLING)
 			get_viewport().set_input_as_handled()
-			return
-		if player.is_hanging_braced:
+		elif player.is_hanging_braced:
 			player.locomotion_state.travel("BracedHangClimbingOn")
 			player.is_climbing_on = true
 			get_viewport().set_input_as_handled()
@@ -60,7 +49,7 @@ func _physics_process(delta: float) -> void:
 	# Check if the player has reached the floor
 	if player.is_on_floor():
 		# Start "standing"
-		player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
+		player.state_machine.travel(state, States.STANDING)
 		return
 
 	# Update footing status if not climbing onto a ledge
@@ -79,26 +68,8 @@ func _physics_process(delta: float) -> void:
 			player.is_hanging_braced = false
 			player.is_hanging_free = true
 
-	# Hanging, Climbing On [Status]
-	if player.is_climbing_on:
-		var was_climbing_on = player.is_climbing_on
-		player.is_climbing_on = player.animation_tree.get(player.LOCOMOTION_STATE_PLAYBACK_PATH).get_current_node() in ["BracedHangClimbingOn", "FreeHangingClimbingOn"]
-		if was_climbing_on and not player.is_climbing_on:
-			player.global_position = player.climbing_on_target
-			# Start "standing"
-			player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
-			return
-
 	# Keep (rotate towards) facing the wall surface
-	if player.ledge_detection_horizontal and player.ledge_detection_horizontal.is_colliding():
-		var normal := player.ledge_detection_horizontal.get_collision_normal()
-		var wall_dir := -normal
-		wall_dir = wall_dir.slide(player.up_direction)
-		if wall_dir.length_squared() > 0.001:
-			wall_dir = wall_dir.normalized()
-			var q_from: Quaternion = player.orientation.basis.get_rotation_quaternion()
-			var q_to: Quaternion = Basis.looking_at(-wall_dir, player.up_direction).get_rotation_quaternion()
-			player.orientation.basis = Basis(q_from.slerp(q_to, delta * player.rotation_interpolate_speed))
+	player.face_wall(delta)
 
 	if player.is_hanging_braced:
 		player.animation_tree.set(player.BRACED_HANG_LOCOMOTION_BLEND_POSITION_PATH, player.smoothed_motion.x)
@@ -106,13 +77,20 @@ func _physics_process(delta: float) -> void:
 		player.animation_tree.set(player.FREE_HANGING_LOCOMOTION_BLEND_POSITION_PATH, player.smoothed_motion.x)
 
 
+## Climbing-on animation finished -> stand on the ledge.
+func _on_locomotion_node_changed(_state_path: String) -> void:
+	if process_mode != Node.PROCESS_MODE_INHERIT: return
+
+	if player.is_climbing_on and player.current_locomotion_node not in ["BracedHangClimbingOn", "FreeHangingClimbingOn"]:
+		player.is_climbing_on = false
+		player.global_position = player.climbing_on_target
+		# Start "standing"
+		player.state_machine.travel(state, States.STANDING)
+
 
 ## Start "hanging".
 func start() -> void:
-	# Enable _this_ state node
-	process_mode = Node.PROCESS_MODE_INHERIT
-	# Set the player's new state
-	player.current_state = _this_state
+	super.start()
 	# Stop airborne momentum
 	player.velocity = Vector3.ZERO
 	player.is_jumping = false
@@ -134,31 +112,18 @@ func start() -> void:
 
 ## Stop "hanging".
 func stop() -> void:
-	# Disable _this_ state node
-	process_mode = Node.PROCESS_MODE_DISABLED
-	# Clear the player's state (if it is currently set to _this_ state)
-	if player.current_state == _this_state:
-		player.current_state = -1
-	# Flag the player as not "hanging"
+	super.stop()
+	# Flag the player as not "hanging" (nor mid climb-on)
 	player.is_hanging_braced = false
 	player.is_hanging_free = false
-	# Clear ledge detection visuals
-	player.ledge_detection_vertical.position = Vector3(0, 0, -1) # Reset to default
-	player.ledge_detection_horizontal.hide()
-	player.ledge_detection_marker.hide()
+	player.is_climbing_on = false
+	player.clear_ledge_visuals()
 
 
-func get_contextual_controls(input_type: int) -> Dictionary:
-	if not player or not player.controls: return {}
-
+func get_contextual_controls(_input_type: int) -> Dictionary:
 	return {
-		player.controls.joypad_button_4_label: "Perspective",
-		player.controls.joypad_button_15_label: "Screenshot",
-		player.controls.joypad_button_6_label: "Pause Menu",
-
 		player.controls.joypad_button_3_label: "Climb Up",
 		player.controls.joypad_button_7_label: "Drop",
 		player.controls.left_joystick_label: "Shimmy",
 		player.controls.right_joystick_label: "Camera",
 	}
-

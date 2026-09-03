@@ -10,8 +10,9 @@ size = Vector2(72, 30)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_p63df"]
 size = Vector2(193, 24)
 
-[node name="Settings" type="CanvasLayer" unique_id=1733087109]
+[node name="Settings" type="CanvasLayer" unique_id=1733087109 node_paths=PackedStringArray("focus_on_show")]
 script = ExtResource("1_sje0d")
+focus_on_show = NodePath("Panel/VBoxContainer/Audio")
 
 [node name="Panel" type="Panel" parent="." unique_id=465508985]
 anchors_preset = 8

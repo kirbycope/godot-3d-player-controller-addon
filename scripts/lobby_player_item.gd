@@ -1,17 +1,20 @@
+class_name LobbyPlayerItem
 extends PanelContainer
+## One row of the lobby member list; the avatar and name come from the Steam singleton when it is present.
 
-## Signal emitted when the player is kicked or ownership changed
-signal player_promoted(steam_id: int)
-signal player_kicked(steam_id: int)
+const AVATAR_MEDIUM: int = 2 ## Mirrors Steam.AvatarSizes.AVATAR_MEDIUM (the Steam class is absent on web exports).
+
+signal player_promoted(steam_id: int) ## Emitted after this member is made lobby owner.
 
 var steam_id: int = 0 : set = set_steam_id
+var lobby_id: int = 0 ## Set by the lobby manager before [member steam_id].
 
 ## Steam singleton when the GodotSteam extension is present, otherwise null.
 var _steam: Object = Engine.get_singleton("Steam") if Engine.has_singleton("Steam") else null
 
-@onready var avatar: SteamAvatarRect = %Avatar
+@onready var avatar: TextureRect = %Avatar
 @onready var host_icon: TextureRect = %HostIcon
-@onready var username_label: SteamUsername = %Username
+@onready var username_label: Label = %Username
 @onready var options_button: Button = %OptionsButton
 @onready var actions_container: HBoxContainer = %ActionsContainer
 @onready var profile_button: Button = %ProfileButton
@@ -20,89 +23,60 @@ var _steam: Object = Engine.get_singleton("Steam") if Engine.has_singleton("Stea
 @onready var kick_button: Button = %KickButton
 
 
+## Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	_connect_signals()
-	_update_player_state()
-
-
-func _connect_signals() -> void:
-	if options_button:
-		options_button.toggled.connect(_on_options_toggled)
-	if profile_button:
-		profile_button.pressed.connect(_on_profile_pressed)
-	if achievements_button:
-		achievements_button.pressed.connect(_on_achievements_pressed)
-	if promote_button:
-		promote_button.pressed.connect(_on_promote_pressed)
-	if kick_button:
-		kick_button.pressed.connect(_on_kick_pressed)
+	if _steam:
+		_steam.connect("avatar_loaded", _on_avatar_loaded)
 
 
 func set_steam_id(new_steam_id: int) -> void:
 	steam_id = new_steam_id
 	if not is_node_ready():
 		await ready
-	if avatar:
-		avatar.steam_id = steam_id
-	if username_label:
-		username_label.steam_id = steam_id
+	if _steam:
+		username_label.text = _steam.getFriendPersonaName(steam_id)
+		_steam.getPlayerAvatar(AVATAR_MEDIUM, steam_id)
 	_update_player_state()
 
 
+## Shows the host badge and, when the local user hosts, the promote/kick actions for other members.
 func _update_player_state() -> void:
-	var is_steam_active: bool = _steam != null and _steam.isSteamRunning()
-	var steamworks = get_node_or_null("/root/Steamworks")
-	var active_lobby_id: int = steamworks.lobby_id if steamworks else 0
-	var local_steam_id: int = steamworks.steam_id if steamworks and "steam_id" in steamworks else (_steam.getSteamID() if is_steam_active else 0)
+	var owner_id: int = _steam.getLobbyOwner(lobby_id) if _steam and lobby_id > 0 else 0
+	var local_id: int = _steam.getSteamID() if _steam else 0
+	host_icon.visible = owner_id > 0 and steam_id == owner_id
+	var can_moderate: bool = owner_id > 0 and local_id == owner_id and steam_id != local_id
+	promote_button.visible = can_moderate
+	kick_button.visible = can_moderate
 
-	var is_owner: bool = false
-	var am_i_host: bool = false
 
-	if is_steam_active and active_lobby_id > 0:
-		var owner_id: int = _steam.getLobbyOwner(active_lobby_id)
-		is_owner = (steam_id == owner_id)
-		am_i_host = (local_steam_id == owner_id)
-
-	if host_icon:
-		host_icon.visible = is_owner
-
-	# Host actions (promote / kick) only visible if local user is host and target is not self
-	var can_moderate: bool = am_i_host and (steam_id != local_steam_id)
-	if promote_button:
-		promote_button.visible = can_moderate
-	if kick_button:
-		kick_button.visible = can_moderate
+func _on_avatar_loaded(avatar_id: int, size: int, data: PackedByteArray) -> void:
+	if avatar_id == steam_id:
+		avatar.texture = ImageTexture.create_from_image(Image.create_from_data(size, size, false, Image.FORMAT_RGBA8, data))
 
 
 func _on_options_toggled(toggled_on: bool) -> void:
-	if actions_container:
-		actions_container.visible = toggled_on
-	if username_label:
-		username_label.visible = not toggled_on
+	actions_container.visible = toggled_on
+	username_label.visible = not toggled_on
 
 
 func _on_profile_pressed() -> void:
-	if _steam != null and steam_id > 0:
+	if _steam and steam_id > 0:
 		_steam.activateGameOverlayToUser("steamid", steam_id)
 
 
 func _on_achievements_pressed() -> void:
-	if _steam != null and steam_id > 0:
+	if _steam and steam_id > 0:
 		_steam.activateGameOverlayToUser("achievements", steam_id)
 
 
 func _on_promote_pressed() -> void:
-	var steamworks = get_node_or_null("/root/Steamworks")
-	var active_lobby_id: int = steamworks.lobby_id if steamworks else 0
-	if _steam != null and active_lobby_id > 0 and steam_id > 0:
-		_steam.setLobbyOwner(active_lobby_id, steam_id)
+	if _steam and lobby_id > 0 and steam_id > 0:
+		_steam.setLobbyOwner(lobby_id, steam_id)
 		player_promoted.emit(steam_id)
 		_update_player_state()
 
 
+## Asks the owner's client to drop this member; the list refreshes from Steam's lobby_chat_update.
 func _on_kick_pressed() -> void:
-	var steamworks = get_node_or_null("/root/Steamworks")
-	var active_lobby_id: int = steamworks.lobby_id if steamworks else 0
-	if _steam != null and active_lobby_id > 0 and steam_id > 0:
-		_steam.sendLobbyChatMsg(active_lobby_id, "/kick %s" % steam_id)
-		player_kicked.emit(steam_id)
+	if _steam and lobby_id > 0 and steam_id > 0:
+		_steam.sendLobbyChatMsg(lobby_id, "/kick %s" % steam_id)

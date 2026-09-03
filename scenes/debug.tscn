@@ -6,8 +6,24 @@
 outline_size = 6
 outline_color = Color(0, 0, 0, 1)
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_marker"]
+shading_mode = 0
+albedo_color = Color(0, 1, 0, 1)
+
+[sub_resource type="SphereMesh" id="SphereMesh_marker"]
+material = SubResource("StandardMaterial3D_marker")
+radius = 0.1
+height = 0.2
+
 [node name="Debug" type="CanvasLayer" unique_id=2032410064]
 script = ExtResource("1_86eym")
+
+[node name="RefreshTimer" type="Timer" parent="." unique_id=1420071113]
+wait_time = 0.1
+
+[node name="NavigationMarker" type="MeshInstance3D" parent="." unique_id=1953244521]
+visible = false
+mesh = SubResource("SphereMesh_marker")
 
 [node name="Enable" type="VBoxContainer" parent="." unique_id=1868662932]
 anchors_preset = 6
@@ -42,7 +58,7 @@ text = "enable_paraglider"
 
 [node name="EnableRagdoll" type="CheckButton" parent="Enable" unique_id=869432366]
 layout_mode = 2
-text = "enable_ragoll"
+text = "enable_ragdoll"
 
 [node name="EnableStamina" type="CheckButton" parent="Enable" unique_id=783508208]
 layout_mode = 2
@@ -482,6 +498,8 @@ grow_vertical = 0
 text = "###"
 label_settings = SubResource("LabelSettings_senyo")
 
+[connection signal="visibility_changed" from="." to="." method="_on_visibility_changed"]
+[connection signal="timeout" from="RefreshTimer" to="." method="_on_refresh_timer_timeout"]
 [connection signal="pressed" from="Enable/EnableFlying" to="." method="_on_enable_flying_pressed"]
 [connection signal="pressed" from="Enable/EnableParaglider" to="." method="_on_enable_paraglider_pressed"]
 [connection signal="pressed" from="Enable/EnableRagdoll" to="." method="_on_enable_ragdoll_pressed"]

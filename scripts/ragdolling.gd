@@ -1,7 +1,6 @@
 class_name Ragdolling
 extends NodeStateMachine
 
-var _this_state: NodeStateMachine.States = NodeStateMachine.States.RAGDOLLING
 var _hips_physical_bone: PhysicalBone3D
 var _physical_bones: Array[Node] = []
 
@@ -13,10 +12,10 @@ func _input(event: InputEvent) -> void:
 
 	# If the player is ragdolling, pressing the "action" button will stop "ragdolling"
 	if player.is_ragdolling and event.is_action_pressed("action"):
-		player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
+		player.state_machine.travel(state, States.STANDING)
 
 
-## Called every physics frame. 'delta' is the elapsed time since the previous frame.
+## Called every physics frame.
 func _physics_process(_delta: float) -> void:
 	# Sync player global position to the hips physical bone position while ragdolling
 	if player and player.is_ragdolling and is_instance_valid(_hips_physical_bone):
@@ -25,8 +24,7 @@ func _physics_process(_delta: float) -> void:
 
 ## Start "ragdolling".
 func start() -> void:
-	process_mode = Node.PROCESS_MODE_INHERIT
-	player.current_state = _this_state
+	super.start()
 	player.is_ragdolling = true
 	# Detach player_model transform hierarchy while ragdolling so setting player.global_position does not shift physical bones
 	if player.player_model:
@@ -46,9 +44,7 @@ func start() -> void:
 
 ## Stop "ragdolling".
 func stop() -> void:
-	process_mode = Node.PROCESS_MODE_DISABLED
-	if player.current_state == _this_state:
-		player.current_state = -1
+	super.stop()
 	player.is_ragdolling = false
 	# Sync position one last time to hips bone position before restoring player_model
 	if is_instance_valid(_hips_physical_bone):

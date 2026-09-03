@@ -245,6 +245,7 @@ class TestAttackingTransitions:
 	extends FsmTestBase
 	
 	func test_attacking_timeout():
+		player.state_machine.get_node("Attacking").boxing_inactivity_delay = 0.5
 		var sender = InputSender.new(Input)
 		sender.set_auto_flush_input(true)
 		sender.action_down("attack")
@@ -254,10 +255,9 @@ class TestAttackingTransitions:
 		
 		assert_eq(player.current_state, NodeStateMachine.States.ATTACKING, "Player should be in ATTACKING state.")
 		
-		var attacking_state = player.state_machine.get_node("Attacking")
-		attacking_state.boxing_inactivity_delay_remaining = 0.1
+		assert_true(player.is_boxing, "Unarmed attack should enter the boxing stance.")
 		
-		await wait_seconds(0.2)
+		await wait_seconds(0.8)
 		await wait_physics_frames(2)
 		
 		assert_eq(player.current_state, NodeStateMachine.States.STANDING, "Player should return to STANDING after attack timeout.")
@@ -345,7 +345,7 @@ class TestSkateboardingTransitions:
 		await wait_physics_frames(2)
 		assert_eq(player.current_state, NodeStateMachine.States.SKATEBOARDING, "Player should be in SKATEBOARDING state.")
 
-		player.controls.current_input_type = 0 # KEYBOARD_MOUSE
+		player.controls.current_input_type = Controls.InputType.KEYBOARD_MOUSE
 		var sender = InputSender.new(Input)
 		sender.set_auto_flush_input(true)
 		sender.action_down("whistle")
@@ -360,7 +360,7 @@ class TestSkateboardingTransitions:
 		await wait_physics_frames(2)
 		assert_eq(player.current_state, NodeStateMachine.States.SKATEBOARDING, "Player should be in SKATEBOARDING state.")
 
-		player.controls.current_input_type = 1 # MICROSOFT controller
+		player.controls.current_input_type = Controls.InputType.MICROSOFT
 		var sender = InputSender.new(Input)
 		sender.set_auto_flush_input(true)
 		sender.action_down("whistle")
@@ -461,3 +461,76 @@ class TestSkateboardingTransitions:
 		player.held_object.drop_held_rigidbody()
 		assert_eq(player.controls.joypad_button_12_label.text, "Dismount")
 		assert_eq(player.controls.joypad_button_1_label.text, "Fast Push")
+
+class TestCrouchingTransitions:
+	extends FsmTestBase
+
+	func test_crouching_to_falling_when_airborne():
+		var sender = InputSender.new(Input)
+		sender.set_auto_flush_input(true)
+		sender.action_down("crouch")
+		await wait_physics_frames(2)
+		assert_eq(player.current_state, NodeStateMachine.States.CROUCHING, "Player should be crouching.")
+
+		player.global_position = Vector3(0, 6.0, 0)
+		await wait_physics_frames(3)
+		assert_eq(player.current_state, NodeStateMachine.States.FALLING, "Crouching player leaving the floor should fall.")
+		sender.action_up("crouch")
+
+class TestSlidingTransitions:
+	extends FsmTestBase
+
+	func test_sliding_auto_exits_to_standing():
+		player.smoothed_motion = Vector2(0, 1.0)
+		var sender = InputSender.new(Input)
+		sender.set_auto_flush_input(true)
+		sender.action_down("move_up")
+		sender.action_down("sprint")
+		await wait_physics_frames(2)
+		sender.action_down("crouch")
+		await wait_physics_frames(2)
+		sender.action_up("crouch")
+		sender.action_up("sprint")
+		sender.action_up("move_up")
+		assert_eq(player.current_state, NodeStateMachine.States.SLIDING, "Player should be sliding.")
+
+		var frames_waited: int = 0
+		while player.current_state == NodeStateMachine.States.SLIDING and frames_waited < 300:
+			await wait_physics_frames(5)
+			frames_waited += 5
+		assert_eq(player.current_state, NodeStateMachine.States.STANDING, "Sliding should end in STANDING once RunningSlide finishes.")
+
+class TestHangingTransitions:
+	extends FsmTestBase
+
+	func test_drop_blocked_while_climbing_on_and_cleared_on_exit():
+		player.global_position = Vector3(0, 2.0, 0)
+		player.state_machine.travel(player.current_state, NodeStateMachine.States.HANGING)
+		await wait_physics_frames(2)
+		assert_eq(player.current_state, NodeStateMachine.States.HANGING, "Player should be hanging.")
+
+		player.is_climbing_on = true
+		var sender = InputSender.new(Input)
+		sender.set_auto_flush_input(true)
+		sender.action_down("crouch")
+		await wait_physics_frames(2)
+		sender.action_up("crouch")
+		assert_eq(player.current_state, NodeStateMachine.States.HANGING, "Drop must be ignored while climbing on to the ledge.")
+
+		player.state_machine.travel(player.current_state, NodeStateMachine.States.FALLING)
+		assert_false(player.is_climbing_on, "Leaving HANGING must clear is_climbing_on.")
+
+class TestStandingLocomotion:
+	extends FsmTestBase
+
+	func test_equipment_changed_rederives_grounded_locomotion():
+		var greatsword: Equipment = Equipment.new()
+		greatsword.equipment_type = Equipment.EquipmentType.SWORD_2H
+		root.add_child(greatsword)
+		player.inventory.add_equipment(greatsword)
+		await wait_physics_frames(2)
+
+		assert_true(
+			player.current_locomotion_path.begins_with("GreatSword"),
+			"Equipping a greatsword while standing should travel to the GreatSword locomotion, got %s." % player.current_locomotion_path,
+		)

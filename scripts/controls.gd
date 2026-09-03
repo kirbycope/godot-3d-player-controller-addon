@@ -1,4 +1,8 @@
+class_name Controls
 extends CanvasLayer
+
+## On-screen input hints: registers the addon's InputMap actions at runtime (drop-in, no project.godot edits),
+## swaps button textures per input device, and shows contextual action labels.
 
 signal input_type_changed(input_type: InputType)
 
@@ -8,6 +12,44 @@ enum InputType {
 	NINTENDO,
 	SONY,
 	TOUCH,
+}
+
+## InputMap actions registered in _ready when the project lacks them.
+## keys = physical keycodes, keycodes = logical keycodes, buttons = joypad buttons, axes = [axis, value] pairs,
+## mouse = mouse buttons; deadzone defaults to 0.2.
+const ACTIONS: Dictionary = {
+	"move_up": {"keys": [KEY_W], "axes": [[JOY_AXIS_LEFT_Y, -1.0]]}, ## Controller: (left-stick) forward, Keyboard: [W]
+	"move_down": {"keys": [KEY_S], "axes": [[JOY_AXIS_LEFT_Y, 1.0]]}, ## Controller: (left-stick) backward, Keyboard: [S]
+	"move_left": {"keys": [KEY_A], "axes": [[JOY_AXIS_LEFT_X, -1.0]]}, ## Controller: (left-stick) left, Keyboard: [A]
+	"move_right": {"keys": [KEY_D], "axes": [[JOY_AXIS_LEFT_X, 1.0]]}, ## Controller: (left-stick) right, Keyboard: [D]
+	"look_up": {"keys": [KEY_UP], "axes": [[JOY_AXIS_RIGHT_Y, -1.0]]}, ## Controller: (right-stick) up, Keyboard: [Up]
+	"look_down": {"keys": [KEY_DOWN], "axes": [[JOY_AXIS_RIGHT_Y, 1.0]]}, ## Controller: (right-stick) down, Keyboard: [Down]
+	"look_left": {"keys": [KEY_LEFT], "axes": [[JOY_AXIS_RIGHT_X, -1.0]]}, ## Controller: (right-stick) left, Keyboard: [Left]
+	"look_right": {"keys": [KEY_RIGHT], "axes": [[JOY_AXIS_RIGHT_X, 1.0]]}, ## Controller: (right-stick) right, Keyboard: [Right]
+	"action": {"keys": [KEY_E], "buttons": [JOY_BUTTON_A]}, ## Microsoft: Ⓐ, Nintendo: Ⓑ, Sony: Ⓧ, Keyboard: [E]
+	"sprint": {"keys": [KEY_SHIFT], "buttons": [JOY_BUTTON_B]}, ## Microsoft: Ⓑ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Shift]
+	"attack": {"keys": [KEY_ALT], "buttons": [JOY_BUTTON_X]}, ## Microsoft: Ⓧ, Nintendo: Ⓨ, Sony: 🟗, Keyboard: [Alt]
+	"jump": {"keys": [KEY_SPACE], "buttons": [JOY_BUTTON_Y]}, ## Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space]
+	"crouch": {"keys": [KEY_CTRL], "buttons": [JOY_BUTTON_LEFT_STICK]}, ## Controller: Ⓛ (left-stick click), Keyboard: [Ctrl]
+	"scope": {"mouse": [MOUSE_BUTTON_MIDDLE], "buttons": [JOY_BUTTON_RIGHT_STICK]}, ## Controller: 🄬 (right-stick click), Mouse: [Middle-Mouse]
+	"focus": {"mouse": [MOUSE_BUTTON_RIGHT], "axes": [[JOY_AXIS_TRIGGER_LEFT, 1.0]]}, ## Microsoft: 🄻T, Nintendo: Z🄻, Sony: 🄻2, Mouse: [Right-Click]
+	"shoot": {"mouse": [MOUSE_BUTTON_LEFT], "axes": [[JOY_AXIS_TRIGGER_RIGHT, 1.0]]}, ## Microsoft: 🅁T, Nintendo: Z🅁, Sony: 🅁2, Mouse: [Left-Click]
+	"ability": {"keys": [KEY_Q], "buttons": [JOY_BUTTON_LEFT_SHOULDER]}, ## Microsoft: 🄻B, Nintendo: L, Sony: L1, Keyboard: [Q]
+	"throw": {"keys": [KEY_T], "buttons": [JOY_BUTTON_RIGHT_SHOULDER]}, ## Microsoft: 🅁B, Nintendo: R, Sony: R1, Keyboard: [T]
+	"perspective": {"keys": [KEY_F5], "buttons": [JOY_BUTTON_BACK]}, ## Microsoft: ⧉, Nintendo: ⊝, Sony: ⦀, Keyboard: [F5]
+	"share": {"keys": [KEY_PRINT], "buttons": [JOY_BUTTON_MISC1]}, ## Microsoft: ⧉, Nintendo: ⧇, Sony: Create, Keyboard: [PrtScn]
+	"start": {"keys": [KEY_ESCAPE], "buttons": [JOY_BUTTON_START]}, ## Pause menu. Microsoft: ☰, Nintendo: ⊕, Sony: ☰, Keyboard: [Esc]
+	"seeker": {"keys": [KEY_I], "buttons": [JOY_BUTTON_DPAD_UP]}, ## Controller: DPad Up, Keyboard: [I]
+	"whistle": {"keys": [KEY_K], "buttons": [JOY_BUTTON_DPAD_DOWN]}, ## Controller: DPad Down, Keyboard: [K]
+	"last_weapon": {"keys": [KEY_J], "buttons": [JOY_BUTTON_DPAD_LEFT]}, ## Controller: DPad Left, Keyboard: [J]
+	"next_weapon": {"keys": [KEY_L], "buttons": [JOY_BUTTON_DPAD_RIGHT]}, ## Controller: DPad Right, Keyboard: [L]
+	"broadcast": {"keys": [KEY_T]}, ## Push-to-talk. Keyboard: [T]
+	"ui_accept": {"deadzone": 0.5, "keycodes": [KEY_ENTER, KEY_KP_ENTER], "keys": [KEY_SPACE], "buttons": [JOY_BUTTON_A]},
+	"ui_left": {"deadzone": 0.5, "buttons": [JOY_BUTTON_DPAD_LEFT]},
+	"ui_right": {"deadzone": 0.5, "buttons": [JOY_BUTTON_DPAD_RIGHT]},
+	"ui_up": {"deadzone": 0.5, "buttons": [JOY_BUTTON_DPAD_UP]},
+	"ui_down": {"deadzone": 0.5, "buttons": [JOY_BUTTON_DPAD_DOWN]},
+	"debug": {"keycodes": [KEY_F3]}, ## Debug HUD. Keyboard: [F3]
 }
 
 @export var player: Player
@@ -184,16 +226,80 @@ enum InputType {
 @onready var key_right: TouchScreenButton = $BottomRight/KeyRight ## Keyboard [Right] key
 @onready var key_right_label: Label = $BottomRight/KeyRight/Label
 
+@onready var all_buttons: Array[TouchScreenButton] = [
+	joypad_button_0, joypad_button_1, joypad_button_2, joypad_button_3,
+	joypad_button_4, joypad_button_15, joypad_button_6, joypad_button_7,
+	joypad_button_8, joypad_button_9, joypad_button_10, joypad_axis_4_plus,
+	joypad_axis_5_plus, joypad_button_11, joypad_button_12, joypad_button_13,
+	joypad_button_14, key_w, key_a, key_s, key_d, key_i, key_j, key_k,
+	key_l, key_up, key_left, key_down, key_right,
+]
+@onready var all_labels: Array[Label] = [
+	joypad_button_0_label, joypad_button_1_label, joypad_button_2_label, joypad_button_3_label,
+	joypad_button_4_label, joypad_button_15_label, joypad_button_6_label, joypad_button_7_label,
+	joypad_button_8_label, joypad_button_9_label, joypad_button_10_label, joypad_axis_4_plus_label,
+	joypad_axis_5_plus_label, joypad_button_11_label, joypad_button_12_label, joypad_button_13_label,
+	joypad_button_14_label, key_w_label, key_a_label, key_s_label, key_d_label, key_i_label, key_j_label, key_k_label,
+	key_l_label, key_up_label, key_left_label, key_down_label, key_right_label,
+	left_joystick_label, right_joystick_label,
+]
+## Buttons whose textures swap per input device, in the order of the [member _vendor_textures] pairs.
+@onready var _swappable_buttons: Array[TouchScreenButton] = [
+	joypad_button_0, joypad_button_1, joypad_button_2, joypad_button_3, joypad_button_4, joypad_button_15,
+	joypad_button_6, joypad_button_7, joypad_button_8, joypad_button_9, joypad_button_10, joypad_axis_4_plus, joypad_axis_5_plus,
+]
+## Normal/pressed texture pairs per input type, in [member _swappable_buttons] order (touch reuses Microsoft).
+@onready var _vendor_textures: Dictionary[InputType, Array] = {
+	InputType.KEYBOARD_MOUSE: [
+		keyboard_mouse_button_0_normal, keyboard_mouse_button_0_pressed, keyboard_mouse_button_1_normal, keyboard_mouse_button_1_pressed,
+		keyboard_mouse_button_2_normal, keyboard_mouse_button_2_pressed, keyboard_mouse_button_3_normal, keyboard_mouse_button_3_pressed,
+		keyboard_mouse_button_4_normal, keyboard_mouse_button_4_pressed, keyboard_mouse_button_15_normal, keyboard_mouse_button_15_pressed,
+		keyboard_mouse_button_6_normal, keyboard_mouse_button_6_pressed, keyboard_mouse_button_7_normal, keyboard_mouse_button_7_pressed,
+		keyboard_mouse_button_8_normal, keyboard_mouse_button_8_pressed, keyboard_mouse_button_9_normal, keyboard_mouse_button_9_pressed,
+		keyboard_mouse_button_10_normal, keyboard_mouse_button_10_pressed, keyboard_mouse_axis_4_plus_normal, keyboard_mouse_axis_4_plus_pressed,
+		keyboard_mouse_axis_5_plus_normal, keyboard_mouse_axis_5_plus_pressed,
+	],
+	InputType.MICROSOFT: [
+		microsoft_button_0_normal, microsoft_button_0_pressed, microsoft_button_1_normal, microsoft_button_1_pressed,
+		microsoft_button_2_normal, microsoft_button_2_pressed, microsoft_button_3_normal, microsoft_button_3_pressed,
+		microsoft_button_4_normal, microsoft_button_4_pressed, microsoft_button_15_normal, microsoft_button_15_pressed,
+		microsoft_button_6_normal, microsoft_button_6_pressed, microsoft_button_7_normal, microsoft_button_7_pressed,
+		microsoft_button_8_normal, microsoft_button_8_pressed, microsoft_button_9_normal, microsoft_button_9_pressed,
+		microsoft_button_10_normal, microsoft_button_10_pressed, microsoft_axis_4_plus_normal, microsoft_axis_4_plus_pressed,
+		microsoft_axis_5_plus_normal, microsoft_axis_5_plus_pressed,
+	],
+	InputType.NINTENDO: [
+		nintendo_button_0_normal, nintendo_button_0_pressed, nintendo_button_1_normal, nintendo_button_1_pressed,
+		nintendo_button_2_normal, nintendo_button_2_pressed, nintendo_button_3_normal, nintendo_button_3_pressed,
+		nintendo_button_4_normal, nintendo_button_4_pressed, nintendo_button_15_normal, nintendo_button_15_pressed,
+		nintendo_button_6_normal, nintendo_button_6_pressed, nintendo_button_7_normal, nintendo_button_7_pressed,
+		nintendo_button_8_normal, nintendo_button_8_pressed, nintendo_button_9_normal, nintendo_button_9_pressed,
+		nintendo_button_10_normal, nintendo_button_10_pressed, nintendo_axis_4_plus_normal, nintendo_axis_4_plus_pressed,
+		nintendo_axis_5_plus_normal, nintendo_axis_5_plus_pressed,
+	],
+	InputType.SONY: [
+		sony_button_0_normal, sony_button_0_pressed, sony_button_1_normal, sony_button_1_pressed,
+		sony_button_2_normal, sony_button_2_pressed, sony_button_3_normal, sony_button_3_pressed,
+		sony_button_4_normal, sony_button_4_pressed, sony_button_15_normal, sony_button_15_pressed,
+		sony_button_6_normal, sony_button_6_pressed, sony_button_7_normal, sony_button_7_pressed,
+		sony_button_8_normal, sony_button_8_pressed, sony_button_9_normal, sony_button_9_pressed,
+		sony_button_10_normal, sony_button_10_pressed, sony_axis_4_plus_normal, sony_axis_4_plus_pressed,
+		sony_axis_5_plus_normal, sony_axis_5_plus_pressed,
+	],
+}
+## Controls shown only for controller/touch input (the keyboard set is shown instead for keyboard/mouse).
+@onready var _joypad_only: Array[CanvasItem] = [joypad_button_11, joypad_button_12, joypad_button_13, joypad_button_14, left_joystick, right_joystick]
+@onready var _keyboard_only: Array[CanvasItem] = [key_w, key_a, key_s, key_d, key_i, key_j, key_k, key_l, key_up, key_left, key_down, key_right]
+
 var current_input_type: InputType = InputType.TOUCH:
 	set(value):
 		if current_input_type != value:
 			current_input_type = value
+			update_input_ui()
 			input_type_changed.emit(value)
 
-var all_buttons: Array[TouchScreenButton] = []
-var _base_normal_textures: Dictionary = {}
-var _label_texts: Dictionary = {}
-var _normal_textures: Dictionary = {}
+var _normal_textures: Dictionary[TouchScreenButton, Texture2D] = {} ## Unpressed texture per button for the current input type.
+var _label_texts: Dictionary[Label, String] = {} ## Default label text per label (from the scene).
 
 
 ## Called when the node enters the scene tree for the first time.
@@ -205,506 +311,83 @@ func _ready() -> void:
 	set_physics_process(is_multiplayer_authority())
 	set_process_input(is_multiplayer_authority())
 
-	all_buttons = [
-		joypad_button_0, joypad_button_1, joypad_button_2, joypad_button_3,
-		joypad_button_4, joypad_button_15, joypad_button_6, joypad_button_7,
-		joypad_button_8, joypad_button_9, joypad_button_10, joypad_axis_4_plus,
-		joypad_axis_5_plus, joypad_button_11, joypad_button_12, joypad_button_13,
-		joypad_button_14, key_w, key_a, key_s, key_d, key_i, key_j, key_k,
-		key_l, key_up, key_left, key_down, key_right,
-	]
-
 	# Cache the initial normal textures and label texts
-	for button in all_buttons:
-		if button != null:
-			_base_normal_textures[button] = button.texture_normal
-			if button.has_node("Label"):
-				var label = button.get_node("Label") as Label
-				_label_texts[label] = label.text
-	_label_texts[left_joystick_label] = left_joystick_label.text
-	_label_texts[right_joystick_label] = right_joystick_label.text
+	for button: TouchScreenButton in all_buttons:
+		_normal_textures[button] = button.texture_normal
+	for label: Label in all_labels:
+		_label_texts[label] = label.text
 
-	# Connect the input_type_changed signal to the update_input_ui function
-	input_type_changed.connect(update_input_ui)
+	# Register the addon's actions; a project's own bindings are left alone, but the engine's built-in ui_* actions are extended
+	for action_name: String in ACTIONS:
+		var binding: Dictionary = ACTIONS[action_name]
+		if not InputMap.has_action(action_name):
+			InputMap.add_action(action_name, binding.get("deadzone", 0.2))
+		elif not action_name.begins_with("ui_"):
+			continue
+		var events: Array[InputEvent] = []
+		for key: Key in binding.get("keys", []):
+			var key_event: InputEventKey = InputEventKey.new()
+			key_event.physical_keycode = key
+			events.append(key_event)
+		for keycode: Key in binding.get("keycodes", []):
+			var key_event: InputEventKey = InputEventKey.new()
+			key_event.keycode = keycode
+			events.append(key_event)
+		for button: JoyButton in binding.get("buttons", []):
+			var button_event: InputEventJoypadButton = InputEventJoypadButton.new()
+			button_event.button_index = button
+			events.append(button_event)
+		for axis: Array in binding.get("axes", []):
+			var motion_event: InputEventJoypadMotion = InputEventJoypadMotion.new()
+			motion_event.axis = axis[0]
+			motion_event.axis_value = axis[1]
+			events.append(motion_event)
+		for mouse_button: MouseButton in binding.get("mouse", []):
+			var mouse_event: InputEventMouseButton = InputEventMouseButton.new()
+			mouse_event.button_index = mouse_button
+			events.append(mouse_event)
+		for event: InputEvent in events:
+			if not InputMap.action_has_event(action_name, event):
+				InputMap.action_add_event(action_name, event)
 
-	# "move_up" { Controller: (left-stick) forward, Keyboard: [W] }
-	if not InputMap.has_action("move_up"):
-		# Add the [move_up] action to the Input Map
-		InputMap.add_action("move_up")
-		# Keyboard 🅆
-		var key_event = InputEventKey.new()
-		key_event.physical_keycode = KEY_W
-		InputMap.action_add_event("move_up", key_event)
-		# Controller (left-stick) forward]
-		var joystick_event = InputEventJoypadMotion.new()
-		joystick_event.axis = JOY_AXIS_LEFT_Y
-		joystick_event.axis_value = -1.0
-		InputMap.action_add_event("move_up", joystick_event)
-
-	# "move_down" { Controller: (left-stick) backward, Keyboard: [S] }
-	if not InputMap.has_action("move_down"):
-		# Add the [move_down] action to the Input Map
-		InputMap.add_action("move_down")
-		# Keyboard 🅂
-		var key_event = InputEventKey.new()
-		key_event.physical_keycode = KEY_S
-		InputMap.action_add_event("move_down", key_event)
-		# Controller (left-stick) backward]
-		var joystick_event = InputEventJoypadMotion.new()
-		joystick_event.axis = JOY_AXIS_LEFT_Y
-		joystick_event.axis_value = 1.0
-		InputMap.action_add_event("move_down", joystick_event)
-
-	# "move_left" { Controller: (left-stick) left, Keyboard: [A] }
-	if not InputMap.has_action("move_left"):
-		# Add the [move_left] action to the Input Map
-		InputMap.add_action("move_left")
-		# Keyboard 🄰
-		var key_event = InputEventKey.new()
-		key_event.physical_keycode = KEY_A
-		InputMap.action_add_event("move_left", key_event)
-		# Controller (left-stick) left]
-		var joystick_event = InputEventJoypadMotion.new()
-		joystick_event.axis = JOY_AXIS_LEFT_X
-		joystick_event.axis_value = -1.0
-		InputMap.action_add_event("move_left", joystick_event)
-	
-	# "move_right" { Controller: (left-stick) right, Keyboard: [D] }
-	if not InputMap.has_action("move_right"):
-		# Add the [move_right] action to the Input Map
-		InputMap.add_action("move_right")
-		# Keyboard 🄳
-		var key_event = InputEventKey.new()
-		key_event.physical_keycode = KEY_D
-		InputMap.action_add_event("move_right", key_event)
-		# Controller (left-stick) right]
-		var joystick_event = InputEventJoypadMotion.new()
-		joystick_event.axis = JOY_AXIS_LEFT_X
-		joystick_event.axis_value = 1.0
-		InputMap.action_add_event("move_right", joystick_event)
-
-	# "look_up" { Controller: (right-stick) up, Keyboard: [Up] }
-	if not InputMap.has_action("look_up"):
-		# Add the [look_up] action to the Input Map
-		InputMap.add_action("look_up")
-		# Keyboard [Up]
-		var key_event = InputEventKey.new()
-		key_event.physical_keycode = KEY_UP
-		InputMap.action_add_event("look_up", key_event)
-		# Controller (right-stick) up]
-		var joystick_event = InputEventJoypadMotion.new()
-		joystick_event.axis = JOY_AXIS_RIGHT_Y
-		joystick_event.axis_value = -1.0
-		InputMap.action_add_event("look_up", joystick_event)
-
-	# "look_down" { Controller: (right-stick) down, Keyboard: [Down] }
-	if not InputMap.has_action("look_down"):
-		# Add the [look_down] action to the Input Map
-		InputMap.add_action("look_down")
-		# Keyboard [Down]
-		var key_event = InputEventKey.new()
-		key_event.physical_keycode = KEY_DOWN
-		InputMap.action_add_event("look_down", key_event)
-		# Controller (right-stick) down]
-		var joystick_event = InputEventJoypadMotion.new()
-		joystick_event.axis = JOY_AXIS_RIGHT_Y
-		joystick_event.axis_value = 1.0
-		InputMap.action_add_event("look_down", joystick_event)
-
-	# "look_left" { Controller: (right-stick) left, Keyboard: [Left] }
-	if not InputMap.has_action("look_left"):
-		# Add the [look_left] action to the Input Map
-		InputMap.add_action("look_left")
-		# Keyboard [Left]
-		var key_event = InputEventKey.new()
-		key_event.physical_keycode = KEY_LEFT
-		InputMap.action_add_event("look_left", key_event)
-		# Controller (right-stick) left]
-		var joystick_event = InputEventJoypadMotion.new()
-		joystick_event.axis = JOY_AXIS_RIGHT_X
-		joystick_event.axis_value = -1.0
-		InputMap.action_add_event("look_left", joystick_event)
-
-	# "look_right" { Controller: (right-stick) right, Keyboard: [Right] }
-	if not InputMap.has_action("look_right"):
-		# Add the [look_right] action to the Input Map
-		InputMap.add_action("look_right")
-		# Keyboard [Right]
-		var key_event = InputEventKey.new()
-		key_event.physical_keycode = KEY_RIGHT
-		InputMap.action_add_event("look_right", key_event)
-		# Controller (right-stick) right]
-		var joystick_event = InputEventJoypadMotion.new()
-		joystick_event.axis = JOY_AXIS_RIGHT_X
-		joystick_event.axis_value = 1.0
-		InputMap.action_add_event("look_right", joystick_event)
-
-	# "action" { Microsoft: Ⓐ, Nintendo: Ⓑ, Sony: Ⓧ, Keyboard: [E] }
-	if not InputMap.has_action("action"):
-		# Add the [action] action to the Input Map
-		InputMap.add_action("action")
-		# Microsoft Ⓐ, Nintendo Ⓑ, Sony Ⓧ
-		var joystick_event = InputEventJoypadButton.new()
-		joystick_event.button_index = JOY_BUTTON_A
-		InputMap.action_add_event("action", joystick_event)
-		# Keyboard [E]
-		var key_event = InputEventKey.new()
-		key_event.physical_keycode = KEY_E
-		InputMap.action_add_event("action", key_event)
-
-	# "sprint" { Microsoft: Ⓑ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Shift] }
-	if not InputMap.has_action("sprint"):
-		# Add the [sprint] action to the Input Map
-		InputMap.add_action("sprint")
-		# Microsoft Ⓑ, Nintendo Ⓐ, Sony Ⓞ
-		var joystick_event = InputEventJoypadButton.new()
-		joystick_event.button_index = JOY_BUTTON_B
-		InputMap.action_add_event("sprint", joystick_event)
-		# Keyboard [Shift]
-		var key_event = InputEventKey.new()
-		key_event.physical_keycode = KEY_SHIFT
-		InputMap.action_add_event("sprint", key_event)
-
-	# "attack" { Microsoft: Ⓧ, Nintendo: Ⓨ, Sony: 🟗, Keyboard: [Alt] }
-	if not InputMap.has_action("attack"):
-		# Add the [attack] action to the Input Map
-		InputMap.add_action("attack")
-		# Microsoft Ⓧ, Nintendo Ⓨ, Sony 🟗
-		var joystick_event = InputEventJoypadButton.new()
-		joystick_event.button_index = JOY_BUTTON_X
-		InputMap.action_add_event("attack", joystick_event)
-		# Keyboard [Alt]
-		var key_event = InputEventKey.new()
-		key_event.physical_keycode = KEY_ALT
-		InputMap.action_add_event("attack", key_event)
-
-	# "jump" { Microsoft: Ⓨ, Nintendo: Ⓧ, Sony: 🟕, Keyboard: [Space] }
-	if not InputMap.has_action("jump"):
-		# Add the [jump] action to the Input Map
-		InputMap.add_action("jump")
-		# Microsoft Ⓨ, Nintendo Ⓧ, Sony 🟕
-		var joystick_event = InputEventJoypadButton.new()
-		joystick_event.button_index = JOY_BUTTON_Y
-		InputMap.action_add_event("jump", joystick_event)
-		# Keyboard [Space]
-		var key_event = InputEventKey.new()
-		key_event.physical_keycode = KEY_SPACE
-		InputMap.action_add_event("jump", key_event)
-
-	# "crouch" { Microsoft: Ⓛ, Nintendo: Ⓛ, Sony: Ⓛ, Keyboard: [Ctrl] }
-	if not InputMap.has_action("crouch"):
-		# Add the [crouch] action to the Input Map
-		InputMap.add_action("crouch")
-		# Microsoft Ⓛ, Nintendo Ⓛ, Sony Ⓛ
-		var joystick_event = InputEventJoypadButton.new()
-		joystick_event.button_index = JOY_BUTTON_LEFT_STICK
-		InputMap.action_add_event("crouch", joystick_event)
-		# Keyboard [Ctrl]
-		var key_event = InputEventKey.new()
-		key_event.physical_keycode = KEY_CTRL
-		InputMap.action_add_event("crouch", key_event)
-
-	# "scope" { Microsoft: 🄬, Nintendo: 🄬, Sony: 🄬, Mouse: [Middle-Mouse] }
-	if not InputMap.has_action("scope"):
-		# Add the [scope] action to the Input Map
-		InputMap.add_action("scope")
-		# Microsoft 🄬, Nintendo 🄬, Sony 🄬
-		var joystick_event = InputEventJoypadButton.new()
-		joystick_event.button_index = JOY_BUTTON_RIGHT_STICK
-		InputMap.action_add_event("scope", joystick_event)
-		# Mouse [Middle-Mouse]
-		var mouse_event = InputEventMouseButton.new()
-		mouse_event.button_index = MOUSE_BUTTON_MIDDLE
-		InputMap.action_add_event("scope", mouse_event)
-
-	# "focus" { Microsoft: 🄻T, Nintendo: Z🄻, Sony: 🄻2, Mouse: [Right-Click] }
-	if not InputMap.has_action("focus"):
-		# Add the [focus] action to the Input Map
-		InputMap.add_action("focus")
-		# Microsoft 🄻T, Nintendo Z🄻, Sony 🄻2
-		var joystick_event = InputEventJoypadMotion.new()
-		joystick_event.axis = JOY_AXIS_TRIGGER_LEFT
-		joystick_event.axis_value = 1.0
-		InputMap.action_add_event("focus", joystick_event)
-		# Mouse [Right-Click]
-		var mouse_event = InputEventMouseButton.new()
-		mouse_event.button_index = MOUSE_BUTTON_RIGHT
-		InputMap.action_add_event("focus", mouse_event)
-
-	# "shoot" { Microsoft: 🅁T, Nintendo: Z🅁, Sony: 🅁2, Mouse: [Right-Click] }
-	if not InputMap.has_action("shoot"):
-		# Add the [shoot] action to the Input Map
-		InputMap.add_action("shoot")
-		# Microsoft 🅁T, Nintendo Z🅁, Sony 🅁2
-		var joystick_event = InputEventJoypadMotion.new()
-		joystick_event.axis = JOY_AXIS_TRIGGER_RIGHT
-		joystick_event.axis_value = 1.0
-		InputMap.action_add_event("shoot", joystick_event)
-		# Mouse [Left-Click]
-		var mouse_event = InputEventMouseButton.new()
-		mouse_event.button_index = MOUSE_BUTTON_LEFT
-		InputMap.action_add_event("shoot", mouse_event)
-
-	# "ability" { Microsoft: 🄻B, Nintendo: L, Sony: L1, Keyboard: [Q] }
-	if not InputMap.has_action("ability"):
-		# Add the [ability] action to the Input Map
-		InputMap.add_action("ability")
-		# Microsoft 🄻B, Nintendo L, Sony L1
-		var joystick_event = InputEventJoypadButton.new()
-		joystick_event.button_index = JOY_BUTTON_LEFT_SHOULDER
-		InputMap.action_add_event("ability", joystick_event)
-		# Keyboard [Q]
-		var key_event = InputEventKey.new()
-		key_event.physical_keycode = KEY_Q
-		InputMap.action_add_event("ability", key_event)
-
-	# "throw" { Microsoft: 🅁B, Nintendo: R, Sony: R1, Keyboard: [T] }
-	if not InputMap.has_action("throw"):
-		# Add the [throw] action to the Input Map
-		InputMap.add_action("throw")
-		# Microsoft 🅁B, Nintendo R, Sony R1
-		var joystick_event = InputEventJoypadButton.new()
-		joystick_event.button_index = JOY_BUTTON_RIGHT_SHOULDER
-		InputMap.action_add_event("throw", joystick_event)
-		# Keyboard [T]
-		var key_event = InputEventKey.new()
-		key_event.physical_keycode = KEY_T
-		InputMap.action_add_event("throw", key_event)
-
-	# "perspective" { Microsoft: ⧉, Nintendo: ⊝, Sony: ⦀, Keyboard: [F5] }
-	if not InputMap.has_action("perspective"):
-		# Add the [perspective] action to the Input Map
-		InputMap.add_action("perspective")
-		# Microsoft ⧉, Nintendo ⊝, Sony ⦀
-		var joystick_event = InputEventJoypadButton.new()
-		joystick_event.button_index = JOY_BUTTON_BACK
-		InputMap.action_add_event("perspective", joystick_event)
-		# Keyboard [F5]
-		var key_event = InputEventKey.new()
-		key_event.physical_keycode = KEY_F5
-		InputMap.action_add_event("perspective", key_event)
-
-	# "share" { Microsoft: ⧉, Nintendo: ⧇, Sony: ?, Keyboard: [PrtScn] }
-	if not InputMap.has_action("share"):
-		# Add the [share] action to the Input Map
-		InputMap.add_action("share")
-		# Microsoft ⧉, Nintendo ⧇, Sony ?
-		var joystick_event = InputEventJoypadButton.new()
-		joystick_event.button_index = JOY_BUTTON_MISC1
-		InputMap.action_add_event("share", joystick_event)
-		# Keyboard [PrtScn]
-		var key_event = InputEventKey.new()
-		key_event.physical_keycode = KEY_PRINT
-		InputMap.action_add_event("share", key_event)
-
-	# "pause" { Microsoft: ☰, Nintendo: ⊕, Sony: ☰, Keyboard: [Esc] }
-	if not InputMap.has_action("start"):
-		# Add the [pause] action to the Input Map
-		InputMap.add_action("start")
-		# Microsoft ☰, Nintendo ⊕, Sony ☰
-		var joystick_event = InputEventJoypadButton.new()
-		joystick_event.button_index = JOY_BUTTON_START
-		InputMap.action_add_event("start", joystick_event)
-		# Keyboard [Esc]
-		var key_event = InputEventKey.new()
-		key_event.physical_keycode = KEY_ESCAPE
-		InputMap.action_add_event("start", key_event)
-
-	# "seeker" { Controller: DPad Up, Keyboard: [I] }
-	if not InputMap.has_action("seeker"):
-		# Add the [seeker] action to the Input Map
-		InputMap.add_action("seeker")
-		# Controller DPad Up
-		var joystick_event = InputEventJoypadButton.new()
-		joystick_event.button_index = JOY_BUTTON_DPAD_UP
-		InputMap.action_add_event("seeker", joystick_event)
-		# Keyboard [I]
-		var key_event = InputEventKey.new()
-		key_event.physical_keycode = KEY_I
-		InputMap.action_add_event("seeker", key_event)
-
-	# "whistle" { Controller: DPad Down, Keyboard: [K] }
-	if not InputMap.has_action("whistle"):
-		# Add the [whistle] action to the Input Map
-		InputMap.add_action("whistle")
-		# Controller DPad Down
-		var joystick_event = InputEventJoypadButton.new()
-		joystick_event.button_index = JOY_BUTTON_DPAD_DOWN
-		InputMap.action_add_event("whistle", joystick_event)
-		# Keyboard [K]
-		var key_event = InputEventKey.new()
-		key_event.physical_keycode = KEY_K
-		InputMap.action_add_event("whistle", key_event)
-
-	# "last_weapon" { Controller: DPad Left, Keyboard: [J] }
-	if not InputMap.has_action("last_weapon"):
-		# Add the [last_weapon] action to the Input Map
-		InputMap.add_action("last_weapon")
-		# Controller DPad Left
-		var joystick_event = InputEventJoypadButton.new()
-		joystick_event.button_index = JOY_BUTTON_DPAD_LEFT
-		InputMap.action_add_event("last_weapon", joystick_event)
-		# Keyboard [J]
-		var key_event = InputEventKey.new()
-		key_event.physical_keycode = KEY_J
-		InputMap.action_add_event("last_weapon", key_event)
-
-	# "next_weapon" { Controller: DPad Right, Keyboard: [L] }
-	if not InputMap.has_action("next_weapon"):
-		# Add the [next_weapon] action to the Input Map
-		InputMap.add_action("next_weapon")
-		# Controller DPad Right
-		var joystick_event = InputEventJoypadButton.new()
-		joystick_event.button_index = JOY_BUTTON_DPAD_RIGHT
-		InputMap.action_add_event("next_weapon", joystick_event)
-		# Keyboard [L]
-		var key_event = InputEventKey.new()
-		key_event.physical_keycode = KEY_L
-		InputMap.action_add_event("next_weapon", key_event)
-
-	# "broadcast" { Keyboard: [T] }
-	if not InputMap.has_action("broadcast"):
-		# Add the [broadcast] action to the Input Map
-		InputMap.add_action("broadcast")
-		# Keyboard [T]
-		var key_event = InputEventKey.new()
-		key_event.physical_keycode = KEY_T
-		InputMap.action_add_event("broadcast", key_event)
-
-	# "ui_accept" { Microsoft: Ⓐ, Keyboard: [Enter], [Numpad Enter], [Space] }
-	if not InputMap.has_action("ui_accept"):
-		# Add the [ui_accept] action to the Input Map
-		InputMap.add_action("ui_accept", 0.5)
-	# Microsoft Ⓐ, Nintendo Ⓑ, Sony Ⓧ
-	var ui_accept_joypad = InputEventJoypadButton.new()
-	ui_accept_joypad.button_index = JOY_BUTTON_A
-	if not InputMap.action_has_event("ui_accept", ui_accept_joypad):
-		InputMap.action_add_event("ui_accept", ui_accept_joypad)
-	# Keyboard [Enter]
-	var ui_accept_enter = InputEventKey.new()
-	ui_accept_enter.keycode = KEY_ENTER
-	if not InputMap.action_has_event("ui_accept", ui_accept_enter):
-		InputMap.action_add_event("ui_accept", ui_accept_enter)
-	# Keyboard [Numpad Enter]
-	var ui_accept_kp_enter = InputEventKey.new()
-	ui_accept_kp_enter.keycode = KEY_KP_ENTER
-	if not InputMap.action_has_event("ui_accept", ui_accept_kp_enter):
-		InputMap.action_add_event("ui_accept", ui_accept_kp_enter)
-	# Keyboard [Space]
-	var ui_accept_space = InputEventKey.new()
-	ui_accept_space.physical_keycode = KEY_SPACE
-	if not InputMap.action_has_event("ui_accept", ui_accept_space):
-		InputMap.action_add_event("ui_accept", ui_accept_space)
-
-	# "ui_left" { Controller: DPad Left }
-	if not InputMap.has_action("ui_left"):
-		# Add the [ui_left] action to the Input Map
-		InputMap.add_action("ui_left", 0.5)
-	# Controller DPad Left
-	var ui_left_joypad = InputEventJoypadButton.new()
-	ui_left_joypad.button_index = JOY_BUTTON_DPAD_LEFT
-	if not InputMap.action_has_event("ui_left", ui_left_joypad):
-		InputMap.action_add_event("ui_left", ui_left_joypad)
-
-	# "ui_right" { Controller: DPad Right }
-	if not InputMap.has_action("ui_right"):
-		# Add the [ui_right] action to the Input Map
-		InputMap.add_action("ui_right", 0.5)
-	# Controller DPad Right
-	var ui_right_joypad = InputEventJoypadButton.new()
-	ui_right_joypad.button_index = JOY_BUTTON_DPAD_RIGHT
-	if not InputMap.action_has_event("ui_right", ui_right_joypad):
-		InputMap.action_add_event("ui_right", ui_right_joypad)
-
-	# "ui_up" { Controller: DPad Up }
-	if not InputMap.has_action("ui_up"):
-		# Add the [ui_up] action to the Input Map
-		InputMap.add_action("ui_up", 0.5)
-	# Controller DPad Up
-	var ui_up_joypad = InputEventJoypadButton.new()
-	ui_up_joypad.button_index = JOY_BUTTON_DPAD_UP
-	if not InputMap.action_has_event("ui_up", ui_up_joypad):
-		InputMap.action_add_event("ui_up", ui_up_joypad)
-
-	# "ui_down" { Controller: DPad Down }
-	if not InputMap.has_action("ui_down"):
-		# Add the [ui_down] action to the Input Map
-		InputMap.add_action("ui_down", 0.5)
-	# Controller DPad Down
-	var ui_down_joypad = InputEventJoypadButton.new()
-	ui_down_joypad.button_index = JOY_BUTTON_DPAD_DOWN
-	if not InputMap.action_has_event("ui_down", ui_down_joypad):
-		InputMap.action_add_event("ui_down", ui_down_joypad)
-
-	# "emote" { Keyboard: [M] }
-	if not InputMap.has_action("emote"):
-		# Add the [emote] action to the Input Map
-		InputMap.add_action("emote", 0.2)
-		# Keyboard [M]
-		var key_event = InputEventKey.new()
-		key_event.physical_keycode = KEY_M
-		InputMap.action_add_event("emote", key_event)
-
-	# "debug" { Keyboard: [F3] }
-	if not InputMap.has_action("debug"):
-		# Add the [debug] action to the Input Map
-		InputMap.add_action("debug", 0.2)
-		# Keyboard [F3]
-		var key_event = InputEventKey.new()
-		key_event.keycode = KEY_F3
-		InputMap.action_add_event("debug", key_event)
-
-	update_input_ui(current_input_type)
+	update_input_ui()
 
 
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:
-	# Check if the input is a keyboard or mouse event
+	# Detect the input device from the event
 	if event is InputEventKey or (event is InputEventMouse and Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED):
-		# Set the current input type to Keyboard and Mouse
 		current_input_type = InputType.KEYBOARD_MOUSE
-	# Check if the input is a joystick event
-	elif event is InputEventJoypadButton or (event is InputEventJoypadMotion and abs(event.axis_value) > input_deadzone):
-		# Get the name of the connected joystick
-		var joystick_name = Input.get_joy_name(event.device).to_lower()
-		# Check if the device name indicates it is a Microsoft [XBox] controller
+	elif event is InputEventJoypadButton or (event is InputEventJoypadMotion and absf((event as InputEventJoypadMotion).axis_value) > input_deadzone):
+		var joystick_name: String = Input.get_joy_name(event.device).to_lower()
+		# Microsoft [XBox], Nintendo [Switch], or Sony [PlayStation] controller
 		if joystick_name.contains("xinput") or joystick_name.contains("standard"):
-			# Set the current input type to Microsoft
 			current_input_type = InputType.MICROSOFT
-		# Check if the device name indicates it is a Nintendo [Switch] controller
 		elif joystick_name.contains("nintendo"):
-			# Set the current input type to Nintendo
 			current_input_type = InputType.NINTENDO
-		# Check if the device name indicates it is a Sony [PlayStation] controller
 		elif joystick_name.contains("dualsense wireless controller") or joystick_name.contains("ps"):
-			# Set the current input type to Sony
 			current_input_type = InputType.SONY
-	# Check if the input is a touch event
 	elif event is InputEventScreenTouch or event is InputEventScreenDrag:
-		# Set the current input type to Touch
 		current_input_type = InputType.TOUCH
 
-	# Check the action of any touchscreen button and display visual press/release state
-	for btn in all_buttons:
-		if btn == null or btn.action.is_empty():
+	# Motion events are never button presses; only press/release events update the pressed visuals
+	if event is InputEventMouseMotion or event is InputEventScreenDrag:
+		return
+	for button: TouchScreenButton in all_buttons:
+		if button.action.is_empty() or not event.is_action(button.action):
 			continue
-		if event.is_action(btn.action):
-			if event.is_action_pressed(btn.action):
-				if btn.texture_pressed != null:
-					btn.texture_normal = btn.texture_pressed
-			elif event.is_action_released(btn.action):
-				if btn in _normal_textures:
-					btn.texture_normal = _normal_textures[btn]
+		if event.is_action_pressed(button.action) and button.texture_pressed:
+			button.texture_normal = button.texture_pressed
+		elif event.is_action_released(button.action):
+			button.texture_normal = _normal_textures[button]
 
 
 func reset_labels() -> void:
-	for label: Variant in _label_texts.keys():
-		if label:
-			label.text = _label_texts[label]
+	for label: Label in _label_texts:
+		label.text = _label_texts[label]
 
 	if player != null and player.has_firearm_equipped:
-		if joypad_axis_4_plus_label:
-			joypad_axis_4_plus_label.text = "Aim"
+		joypad_axis_4_plus_label.text = "Aim"
 
 
 func set_labels(label_texts: Dictionary) -> void:
@@ -730,189 +413,30 @@ func set_labels(label_texts: Dictionary) -> void:
 	if key_l_label in final_texts and not joypad_button_14_label in final_texts:
 		final_texts[joypad_button_14_label] = final_texts[key_l_label]
 
-	for label: Variant in _label_texts.keys():
-		if label:
-			if label in final_texts:
-				label.text = final_texts[label]
-			else:
-				# Don't clear joystick labels if they are not explicitly specified
-				if label != left_joystick_label and label != right_joystick_label:
-					label.text = ""
+	for label: Label in _label_texts:
+		if label in final_texts:
+			label.text = final_texts[label]
+		# Don't clear joystick labels if they are not explicitly specified
+		elif label != left_joystick_label and label != right_joystick_label:
+			label.text = ""
 
 
-func update_input_ui(input_type: InputType) -> void:
+## Applies the current input type: device textures on the swappable buttons, keyboard vs joypad visibility, default labels, and held-button visuals.
+func update_input_ui() -> void:
 	reset_labels()
 
-	# Reset non-swappable buttons (D-pad and keyboard keys) to their pristine normal textures
-	for btn: TouchScreenButton in [
-		joypad_button_11, joypad_button_12, joypad_button_13, joypad_button_14,
-		key_w, key_a, key_s, key_d, key_i, key_j, key_k, key_l,
-		key_up, key_left, key_down, key_right,
-	]:
-		if btn != null and btn in _base_normal_textures:
-			btn.texture_normal = _base_normal_textures[btn]
+	var textures: Array = _vendor_textures[InputType.MICROSOFT if current_input_type == InputType.TOUCH else current_input_type]
+	for i: int in _swappable_buttons.size():
+		_swappable_buttons[i].texture_pressed = textures[i * 2 + 1]
+		_normal_textures[_swappable_buttons[i]] = textures[i * 2]
 
-	if input_type == InputType.KEYBOARD_MOUSE:
-		joypad_button_0.texture_normal = keyboard_mouse_button_0_normal
-		joypad_button_0.texture_pressed = keyboard_mouse_button_0_pressed
-		joypad_button_1.texture_normal = keyboard_mouse_button_1_normal
-		joypad_button_1.texture_pressed = keyboard_mouse_button_1_pressed
-		joypad_button_2.texture_normal = keyboard_mouse_button_2_normal
-		joypad_button_2.texture_pressed = keyboard_mouse_button_2_pressed
-		joypad_button_3.texture_normal = keyboard_mouse_button_3_normal
-		joypad_button_3.texture_pressed = keyboard_mouse_button_3_pressed
-		joypad_button_4.texture_normal = keyboard_mouse_button_4_normal
-		joypad_button_4.texture_pressed = keyboard_mouse_button_4_pressed
-		joypad_button_15.texture_normal = keyboard_mouse_button_15_normal
-		joypad_button_15.texture_pressed = keyboard_mouse_button_15_pressed
-		joypad_button_6.texture_normal = keyboard_mouse_button_6_normal
-		joypad_button_6.texture_pressed = keyboard_mouse_button_6_pressed
-		joypad_button_7.texture_normal = keyboard_mouse_button_7_normal
-		joypad_button_7.texture_pressed = keyboard_mouse_button_7_pressed
-		joypad_button_8.texture_normal = keyboard_mouse_button_8_normal
-		joypad_button_8.texture_pressed = keyboard_mouse_button_8_pressed
-		joypad_button_9.texture_normal = keyboard_mouse_button_9_normal
-		joypad_button_9.texture_pressed = keyboard_mouse_button_9_pressed
-		joypad_button_10.texture_normal = keyboard_mouse_button_10_normal
-		joypad_button_10.texture_pressed = keyboard_mouse_button_10_pressed
-		joypad_axis_4_plus.texture_normal = keyboard_mouse_axis_4_plus_normal
-		joypad_axis_4_plus.texture_pressed = keyboard_mouse_axis_4_plus_pressed
-		joypad_axis_5_plus.texture_normal = keyboard_mouse_axis_5_plus_normal
-		joypad_axis_5_plus.texture_pressed = keyboard_mouse_axis_5_plus_pressed
-		joypad_button_11.hide()
-		joypad_button_12.hide()
-		joypad_button_13.hide()
-		joypad_button_14.hide()
-		left_joystick.hide()
-		right_joystick.hide()
-		key_w.show()
-		key_a.show()
-		key_s.show()
-		key_d.show()
-		key_i.show()
-		key_j.show()
-		key_k.show()
-		key_l.show()
-		key_up.show()
-		key_down.show()
-		key_left.show()
-		key_right.show()
-	elif input_type == InputType.MICROSOFT \
-	or input_type == InputType.TOUCH:
-		joypad_button_0.texture_normal = microsoft_button_0_normal
-		joypad_button_0.texture_pressed = microsoft_button_0_pressed
-		joypad_button_1.texture_normal = microsoft_button_1_normal
-		joypad_button_1.texture_pressed = microsoft_button_1_pressed
-		joypad_button_2.texture_normal = microsoft_button_2_normal
-		joypad_button_2.texture_pressed = microsoft_button_2_pressed
-		joypad_button_3.texture_normal = microsoft_button_3_normal
-		joypad_button_3.texture_pressed = microsoft_button_3_pressed
-		joypad_button_4.texture_normal = microsoft_button_4_normal
-		joypad_button_4.texture_pressed = microsoft_button_4_pressed
-		joypad_button_15.texture_normal = microsoft_button_15_normal
-		joypad_button_15.texture_pressed = microsoft_button_15_pressed
-		joypad_button_6.texture_normal = microsoft_button_6_normal
-		joypad_button_6.texture_pressed = microsoft_button_6_pressed
-		joypad_button_7.texture_normal = microsoft_button_7_normal
-		joypad_button_7.texture_pressed = microsoft_button_7_pressed
-		joypad_button_8.texture_normal = microsoft_button_8_normal
-		joypad_button_8.texture_pressed = microsoft_button_8_pressed
-		joypad_button_9.texture_normal = microsoft_button_9_normal
-		joypad_button_9.texture_pressed = microsoft_button_9_pressed
-		joypad_button_10.texture_normal = microsoft_button_10_normal
-		joypad_button_10.texture_pressed = microsoft_button_10_pressed
-		joypad_axis_4_plus.texture_normal = microsoft_axis_4_plus_normal
-		joypad_axis_4_plus.texture_pressed = microsoft_axis_4_plus_pressed
-		joypad_axis_5_plus.texture_normal = microsoft_axis_5_plus_normal
-		joypad_axis_5_plus.texture_pressed = microsoft_axis_5_plus_pressed
-	elif input_type == InputType.NINTENDO:
-		joypad_button_0.texture_normal = nintendo_button_0_normal
-		joypad_button_0.texture_pressed = nintendo_button_0_pressed
-		joypad_button_1.texture_normal = nintendo_button_1_normal
-		joypad_button_1.texture_pressed = nintendo_button_1_pressed
-		joypad_button_2.texture_normal = nintendo_button_2_normal
-		joypad_button_2.texture_pressed = nintendo_button_2_pressed
-		joypad_button_3.texture_normal = nintendo_button_3_normal
-		joypad_button_3.texture_pressed = nintendo_button_3_pressed
-		joypad_button_4.texture_normal = nintendo_button_4_normal
-		joypad_button_4.texture_pressed = nintendo_button_4_pressed
-		joypad_button_15.texture_normal = nintendo_button_15_normal
-		joypad_button_15.texture_pressed = nintendo_button_15_pressed
-		joypad_button_6.texture_normal = nintendo_button_6_normal
-		joypad_button_6.texture_pressed = nintendo_button_6_pressed
-		joypad_button_7.texture_normal = nintendo_button_7_normal
-		joypad_button_7.texture_pressed = nintendo_button_7_pressed
-		joypad_button_8.texture_normal = nintendo_button_8_normal
-		joypad_button_8.texture_pressed = nintendo_button_8_pressed
-		joypad_button_9.texture_normal = nintendo_button_9_normal
-		joypad_button_9.texture_pressed = nintendo_button_9_pressed
-		joypad_button_10.texture_normal = nintendo_button_10_normal
-		joypad_button_10.texture_pressed = nintendo_button_10_pressed
-		joypad_axis_4_plus.texture_normal = nintendo_axis_4_plus_normal
-		joypad_axis_4_plus.texture_pressed = nintendo_axis_4_plus_pressed
-		joypad_axis_5_plus.texture_normal = nintendo_axis_5_plus_normal
-		joypad_axis_5_plus.texture_pressed = nintendo_axis_5_plus_pressed
-	elif input_type == InputType.SONY:
-		joypad_button_0.texture_normal = sony_button_0_normal
-		joypad_button_0.texture_pressed = sony_button_0_pressed
-		joypad_button_1.texture_normal = sony_button_1_normal
-		joypad_button_1.texture_pressed = sony_button_1_pressed
-		joypad_button_2.texture_normal = sony_button_2_normal
-		joypad_button_2.texture_pressed = sony_button_2_pressed
-		joypad_button_3.texture_normal = sony_button_3_normal
-		joypad_button_3.texture_pressed = sony_button_3_pressed
-		joypad_button_4.texture_normal = sony_button_4_normal
-		joypad_button_4.texture_pressed = sony_button_4_pressed
-		joypad_button_15.texture_normal = sony_button_15_normal
-		joypad_button_15.texture_pressed = sony_button_15_pressed
-		joypad_button_6.texture_normal = sony_button_6_normal
-		joypad_button_6.texture_pressed = sony_button_6_pressed
-		joypad_button_7.texture_normal = sony_button_7_normal
-		joypad_button_7.texture_pressed = sony_button_7_pressed
-		joypad_button_8.texture_normal = sony_button_8_normal
-		joypad_button_8.texture_pressed = sony_button_8_pressed
-		joypad_button_9.texture_normal = sony_button_9_normal
-		joypad_button_9.texture_pressed = sony_button_9_pressed
-		joypad_button_10.texture_normal = sony_button_10_normal
-		joypad_button_10.texture_pressed = sony_button_10_pressed
-		joypad_axis_4_plus.texture_normal = sony_axis_4_plus_normal
-		joypad_axis_4_plus.texture_pressed = sony_axis_4_plus_pressed
-		joypad_axis_5_plus.texture_normal = sony_axis_5_plus_normal
-		joypad_axis_5_plus.texture_pressed = sony_axis_5_plus_pressed
+	var is_keyboard: bool = current_input_type == InputType.KEYBOARD_MOUSE
+	for item: CanvasItem in _joypad_only:
+		item.visible = not is_keyboard
+	for item: CanvasItem in _keyboard_only:
+		item.visible = is_keyboard
 
-	if input_type != InputType.KEYBOARD_MOUSE:
-		# Show joypad controls
-		joypad_button_11.show()
-		joypad_button_12.show()
-		joypad_button_13.show()
-		joypad_button_14.show()
-		left_joystick.show()
-		right_joystick.show()
-		# Hide keyboard controls
-		key_w.hide()
-		key_a.hide()
-		key_s.hide()
-		key_d.hide()
-		key_i.hide()
-		key_j.hide()
-		key_k.hide()
-		key_l.hide()
-		key_up.hide()
-		key_down.hide()
-		key_left.hide()
-		key_right.hide()
-
-	# Cache normal textures for visual pressed/released state feedback
-	for btn in all_buttons:
-		if btn != null:
-			_normal_textures[btn] = btn.texture_normal
-
-	# Sync current pressed state with active actions
-	for btn in all_buttons:
-		if btn == null or btn.action.is_empty():
-			continue
-		if InputMap.has_action(btn.action) and Input.is_action_pressed(btn.action):
-			if btn.texture_pressed != null:
-				btn.texture_normal = btn.texture_pressed
-		else:
-			btn.texture_normal = _normal_textures[btn]
+	# Show each button pressed or normal to match the actions currently held
+	for button: TouchScreenButton in all_buttons:
+		var is_held: bool = not button.action.is_empty() and InputMap.has_action(button.action) and Input.is_action_pressed(button.action)
+		button.texture_normal = button.texture_pressed if is_held and button.texture_pressed else _normal_textures[button]

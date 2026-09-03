@@ -1,7 +1,7 @@
 class_name Flying
 extends NodeStateMachine
 
-const DOUBLE_TAP_TIME_MS: int = 300
+const DOUBLE_TAP_TIME: float = 0.3 ## Window (s) in which a second stop-action press stops flying.
 
 @export_category("Flying Controls")
 @export_group("Keyboard/Mouse Actions")
@@ -14,8 +14,7 @@ const DOUBLE_TAP_TIME_MS: int = 300
 @export var pad_down_action: StringName = &"action"
 @export var pad_stop_action: StringName = &"action" ## Requires a double-press
 
-var _last_crouch_press_time: int = 0
-var _this_state := NodeStateMachine.States.FLYING
+var _double_tap_timer: SceneTreeTimer ## Runs after a stop-action press; a second press before it expires stops flying.
 
 
 ## Called when there is an input event.
@@ -24,21 +23,13 @@ func _input(event: InputEvent) -> void:
 	# Do nothing if the player is not set or is paused/ragdolling
 	if not player or player.is_paused or player.is_ragdolling: return
 
-	var input_type = player.controls.current_input_type if player.controls else 0
-	var current_stop_action = keyboard_stop_action if input_type == 0 else pad_stop_action
-
-	# Stop flying if double-press crouch / stop action
-	if event.is_action_pressed(current_stop_action) and not event.is_echo():
-		var current_time := Time.get_ticks_msec()
-		if current_time - _last_crouch_press_time <= DOUBLE_TAP_TIME_MS:
-			if player.is_on_floor():
-				player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
-			else:
-				player.state_machine.travel(_this_state, NodeStateMachine.States.FALLING)
-			_last_crouch_press_time = 0
-			return
+	# Stop flying on a double-press of the stop action
+	if event.is_action_pressed(action(keyboard_stop_action, pad_stop_action)) and not event.is_echo():
+		if _double_tap_timer and _double_tap_timer.time_left > 0.0:
+			_double_tap_timer = null
+			player.state_machine.travel(state, States.STANDING if player.is_on_floor() else States.FALLING)
 		else:
-			_last_crouch_press_time = current_time
+			_double_tap_timer = get_tree().create_timer(DOUBLE_TAP_TIME)
 
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
@@ -52,7 +43,7 @@ func _physics_process(delta: float) -> void:
 	# Check if the player has reached the floor
 	if player.is_on_floor():
 		# Start "standing"
-		player.state_machine.travel(_this_state, NodeStateMachine.States.STANDING)
+		player.state_machine.travel(state, States.STANDING)
 		return
 
 	# While flying, movement is driven relative to camera / input
@@ -77,23 +68,16 @@ func _physics_process(delta: float) -> void:
 		player.orientation.basis = Basis(q_from.slerp(q_to, delta * player.rotation_interpolate_speed))
 
 	# Horizontal speed
-	var fly_speed: float = 8.0
-	if player.is_sprinting:
-		fly_speed = 14.0
-
+	var fly_speed: float = 14.0 if player.is_sprinting else 8.0
 	var h_velocity: Vector3 = Vector3.ZERO
 	if target_dir.length_squared() > 0.001:
 		h_velocity = target_dir.normalized() * fly_speed * (speed_blend / (1.5 if player.is_sprinting else 1.0))
 
-	var input_type = player.controls.current_input_type if player.controls else 0
-	var current_up_action = keyboard_up_action if input_type == 0 else pad_up_action
-	var current_down_action = keyboard_down_action if input_type == 0 else pad_down_action
-
 	# Vertical control along player.up_direction (jump to fly upward along up_dir, crouch/down to fly downward along -up_dir)
 	var v_speed: float = 0.0
-	if Input.is_action_pressed(current_up_action):
+	if Input.is_action_pressed(action(keyboard_up_action, pad_up_action)):
 		v_speed = 6.0
-	elif Input.is_action_pressed(current_down_action):
+	elif Input.is_action_pressed(action(keyboard_down_action, pad_down_action)):
 		v_speed = -6.0
 
 	player.velocity = h_velocity + (up_dir * v_speed)
@@ -102,10 +86,7 @@ func _physics_process(delta: float) -> void:
 
 ## Start "flying".
 func start() -> void:
-	# Enable _this_ state node
-	process_mode = Node.PROCESS_MODE_INHERIT
-	# Set the player's new state
-	player.current_state = _this_state
+	super.start()
 	# Flag the player as "flying"
 	player.is_flying = true
 	# Flag the player as not jumping or falling
@@ -117,29 +98,16 @@ func start() -> void:
 
 ## Stop "flying".
 func stop() -> void:
-	# Disable _this_ state node
-	process_mode = Node.PROCESS_MODE_DISABLED
-	# Clear the player's state (if it is currently set to _this_ state)
-	if player.current_state == _this_state:
-		player.current_state = -1
+	super.stop()
 	# Flag the player as not "flying"
 	player.is_flying = false
+	_double_tap_timer = null
 
 
 func get_contextual_controls(input_type: int) -> Dictionary:
-	if not player or not player.controls: return {}
-
-	var controls = {
-		player.controls.joypad_button_4_label: "Perspective",
-		player.controls.joypad_button_15_label: "Screenshot",
-		player.controls.joypad_button_6_label: "Pause Menu",
+	return {
 		player.controls.joypad_button_3_label: "Fly Up",
 		player.controls.left_joystick_label: "Fly",
 		player.controls.right_joystick_label: "Camera",
+		player.controls.joypad_button_7_label if input_type == Controls.InputType.KEYBOARD_MOUSE else player.controls.joypad_button_0_label: "Fly Down",
 	}
-	if input_type == 0: # KEYBOARD_MOUSE
-		controls[player.controls.joypad_button_7_label] = "Fly Down"
-	else:
-		controls[player.controls.joypad_button_0_label] = "Fly Down"
-	
-	return controls

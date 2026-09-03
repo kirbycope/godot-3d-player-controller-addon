@@ -1,7 +1,10 @@
 class_name NodeStateMachine
 extends Node
 
+## Node-based finite state machine for [Player]: this script is both the machine node and the base of every state node beneath it.
+
 enum States {
+	NONE = -1,
 	ATTACKING,
 	CLIMBING,
 	CROUCHING,
@@ -21,17 +24,23 @@ enum States {
 	SWIMMING,
 }
 
+@export var player: Player
+
+## The state this node represents, derived from its node name ("Standing" -> STANDING); NONE on the machine node itself.
+@onready var state: States = States.get(String(name).to_upper(), States.NONE)
+
+
 func _ready() -> void:
 	set_process(is_multiplayer_authority())
 	set_physics_process(is_multiplayer_authority())
 	set_process_input(is_multiplayer_authority())
-
-@export var player: Player
+	if player and is_multiplayer_authority() and not player.locomotion_node_changed.is_connected(_on_locomotion_node_changed):
+		player.locomotion_node_changed.connect(_on_locomotion_node_changed)
 
 
 ## Helper function to get the state name from the `NodeStateMachine.States` enum value.
-static func get_state_name(state: int) -> StringName:
-	var state_name: Variant = States.find_key(state)
+static func get_state_name(state_value: int) -> StringName:
+	var state_name: Variant = States.find_key(state_value)
 	if state_name == null:
 		return &""
 	return StringName(String(state_name).capitalize())
@@ -39,75 +48,65 @@ static func get_state_name(state: int) -> StringName:
 
 ## Transition from one state to another.
 func travel(from_state: States, to_state: States) -> void:
-	if not _is_state_enabled(to_state):
-		return
-
-	# Block transition to RAGDOLLING if player is paused or Pause CanvasLayer is visible
-	if to_state == States.RAGDOLLING and player and (player.is_paused or (player.pause and player.pause.visible)):
-		return
-
-	# Block transitions while ragdolling unless explicitly entering or exiting the RAGDOLLING state
-	if player and player.is_ragdolling and to_state != States.RAGDOLLING and from_state != States.RAGDOLLING:
-		return
-
-	if from_state in States.values():
-		var from_state_name: StringName = get_state_name(from_state)
-		var from_state_node: Node = get_node_or_null(NodePath(from_state_name))
-		if from_state_node == null:
-			push_error("Invalid from_state: %s" % str(from_state_name))
-		elif not from_state_node.has_method("stop"):
-			push_error("State %s missing stop()" % str(from_state_name))
-		else:
-			if player and player.controls:
-				if player.controls.input_type_changed.is_connected(from_state_node._on_input_type_changed):
-					player.controls.input_type_changed.disconnect(from_state_node._on_input_type_changed)
-				player.controls.reset_labels()
-			from_state_node.call("stop")
-	elif from_state != -1:
-		push_warning("Invalid from_state: %s" % str(from_state))
-
-	if to_state in States.values():
-		var to_state_name: StringName = get_state_name(to_state)
-		var to_state_node: Node = get_node_or_null(NodePath(to_state_name))
-		if to_state_node == null:
-			push_error("Invalid to_state: %s" % str(to_state_name))
-		elif not to_state_node.has_method("start"):
-			push_error("State %s missing start()" % str(to_state_name))
-		else:
-			if player and player.controls:
-				var is_holding_object: bool = player.held_object \
-						and player.held_object.is_holding_object()
-				if is_holding_object:
-					player.held_object.refresh_contextual_controls()
-				else:
-					if not player.controls.input_type_changed.is_connected(
-						to_state_node._on_input_type_changed
-					):
-						player.controls.input_type_changed.connect(
-							to_state_node._on_input_type_changed
-						)
-					to_state_node._on_input_type_changed(player.controls.current_input_type)
-			to_state_node.call("start")
-	else:
-		push_warning("Invalid to_state: %s" % str(to_state))
-
-
-func _is_state_enabled(state: States) -> bool:
 	if player == null:
-		return true
+		return
 
-	match state:
-		States.FLYING:
-			return player.enable_flying
-		States.PARAGLIDING:
-			return player.enable_paraglider
-		States.RAGDOLLING:
-			return player.enable_ragdoll
-		_:
-			return true
+	# Optional states must be enabled; RAGDOLLING is also blocked while paused, and nothing but RAGDOLLING changes while ragdolling
+	match to_state:
+		States.FLYING when not player.enable_flying: return
+		States.PARAGLIDING when not player.enable_paraglider: return
+		States.RAGDOLLING when not player.enable_ragdoll or player.is_paused or (player.pause and player.pause.visible): return
+	if player.is_ragdolling and to_state != States.RAGDOLLING and from_state != States.RAGDOLLING:
+		return
+
+	if from_state != States.NONE:
+		var from_node: NodeStateMachine = get_node_or_null(NodePath(get_state_name(from_state))) as NodeStateMachine
+		if from_node == null:
+			push_error("Invalid from_state: %s" % from_state)
+		else:
+			if player.controls:
+				if player.controls.input_type_changed.is_connected(from_node._on_input_type_changed):
+					player.controls.input_type_changed.disconnect(from_node._on_input_type_changed)
+				player.controls.reset_labels()
+			from_node.stop()
+
+	var to_node: NodeStateMachine = get_node_or_null(NodePath(get_state_name(to_state))) as NodeStateMachine
+	if to_node == null:
+		push_error("Invalid to_state: %s" % to_state)
+		return
+	if player.controls:
+		if player.held_object and player.held_object.is_holding_object():
+			player.held_object.refresh_contextual_controls()
+		else:
+			if not player.controls.input_type_changed.is_connected(to_node._on_input_type_changed):
+				player.controls.input_type_changed.connect(to_node._on_input_type_changed)
+			to_node._on_input_type_changed(player.controls.current_input_type)
+	to_node.start()
 
 
+## Enables this state node and makes it the player's current state; states extend it with `super.start()`.
+func start() -> void:
+	process_mode = Node.PROCESS_MODE_INHERIT
+	player.current_state = state
 
+
+## Disables this state node and clears the player's current state (if it is still this state); states extend it with `super.stop()`.
+func stop() -> void:
+	process_mode = Node.PROCESS_MODE_DISABLED
+	if player.current_state == state:
+		player.current_state = States.NONE
+
+
+## Resolves an action name for the current input type (keyboard/mouse vs controller/touch).
+func action(keyboard: StringName, pad: StringName) -> StringName:
+	if player.controls == null or player.controls.current_input_type == Controls.InputType.KEYBOARD_MOUSE:
+		return keyboard
+	return pad
+
+
+## Called when the player's locomotion path changes; states override it and early-return unless `process_mode == PROCESS_MODE_INHERIT`.
+func _on_locomotion_node_changed(_state_path: String) -> void:
+	pass
 
 
 ## True if the player is moving into a wall (or heavy object) they are facing.
@@ -117,7 +116,7 @@ func is_player_pushing_into_wall() -> bool:
 	var facing: Vector3 = player.get_facing_direction()
 	if facing == Vector3.ZERO:
 		return false
-	for i in player.get_slide_collision_count():
+	for i: int in player.get_slide_collision_count():
 		var collision: KinematicCollision3D = player.get_slide_collision(i)
 		if collision.get_collider() is CharacterBody3D:
 			continue
@@ -131,15 +130,23 @@ func is_player_pushing_into_wall() -> bool:
 	return false
 
 
+## Applies this state's contextual control labels (plus the shared Perspective/Screenshot/Pause Menu labels), or the defaults when it has none.
 func _on_input_type_changed(input_type: int) -> void:
-	if not player or not player.controls: return
-	
-	var controls = get_contextual_controls(input_type)
+	if player == null or player.controls == null: return
+	# A held object owns the labels while it is held
+	if player.held_object and player.held_object.is_holding_object(): return
+
+	var controls: Dictionary = get_contextual_controls(input_type)
 	if controls.is_empty():
 		player.controls.reset_labels()
 	else:
-		player.controls.set_labels(controls)
+		player.controls.set_labels(controls.merged({
+			player.controls.joypad_button_4_label: "Perspective",
+			player.controls.joypad_button_15_label: "Screenshot",
+			player.controls.joypad_button_6_label: "Pause Menu",
+		}))
 
 
+## State-specific control labels keyed by label node; return {} to keep the default labels.
 func get_contextual_controls(_input_type: int) -> Dictionary:
 	return {}

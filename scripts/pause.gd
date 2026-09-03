@@ -1,55 +1,37 @@
-extends CanvasLayer
+extends PlayerMenuLayer
 
-@export var player: Player
-
-@onready var project_rendering_method = ProjectSettings.get_setting("rendering/renderer/rendering_method")
-@onready var lobby: Button = get_node_or_null("Panel/VBoxContainer/Lobby") as Button
+@onready var lobby: Button = $Panel/VBoxContainer/Lobby
 
 
 ## Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	if lobby:
-		var is_gl_compatibility: bool = project_rendering_method not in ["forward_plus", "mobile"] or OS.has_feature("gl_compatibility") or OS.has_feature("web") or not Engine.has_singleton("Steam")
-		lobby.disabled = is_gl_compatibility
+	super()
+	var rendering_method: String = ProjectSettings.get_setting("rendering/renderer/rendering_method")
+	var lobby_unavailable: bool = rendering_method not in ["forward_plus", "mobile"] \
+		or OS.has_feature("gl_compatibility") \
+		or OS.has_feature("web") \
+		or not Engine.has_singleton("Steam")
+	lobby.disabled = lobby_unavailable
 
 
-## Called when there is an input event.
+## Called when there is an input event; "start" toggles the pause menu.
 func _input(event: InputEvent) -> void:
-
-	# Unpause
-	if event.is_action_pressed("start") \
-	and player.is_paused \
-	and visible:
+	if not event.is_action_pressed("start"):
+		return
+	if visible:
 		hide_menu()
-		get_viewport().set_input_as_handled()
-
-	# Pause
-	elif event.is_action_pressed("start") \
-	and not player.is_paused \
-	and not visible:
+	elif player and not player.is_paused:
 		show_menu()
-		get_viewport().set_input_as_handled()
-
-
-func show_menu() -> void:
-	show()
-	player.is_paused = true
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	$Panel/VBoxContainer/Resume.grab_focus()
-
-
-func hide_menu() -> void:
-	hide()
-	player.is_paused = false
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	else:
+		return
+	get_viewport().set_input_as_handled()
 
 
 func _on_lobby_pressed() -> void:
-	if lobby and lobby.disabled:
+	if player == null or lobby.disabled or player.lobby_manager == null:
 		return
 	hide()
-	if player and player.lobby_manager:
-		player.lobby_manager.show_menu()
+	player.lobby_manager.show_menu()
 
 
 func _on_lobby_touch_screen_button_pressed() -> void:
@@ -73,8 +55,10 @@ func _on_restart_touch_screen_button_pressed() -> void:
 
 
 func _on_settings_pressed() -> void:
+	if player == null:
+		return
 	hide()
-	player.settings.show_settings()
+	player.settings.show_menu()
 
 
 func _on_settings_touch_screen_button_pressed() -> void:
@@ -82,13 +66,14 @@ func _on_settings_touch_screen_button_pressed() -> void:
 
 
 func _on_unstuck_pressed() -> void:
-	if player:
-		player.global_transform = player.initial_transform
-		player.velocity = Vector3.ZERO
-		player.up_direction = player.initial_transform.basis.y.normalized()
-		player.orientation = Transform3D(player.initial_transform.basis, Vector3.ZERO)
-		player.player_model.transform = player.initial_player_model_transform
-		player.collision_shape.transform = player.initial_collision_shape_transform
+	if player == null:
+		return
+	player.global_transform = player.initial_transform
+	player.velocity = Vector3.ZERO
+	player.up_direction = player.initial_transform.basis.y.normalized()
+	player.orientation = Transform3D(player.initial_transform.basis, Vector3.ZERO)
+	player.player_model.transform = player.initial_player_model_transform
+	player.collision_shape.transform = player.initial_collision_shape_transform
 
 
 func _on_unstuck_touch_screen_button_pressed() -> void:

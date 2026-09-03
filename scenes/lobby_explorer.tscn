@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://cm3w8qf7ypsak"]
 
 [ext_resource type="Script" path="res://addons/3d_player_controller/scripts/lobby_explorer.gd" id="1_explorer"]
-[ext_resource type="PackedScene" uid="uid://cs1ytkq7kgqdu" path="res://scenes/loading.tscn" id="2_loading"]
+[ext_resource type="PackedScene" uid="uid://cs1ytkq7kgqdu" path="res://addons/3d_player_controller/scenes/loading.tscn" id="2_loading"]
 [ext_resource type="PackedScene" uid="uid://df7h3wqp5lxy1" path="res://addons/3d_player_controller/scenes/lobby_explorer_entry.tscn" id="3_entry"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_title"]
@@ -168,6 +168,10 @@ text = "© Timothy Cope 2026"
 [node name="Loading" parent="." instance=ExtResource("2_loading")]
 visible = false
 
+[connection signal="pressed" from="Panel/VBoxContainer/TopBar/Button_Host" to="." method="_on_host_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/TopBar/Button_Host/TouchScreenButton" to="." method="_on_touch_host_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/TopBar/Button_Refresh" to="." method="refresh_lobbies"]
 [connection signal="pressed" from="Panel/VBoxContainer/TopBar/Button_Refresh/TouchScreenButton" to="." method="_on_touch_refresh_pressed"]
+[connection signal="item_selected" from="Panel/VBoxContainer/TopBar/DistanceOption" to="." method="_on_distance_filter_changed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Button_Back" to="." method="_on_back_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/Button_Back/TouchScreenButton" to="." method="_on_touch_back_pressed"]
