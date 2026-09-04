@@ -31,7 +31,6 @@ func before_each() -> void:
 	abilities = player.abilities
 	stealth = STEALTH.duplicate()
 	heal = HEAL.duplicate()
-	heal.cast_style = Ability.CastStyle.UPWARD # The shipped resources leave the style and sounds to the inspector
 	abilities.abilities = [stealth, heal]
 	abilities.active_ability = stealth
 	sender = InputSender.new(Input)
@@ -365,12 +364,12 @@ func test_cast_styles_map_to_the_weapon_group_clips() -> void:
 	assert_eq(spell.get_cast_state("", false), "SpellCastSweepingUpwards")
 
 
-func test_the_shipped_spells_leave_style_and_sounds_to_the_inspector() -> void:
-	for spell: Ability in [HEAL, STEALTH]:
-		assert_eq(spell.cast_style, Ability.CastStyle.NONE, spell.display_name + " ships with no cast style picked")
-		assert_null(spell.channeling_sfx, spell.display_name)
-		assert_null(spell.casting_sfx, spell.display_name)
-		assert_null(spell.impact_sfx, spell.display_name)
+func test_the_shipped_spells_carry_styles_and_sounds() -> void:
+	assert_eq(HEAL.cast_style, Ability.CastStyle.UPWARD)
+	assert_not_null(HEAL.channeling_sfx)
+	assert_not_null(HEAL.casting_sfx)
+	assert_eq(STEALTH.cast_style, Ability.CastStyle.SWEEPING_SIDEWAYS)
+	assert_not_null(STEALTH.casting_sfx)
 
 
 func _equip_shield() -> void:
