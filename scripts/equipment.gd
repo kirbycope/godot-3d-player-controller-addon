@@ -30,6 +30,7 @@ enum EquipmentType {
 @export var is_exclusive: bool = false ## Is this equipment exclusive, meaning it cannot be equipped with other equipment types simultaneously?
 @export var is_throwable: bool = false ## Can this equipment be thrown?
 @export var projectile_speed: float = 50.0 ## meters/second (Arrows, Bullets, etc.)
+@export var accuracy: Accuracy ## Spread cone for ranged equipment, shrinking with the Player's [code]skill_level[/code]; empty fires dead straight.
 @export var position_offset: Vector3: ## Positional offset applied to the equipment when attached to the player.
 	set(val):
 		position_offset = val
@@ -99,3 +100,8 @@ func hide_menu() -> void:
 	if action_prompt:
 		action_prompt.hide()
 	menu_displayed = false
+
+
+## [param direction] pushed off its line by [member accuracy] for the Player's skill; straight without one.
+func scatter(direction: Vector3) -> Vector3:
+	return accuracy.scatter(direction, player.skill_level) if accuracy and player else direction.normalized()

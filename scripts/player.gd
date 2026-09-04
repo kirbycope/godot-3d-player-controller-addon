@@ -1278,6 +1278,8 @@ func set_look_at_target(target: Node3D) -> void:
 	modifier.active = target != null
 
 
+@export_category("Combat")
+@export var skill_level: int = 0 ## Marksmanship: shrinks the spread of ranged equipment per its [Accuracy] resource (0 novice, expert at the resource's expert_level).
 @export_category("Traversal")
 @export var stealth_transparency: float = 0.7 ## How faded the model is while [member is_stealthed].
 @export var lethal_fall_speed: float = 15.0 ## Landing at or above this downward speed (m/s) ragdolls the player.

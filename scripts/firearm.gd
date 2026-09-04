@@ -85,7 +85,8 @@ func get_aim_point() -> Vector3:
 
 
 ## Launches one projectile on the projectile ray, level with the muzzle, toward the aim point; an empty
-## magazine reloads instead. The round rides the crosshair line, so it lands where the crosshair is.
+## magazine reloads instead. The round rides the crosshair line, so it lands where the crosshair is, give or
+## take the spread of [member accuracy] for the Player's skill.
 func fire() -> Projectile:
 	if projectile_scene == null or muzzle == null:
 		return null
@@ -98,7 +99,7 @@ func fire() -> Projectile:
 	var along: Vector3 = -ray.global_basis.z
 	var origin: Transform3D = muzzle.global_transform
 	origin.origin = ray.global_position + along * maxf((muzzle.global_position - ray.global_position).dot(along), 0.0)
-	var direction: Vector3 = (aim - origin.origin).normalized()
+	var direction: Vector3 = scatter(aim - origin.origin)
 	var projectile: Projectile
 	var spawner: ProjectileSpawner = get_tree().get_first_node_in_group(&"ProjectileSpawner") as ProjectileSpawner
 	if spawner:

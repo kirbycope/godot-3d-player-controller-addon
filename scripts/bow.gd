@@ -46,7 +46,7 @@ func fire_arrow() -> void:
 	var origin: Node3D = arrow_node if arrow_node else self
 	player.projectile_raycast.force_raycast_update()
 	var target_position: Vector3 = player.projectile_raycast.get_collision_point() if player.projectile_raycast.is_colliding() 			else player.projectile_raycast.global_position - player.projectile_raycast.global_basis.z * RAY_MISS_DISTANCE
-	var direction: Vector3 = (target_position - origin.global_position).normalized()
+	var direction: Vector3 = scatter(target_position - origin.global_position)
 	var spawner: ProjectileSpawner = get_tree().get_first_node_in_group(&"ProjectileSpawner") as ProjectileSpawner
 	if arrow_scene and spawner:
 		spawner.fire(arrow_scene, origin.global_transform, direction, projectile_speed, player, self)
