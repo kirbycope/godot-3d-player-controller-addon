@@ -23,7 +23,10 @@ extends NodeStateMachine
 
 const BAIL_OUT_SPEED: float = 2.0 ## Above this speed exiting skips the door animation.
 
+@export var chase_distance: float = 5.5 ## Camera spring arm length while driving (GTA chase camera); the walking length is restored on exit.
+
 var _driver_seat: Node3D ## The vehicle's "DriverSeat" marker, cached on start.
+var _walking_spring_length: float = 2.0
 
 
 func _input(event: InputEvent) -> void:
@@ -87,12 +90,22 @@ func start() -> void:
 	player.locomotion_state.start("EnteringCar")
 	player.collision_shape.disabled = true
 	player.crosshair.hide()
+	# The chase camera sits well back and must not be pushed onto the roof by the car's own collision
+	var arm: SpringArm3D = player.camera.camera_spring_arm
+	_walking_spring_length = arm.spring_length
+	arm.spring_length = chase_distance
+	if player.is_driving_in is CollisionObject3D:
+		arm.add_excluded_object((player.is_driving_in as CollisionObject3D).get_rid())
 
 
 ## Stop "driving".
 func stop() -> void:
 	super.stop()
 	player.is_driving = false
+	var arm: SpringArm3D = player.camera.camera_spring_arm
+	arm.spring_length = _walking_spring_length
+	if player.is_driving_in is CollisionObject3D:
+		arm.remove_excluded_object((player.is_driving_in as CollisionObject3D).get_rid())
 	if player.is_driving_in and player.is_driving_in.has_method("set_driver"):
 		player.is_driving_in.call("set_driver", null)
 	player.is_driving_in = null

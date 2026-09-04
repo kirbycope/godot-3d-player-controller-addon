@@ -4044,7 +4044,7 @@ target_position = Vector3(0, 0, -3)
 collide_with_areas = true
 
 [node name="CameraFollowTimer" type="Timer" parent="CameraMount/CameraSpringArm/Camera3D"]
-wait_time = 2.0
+wait_time = 0.8
 one_shot = true
 
 [node name="ItemSpringArm" type="SpringArm3D" parent="CameraMount" unique_id=333552600]

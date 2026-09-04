@@ -203,7 +203,14 @@ func _process(delta: float) -> void:
 	else:
 		focus_aim_offset = Vector2.ZERO
 		if (player.is_driving or player.is_skateboarding) and camera_follow_timer.is_stopped():
-			camera_mount.rotation.y = lerp_angle(camera_mount.rotation.y, player.player_model.rotation.y + PI, delta * 8.0)
+			var target_yaw: float = player.player_model.rotation.y + PI
+			var vehicle: RigidBody3D = player.is_driving_in as RigidBody3D
+			# GTA chase camera: follow where the car is travelling once it moves the way the camera looks, so slides swing the view
+			if vehicle and Vector2(vehicle.linear_velocity.x, vehicle.linear_velocity.z).length() > 3.0 \
+			and vehicle.linear_velocity.dot(-camera_mount.global_basis.z) > 0.0:
+				var travel: Vector3 = player.global_basis.inverse() * vehicle.linear_velocity
+				target_yaw = atan2(-travel.x, -travel.z)
+			camera_mount.rotation.y = lerp_angle(camera_mount.rotation.y, target_yaw, delta * 5.0)
 
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
