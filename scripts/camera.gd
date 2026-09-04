@@ -89,7 +89,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	# Do nothing if the player is not set or is paused/ragdolling
 	if not player or player.is_paused or player.is_ragdolling: return
 
-	# Check if the player is interacting with an equipment item and has pressed "action" to interact
+	# Look-at interactables that take "action" (the skateboard, the push button); Equipment pickups are walk-over areas instead
 	if looking_at and event.is_action_pressed("action") and looking_at.has_method("equip"):
 		looking_at.equip(player)
 		looking_at = null

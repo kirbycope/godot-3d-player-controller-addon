@@ -2,6 +2,10 @@ class_name Equipment
 extends Node3D
 ## A pick-up-able item attached to a Player skeleton bone when equipped.
 ##
+## In the world it is a GTA-style pickup: a child [Area3D] named "PlayerDetection" (its body_entered wired to
+## [method _on_player_detection_body_entered] in the scene) equips a copy on the first Player to walk over it and
+## then stops monitoring, so each pickup is taken once with no prompt or button.
+##
 ## Melee weapons that should register hits need a child [Area3D] named "Hitbox"; [HitDetection]
 ## enables its monitoring during attack swings.
 
@@ -45,10 +49,9 @@ enum EquipmentType {
 		_update_attachment_offsets()
 
 var equipment_instance: Equipment ## The equipped copy of this item, once [method equip] has run.
-var menu_displayed: bool = false
 var player: Player
 
-@onready var action_prompt: Node3D = get_node_or_null("ActionPrompt") as Node3D
+@onready var player_detection: Area3D = get_node_or_null("PlayerDetection") as Area3D ## The walk-over pickup volume, on world copies.
 
 
 func _update_attachment_offsets() -> void:
@@ -59,22 +62,18 @@ func _update_attachment_offsets() -> void:
 	equipment_instance.scale = scale_offset
 
 
-func display_menu(target_player: Player) -> void:
-	if target_player.inventory.has_equipment_in_backpack(equipment_type, bone_attachment_bone_name):
-		return
-
-	# The prompt scene is project-side (scenes/action_prompt.gd), so this stays duck typed.
-	if action_prompt and action_prompt.has_method("show_for"):
-		action_prompt.call("show_for", target_player)
-	menu_displayed = true
+## Wired to PlayerDetection.body_entered: the Player that walked over the pickup takes it, and the pickup is spent.
+func _on_player_detection_body_entered(body: Node3D) -> void:
+	if body is Player and body.is_multiplayer_authority() and equip(body):
+		player_detection.set_deferred(&"monitoring", false)
 
 
 ## Duplicates this item onto a new [BoneAttachment3D] on the player's skeleton and registers it with the inventory.
-func equip(target_player: Player) -> void:
-	hide_menu()
+## False when the Player already carries one of this type on this bone, or the item cannot be worn.
+func equip(target_player: Player) -> bool:
 	if target_player == null or bone_attachment_bone_name.is_empty() \
 			or target_player.inventory.has_equipment_in_backpack(equipment_type, bone_attachment_bone_name):
-		return
+		return false
 
 	target_player.inventory.stow_conflicting(bone_attachment_bone_name, is_exclusive)
 
@@ -94,12 +93,7 @@ func equip(target_player: Player) -> void:
 	_update_attachment_offsets()
 
 	target_player.inventory.add_equipment(equipment_instance)
-
-
-func hide_menu() -> void:
-	if action_prompt:
-		action_prompt.hide()
-	menu_displayed = false
+	return true
 
 
 ## [param direction] pushed off its line by [member accuracy] for the Player's skill; straight without one.
