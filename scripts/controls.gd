@@ -185,6 +185,9 @@ const ACTIONS: Dictionary = {
 @onready var joypad_button_9_label: Label = $TopLeft/JoypadButton9/Label
 @onready var cast_bar: ProgressBar = %CastBar ## Fills while an ability with a cast time is cast.
 @onready var cast_label: Label = %CastLabel ## Names the ability being cast on the cast bar.
+@onready var boss_bar: VBoxContainer = %BossBar ## Name and health of the boss this player is fighting.
+@onready var boss_name_label: Label = %BossName
+@onready var boss_health_bar: ProgressBar = %BossHealth
 @onready var joypad_button_10: TouchScreenButton = $TopRight/JoypadButton10 ## Joypad Button 10 (Right Shoulder, Sony R1, XBox RB, Nintendo R)
 @onready var joypad_button_10_label: Label = $TopRight/JoypadButton10/Label
 @onready var joypad_axis_4_plus: TouchScreenButton = $TopLeft/JoypadAxis4Plus ## Joypad Axis 4 + (Left Trigger, Sony L2, XBox LT, Nintendo ZL)
@@ -444,3 +447,18 @@ func update_input_ui() -> void:
 	for button: TouchScreenButton in all_buttons:
 		var is_held: bool = not button.action.is_empty() and InputMap.has_action(button.action) and Input.is_action_pressed(button.action)
 		button.texture_normal = button.texture_pressed if is_held and button.texture_pressed else _normal_textures[button]
+
+
+## Shows the boss bar for [param boss_name] at [param ratio] (0-1) health; [Boss] drives these three.
+func show_boss(boss_name: String, ratio: float) -> void:
+	boss_name_label.text = boss_name
+	boss_health_bar.value = ratio
+	boss_bar.show()
+
+
+func update_boss(ratio: float) -> void:
+	boss_health_bar.value = ratio
+
+
+func hide_boss() -> void:
+	boss_bar.hide()

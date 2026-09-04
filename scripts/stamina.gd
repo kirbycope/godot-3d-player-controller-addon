@@ -4,6 +4,8 @@ extends TextureProgressBar
 ## Exhaustion clears only once stamina has fully refilled (BotW style). The bar hides itself via
 ## [member timer] once full.
 
+signal stamina_changed(stamina: float, max_stamina: float) ## Emitted on every change, for the world-space energy bar.
+
 @export var player: Player
 @export var drain_sprint: float = 20.0
 @export var drain_paraglide: float = 12.0
@@ -18,6 +20,7 @@ var stamina: float = 100.0:
 	set(val):
 		stamina = clampf(val, min_value, max_value)
 		value = stamina
+		stamina_changed.emit(stamina, max_value)
 
 @onready var timer: Timer = $Timer ## Hides the bar after refilling; its timeout is wired to [method hide] in the scene.
 

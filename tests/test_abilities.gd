@@ -106,24 +106,24 @@ func test_attacking_ends_stealth() -> void:
 	assert_true(abilities.active_toggles.is_empty())
 
 
-func test_heal_casts_over_time_and_restores_stamina() -> void:
+func test_heal_casts_over_time_and_restores_health() -> void:
 	watch_signals(abilities)
-	player.stamina.stamina = 20.0
+	player.health.health = 20.0
 	heal.cast_time = 0.3
 	abilities.cast(heal)
 	assert_eq(abilities.casting, heal)
 	assert_true(player.controls.cast_bar.visible, "A timed cast shows the cast bar")
 	assert_eq(player.controls.cast_label.text, "Heal", "The cast bar names the spell")
 	assert_signal_emitted(abilities, "cast_started")
-	assert_almost_eq(player.stamina.stamina, 20.0, 5.0, "Nothing lands until the cast finishes")
+	assert_almost_eq(player.health.health, 20.0, 0.01, "Nothing lands until the cast finishes")
 	await wait_seconds(0.5)
 	assert_null(abilities.casting)
 	assert_false(player.controls.cast_bar.visible)
-	assert_gt(player.stamina.stamina, 60.0, "The heal restores stamina once the cast lands")
+	assert_almost_eq(player.health.health, 70.0, 0.01, "The heal restores health once the cast lands")
 	assert_signal_emitted_with_parameters(abilities, "ability_activated", [heal])
 
 
-func test_heal_is_refused_at_full_stamina_without_spending_its_cooldown() -> void:
+func test_heal_is_refused_at_full_health_without_spending_its_cooldown() -> void:
 	heal.cast_time = 0.0
 	abilities.cast(heal)
 	assert_true(abilities.is_ready(heal), "A refused cast spends no cooldown")
@@ -131,7 +131,7 @@ func test_heal_is_refused_at_full_stamina_without_spending_its_cooldown() -> voi
 
 func test_moving_interrupts_a_cast() -> void:
 	watch_signals(abilities)
-	player.stamina.stamina = 20.0
+	player.health.health = 20.0
 	heal.cast_time = 1.0
 	abilities.cast(heal)
 	player.locomotion_node_changed.emit("Walking")
@@ -139,11 +139,11 @@ func test_moving_interrupts_a_cast() -> void:
 	assert_signal_emitted_with_parameters(abilities, "cast_interrupted", [heal])
 	assert_false(player.controls.cast_bar.visible)
 	assert_true(abilities.cast_timer.is_stopped())
-	assert_almost_eq(player.stamina.stamina, 20.0, 5.0, "An interrupted heal lands nothing")
+	assert_almost_eq(player.health.health, 20.0, 0.01, "An interrupted heal lands nothing")
 
 
 func test_walking_input_interrupts_a_cast() -> void:
-	player.stamina.stamina = 20.0
+	player.health.health = 20.0
 	heal.cast_time = 2.0
 	abilities.cast(heal)
 	assert_true(abilities.is_physics_processing(), "Movement is polled only while a breakable cast runs")
@@ -156,7 +156,7 @@ func test_walking_input_interrupts_a_cast() -> void:
 
 func test_channel_while_moving_survives_movement_but_not_attacks() -> void:
 	watch_signals(abilities)
-	player.stamina.stamina = 20.0
+	player.health.health = 20.0
 	heal.cast_time = 2.0
 	heal.channel_while_moving = true
 	abilities.cast(heal)
@@ -202,7 +202,7 @@ func _make_vfx() -> PackedScene:
 
 
 func test_channeling_fx_run_for_the_cast_and_stop_when_interrupted() -> void:
-	player.stamina.stamina = 20.0
+	player.health.health = 20.0
 	heal.cast_time = 1.0
 	heal.channeling_vfx = _make_vfx()
 	heal.channeling_sfx = AudioStreamGenerator.new()
@@ -218,7 +218,7 @@ func test_channeling_fx_run_for_the_cast_and_stop_when_interrupted() -> void:
 
 
 func test_casting_and_impact_fx_play_when_the_effect_lands() -> void:
-	player.stamina.stamina = 20.0
+	player.health.health = 20.0
 	heal.cast_time = 0.0
 	heal.casting_vfx = _make_vfx()
 	heal.impact_vfx = _make_vfx()

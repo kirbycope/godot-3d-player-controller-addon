@@ -327,6 +327,9 @@ var skateboard: Node3D
 @onready var video_settings: PlayerMenuLayer = $VideoSettings
 @onready var lobby_manager: PlayerMenuLayer = get_node_or_null("LobbyManager") as PlayerMenuLayer
 @onready var stamina: TextureProgressBar = $Stamina
+@onready var health: Health = $Health
+@onready var respawn_timer: Timer = $RespawnTimer ## Runs after death; its timeout is wired to [method respawn].
+var _ragdoll_was_enabled: bool = true ## enable_ragdoll before death forced it on.
 @onready var initial_transform: Transform3D = global_transform
 @onready var falling_raycast: RayCast3D = $FallingRaycast
 @onready var player_model: Node3D = $PlayerModel
@@ -1311,31 +1314,47 @@ func warp_to(target: Transform3D) -> void:
 	collision_shape.transform = initial_collision_shape_transform
 
 
-## Damage lands on the owning peer: it drains stamina (the Player's only pool), shoves away from [param from]
-## and rumbles the pad. Enemies run on the server, so their hits arrive here through the RPC.
+## Damage lands on the owning peer: it costs health, shoves away from [param from] and rumbles the pad.
+## Enemies run on the server, so their hits arrive here through the RPC.
 @rpc("any_peer", "call_local", "reliable")
 func take_hit(damage: float, from: Vector3) -> void:
 	if not is_multiplayer_authority():
 		take_hit.rpc_id(get_multiplayer_authority(), damage, from)
 		return
-	stamina.stamina -= damage
-	if stamina.stamina <= stamina.min_value:
-		is_exhausted = true
+	if not health.is_alive():
+		return
+	health.damage(damage, from)
 	var away: Vector3 = (global_position - from).slide(up_direction)
 	if away.length_squared() > 0.001:
 		velocity += away.normalized() * 4.0 + up_direction * 1.5
 	Input.start_joy_vibration(0, 0.6, 0.8, 0.25)
 
 
-## Restores stamina; false when already full, so a heal ability is not spent.
+## Restores health; false when already full, so a heal ability is not spent.
 func heal(amount: float) -> bool:
-	if stamina.stamina >= stamina.max_value:
-		return false
-	stamina.stamina += amount
-	return true
+	return health.heal(amount)
 
 
 ## Called by a landing [Projectile]; the Player is a valid target for enemy arrows and bullets.
 func register_projectile_hit(projectile: Projectile, point: Vector3, _normal: Vector3) -> void:
 	if projectile.shooter != self:
 		take_hit(projectile.damage, point)
+
+
+## Wired to Health.died: the body drops into the ragdoll and the RespawnTimer brings the Player back.
+func _on_health_died() -> void:
+	if not is_multiplayer_authority():
+		return
+	# Death always drops the body, even where falls are set not to ragdoll
+	_ragdoll_was_enabled = enable_ragdoll
+	enable_ragdoll = true
+	state_machine.travel(current_state, NodeStateMachine.States.RAGDOLLING)
+	respawn_timer.start()
+
+
+## Back on your feet at the spawn point with full health.
+func respawn() -> void:
+	health.health = health.max_health
+	state_machine.travel(current_state, NodeStateMachine.States.STANDING)
+	enable_ragdoll = _ragdoll_was_enabled
+	warp_to(initial_transform)

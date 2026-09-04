@@ -234,6 +234,8 @@
 [ext_resource type="Script" path="res://addons/3d_player_controller/scripts/ability.gd" id="220_ability"]
 [ext_resource type="Resource" path="res://addons/3d_player_controller/resources/abilities/stealth.tres" id="221_stealth"]
 [ext_resource type="Resource" path="res://addons/3d_player_controller/resources/abilities/heal.tres" id="222_heal"]
+[ext_resource type="PackedScene" uid="uid://c7health000001" path="res://addons/3d_player_controller/scenes/health.tscn" id="223_health"]
+[ext_resource type="PackedScene" uid="uid://c7statusbars01" path="res://addons/3d_player_controller/scenes/status_bars_3d.tscn" id="224_bars"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_underwater"]
 render_priority = 0
@@ -2717,6 +2719,9 @@ properties/35/replication_mode = 2
 properties/36/path = NodePath(".:is_stealthed")
 properties/36/spawn = true
 properties/36/replication_mode = 2
+properties/37/path = NodePath("Health:health")
+properties/37/spawn = true
+properties/37/replication_mode = 2
 
 [node name="Player" type="CharacterBody3D" unique_id=548622605 groups=["Player"] node_paths=PackedStringArray("animation_tree")]
 script = ExtResource("1_ho2o7")
@@ -4176,6 +4181,16 @@ scale = Vector2(0.5, 0.5)
 pivot_offset = Vector2(26, 26)
 texture = SubResource("AtlasTexture_fk680")
 
+[node name="Health" parent="." instance=ExtResource("223_health")]
+max_health = 100.0
+
+[node name="StatusBars3D" parent="." instance=ExtResource("224_bars")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.1, 0)
+
+[node name="RespawnTimer" type="Timer" parent="."]
+wait_time = 3.0
+one_shot = true
+
 [node name="Stamina" type="TextureProgressBar" parent="." unique_id=1209274681 node_paths=PackedStringArray("player")]
 visible = false
 anchors_preset = 8
@@ -4363,3 +4378,7 @@ mouse_filter = 2
 [connection signal="locomotion_node_changed" from="." to="Abilities" method="_on_locomotion_node_changed"]
 [connection signal="state_changed" from="." to="Abilities" method="_on_state_changed"]
 [connection signal="equipment_changed" from="Inventory" to="Abilities" method="_on_equipment_changed"]
+[connection signal="health_changed" from="Health" to="StatusBars3D" method="set_health"]
+[connection signal="died" from="Health" to="." method="_on_health_died"]
+[connection signal="stamina_changed" from="Stamina" to="StatusBars3D" method="set_energy"]
+[connection signal="timeout" from="RespawnTimer" to="." method="respawn"]
