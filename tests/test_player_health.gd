@@ -74,3 +74,13 @@ func test_mana_only_regenerates_out_of_combat() -> void:
 	assert_false(player.health.regen_paused)
 	await wait_seconds(0.6)
 	assert_gt(player.health.energy, 50.0, "Alone again: mana trickles back")
+
+
+func test_a_round_on_the_head_kills_the_player_outright() -> void:
+	var bullet: Projectile = preload("res://addons/3d_player_controller/scenes/bullet.tscn").instantiate()
+	add_child_autofree(bullet)
+	bullet.shooter = null
+	player.register_projectile_hit(bullet, player.global_position + Vector3(0.0, 1.0, 0.3), Vector3.FORWARD)
+	assert_eq(player.health.health, 100.0 - bullet.damage, "A body hit costs the round's damage")
+	player.register_projectile_hit(bullet, player.head_attachment.global_position + Vector3(0.0, 0.12, 0.0), Vector3.FORWARD)
+	assert_eq(player.health.health, 0.0, "A head hit is lethal")
