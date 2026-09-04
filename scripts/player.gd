@@ -1330,8 +1330,17 @@ func take_hit(damage: float, from: Vector3) -> void:
 	Input.start_joy_vibration(0, 0.6, 0.8, 0.25)
 
 
-## Restores health; false when already full, so a heal ability is not spent.
+## True while a heal would do something; abilities check it before spending anything.
+func can_heal() -> bool:
+	return health.can_heal()
+
+
+## Restores health on the owning peer, so one player can heal another; false only when already full here.
+@rpc("any_peer", "call_local", "reliable")
 func heal(amount: float) -> bool:
+	if not is_multiplayer_authority():
+		heal.rpc_id(get_multiplayer_authority(), amount)
+		return true
 	return health.heal(amount)
 
 

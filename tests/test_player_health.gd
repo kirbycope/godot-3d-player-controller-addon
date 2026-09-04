@@ -31,6 +31,7 @@ func test_a_hit_costs_health_not_stamina() -> void:
 	assert_eq(player.health.health, 70.0)
 	assert_eq(player.stamina.stamina, stamina, "Stamina is energy, not hit points")
 	assert_true(player.get_node("StatusBars3D/HealthBar").visible, "Missing health shows over the head")
+	assert_gt(player.get_node("StatusBars3D/HealthBar").fill_color.g, 0.7, "The Player's health bar is green")
 	assert_true(player.heal(10.0))
 	assert_eq(player.health.health, 80.0)
 

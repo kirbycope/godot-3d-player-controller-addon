@@ -2723,7 +2723,7 @@ properties/37/path = NodePath("Health:health")
 properties/37/spawn = true
 properties/37/replication_mode = 2
 
-[node name="Player" type="CharacterBody3D" unique_id=548622605 groups=["Player"] node_paths=PackedStringArray("animation_tree")]
+[node name="Player" type="CharacterBody3D" unique_id=548622605 groups=["Focusable", "Player"] node_paths=PackedStringArray("animation_tree")]
 script = ExtResource("1_ho2o7")
 animation_tree = NodePath("AnimationTree")
 
@@ -4186,6 +4186,9 @@ max_health = 100.0
 
 [node name="StatusBars3D" parent="." instance=ExtResource("224_bars")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.1, 0)
+
+[node name="HealthBar" parent="StatusBars3D" index="0"]
+fill_color = Color(0.3, 0.85, 0.35, 1)
 
 [node name="RespawnTimer" type="Timer" parent="."]
 wait_time = 3.0

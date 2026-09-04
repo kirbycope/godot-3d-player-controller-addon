@@ -49,9 +49,14 @@ func damage(amount: float, from: Vector3 = Vector3.ZERO) -> void:
 	damaged.emit(amount, from)
 
 
-## False when already full, so a heal is not wasted.
+## True while a heal would do something: alive and not full.
+func can_heal() -> bool:
+	return health > 0.0 and health < max_health
+
+
+## False when already full or dead, so a heal is not wasted.
 func heal(amount: float) -> bool:
-	if health >= max_health or health <= 0.0:
+	if not can_heal():
 		return false
 	health += amount
 	return true

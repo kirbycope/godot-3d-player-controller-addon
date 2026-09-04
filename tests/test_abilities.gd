@@ -123,6 +123,20 @@ func test_heal_casts_over_time_and_restores_health() -> void:
 	assert_signal_emitted_with_parameters(abilities, "ability_activated", [heal])
 
 
+func test_heal_lands_on_a_locked_on_player_instead_of_the_caster() -> void:
+	var friend: Player = PLAYER_SCENE.instantiate()
+	friend.position = Vector3(2.0, 0.0, 0.0)
+	player.get_parent().add_child(friend)
+	await wait_physics_frames(2)
+	friend.health.health = 30.0
+	player.focus.current_focus_target = friend
+	heal.cast_time = 0.0
+	abilities.cast(heal)
+	assert_almost_eq(friend.health.health, 80.0, 0.01, "The locked-on player is healed")
+	assert_eq(player.health.health, player.health.max_health, "The caster is untouched")
+	assert_true(player.is_in_group("Focusable"), "Players can be locked on to, so they can be healed")
+
+
 func test_heal_is_refused_at_full_health_without_spending_its_cooldown() -> void:
 	heal.cast_time = 0.0
 	abilities.cast(heal)
