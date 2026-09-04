@@ -146,3 +146,25 @@ func test_arrow_frees_after_lifetime_and_forgets_shooter_exception():
 	assert_false(player in arrow.get_collision_exceptions(), "The shooter exception is dropped after a short delay.")
 	await wait_seconds(0.2)
 	assert_false(is_instance_valid(arrow), "The arrow frees itself once its lifetime elapses.")
+
+
+func test_a_stuck_arrow_frees_after_stuck_seconds():
+	var wall = StaticBody3D.new()
+	var shape = CollisionShape3D.new()
+	shape.shape = BoxShape3D.new()
+	shape.shape.size = Vector3(4.0, 4.0, 0.2)
+	wall.add_child(shape)
+	wall.position = Vector3(0, 5, -2)
+	root.add_child(wall)
+	var arrow = RigidBody3D.new()
+	arrow.set_script(ARROW_SCRIPT)
+	arrow.is_template = false
+	arrow.stuck_seconds = 0.3
+	root.add_child(arrow)
+	arrow.launch(Transform3D(Basis.IDENTITY, Vector3(0, 5, 0)), Vector3.FORWARD, 10.0, player)
+	await wait_seconds(0.4)
+	assert_true(is_instance_valid(arrow) and arrow.has_hit and arrow.freeze, "The arrow sticks in the wall")
+	await wait_seconds(0.4)
+	assert_false(is_instance_valid(arrow), "A moment later the stuck arrow is gone")
+	wall.free()
+

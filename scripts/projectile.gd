@@ -17,6 +17,7 @@ const MAX_AREA_SKIPS: int = 4 ## Areas without a hit handler (water, weather zon
 @export var lifetime: float = 5.0 ## Seconds before an unlanded projectile frees itself.
 @export var impact_impulse: float = 4.0 ## Impulse (N·s) applied to RigidBody3D targets, scaled by the remaining speed fraction.
 @export var sticks_on_hit: bool = false ## Freeze where it lands (arrows) instead of freeing (bullets).
+@export var stuck_seconds: float = 1.0 ## How long a stuck projectile stays in the target before freeing.
 @export var damage: float = 15.0 ## Passed to `take_hit` handlers such as the Player and enemies.
 
 var shooter: Node3D = null ## The body that fired the projectile.
@@ -109,6 +110,7 @@ func _apply_hit(collider: Node, point: Vector3, normal: Vector3) -> void:
 		global_position = point
 		freeze = true
 		set_physics_process(false)
+		get_tree().create_timer(stuck_seconds).timeout.connect(queue_free)
 	else:
 		queue_free()
 
@@ -133,6 +135,7 @@ func _on_shooter_exception_timeout() -> void:
 		remove_collision_exception_with(shooter)
 
 
+## Only an unlanded projectile is still around to free; a stuck one frees itself after [member stuck_seconds].
 func _on_lifetime_timeout() -> void:
-	if not sticks_on_hit or not has_hit:
+	if not has_hit:
 		queue_free()
