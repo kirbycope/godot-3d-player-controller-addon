@@ -1309,3 +1309,33 @@ func warp_to(target: Transform3D) -> void:
 	orientation = Transform3D(target.basis, Vector3.ZERO)
 	player_model.transform = initial_player_model_transform
 	collision_shape.transform = initial_collision_shape_transform
+
+
+## Damage lands on the owning peer: it drains stamina (the Player's only pool), shoves away from [param from]
+## and rumbles the pad. Enemies run on the server, so their hits arrive here through the RPC.
+@rpc("any_peer", "call_local", "reliable")
+func take_hit(damage: float, from: Vector3) -> void:
+	if not is_multiplayer_authority():
+		take_hit.rpc_id(get_multiplayer_authority(), damage, from)
+		return
+	stamina.stamina -= damage
+	if stamina.stamina <= stamina.min_value:
+		is_exhausted = true
+	var away: Vector3 = (global_position - from).slide(up_direction)
+	if away.length_squared() > 0.001:
+		velocity += away.normalized() * 4.0 + up_direction * 1.5
+	Input.start_joy_vibration(0, 0.6, 0.8, 0.25)
+
+
+## Restores stamina; false when already full, so a heal ability is not spent.
+func heal(amount: float) -> bool:
+	if stamina.stamina >= stamina.max_value:
+		return false
+	stamina.stamina += amount
+	return true
+
+
+## Called by a landing [Projectile]; the Player is a valid target for enemy arrows and bullets.
+func register_projectile_hit(projectile: Projectile, point: Vector3, _normal: Vector3) -> void:
+	if projectile.shooter != self:
+		take_hit(projectile.damage, point)

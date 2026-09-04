@@ -1,13 +1,15 @@
 class_name Ability
 extends Resource
-## A World of Warcraft style ability picked from the ability wheel and cast with the "ability" action.
+## A World of Warcraft style ability: the Player casts it from the ability wheel, NPCs through an NPC caster.
 ##
-## Subclass and override [method activate] (and [method deactivate] for toggles). Timing, costs,
-## cooldowns and the VFX/SFX of each [enum Phase] are handled by [Abilities]; the resource only
-## applies the effect and says what to play.
+## Subclass and override [method activate] (and [method deactivate] for toggles, [method impact] for
+## effects on a target). Timing, costs and cooldowns are handled by the caster node; the resource only
+## applies the effect and says what to play. [method spawn_phase] is the one place phase VFX/SFX and bolts come from.
 
 enum Phase { CHANNELING, CASTING, IMPACT } ## Channeling runs for the cast time, casting fires on the caster when the effect lands, impact lands at [method get_impact_position].
-enum Target { SELF, FOCUS } ## SELF lands on the caster; FOCUS lands on the locked-on target, or where the Player aims without one.
+enum Target { SELF, FOCUS } ## SELF lands on the caster; FOCUS lands on the Player's locked-on target (an NPC's `target`), or where the Player aims without one.
+
+const SPELL_PROJECTILE_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/spell_projectile.tscn")
 
 @export var display_name: String = ""
 @export var icon: Texture2D
@@ -19,6 +21,7 @@ enum Target { SELF, FOCUS } ## SELF lands on the caster; FOCUS lands on the lock
 @export var ends_on_attack: bool = false ## Active toggles end when the Player attacks or fires a weapon.
 @export var fx_lifetime: float = 3.0 ## Seconds a one-shot casting or impact VFX instance stays before it is freed.
 @export var target_mode: Target = Target.SELF
+@export var cast_range: float = 12.0 ## NPC casters use it only with their target this close.
 @export_group("Projectile", "projectile_")
 @export var projectile_speed: float = 0.0 ## Metres per second; above 0 the casting VFX/SFX fly to the target as a [SpellProjectile] and impact lands on arrival.
 @export var projectile_homing: bool = true ## The bolt follows a moving target and always arrives, WoW style.
@@ -34,12 +37,12 @@ enum Target { SELF, FOCUS } ## SELF lands on the caster; FOCUS lands on the lock
 
 
 ## Applies the effect; return false to refuse the cast so no cost or cooldown is spent.
-func activate(_player: Player) -> bool:
+func activate(_caster: Node3D) -> bool:
 	return true
 
 
 ## Ends an active toggle's effect.
-func deactivate(_player: Player) -> void:
+func deactivate(_caster: Node3D) -> void:
 	pass
 
 
@@ -52,22 +55,63 @@ func get_sfx(phase: Phase) -> AudioStream:
 
 
 ## Applies the effect to [param target] when the impact lands (on arrival for projectiles); null when nothing was aimed at.
-func impact(_player: Player, _target: Node3D) -> void:
+func impact(_caster: Node3D, _target: Node3D) -> void:
 	pass
 
 
-## The node the impact lands on; null when nothing is locked on in FOCUS mode.
-func get_target(player: Player) -> Node3D:
-	return player if target_mode == Target.SELF else player.current_focus_target
+## The node the impact lands on: the caster itself, the Player's focus target, or an NPC's `target`.
+func get_target(caster: Node3D) -> Node3D:
+	if target_mode == Target.SELF:
+		return caster
+	if caster is Player:
+		return (caster as Player).current_focus_target
+	return caster.get("target") as Node3D
 
 
-## Where the impact lands: the caster, the target, or the aim point when nothing is locked on.
-func get_impact_position(player: Player) -> Vector3:
-	var target: Node3D = get_target(player)
-	if target == player:
-		return player.global_position
+## Where the impact lands: the caster, the target, the Player's aim point, or straight ahead of an NPC.
+func get_impact_position(caster: Node3D) -> Vector3:
+	var target: Node3D = get_target(caster)
+	if target == caster:
+		return caster.global_position
 	if is_instance_valid(target):
 		return Focus.get_focus_target_position(target)
-	var ray: RayCast3D = player.projectile_raycast
-	ray.force_raycast_update()
-	return ray.get_collision_point() if ray.is_colliding() else ray.global_position - ray.global_basis.z * Firearm.RAY_MISS_DISTANCE
+	if caster is Player:
+		var ray: RayCast3D = (caster as Player).projectile_raycast
+		ray.force_raycast_update()
+		return ray.get_collision_point() if ray.is_colliding() else ray.global_position - ray.global_basis.z * Firearm.RAY_MISS_DISTANCE
+	return caster.global_position - caster.global_basis.z * cast_range
+
+
+## Plays [param phase] for a caster on this peer: SFX on [param audio], one-shot VFX under [param fx_root], or a
+## [SpellProjectile] carrying the casting VFX/SFX when the ability has a projectile. Returns the channeling VFX or
+## the bolt so the caller can stop or watch it; one-shot VFX free themselves after [member fx_lifetime].
+func spawn_phase(phase: Phase, at: Vector3, fx_root: Node3D, audio: AudioStreamPlayer3D, target: Node3D, destination: Vector3) -> Node3D:
+	if fx_root == null:
+		return null
+	if phase == Phase.CASTING and projectile_speed > 0.0:
+		var bolt: SpellProjectile = SPELL_PROJECTILE_SCENE.instantiate()
+		bolt.speed = projectile_speed
+		bolt.homing = projectile_homing
+		bolt.target = target
+		bolt.destination = destination
+		if casting_vfx:
+			bolt.add_child(casting_vfx.instantiate())
+		fx_root.add_child(bolt)
+		bolt.global_position = at
+		if casting_sfx:
+			bolt.audio.stream = casting_sfx
+			bolt.audio.play()
+		return bolt
+	if audio and get_sfx(phase):
+		audio.stream = get_sfx(phase)
+		audio.global_position = at
+		audio.play()
+	var scene: PackedScene = get_vfx(phase)
+	if scene == null:
+		return null
+	var vfx: Node3D = scene.instantiate()
+	fx_root.add_child(vfx)
+	vfx.global_position = at
+	if phase != Phase.CHANNELING:
+		fx_root.get_tree().create_timer(fx_lifetime).timeout.connect(vfx.queue_free)
+	return vfx

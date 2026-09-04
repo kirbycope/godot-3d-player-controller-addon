@@ -8,10 +8,13 @@ func _init() -> void:
 	ends_on_attack = true
 
 
-func activate(player: Player) -> bool:
-	player.is_stealthed = true
+func activate(caster: Node3D) -> bool:
+	if not caster is Player:
+		return false
+	(caster as Player).is_stealthed = true
 	return true
 
 
-func deactivate(player: Player) -> void:
-	player.is_stealthed = false
+func deactivate(caster: Node3D) -> void:
+	if caster is Player:
+		(caster as Player).is_stealthed = false

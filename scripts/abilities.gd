@@ -17,7 +17,6 @@ signal ability_deactivated(ability: Ability) ## Emitted when a toggle ends.
 signal cast_started(ability: Ability) ## Emitted when a timed cast begins.
 signal cast_interrupted(ability: Ability) ## Emitted when a timed cast breaks before landing.
 
-const SPELL_PROJECTILE_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/spell_projectile.tscn")
 const PROJECTILE_HEIGHT: float = 1.2 ## Bolts leave the caster at chest height.
 
 @export var player: Player
@@ -197,45 +196,13 @@ func _play(ability: Ability, phase: Ability.Phase, at: Vector3, target_path: Nod
 @rpc("authority", "call_local", "reliable")
 func _play_phase(ability_index: int, phase: Ability.Phase, at: Vector3, target_path: NodePath = NodePath(), destination: Vector3 = Vector3.ZERO) -> void:
 	var ability: Ability = abilities[ability_index]
-	if phase == Ability.Phase.CASTING and ability.projectile_speed > 0.0:
-		_launch_bolt(ability_index, at, target_path, destination)
-		return
 	var audio: AudioStreamPlayer3D = [channeling_audio, casting_audio, impact_audio][phase]
-	if audio and ability.get_sfx(phase):
-		audio.stream = ability.get_sfx(phase)
-		audio.global_position = at
-		audio.play()
-	var scene: PackedScene = ability.get_vfx(phase)
-	if scene == null or fx_root == null:
-		return
-	var vfx: Node3D = scene.instantiate()
-	fx_root.add_child(vfx)
-	vfx.global_position = at
-	if phase == Ability.Phase.CHANNELING:
-		_channeling_vfx = vfx
-	else:
-		get_tree().create_timer(ability.fx_lifetime).timeout.connect(vfx.queue_free)
-
-
-## Flies the casting VFX/SFX to the destination as a bolt; only the authority's bolt lands the impact.
-func _launch_bolt(ability_index: int, from: Vector3, target_path: NodePath, destination: Vector3) -> void:
-	if fx_root == null:
-		return
-	var ability: Ability = abilities[ability_index]
-	var bolt: SpellProjectile = SPELL_PROJECTILE_SCENE.instantiate()
-	bolt.speed = ability.projectile_speed
-	bolt.homing = ability.projectile_homing
-	bolt.target = get_node_or_null(target_path)
-	bolt.destination = destination
-	if ability.casting_vfx:
-		bolt.add_child(ability.casting_vfx.instantiate())
-	if is_multiplayer_authority():
-		bolt.arrived.connect(_on_bolt_arrived.bind(ability_index, target_path))
-	fx_root.add_child(bolt)
-	bolt.global_position = from
-	if ability.casting_sfx:
-		bolt.audio.stream = ability.casting_sfx
-		bolt.audio.play()
+	var node: Node3D = ability.spawn_phase(phase, at, fx_root, audio, get_node_or_null(target_path), destination)
+	if phase == Ability.Phase.CASTING and node is SpellProjectile and is_multiplayer_authority():
+		# Only the caster's copy lands the impact
+		(node as SpellProjectile).arrived.connect(_on_bolt_arrived.bind(ability_index, target_path))
+	elif phase == Ability.Phase.CHANNELING:
+		_channeling_vfx = node
 
 
 func _on_bolt_arrived(at: Vector3, ability_index: int, target_path: NodePath) -> void:

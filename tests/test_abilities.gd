@@ -247,8 +247,8 @@ func test_impact_lands_where_the_ability_says() -> void:
 
 
 class RangedAbility extends Ability:
-	func get_impact_position(player: Player) -> Vector3:
-		return player.global_position + Vector3(0.0, 0.0, -5.0)
+	func get_impact_position(caster: Node3D) -> Vector3:
+		return caster.global_position + Vector3(0.0, 0.0, -5.0)
 
 
 ## A bolt aimed at a fixed dummy, recording every impact target.
@@ -257,9 +257,9 @@ class BoltAbility extends Ability:
 	var hits: Array[Node3D] = []
 	func _init() -> void:
 		projectile_speed = 10.0
-	func get_target(_player: Player) -> Node3D:
+	func get_target(_caster: Node3D) -> Node3D:
 		return dummy
-	func impact(_player: Player, target: Node3D) -> void:
+	func impact(_caster: Node3D, target: Node3D) -> void:
 		hits.append(target)
 
 

@@ -1,12 +1,9 @@
 class_name HealAbility
 extends Ability
-## Restores stamina after a cast, standing in for a healing spell until the project has hit points.
+## Heals whoever casts it through their `heal(amount) -> bool` method: stamina for the Player, health for NPCs.
 
-@export var amount: float = 50.0 ## Stamina restored when the cast lands.
+@export var amount: float = 50.0
 
 
-func activate(player: Player) -> bool:
-	if player.stamina.stamina >= player.stamina.max_value:
-		return false
-	player.stamina.stamina += amount
-	return true
+func activate(caster: Node3D) -> bool:
+	return caster.has_method("heal") and caster.call("heal", amount)

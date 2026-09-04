@@ -17,6 +17,7 @@ const MAX_AREA_SKIPS: int = 4 ## Areas without a hit handler (water, weather zon
 @export var lifetime: float = 5.0 ## Seconds before an unlanded projectile frees itself.
 @export var impact_impulse: float = 4.0 ## Impulse (N·s) applied to RigidBody3D targets, scaled by the remaining speed fraction.
 @export var sticks_on_hit: bool = false ## Freeze where it lands (arrows) instead of freeing (bullets).
+@export var damage: float = 15.0 ## Passed to `take_hit` handlers such as the Player and enemies.
 
 var shooter: Node3D = null ## The body that fired the projectile.
 var pending_launch: Dictionary = {} ## Launch data from a [ProjectileSpawner], applied on ready (every peer simulates the same round).
