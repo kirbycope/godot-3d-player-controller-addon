@@ -26,19 +26,16 @@ func _on_locomotion_node_changed(state_path: String) -> void:
 	player.set_look_at_target(player.look_at_target if is_aiming else null)
 	if arrow_node:
 		arrow_node.visible = is_aiming
-	var rumble: bool = player.controls.current_input_type not in [player.controls.InputType.KEYBOARD_MOUSE, player.controls.InputType.TOUCH]
 	match state_path:
 		"Bow/BowDrawArrow":
 			if draw_sfx:
 				draw_sfx.play()
-			if rumble:
-				Input.start_joy_vibration(0, 0.0, 0.2, 0.5)
+			player.controls.rumble(0.0, 0.2, 0.5)
 		"Bow/BowFireArrow":
 			fire_arrow()
 			if fire_sfx:
 				fire_sfx.play()
-			if rumble:
-				Input.start_joy_vibration(0, 0.4, 0.0, 0.5)
+			player.controls.rumble(0.4, 0.0, 0.5)
 
 
 ## Fires an arrow at the projectile ray's hit point: [member arrow_scene] through the world's

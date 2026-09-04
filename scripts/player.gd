@@ -1327,7 +1327,7 @@ func take_hit(damage: float, from: Vector3) -> void:
 	var away: Vector3 = (global_position - from).slide(up_direction)
 	if away.length_squared() > 0.001:
 		velocity += away.normalized() * 4.0 + up_direction * 1.5
-	Input.start_joy_vibration(0, 0.6, 0.8, 0.25)
+	controls.rumble(0.6, 0.8, 0.25)
 
 
 ## True while a heal would do something; abilities check it before spending anything.

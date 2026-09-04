@@ -472,5 +472,13 @@ func hide_ammo() -> void:
 	ammo_label.hide()
 
 
+## Rumbles the pad for [param seconds] unless the Player is on keyboard/mouse or touch; returns whether it did.
+func rumble(weak: float, strong: float, seconds: float) -> bool:
+	if current_input_type in [InputType.KEYBOARD_MOUSE, InputType.TOUCH]:
+		return false
+	Input.start_joy_vibration(0, weak, strong, seconds)
+	return true
+
+
 func hide_boss() -> void:
 	boss_bar.hide()

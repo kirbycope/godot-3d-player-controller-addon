@@ -3,7 +3,8 @@ extends Equipment
 ## A gun: fires [member projectile_scene] from [member muzzle] toward the Player's projectile ray
 ## while shoot is held, and shows [member laser_sight] along that ray while aiming or shooting.
 ## It carries [member magazine_size] rounds plus [member reserve_rounds]; the "reload" action or an
-## empty trigger pull refills the magazine from the reserve after [member reload_time].
+## empty trigger pull refills the magazine from the reserve after [member reload_time]. Every shot
+## kicks the pad and a reload pulses it, through [method Controls.rumble].
 ##
 ## Shoot and focus are held inputs with no signal, so the equipped copy polls them each physics frame.
 
@@ -102,6 +103,7 @@ func fire() -> Projectile:
 		projectile.launch(muzzle.global_transform, direction, projectile_speed, player, self)
 	if fire_sfx:
 		fire_sfx.play()
+	player.controls.rumble(0.0, 0.8, 0.1)
 	fired.emit(projectile)
 	return projectile
 
@@ -114,6 +116,7 @@ func reload() -> void:
 	is_reloading = true
 	if reload_sfx:
 		reload_sfx.play()
+	player.controls.rumble(0.3, 0.0, 0.2)
 	fire_timer.start(reload_time)
 	await fire_timer.timeout
 	var moved: int = mini(magazine_size - rounds, reserve_rounds)

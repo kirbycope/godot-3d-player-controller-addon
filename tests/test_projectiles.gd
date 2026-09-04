@@ -186,3 +186,16 @@ func test_the_aim_point_sits_under_the_crosshair_with_the_shoulder_camera() -> v
 	var centre: Vector2 = camera.get_viewport().get_visible_rect().size * 0.5
 	var on_screen: Vector2 = camera.unproject_position(gun.get_aim_point())
 	assert_almost_eq(on_screen, centre, Vector2.ONE, "The ray follows the camera's centre line, offset shoulder and all")
+
+
+func test_rumble_only_reaches_a_pad() -> void:
+	var player: Player = PLAYER_SCENE.instantiate()
+	root.add_child(player)
+	await wait_physics_frames(1)
+	var controls: Controls = player.controls
+	controls.current_input_type = Controls.InputType.KEYBOARD_MOUSE
+	assert_false(controls.rumble(0.0, 0.8, 0.1), "Keyboard players get no rumble")
+	controls.current_input_type = Controls.InputType.TOUCH
+	assert_false(controls.rumble(0.0, 0.8, 0.1), "Touch players get no rumble")
+	controls.current_input_type = Controls.InputType.MICROSOFT
+	assert_true(controls.rumble(0.0, 0.8, 0.1), "A pad gets the kick")
