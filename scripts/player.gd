@@ -918,6 +918,40 @@ func travel_locomotion(state_path: String) -> void:
 			group_playback.travel(parts[1])
 
 
+## Wired to Abilities.cast_started: holds the weapon group's Spell Casting channel for the cast time.
+func _on_abilities_cast_started(ability: Ability) -> void:
+	_travel_spell_state(ability.get_cast_state(get_spell_group(), true))
+
+
+## Wired to Abilities.ability_activated: plays the cast (or power up) clip for the ability's cast style.
+func _on_abilities_ability_activated(ability: Ability) -> void:
+	_travel_spell_state(ability.get_cast_state(get_spell_group(), false))
+
+
+## Wired to Abilities.cast_interrupted: drops the channel pose.
+func _on_abilities_cast_interrupted(_ability: Ability) -> void:
+	if not is_standing or not current_locomotion_node.ends_with("SpellCasting"):
+		return
+	var stance: String = String(get_grounded_locomotion_state())
+	if active_locomotion_playback.get_fading_from_node() != &"":
+		# A travel is dropped while the channel is still fading in, so snap back to the stance
+		active_locomotion_playback.start(stance.get_file())
+	else:
+		travel_locomotion(stance)
+
+
+## The locomotion group spell clips are picked for ("Shield", "GreatSword", ...), or "" unarmed.
+func get_spell_group() -> String:
+	var node: String = String(locomotion_state.get_current_node()) if locomotion_state else ""
+	return node if node in LOCOMOTION_GROUPS else ""
+
+
+## Spell clips only exist for standing on the ground; anywhere else the cast plays no pose.
+func _travel_spell_state(state_path: String) -> void:
+	if is_standing and not state_path.is_empty():
+		travel_locomotion(state_path)
+
+
 ## True if the equipment matching the given locomotion group is currently equipped.
 func is_group_equipment_equipped(group_name: String) -> bool:
 	match group_name:

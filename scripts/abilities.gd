@@ -21,6 +21,7 @@ const PROJECTILE_HEIGHT: float = 1.2 ## Bolts leave the caster at chest height.
 
 @export var player: Player
 @export var fx_root: Node3D ## Under the Player; phase VFX are instanced here.
+@export var hand_anchor: Node3D ## The casting hand (a bone attachment): channeling VFX ride it and bolts leave from it. Without one they sit at the caster's feet and chest.
 @export var channeling_audio: AudioStreamPlayer3D
 @export var casting_audio: AudioStreamPlayer3D
 @export var impact_audio: AudioStreamPlayer3D
@@ -94,7 +95,7 @@ func cast(ability: Ability) -> void:
 	cast_bar.show()
 	_cast_tween = create_tween()
 	_cast_tween.tween_property(cast_bar, "value", cast_bar.max_value, ability.cast_time)
-	_play(ability, Ability.Phase.CHANNELING, player.global_position)
+	_play(ability, Ability.Phase.CHANNELING, _hand_position())
 	cast_started.emit(ability)
 
 
@@ -136,9 +137,10 @@ func get_wheel_items() -> Array[Dictionary]:
 	return items
 
 
-func _activate(ability: Ability) -> void:
+## Lands the effect; false when the ability refused (nothing to aim at, full health), spending nothing.
+func _activate(ability: Ability) -> bool:
 	if not ability.activate(player):
-		return
+		return false
 	player.health.spend_energy(ability.energy_cost)
 	if ability.is_toggle:
 		active_toggles.append(ability)
@@ -148,11 +150,22 @@ func _activate(ability: Ability) -> void:
 	var target_path: NodePath = target.get_path() if is_instance_valid(target) else NodePath()
 	if ability.projectile_speed > 0.0:
 		# The bolt carries the casting phase; the authority's copy lands the impact when it arrives
-		_play(ability, Ability.Phase.CASTING, player.global_position + player.up_direction * PROJECTILE_HEIGHT, target_path, ability.get_impact_position(player))
+		_play(ability, Ability.Phase.CASTING, _bolt_origin(), target_path, ability.get_impact_position(player))
 	else:
 		_play(ability, Ability.Phase.CASTING, player.global_position)
 		_land(ability, target, ability.get_impact_position(player))
 	ability_activated.emit(ability)
+	return true
+
+
+## Where channeling VFX sit: the casting hand, or the caster's feet without one.
+func _hand_position() -> Vector3:
+	return hand_anchor.global_position if is_instance_valid(hand_anchor) else player.global_position
+
+
+## Where a bolt leaves: the casting hand, or chest height without one.
+func _bolt_origin() -> Vector3:
+	return hand_anchor.global_position if is_instance_valid(hand_anchor) else player.global_position + player.up_direction * PROJECTILE_HEIGHT
 
 
 ## The impact phase: the ability's effect on the target, then its impact VFX/SFX.
@@ -183,7 +196,8 @@ func _on_cast_timer_timeout() -> void:
 	set_physics_process(false)
 	_hide_cast_bar()
 	_stop_channeling.rpc()
-	_activate(ability)
+	if not _activate(ability):
+		cast_interrupted.emit(ability) # Fizzled at the end of the cast: the channel pose has to drop
 
 
 ## Plays a phase's VFX/SFX on every peer; abilities not on the wheel play nothing.
@@ -197,7 +211,9 @@ func _play(ability: Ability, phase: Ability.Phase, at: Vector3, target_path: Nod
 func _play_phase(ability_index: int, phase: Ability.Phase, at: Vector3, target_path: NodePath = NodePath(), destination: Vector3 = Vector3.ZERO) -> void:
 	var ability: Ability = abilities[ability_index]
 	var audio: AudioStreamPlayer3D = [channeling_audio, casting_audio, impact_audio][phase]
-	var node: Node3D = ability.spawn_phase(phase, at, fx_root, audio, get_node_or_null(target_path), destination)
+	# Channeling VFX are parented to the hand so they follow it through the cast
+	var parent: Node3D = hand_anchor if phase == Ability.Phase.CHANNELING and is_instance_valid(hand_anchor) else fx_root
+	var node: Node3D = ability.spawn_phase(phase, at, parent, audio, get_node_or_null(target_path), destination)
 	if phase == Ability.Phase.CASTING and node is SpellProjectile and is_multiplayer_authority():
 		# Only the caster's copy lands the impact
 		(node as SpellProjectile).arrived.connect(_on_bolt_arrived.bind(ability_index, target_path))
@@ -235,6 +251,8 @@ func _on_state_changed(_from_state: int, _to_state: int) -> void:
 ## Wired to the Player's locomotion_node_changed; attacks always interrupt and end toggles that end on attack.
 func _on_locomotion_node_changed(state_path: String) -> void:
 	var node_name: String = state_path.get_file()
+	if node_name.contains("SpellCast") or node_name.ends_with("PowerUp"):
+		return # The cast's own clips
 	var is_attack: bool = node_name in Attacking.ATTACK_NODES or node_name == "BowFireArrow"
 	if casting and (is_attack or not casting.channel_while_moving):
 		interrupt_cast()

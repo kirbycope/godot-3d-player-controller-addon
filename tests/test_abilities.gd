@@ -224,12 +224,13 @@ func test_channeling_fx_run_for_the_cast_and_stop_when_interrupted() -> void:
 	heal.channeling_sfx = AudioStreamGenerator.new()
 	abilities.cast(heal)
 	await wait_physics_frames(1)
-	assert_eq(abilities.fx_root.get_child_count(), 4, "The channeling VFX joins the three audio players")
+	assert_eq(abilities.hand_anchor.get_child_count(), 1, "The channeling VFX rides the casting hand")
+	assert_eq(abilities.fx_root.get_child_count(), 3)
 	assert_true(abilities.channeling_audio.playing)
 	assert_eq(abilities.channeling_audio.stream, heal.channeling_sfx)
 	abilities.interrupt_cast()
 	await wait_physics_frames(1)
-	assert_eq(abilities.fx_root.get_child_count(), 3, "Interrupting frees the channeling VFX")
+	assert_eq(abilities.hand_anchor.get_child_count(), 0, "Interrupting frees the channeling VFX")
 	assert_false(abilities.channeling_audio.playing)
 
 
@@ -295,7 +296,7 @@ func test_projectile_spell_flies_the_casting_fx_to_the_target_and_lands_impact_o
 	var bolt := _make_bolt(Vector3(4.0, 0.0, 0.0))
 	abilities.cast(bolt)
 	var projectile: SpellProjectile = abilities.fx_root.get_child(3)
-	assert_almost_eq(projectile.global_position.y, player.global_position.y + abilities.PROJECTILE_HEIGHT, 0.01, "The bolt leaves at chest height")
+	assert_lt(projectile.global_position.distance_to(abilities.hand_anchor.global_position), 0.05, "The bolt leaves from the casting hand")
 	await wait_physics_frames(1)
 	assert_true(projectile.homing, "Spell projectiles home by default")
 	assert_eq(projectile.get_child_count(), 2, "The bolt carries the casting VFX next to its audio player")
@@ -338,3 +339,108 @@ func test_puppets_fade_when_the_replicated_flag_arrives() -> void:
 	puppet.is_stealthed = true
 	for mesh: MeshInstance3D in puppet.skeleton.find_children("*", "MeshInstance3D"):
 		assert_almost_eq(mesh.transparency, puppet.stealth_transparency, 0.001)
+
+
+func test_cast_styles_map_to_the_weapon_group_clips() -> void:
+	var spell := Ability.new()
+	assert_eq(spell.get_cast_state("", false), "", "No style, no clip")
+	spell.cast_style = Ability.CastStyle.FORWARD
+	assert_eq(spell.get_cast_state("", false), "SpellCastForwards")
+	assert_eq(spell.get_cast_state("", true), "", "Unarmed has no channel loop")
+	assert_eq(spell.get_cast_state("Shield", true), "Shield/ShieldSpellCasting")
+	assert_eq(spell.get_cast_state("Shield", false), "Shield/ShieldSpellCast")
+	assert_eq(spell.get_cast_state("GreatSword", true), "GreatSword/GreatSwordSpellCasting")
+	assert_eq(spell.get_cast_state("GreatSword", false), "GreatSword/GreatSwordSpellCast")
+	assert_eq(spell.get_cast_state("Rifle", false), "", "Groups without spell clips play nothing")
+	spell.cast_style = Ability.CastStyle.POWER_UP
+	assert_eq(spell.get_cast_state("Shield", false), "Shield/ShieldPowerUp")
+	assert_eq(spell.get_cast_state("GreatSword", false), "GreatSword/GreatSwordPowerUp")
+	assert_eq(spell.get_cast_state("", false), "SpellCastUpwards", "Unarmed has no power up clip; the upward cast stands in")
+	spell.cast_style = Ability.CastStyle.UPWARD
+	assert_eq(spell.get_cast_state("", false), "SpellCastUpwards")
+	spell.cast_style = Ability.CastStyle.SWEEPING_SIDEWAYS
+	assert_eq(spell.get_cast_state("", false), "SpellCastSweepingSideways")
+	spell.cast_style = Ability.CastStyle.SWEEPING_UPWARD
+	assert_eq(spell.get_cast_state("", false), "SpellCastSweepingUpwards")
+
+
+func test_the_shipped_spells_carry_styles_and_sounds() -> void:
+	assert_eq(HEAL.cast_style, Ability.CastStyle.UPWARD)
+	assert_not_null(HEAL.channeling_sfx)
+	assert_not_null(HEAL.casting_sfx)
+	assert_eq(STEALTH.cast_style, Ability.CastStyle.SWEEPING_SIDEWAYS)
+	assert_not_null(STEALTH.casting_sfx)
+
+
+func _equip_shield() -> void:
+	var shield := Equipment.new()
+	shield.equipment_type = Equipment.EquipmentType.SWORD_AND_SHIELD
+	player.get_parent().add_child(shield)
+	player.inventory.add_equipment(shield)
+	await wait_physics_frames(2)
+	# A fresh group enters through its draw clip; skip straight to the stance
+	(player.animation_tree.get("parameters/LocomotionStateMachine/Shield/playback") as AnimationNodeStateMachinePlayback).start("ShieldLocomotion")
+	await wait_physics_frames(2)
+	assert_eq(player.current_locomotion_path, "Shield/ShieldLocomotion")
+
+
+func test_a_timed_cast_holds_the_shield_channel_then_plays_the_cast_clip() -> void:
+	await _equip_shield()
+	player.health.health = 20.0
+	heal.cast_time = 0.4
+	abilities.cast(heal)
+	await wait_physics_frames(2)
+	assert_eq(player.current_locomotion_path, "Shield/ShieldSpellCasting", "The channel plays for the cast time")
+	assert_eq(abilities.casting, heal, "The cast's own clip never interrupts it")
+	await wait_seconds(0.6)
+	assert_eq(player.current_locomotion_path, "Shield/ShieldSpellCast", "The cast clip plays as the effect lands")
+	assert_eq(player.health.health, 70.0)
+
+
+func test_an_interrupted_channel_drops_the_pose() -> void:
+	await _equip_shield()
+	player.health.health = 20.0
+	heal.cast_time = 1.0
+	abilities.cast(heal)
+	await wait_physics_frames(2)
+	assert_eq(player.current_locomotion_path, "Shield/ShieldSpellCasting")
+	abilities.interrupt_cast()
+	await wait_physics_frames(2)
+	assert_eq(player.current_locomotion_path, "Shield/ShieldLocomotion", "Back to the shield stance even while the channel was still fading in")
+	assert_eq(player.health.health, 20.0)
+	# And an interrupt after the fade travels back the ordinary way
+	abilities.cast(heal)
+	await wait_seconds(0.4)
+	assert_eq(player.current_locomotion_path, "Shield/ShieldSpellCasting")
+	abilities.interrupt_cast()
+	await wait_physics_frames(2)
+	assert_eq(player.current_locomotion_path, "Shield/ShieldLocomotion", "Back to the shield stance")
+
+
+func test_an_unarmed_cast_plays_its_standing_clip_only_when_it_lands() -> void:
+	player.health.health = 20.0
+	heal.cast_time = 0.4
+	abilities.cast(heal)
+	await wait_physics_frames(2)
+	assert_eq(player.current_locomotion_path, "StandingLocomotion", "Unarmed there is no channel clip")
+	await wait_seconds(0.6)
+	assert_eq(player.current_locomotion_path, "SpellCastUpwards", "Heal casts upward")
+	stealth.cast_style = Ability.CastStyle.FORWARD
+	await wait_seconds(2.5) # The upward clip has to end first
+	abilities.cast(stealth)
+	await wait_physics_frames(2)
+	assert_eq(player.current_locomotion_path, "SpellCastForwards", "An instant cast plays its clip at once")
+
+
+func test_a_cast_refused_when_it_lands_drops_the_channel_pose() -> void:
+	await _equip_shield()
+	player.health.health = player.health.max_health # Heal refuses at full health
+	heal.cast_time = 0.4
+	watch_signals(abilities)
+	abilities.cast(heal)
+	await wait_physics_frames(2)
+	assert_eq(player.current_locomotion_path, "Shield/ShieldSpellCasting")
+	await wait_seconds(0.6)
+	assert_signal_not_emitted(abilities, "ability_activated")
+	assert_signal_emitted(abilities, "cast_interrupted", "A fizzle counts as an interrupt so the pose drops")
+	assert_eq(player.current_locomotion_path, "Shield/ShieldLocomotion", "No cast clip and no channel pose left behind")

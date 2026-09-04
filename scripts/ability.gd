@@ -8,8 +8,18 @@ extends Resource
 
 enum Phase { CHANNELING, CASTING, IMPACT } ## Channeling runs for the cast time, casting fires on the caster when the effect lands, impact lands at [method get_impact_position].
 enum Target { SELF, FOCUS } ## SELF lands on the caster; FOCUS lands on the Player's locked-on target (an NPC's `target`), or where the Player aims without one.
+enum CastStyle { NONE, FORWARD, UPWARD, SWEEPING_SIDEWAYS, SWEEPING_UPWARD, POWER_UP } ## The cast clip played when the effect lands; NONE plays no animation.
 
 const SPELL_PROJECTILE_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/spell_projectile.tscn")
+const SPELL_CLIP_GROUPS: Array[String] = ["Shield", "GreatSword"] ## Locomotion groups with their own spell clips: a Spell Casting channel, a Spell Cast and a Power Up.
+## The standing one-handed clip for each style; unarmed has no power up clip, so the upward cast stands in.
+const STANDING_CAST_STATES: Dictionary = {
+	CastStyle.FORWARD: "SpellCastForwards",
+	CastStyle.UPWARD: "SpellCastUpwards",
+	CastStyle.SWEEPING_SIDEWAYS: "SpellCastSweepingSideways",
+	CastStyle.SWEEPING_UPWARD: "SpellCastSweepingUpwards",
+	CastStyle.POWER_UP: "SpellCastUpwards",
+}
 
 @export var display_name: String = ""
 @export var icon: Texture2D
@@ -22,6 +32,7 @@ const SPELL_PROJECTILE_SCENE: PackedScene = preload("res://addons/3d_player_cont
 @export var fx_lifetime: float = 3.0 ## Seconds a one-shot casting or impact VFX instance stays before it is freed.
 @export var target_mode: Target = Target.SELF
 @export var cast_range: float = 12.0 ## NPC casters use it only with their target this close.
+@export var cast_style: CastStyle = CastStyle.NONE ## The cast clip played when the effect lands, picked per weapon group by [method get_cast_state]; a timed cast holds the group's Spell Casting channel first.
 @export_group("Projectile", "projectile_")
 @export var projectile_speed: float = 0.0 ## Metres per second; above 0 the casting VFX/SFX fly to the target as a [SpellProjectile] and impact lands on arrival.
 @export var projectile_homing: bool = true ## The bolt follows a moving target and always arrives, WoW style.
@@ -52,6 +63,22 @@ func get_vfx(phase: Phase) -> PackedScene:
 
 func get_sfx(phase: Phase) -> AudioStream:
 	return [channeling_sfx, casting_sfx, impact_sfx][phase]
+
+
+## The locomotion state the caster travels to for this ability: [param group]'s Spell Casting channel while
+## [param channeling], its Spell Cast (or Power Up) when the effect lands, or the standing one-handed clip for
+## [member cast_style] with no weapon group (""). Empty when there is nothing to play: no style, a weapon group
+## without spell clips (bow, guns, boxing), or a channel while unarmed.
+func get_cast_state(group: String, channeling: bool) -> String:
+	if cast_style == CastStyle.NONE:
+		return ""
+	if group in SPELL_CLIP_GROUPS:
+		if channeling:
+			return group + "/" + group + "SpellCasting"
+		return group + "/" + group + ("PowerUp" if cast_style == CastStyle.POWER_UP else "SpellCast")
+	if channeling or not group.is_empty():
+		return ""
+	return STANDING_CAST_STATES[cast_style]
 
 
 ## Applies the effect to [param target] when the impact lands (on arrival for projectiles); null when nothing was aimed at.

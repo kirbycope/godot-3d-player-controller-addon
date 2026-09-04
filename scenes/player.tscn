@@ -3824,6 +3824,10 @@ monitorable = false
 [node name="CollisionShape3D" type="CollisionShape3D" parent="PlayerModel/Armature/GeneralSkeleton/RightHandHitboxAttachment/RightHandHitbox" unique_id=1096177976]
 shape = SubResource("SphereShape3D_hand_hitbox")
 
+[node name="SpellHand" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton"]
+bone_name = "RightHand"
+bone_idx = 35
+
 [node name="HeadAttachment" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton" index="10" unique_id=1176968755]
 bone_name = "Head"
 bone_idx = 6
@@ -4223,9 +4227,10 @@ player = NodePath("..")
 
 [node name="ImpactAudio" type="AudioStreamPlayer3D" parent="AbilityFx" unique_id=406147478]
 
-[node name="Abilities" parent="." unique_id=1423797243 node_paths=PackedStringArray("player", "fx_root", "channeling_audio", "casting_audio", "impact_audio") instance=ExtResource("219_abil")]
+[node name="Abilities" parent="." unique_id=1423797243 node_paths=PackedStringArray("player", "fx_root", "hand_anchor", "channeling_audio", "casting_audio", "impact_audio") instance=ExtResource("219_abil")]
 player = NodePath("..")
 fx_root = NodePath("../AbilityFx")
+hand_anchor = NodePath("../PlayerModel/Armature/GeneralSkeleton/SpellHand")
 channeling_audio = NodePath("../AbilityFx/ChannelingAudio")
 casting_audio = NodePath("../AbilityFx/CastingAudio")
 impact_audio = NodePath("../AbilityFx/ImpactAudio")
@@ -4457,6 +4462,9 @@ mouse_filter = 2
 [connection signal="timeout" from="AttackSequenceTimer" to="." method="_on_attack_sequence_timer_timeout"]
 [connection signal="timeout" from="UpdraftVfxTimer" to="." method="_update_updraft_vfx"]
 [connection signal="equipment_changed" from="Inventory" to="Abilities" method="_on_equipment_changed"]
+[connection signal="ability_activated" from="Abilities" to="." method="_on_abilities_ability_activated"]
+[connection signal="cast_interrupted" from="Abilities" to="." method="_on_abilities_cast_interrupted"]
+[connection signal="cast_started" from="Abilities" to="." method="_on_abilities_cast_started"]
 [connection signal="equipment_changed" from="Inventory" to="Focus" method="_on_equipment_changed"]
 [connection signal="equipment_changed" from="Inventory" to="HitDetection" method="_on_equipment_changed"]
 [connection signal="died" from="Health" to="." method="_on_health_died"]
