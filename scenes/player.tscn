@@ -2726,6 +2726,9 @@ properties/38/path = NodePath("Health:energy")
 properties/38/spawn = true
 properties/38/replication_mode = 2
 
+[sub_resource type="SphereShape3D" id="SphereShape3D_head"]
+radius = 0.14
+
 [node name="Player" type="CharacterBody3D" unique_id=548622605 groups=["Focusable", "Player"] node_paths=PackedStringArray("animation_tree")]
 script = ExtResource("1_ho2o7")
 animation_tree = NodePath("AnimationTree")
@@ -3760,6 +3763,19 @@ monitorable = false
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="PlayerModel/Armature/GeneralSkeleton/RightHandHitboxAttachment/RightHandHitbox"]
 shape = SubResource("SphereShape3D_hand_hitbox")
+
+[node name="HeadAttachment" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton"]
+bone_name = "Head"
+
+[node name="Head" type="Area3D" parent="PlayerModel/Armature/GeneralSkeleton/HeadAttachment"]
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+monitorable = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PlayerModel/Armature/GeneralSkeleton/HeadAttachment/Head"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0)
+shape = SubResource("SphereShape3D_head")
 
 [node name="AnimationPlayer" parent="PlayerModel" index="1" unique_id=2058321379]
 "libraries/Axe Standing Melee Attack Downward" = ExtResource("4_dtq52")

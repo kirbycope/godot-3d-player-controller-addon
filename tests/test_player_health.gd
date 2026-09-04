@@ -82,5 +82,6 @@ func test_a_round_on_the_head_kills_the_player_outright() -> void:
 	bullet.shooter = null
 	player.register_projectile_hit(bullet, player.global_position + Vector3(0.0, 1.0, 0.3), Vector3.FORWARD)
 	assert_eq(player.health.health, 100.0 - bullet.damage, "A body hit costs the round's damage")
-	player.register_projectile_hit(bullet, player.head_attachment.global_position + Vector3(0.0, 0.12, 0.0), Vector3.FORWARD)
+	bullet.hit_part = player.get_node("PlayerModel/Armature/GeneralSkeleton/HeadAttachment/Head")
+	player.register_projectile_hit(bullet, bullet.hit_part.global_position, Vector3.FORWARD)
 	assert_eq(player.health.health, 0.0, "A head hit is lethal")

@@ -348,7 +348,6 @@ var _ragdoll_was_enabled: bool = true ## enable_ragdoll before death forced it o
 @onready var projectile_raycast: RayCast3D = $CameraMount/ProjectileRaycast
 @onready var skeleton: Skeleton3D = $PlayerModel/Armature/GeneralSkeleton
 @onready var look_at_modifier = $PlayerModel/Armature/GeneralSkeleton/LookAtModifier3D
-@onready var head_attachment: BoneAttachment3D = %FirstPersonCameraBoneAttachment ## Rides the Neck bone; the head sits just above it.
 @onready var right_hand_ik: TwoBoneIK3D = $PlayerModel/Armature/GeneralSkeleton/RightHandIK
 @onready var physical_bone_simulator: PhysicalBoneSimulator3D = $PlayerModel/Armature/GeneralSkeleton/PhysicalBoneSimulator3D
 @onready var spring_arm: SpringArm3D = $CameraMount/CameraSpringArm
@@ -1281,7 +1280,6 @@ func set_look_at_target(target: Node3D) -> void:
 
 @export_category("Traversal")
 @export var stealth_transparency: float = 0.7 ## How faded the model is while [member is_stealthed].
-@export var headshot_margin: float = 0.12 ## A projectile landing no lower than this below the head kills outright; hits land on the capsule, so height is what counts.
 @export var lethal_fall_speed: float = 15.0 ## Landing at or above this downward speed (m/s) ragdolls the player.
 @export var wall_leap_horizontal_speed: float = 5.0 ## Horizontal impulse away from the wall on a climbing/hanging back-eject.
 @export var wall_leap_vertical_speed: float = 3.5 ## Vertical impulse on a climbing/hanging back-eject.
@@ -1370,9 +1368,9 @@ func heal(amount: float) -> bool:
 func register_projectile_hit(projectile: Projectile, point: Vector3, _normal: Vector3) -> void:
 	if projectile.shooter == self:
 		return
-	# A round on the head kills outright; the head sits just above the neck attachment
-	var head: Vector3 = head_attachment.global_position + up_direction * 0.12
-	take_hit(health.max_health if up_direction.dot(point - head) >= -headshot_margin else projectile.damage, point)
+	# A round on the Head hurtbox kills outright
+	var headshot: bool = projectile.hit_part != null and projectile.hit_part.name == "Head"
+	take_hit(health.max_health if headshot else projectile.damage, point)
 
 
 ## Wired to Health.died: the body drops into the ragdoll and the RespawnTimer brings the Player back.

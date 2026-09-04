@@ -4,6 +4,9 @@ extends RigidBody3D
 ## never tunnel through thin or small targets such as balloons. Projectile scenes sit on no collision
 ## layer (mask 1), so rounds pass through each other and only collide with the world.
 ##
+## Characters wear hurtboxes, Area3Ds on bone attachments on [constant HURTBOX_LAYER]: when the sweep lands on a
+## CharacterBody3D the same ray is cast again for the hurtbox behind the capsule, and [member hit_part] tells the
+## handler which body part took the round (one named "Head" is a headshot).
 ## Hits are delivered to the nearest ancestor of the collider that has
 ## [code]register_projectile_hit(projectile, point, normal)[/code], or failing that
 ## [code]register_weapon_hit(weapon, projectile)[/code]; RigidBody3D targets also receive an impulse.
@@ -12,6 +15,7 @@ signal hit(collider: Node, point: Vector3, normal: Vector3) ## Emitted once when
 
 const SHOOTER_EXCEPTION_SECONDS: float = 0.15 ## How long the projectile ignores the body that fired it.
 const MAX_AREA_SKIPS: int = 4 ## Areas without a hit handler (water, weather zones) are skipped up to this many times per step.
+const HURTBOX_LAYER: int = 2 ## Physics layer of the hurtbox areas that report which body part a round hit.
 
 @export var is_template: bool = false ## A frozen display copy (the arrow shown on the bow model); never flies.
 @export var lifetime: float = 5.0 ## Seconds before an unlanded projectile frees itself.
@@ -24,6 +28,7 @@ var shooter: Node3D = null ## The body that fired the projectile.
 var pending_launch: Dictionary = {} ## Launch data from a [ProjectileSpawner], applied on ready (every peer simulates the same round).
 var weapon: Equipment = null ## The equipment that fired the projectile, passed on to weapon-hit handlers.
 var has_hit: bool = false ## True once the projectile has landed.
+var hit_part: Area3D ## The hurtbox under the impact, when the target wears any; its name is the body part.
 
 var _launch_speed: float = 1.0
 var _previous_position: Vector3
@@ -82,16 +87,24 @@ func _physics_process(_delta: float) -> void:
 		if collider is Projectile or (collider is Area3D and _find_hit_handler(collider) == null):
 			excludes.append(result.rid)
 			continue
+		if collider is CharacterBody3D:
+			hit_part = _hurtbox_behind(query, excludes + [result.rid], collider)
 		_apply_hit(collider, result.position, result.normal)
 		break
 	_previous_position = global_position
 	_flight_velocity = linear_velocity
 
 
-## Contact fallback for slow projectiles that physics resolves before the sweep runs (wired in the scene).
+## Contact fallback for rounds physics resolves before the sweep runs (wired in the scene); a character still
+## gets its hurtbox looked up along the flight line through the contact.
 func _on_body_entered(body: Node) -> void:
-	if not has_hit and body != shooter and not body is Projectile:
-		_apply_hit(body, global_position, -_flight_velocity.normalized())
+	if has_hit or body == shooter or body is Projectile:
+		return
+	var along: Vector3 = _flight_velocity.normalized()
+	if body is CharacterBody3D and along.length_squared() > 0.0:
+		var query: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.create(global_position - along, global_position + along)
+		hit_part = _hurtbox_behind(query, [get_rid(), (body as CollisionObject3D).get_rid()], body)
+	_apply_hit(body, global_position, -along)
 
 
 func _apply_hit(collider: Node, point: Vector3, normal: Vector3) -> void:
@@ -113,6 +126,16 @@ func _apply_hit(collider: Node, point: Vector3, normal: Vector3) -> void:
 		get_tree().create_timer(stuck_seconds).timeout.connect(queue_free)
 	else:
 		queue_free()
+
+
+## Casts the same ray on the hurtbox layer, past the capsule, for a hurtbox that belongs to [param body].
+func _hurtbox_behind(query: PhysicsRayQueryParameters3D, excludes: Array[RID], body: Node) -> Area3D:
+	var probe: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.create(query.from, query.to, 1 << (HURTBOX_LAYER - 1), excludes)
+	probe.collide_with_areas = true
+	probe.collide_with_bodies = false
+	var result: Dictionary = get_world_3d().direct_space_state.intersect_ray(probe)
+	var part: Area3D = result.get("collider") as Area3D
+	return part if part and body.is_ancestor_of(part) else null
 
 
 ## The nearest ancestor (inclusive) that accepts projectile or weapon hits.
