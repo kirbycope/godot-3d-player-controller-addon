@@ -60,3 +60,17 @@ func test_boss_bar_shows_name_and_health() -> void:
 	assert_almost_eq(controls.boss_health_bar.value, 0.25, 0.001)
 	controls.hide_boss()
 	assert_false(controls.boss_bar.visible)
+
+
+func test_mana_only_regenerates_out_of_combat() -> void:
+	player.health.energy = 50.0
+	var hunter := Node.new()
+	add_child_autofree(hunter)
+	player.hunted_by(hunter.get_path(), true)
+	assert_true(player.health.regen_paused)
+	await wait_seconds(0.6)
+	assert_eq(player.health.energy, 50.0, "Hunted: mana holds")
+	player.hunted_by(hunter.get_path(), false)
+	assert_false(player.health.regen_paused)
+	await wait_seconds(0.6)
+	assert_gt(player.health.energy, 50.0, "Alone again: mana trickles back")

@@ -18,6 +18,8 @@ signal died ## Emitted once when health reaches zero.
 @export var max_energy: float = 0.0 ## 0 means no energy pool.
 @export var energy_regen: float = 5.0 ## Energy restored per second, in ticks of the RegenTimer.
 
+var regen_paused: bool = false ## The owner sets this while in combat; energy holds until it clears.
+
 var health: float = 100.0:
 	set(value):
 		var was_alive: bool = health > 0.0
@@ -73,5 +75,5 @@ func spend_energy(amount: float) -> bool:
 
 
 func _on_regen_timer_timeout() -> void:
-	if max_energy > 0.0 and energy < max_energy:
+	if not regen_paused and max_energy > 0.0 and energy < max_energy:
 		energy += energy_regen * regen_timer.wait_time

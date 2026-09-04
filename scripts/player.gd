@@ -1330,6 +1330,26 @@ func take_hit(damage: float, from: Vector3) -> void:
 	controls.rumble(0.6, 0.8, 0.25)
 
 
+var hunters: Array[Node] = [] ## Enemies currently targeting this Player; mana regenerates only when it is empty.
+
+
+## Enemies report starting and stopping their hunt; lands on the owning peer, where mana lives.
+@rpc("any_peer", "call_local", "reliable")
+func hunted_by(enemy_path: NodePath, hunting: bool) -> void:
+	if not is_multiplayer_authority():
+		hunted_by.rpc_id(get_multiplayer_authority(), enemy_path, hunting)
+		return
+	var enemy: Node = get_node_or_null(enemy_path)
+	if hunting and enemy and not hunters.has(enemy):
+		hunters.append(enemy)
+	elif not hunting:
+		hunters.erase(enemy)
+	for hunter: Node in hunters.duplicate():
+		if not is_instance_valid(hunter):
+			hunters.erase(hunter)
+	health.regen_paused = not hunters.is_empty()
+
+
 ## True while a heal would do something; abilities check it before spending anything.
 func can_heal() -> bool:
 	return health.can_heal()
@@ -1363,6 +1383,8 @@ func _on_health_died() -> void:
 
 ## Back on your feet at the spawn point with full health.
 func respawn() -> void:
+	hunters.clear()
+	health.regen_paused = false
 	health.health = health.max_health
 	state_machine.travel(current_state, NodeStateMachine.States.STANDING)
 	enable_ragdoll = _ragdoll_was_enabled
