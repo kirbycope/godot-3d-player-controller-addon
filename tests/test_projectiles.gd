@@ -96,7 +96,7 @@ func test_laser_sight_spans_muzzle_to_aim_point() -> void:
 	assert_almost_eq(laser.global_position.x, 1.0, 0.001)
 
 
-func test_firearm_fires_from_muzzle_along_the_projectile_ray() -> void:
+func test_firearm_fires_along_the_projectile_ray_level_with_the_muzzle() -> void:
 	var player: Player = PLAYER_SCENE.instantiate()
 	root.add_child(player)
 	var gun: Firearm = FIREARM_SCRIPT.new()
@@ -118,9 +118,12 @@ func test_firearm_fires_from_muzzle_along_the_projectile_ray() -> void:
 	var bullet: Projectile = gun.fire()
 	assert_not_null(bullet, "fire() spawns a projectile")
 	assert_signal_emitted(gun, "fired")
-	assert_almost_eq(bullet.global_position.distance_to(muzzle.global_position), 0.0, 0.01, "Rounds leave from the muzzle")
-	var expected: Vector3 = (gun.get_aim_point() - muzzle.global_position).normalized()
-	assert_almost_eq(bullet.linear_velocity.normalized().dot(expected), 1.0, 0.01, "Rounds fly toward the projectile ray's aim point")
+	var ray: RayCast3D = player.projectile_raycast
+	var along: Vector3 = -ray.global_basis.z
+	var off_line: float = (bullet.global_position - ray.global_position).cross(along).length()
+	assert_almost_eq(off_line, 0.0, 0.01, "Rounds leave on the crosshair line")
+	assert_almost_eq((bullet.global_position - ray.global_position).dot(along), (muzzle.global_position - ray.global_position).dot(along), 0.01, "Level with the muzzle")
+	assert_almost_eq(bullet.linear_velocity.normalized().dot(along), 1.0, 0.01, "Rounds fly straight down the projectile ray")
 	assert_almost_eq(bullet.linear_velocity.length(), 120.0, 0.01, "Round speed is the weapon's projectile_speed")
 	assert_eq(bullet.shooter, player)
 	assert_eq(bullet.weapon, gun)
@@ -199,3 +202,19 @@ func test_rumble_only_reaches_a_pad() -> void:
 	assert_false(controls.rumble(0.0, 0.8, 0.1), "Touch players get no rumble")
 	controls.current_input_type = Controls.InputType.MICROSOFT
 	assert_true(controls.rumble(0.0, 0.8, 0.1), "A pad gets the kick")
+
+
+func test_aiming_turns_the_spine_toward_the_crosshair() -> void:
+	var player: Player = PLAYER_SCENE.instantiate()
+	root.add_child(player)
+	var gun: Firearm = _gun(player)
+	await wait_physics_frames(1)
+	var modifier: LookAtModifier3D = player.look_at_modifier
+	assert_false(modifier.active, "Idle: the spine is free")
+	gun._set_aiming(true)
+	assert_true(modifier.active, "Aiming: the LookAtModifier tracks the crosshair")
+	assert_eq(modifier.get_node(modifier.target_node), player.look_at_target)
+	assert_true(player.weapon_look_at_modifier.active, "The gun hand's modifier points the barrel at the crosshair too")
+	gun._set_aiming(false)
+	assert_false(modifier.active, "Released: the spine is free again")
+	assert_false(player.weapon_look_at_modifier.active)

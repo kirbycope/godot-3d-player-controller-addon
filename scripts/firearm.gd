@@ -1,7 +1,8 @@
 class_name Firearm
 extends Equipment
-## A gun: fires [member projectile_scene] from [member muzzle] toward the Player's projectile ray
-## while shoot is held, and shows [member laser_sight] along that ray while aiming or shooting.
+## A gun: while shoot is held it launches [member projectile_scene] along the Player's projectile ray,
+## level with [member muzzle], so every round flies exactly through the crosshair; aiming or shooting
+## turns the Player's spine toward the crosshair and shows [member laser_sight] from the muzzle to it.
 ## It carries [member magazine_size] rounds plus [member reserve_rounds]; the "reload" action or an
 ## empty trigger pull refills the magazine from the reserve after [member reload_time]. Every shot
 ## kicks the pad and a reload pulses it, through [method Controls.rumble].
@@ -31,6 +32,7 @@ var rounds: int = 0: ## Rounds left in the magazine.
 		ammo_changed.emit(rounds, reserve_rounds)
 var is_reloading: bool = false
 var _trigger_was_held: bool = false
+var _aiming: bool = false
 
 
 func _ready() -> void:
@@ -53,8 +55,8 @@ func _on_equipment_changed() -> void:
 		player.controls.set_ammo(rounds, reserve_rounds)
 	elif not player.has_firearm_equipped:
 		player.controls.hide_ammo()
-	if not equipped and laser_sight:
-		laser_sight.hide()
+	if not equipped:
+		_set_aiming(false)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -64,14 +66,25 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _physics_process(_delta: float) -> void:
 	var shooting: bool = player.is_shooting
-	if laser_sight:
-		laser_sight.visible = shooting or player.is_focusing
-		if laser_sight.visible:
-			laser_sight.aim(muzzle.global_position, get_aim_point())
+	_set_aiming(shooting or player.is_focusing)
+	if laser_sight and _aiming:
+		laser_sight.aim(muzzle.global_position, get_aim_point())
 	if shooting and fire_timer.is_stopped() and (automatic or not _trigger_was_held):
 		fire()
 		fire_timer.start(fire_interval)
 	_trigger_was_held = shooting
+
+
+## Turns the spine (as the bow does) and then the gun hand toward the crosshair through the Player's two
+## LookAtModifier3D nodes, and shows the laser.
+func _set_aiming(aiming: bool) -> void:
+	if aiming == _aiming:
+		return
+	_aiming = aiming
+	player.set_look_at_target(player.look_at_target if aiming else null)
+	player.weapon_look_at_modifier.active = aiming
+	if laser_sight:
+		laser_sight.visible = aiming
 
 
 ## Where the Player's camera-aligned projectile ray lands, or a point far along it.
@@ -83,7 +96,8 @@ func get_aim_point() -> Vector3:
 	return ray.global_position - ray.global_basis.z * RAY_MISS_DISTANCE
 
 
-## Spawns one projectile at the muzzle and launches it at the aim point; an empty magazine reloads instead.
+## Launches one projectile on the projectile ray, level with the muzzle, toward the aim point; an empty
+## magazine reloads instead. The round rides the crosshair line, so it lands where the crosshair is.
 func fire() -> Projectile:
 	if projectile_scene == null or muzzle == null:
 		return null
@@ -91,16 +105,21 @@ func fire() -> Projectile:
 		reload()
 		return null
 	rounds -= 1
-	var direction: Vector3 = (get_aim_point() - muzzle.global_position).normalized()
+	var ray: RayCast3D = player.projectile_raycast
+	var aim: Vector3 = get_aim_point()
+	var along: Vector3 = -ray.global_basis.z
+	var origin: Transform3D = muzzle.global_transform
+	origin.origin = ray.global_position + along * maxf((muzzle.global_position - ray.global_position).dot(along), 0.0)
+	var direction: Vector3 = (aim - origin.origin).normalized()
 	var projectile: Projectile
 	var spawner: ProjectileSpawner = get_tree().get_first_node_in_group(&"ProjectileSpawner") as ProjectileSpawner
 	if spawner:
-		projectile = spawner.fire(projectile_scene, muzzle.global_transform, direction, projectile_speed, player, self)
+		projectile = spawner.fire(projectile_scene, origin, direction, projectile_speed, player, self)
 	else:
 		projectile = projectile_scene.instantiate() as Projectile
 		var world: Node = get_tree().current_scene if get_tree().current_scene else player.get_parent()
 		world.add_child(projectile)
-		projectile.launch(muzzle.global_transform, direction, projectile_speed, player, self)
+		projectile.launch(origin, direction, projectile_speed, player, self)
 	if fire_sfx:
 		fire_sfx.play()
 	player.controls.rumble(0.0, 0.8, 0.1)
