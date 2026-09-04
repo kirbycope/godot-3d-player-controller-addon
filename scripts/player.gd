@@ -348,7 +348,6 @@ var _ragdoll_was_enabled: bool = true ## enable_ragdoll before death forced it o
 @onready var projectile_raycast: RayCast3D = $CameraMount/ProjectileRaycast
 @onready var skeleton: Skeleton3D = $PlayerModel/Armature/GeneralSkeleton
 @onready var look_at_modifier = $PlayerModel/Armature/GeneralSkeleton/LookAtModifier3D
-@onready var weapon_look_at_modifier: LookAtModifier3D = $PlayerModel/Armature/GeneralSkeleton/WeaponLookAt ## Points the gun hand's barrel axis at the crosshair while a firearm aims; runs after the spine modifier.
 @onready var right_hand_ik: TwoBoneIK3D = $PlayerModel/Armature/GeneralSkeleton/RightHandIK
 @onready var physical_bone_simulator: PhysicalBoneSimulator3D = $PlayerModel/Armature/GeneralSkeleton/PhysicalBoneSimulator3D
 @onready var spring_arm: SpringArm3D = $CameraMount/CameraSpringArm

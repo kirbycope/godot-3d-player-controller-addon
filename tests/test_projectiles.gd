@@ -202,19 +202,3 @@ func test_rumble_only_reaches_a_pad() -> void:
 	assert_false(controls.rumble(0.0, 0.8, 0.1), "Touch players get no rumble")
 	controls.current_input_type = Controls.InputType.MICROSOFT
 	assert_true(controls.rumble(0.0, 0.8, 0.1), "A pad gets the kick")
-
-
-func test_aiming_turns_the_spine_toward_the_crosshair() -> void:
-	var player: Player = PLAYER_SCENE.instantiate()
-	root.add_child(player)
-	var gun: Firearm = _gun(player)
-	await wait_physics_frames(1)
-	var modifier: LookAtModifier3D = player.look_at_modifier
-	assert_false(modifier.active, "Idle: the spine is free")
-	gun._set_aiming(true)
-	assert_true(modifier.active, "Aiming: the LookAtModifier tracks the crosshair")
-	assert_eq(modifier.get_node(modifier.target_node), player.look_at_target)
-	assert_true(player.weapon_look_at_modifier.active, "The gun hand's modifier points the barrel at the crosshair too")
-	gun._set_aiming(false)
-	assert_false(modifier.active, "Released: the spine is free again")
-	assert_false(player.weapon_look_at_modifier.active)

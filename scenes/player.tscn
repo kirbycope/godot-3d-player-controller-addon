@@ -2879,20 +2879,6 @@ primary_damp_threshold = 1.0
 secondary_limit_angle = 1.9198622
 secondary_damp_threshold = 1.0
 
-[node name="WeaponLookAt" type="LookAtModifier3D" parent="PlayerModel/Armature/GeneralSkeleton" index="4"]
-active = false
-target_node = NodePath("../../../../CameraMount/ProjectileRaycast/LookAtTarget")
-bone_name = "RightHand"
-forward_axis = 2
-duration = 0.15
-ease_type = 2
-use_angle_limitation = true
-symmetry_limitation = true
-primary_limit_angle = 1.2
-primary_damp_threshold = 1.0
-secondary_limit_angle = 1.2
-secondary_damp_threshold = 1.0
-
 [node name="ParagliderBoneAttachment" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton" index="4" unique_id=1910251258]
 bone_name = "RightHand"
 bone_idx = 35
