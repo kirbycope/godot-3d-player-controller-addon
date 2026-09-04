@@ -80,7 +80,7 @@ func cast(ability: Ability) -> void:
 		return
 	if casting or not is_ready(ability):
 		return
-	if player.stamina.stamina < ability.stamina_cost:
+	if player.health.energy < ability.energy_cost:
 		return
 	if ability.cast_time <= 0.0:
 		_activate(ability)
@@ -139,7 +139,7 @@ func get_wheel_items() -> Array[Dictionary]:
 func _activate(ability: Ability) -> void:
 	if not ability.activate(player):
 		return
-	player.stamina.stamina -= ability.stamina_cost
+	player.health.spend_energy(ability.energy_cost)
 	if ability.is_toggle:
 		active_toggles.append(ability)
 	else:

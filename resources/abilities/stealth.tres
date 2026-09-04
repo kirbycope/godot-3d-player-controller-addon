@@ -8,4 +8,4 @@ script = ExtResource("1_stealth")
 display_name = "Stealth"
 icon = ExtResource("2_icon")
 cooldown = 3.0
-stamina_cost = 10.0
+energy_cost = 10.0

@@ -82,13 +82,15 @@ func test_holding_ability_opens_the_wheel_and_a_tap_casts() -> void:
 	assert_true(player.is_stealthed, "A tap casts the picked ability")
 
 
-func test_stealth_toggles_fades_the_model_and_costs_stamina() -> void:
+func test_stealth_toggles_fades_the_model_and_costs_mana_not_stamina() -> void:
 	watch_signals(abilities)
-	var before: float = player.stamina.stamina
+	var before: float = player.health.energy
+	var stamina_before: float = player.stamina.stamina
 	abilities.cast(stealth)
 	assert_true(player.is_stealthed)
 	assert_signal_emitted_with_parameters(abilities, "ability_activated", [stealth])
-	assert_almost_eq(player.stamina.stamina, before - stealth.stamina_cost, 0.01)
+	assert_almost_eq(player.health.energy, before - stealth.energy_cost, 0.01, "Abilities draw on the mana pool")
+	assert_eq(player.stamina.stamina, stamina_before, "The stamina wheel is for moving, not casting")
 	for mesh: MeshInstance3D in player.skeleton.find_children("*", "MeshInstance3D"):
 		assert_almost_eq(mesh.transparency, player.stealth_transparency, 0.001)
 
@@ -202,10 +204,10 @@ func test_cooldown_gates_recasts() -> void:
 	assert_true(player.is_stealthed)
 
 
-func test_a_cast_needs_the_stamina_cost() -> void:
-	player.stamina.stamina = 5.0
+func test_a_cast_needs_the_energy_cost() -> void:
+	player.health.energy = 5.0
 	abilities.cast(stealth)
-	assert_false(player.is_stealthed, "Stealth costs more stamina than the Player has")
+	assert_false(player.is_stealthed, "Stealth costs more mana than the Player has")
 
 
 ## A PackedScene whose root is a plain Node3D, standing in for a particle effect.

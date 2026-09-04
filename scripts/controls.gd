@@ -35,7 +35,8 @@ const ACTIONS: Dictionary = {
 	"focus": {"mouse": [MOUSE_BUTTON_RIGHT], "axes": [[JOY_AXIS_TRIGGER_LEFT, 1.0]]}, ## Microsoft: 🄻T, Nintendo: Z🄻, Sony: 🄻2, Mouse: [Right-Click]
 	"shoot": {"mouse": [MOUSE_BUTTON_LEFT], "axes": [[JOY_AXIS_TRIGGER_RIGHT, 1.0]]}, ## Microsoft: 🅁T, Nintendo: Z🅁, Sony: 🅁2, Mouse: [Left-Click]
 	"ability": {"keys": [KEY_Q], "buttons": [JOY_BUTTON_LEFT_SHOULDER]}, ## Microsoft: 🄻B, Nintendo: L, Sony: L1, Keyboard: [Q]
-	"throw": {"keys": [KEY_T], "buttons": [JOY_BUTTON_RIGHT_SHOULDER]}, ## Microsoft: 🅁B, Nintendo: R, Sony: R1, Keyboard: [T]
+	"throw": {"keys": [KEY_T], "buttons": [JOY_BUTTON_RIGHT_SHOULDER]},
+	"reload": {"keys": [KEY_R]}, ## Refill the equipped firearm; an empty magazine also reloads on the next trigger pull. Keyboard: [R] ## Microsoft: 🅁B, Nintendo: R, Sony: R1, Keyboard: [T]
 	"perspective": {"keys": [KEY_F5], "buttons": [JOY_BUTTON_BACK]}, ## Microsoft: ⧉, Nintendo: ⊝, Sony: ⦀, Keyboard: [F5]
 	"share": {"keys": [KEY_PRINT], "buttons": [JOY_BUTTON_MISC1]}, ## Microsoft: ⧉, Nintendo: ⧇, Sony: Create, Keyboard: [PrtScn]
 	"start": {"keys": [KEY_ESCAPE], "buttons": [JOY_BUTTON_START]}, ## Pause menu. Microsoft: ☰, Nintendo: ⊕, Sony: ☰, Keyboard: [Esc]
@@ -188,6 +189,7 @@ const ACTIONS: Dictionary = {
 @onready var boss_bar: VBoxContainer = %BossBar ## Name and health of the boss this player is fighting.
 @onready var boss_name_label: Label = %BossName
 @onready var boss_health_bar: ProgressBar = %BossHealth
+@onready var ammo_label: Label = %AmmoLabel ## Magazine / reserve of the equipped firearm; [Firearm] drives it.
 @onready var joypad_button_10: TouchScreenButton = $TopRight/JoypadButton10 ## Joypad Button 10 (Right Shoulder, Sony R1, XBox RB, Nintendo R)
 @onready var joypad_button_10_label: Label = $TopRight/JoypadButton10/Label
 @onready var joypad_axis_4_plus: TouchScreenButton = $TopLeft/JoypadAxis4Plus ## Joypad Axis 4 + (Left Trigger, Sony L2, XBox LT, Nintendo ZL)
@@ -458,6 +460,16 @@ func show_boss(boss_name: String, ratio: float) -> void:
 
 func update_boss(ratio: float) -> void:
 	boss_health_bar.value = ratio
+
+
+## Shows rounds in the magazine and in reserve while a firearm is equipped.
+func set_ammo(rounds: int, reserve: int) -> void:
+	ammo_label.text = "%d / %d" % [rounds, reserve]
+	ammo_label.show()
+
+
+func hide_ammo() -> void:
+	ammo_label.hide()
 
 
 func hide_boss() -> void:

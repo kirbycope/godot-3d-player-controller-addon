@@ -216,6 +216,12 @@ func _physics_process(_delta: float) -> void:
 
 	_sync_item_spring_arm()
 
+	# Keep the projectile ray on the camera's centre line (shoulder offset, first-person head), so the crosshair is where rounds go
+	var centre: Vector2 = get_viewport().get_visible_rect().size * 0.5
+	var normal: Vector3 = project_ray_normal(centre)
+	player.projectile_raycast.global_transform = Transform3D(Basis.looking_at(normal, global_basis.y),
+			project_ray_origin(centre) + normal * global_position.distance_to(camera_mount.global_position))
+
 	# Resolve the nearest ancestor of the ray's collider that can display an interaction prompt
 	var target: Node = camera_ray_cast.get_collider() as Node if camera_ray_cast.is_colliding() else null
 	while target and not target.has_method("display_menu"):

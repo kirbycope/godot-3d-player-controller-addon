@@ -125,3 +125,64 @@ func test_firearm_fires_from_muzzle_along_the_projectile_ray() -> void:
 	assert_eq(bullet.shooter, player)
 	assert_eq(bullet.weapon, gun)
 	bullet.free()
+
+
+func _gun(player: Player) -> Firearm:
+	var gun: Firearm = FIREARM_SCRIPT.new()
+	gun.player = player
+	gun.projectile_scene = BULLET_SCENE
+	var muzzle := Marker3D.new()
+	muzzle.position = Vector3(0.3, 1.2, -0.4)
+	gun.add_child(muzzle)
+	gun.muzzle = muzzle
+	var timer := Timer.new()
+	timer.one_shot = true
+	gun.add_child(timer)
+	gun.fire_timer = timer
+	root.add_child(gun)
+	return gun
+
+
+func test_magazine_empties_and_reloads_from_the_reserve() -> void:
+	var player: Player = PLAYER_SCENE.instantiate()
+	root.add_child(player)
+	var gun: Firearm = _gun(player)
+	gun.magazine_size = 2
+	gun.reserve_rounds = 3
+	gun.reload_time = 0.2
+	gun.rounds = 2
+	await wait_physics_frames(1)
+	watch_signals(gun)
+	assert_not_null(gun.fire())
+	assert_eq(gun.rounds, 1)
+	assert_signal_emitted_with_parameters(gun, "ammo_changed", [1, 3])
+	gun.fire_timer.stop()
+	assert_not_null(gun.fire())
+	assert_eq(gun.rounds, 0)
+	gun.fire_timer.stop()
+	assert_null(gun.fire(), "An empty magazine fires nothing and starts a reload")
+	assert_true(gun.is_reloading)
+	assert_false(gun.fire_timer.is_stopped(), "Reloading blocks the trigger")
+	await wait_seconds(0.3)
+	assert_false(gun.is_reloading)
+	assert_eq(gun.rounds, 2, "The magazine refills from the reserve")
+	assert_eq(gun.reserve_rounds, 1)
+	gun.reload()
+	assert_false(gun.is_reloading, "A full magazine does not reload")
+	player.controls.set_ammo(gun.rounds, gun.reserve_rounds)
+	assert_eq(player.controls.ammo_label.text, "2 / 1")
+	assert_true(player.controls.ammo_label.visible)
+	player.controls.hide_ammo()
+	assert_false(player.controls.ammo_label.visible)
+
+
+func test_the_aim_point_sits_under_the_crosshair_with_the_shoulder_camera() -> void:
+	var player: Player = PLAYER_SCENE.instantiate()
+	root.add_child(player)
+	var gun: Firearm = _gun(player)
+	var camera: Camera3D = player.camera
+	camera.h_offset = camera.aim_h_offset
+	await wait_physics_frames(3)
+	var centre: Vector2 = camera.get_viewport().get_visible_rect().size * 0.5
+	var on_screen: Vector2 = camera.unproject_position(gun.get_aim_point())
+	assert_almost_eq(on_screen, centre, Vector2.ONE, "The ray follows the camera's centre line, offset shoulder and all")

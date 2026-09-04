@@ -6,6 +6,7 @@
 radius = 0.6
 
 [node name="MeleeHitbox" type="Area3D"]
+collision_layer = 0
 monitorable = false
 script = ExtResource("1_hitbox")
 

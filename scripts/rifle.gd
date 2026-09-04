@@ -5,6 +5,11 @@ extends Firearm
 const FIRING_EMOTE: StringName = &"RifleFiringStanding"
 
 
+func _init() -> void:
+	magazine_size = 30
+	reserve_rounds = 90
+
+
 func _physics_process(delta: float) -> void:
 	super(delta)
 	var emote_state: AnimationNodeStateMachinePlayback = player.animation_tree.get(Player.EMOTE_STATE_PLAYBACK_PATH)

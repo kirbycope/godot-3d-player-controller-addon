@@ -2722,6 +2722,9 @@ properties/36/replication_mode = 2
 properties/37/path = NodePath("Health:health")
 properties/37/spawn = true
 properties/37/replication_mode = 2
+properties/38/path = NodePath("Health:energy")
+properties/38/spawn = true
+properties/38/replication_mode = 2
 
 [node name="Player" type="CharacterBody3D" unique_id=548622605 groups=["Focusable", "Player"] node_paths=PackedStringArray("animation_tree")]
 script = ExtResource("1_ho2o7")
@@ -4183,6 +4186,7 @@ texture = SubResource("AtlasTexture_fk680")
 
 [node name="Health" parent="." instance=ExtResource("223_health")]
 max_health = 100.0
+max_energy = 100.0
 
 [node name="StatusBars3D" parent="." instance=ExtResource("224_bars")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.1, 0)
@@ -4383,5 +4387,5 @@ mouse_filter = 2
 [connection signal="equipment_changed" from="Inventory" to="Abilities" method="_on_equipment_changed"]
 [connection signal="health_changed" from="Health" to="StatusBars3D" method="set_health"]
 [connection signal="died" from="Health" to="." method="_on_health_died"]
-[connection signal="stamina_changed" from="Stamina" to="StatusBars3D" method="set_energy"]
+[connection signal="energy_changed" from="Health" to="StatusBars3D" method="set_energy"]
 [connection signal="timeout" from="RespawnTimer" to="." method="respawn"]
