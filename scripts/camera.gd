@@ -70,6 +70,11 @@ func _ready() -> void:
 	# Ensure the [RayCast3D] doesn't collide with the player
 	camera_ray_cast.add_exception(player)
 
+	# Water is looked through, never at: the ray has to reach the boat and the props floating in it
+	for water: Node in get_tree().get_nodes_in_group(&"WATER"):
+		if water is CollisionObject3D:
+			camera_ray_cast.add_exception(water)
+
 	# Ensure the Camera's [SpringArm3D] doesn't collide with the player
 	camera_spring_arm.add_excluded_object(player.get_rid())
 
