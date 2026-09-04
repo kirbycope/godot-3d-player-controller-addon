@@ -7,6 +7,7 @@ signal exhausted_changed(is_exhausted: bool) ## Emitted when [member is_exhauste
 signal navigating_changed(is_navigating: bool) ## Emitted when click-to-move navigation starts or stops.
 
 const EMOTE_STATE_PLAYBACK_PATH: String = "parameters/EmoteStateMachine/playback"
+const CAST_CHANNEL_EMOTE: StringName = &"ReadyToCastSpell" ## Upper-body pose held while an unarmed cast channels.
 const LOCOMOTION_STATE_PLAYBACK_PATH: String = "parameters/LocomotionStateMachine/playback"
 const ARCHERY_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/Bow/ArcheryLocomotion/blend_position"
 const BOW_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/Bow/BowLocomotion/blend_position"
@@ -918,18 +919,25 @@ func travel_locomotion(state_path: String) -> void:
 			group_playback.travel(parts[1])
 
 
-## Wired to Abilities.cast_started: holds the weapon group's Spell Casting channel for the cast time.
+## Wired to Abilities.cast_started: holds the weapon group's Spell Casting channel for the cast time; unarmed,
+## where no such clip exists, the Ready To Cast Spell emote holds the upper body instead.
 func _on_abilities_cast_started(ability: Ability) -> void:
-	_travel_spell_state(ability.get_cast_state(get_spell_group(), true))
+	var state_path: String = ability.get_cast_state(get_spell_group(), true)
+	if not state_path.is_empty():
+		_travel_spell_state(state_path)
+	elif is_standing and ability.cast_style != Ability.CastStyle.NONE and get_spell_group().is_empty():
+		_start_channel_emote()
 
 
 ## Wired to Abilities.ability_activated: plays the cast (or power up) clip for the ability's cast style.
 func _on_abilities_ability_activated(ability: Ability) -> void:
+	_end_channel_emote()
 	_travel_spell_state(ability.get_cast_state(get_spell_group(), false))
 
 
 ## Wired to Abilities.cast_interrupted: drops the channel pose.
 func _on_abilities_cast_interrupted(_ability: Ability) -> void:
+	_end_channel_emote()
 	if not is_standing or not current_locomotion_node.ends_with("SpellCasting"):
 		return
 	var stance: String = String(get_grounded_locomotion_state())
@@ -950,6 +958,27 @@ func get_spell_group() -> String:
 func _travel_spell_state(state_path: String) -> void:
 	if is_standing and not state_path.is_empty():
 		travel_locomotion(state_path)
+
+
+## Holds the Ready To Cast Spell pose on the emote layer, the way a carried object does.
+func _start_channel_emote() -> void:
+	var emote_state: AnimationNodeStateMachinePlayback = animation_tree.get(EMOTE_STATE_PLAYBACK_PATH)
+	if emote_state == null or (held_object and held_object.is_holding_object()):
+		return
+	animation_tree.set("parameters/EmoteSpineBlend2/blend_amount", 1.0)
+	emote_state.start(CAST_CHANNEL_EMOTE)
+	is_emoting = true
+	has_started_emoting = false
+
+
+## Lets go of the channel pose, if it is the one showing.
+func _end_channel_emote() -> void:
+	var emote_state: AnimationNodeStateMachinePlayback = animation_tree.get(EMOTE_STATE_PLAYBACK_PATH)
+	if emote_state and emote_state.get_current_node() == CAST_CHANNEL_EMOTE and not (held_object and held_object.is_holding_object()):
+		emote_state.start("Idle")
+		animation_tree.set("parameters/EmoteSpineBlend2/blend_amount", 0.0)
+		is_emoting = false
+		has_started_emoting = false
 
 
 ## True if the equipment matching the given locomotion group is currently equipped.

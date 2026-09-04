@@ -47,6 +47,12 @@ const STANDING_CAST_STATES: Dictionary = {
 @export var impact_sfx: AudioStream
 
 
+## True when the cast can start at all (something to aim at, a patient who is hurt); a false here is refused
+## before the cast bar runs, so the caster never channels for nothing. [method activate] checks again when it lands.
+func can_cast(_caster: Node3D) -> bool:
+	return true
+
+
 ## Applies the effect; return false to refuse the cast so no cost or cooldown is spent.
 func activate(_caster: Node3D) -> bool:
 	return true

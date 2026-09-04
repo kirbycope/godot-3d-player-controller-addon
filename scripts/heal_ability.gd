@@ -13,11 +13,16 @@ func get_target(caster: Node3D) -> Node3D:
 	return caster
 
 
-func activate(caster: Node3D) -> bool:
+## Refused when the patient has no health to restore.
+func can_cast(caster: Node3D) -> bool:
 	var target: Node3D = get_target(caster)
 	if not target.has_method("heal"):
 		return false
 	return target.call("can_heal") if target.has_method("can_heal") else true
+
+
+func activate(caster: Node3D) -> bool:
+	return can_cast(caster)
 
 
 func impact(_caster: Node3D, target: Node3D) -> void:

@@ -434,13 +434,54 @@ func test_an_unarmed_cast_plays_its_standing_clip_only_when_it_lands() -> void:
 
 func test_a_cast_refused_when_it_lands_drops_the_channel_pose() -> void:
 	await _equip_shield()
-	player.health.health = player.health.max_health # Heal refuses at full health
+	player.health.health = 20.0
 	heal.cast_time = 0.4
 	watch_signals(abilities)
 	abilities.cast(heal)
 	await wait_physics_frames(2)
 	assert_eq(player.current_locomotion_path, "Shield/ShieldSpellCasting")
+	player.health.health = player.health.max_health # Healed by someone else meanwhile: the landing is refused
 	await wait_seconds(0.6)
 	assert_signal_not_emitted(abilities, "ability_activated")
 	assert_signal_emitted(abilities, "cast_interrupted", "A fizzle counts as an interrupt so the pose drops")
 	assert_eq(player.current_locomotion_path, "Shield/ShieldLocomotion", "No cast clip and no channel pose left behind")
+
+
+func test_a_doomed_cast_is_refused_before_its_bar_runs() -> void:
+	watch_signals(abilities)
+	player.health.health = player.health.max_health
+	heal.cast_time = 1.0
+	abilities.cast(heal)
+	assert_null(abilities.casting, "Heal at full health never starts channeling")
+	assert_signal_not_emitted(abilities, "cast_started")
+	var bolt := DamageAbility.new()
+	bolt.cast_time = 1.0
+	abilities.abilities.append(bolt)
+	abilities.cast(bolt)
+	assert_null(abilities.casting, "A damage spell with nothing locked on never starts channeling")
+	assert_false(player.controls.cast_bar.visible)
+
+
+func test_an_unarmed_channel_holds_the_ready_to_cast_emote() -> void:
+	player.health.health = 20.0
+	heal.cast_time = 0.4
+	heal.cooldown = 0.0
+	abilities.cast(heal)
+	await wait_physics_frames(2)
+	var emote: AnimationNodeStateMachinePlayback = player.animation_tree.get(Player.EMOTE_STATE_PLAYBACK_PATH)
+	assert_eq(emote.get_current_node(), &"ReadyToCastSpell", "The upper body readies the spell while the bar runs")
+	assert_eq(player.animation_tree.get("parameters/EmoteSpineBlend2/blend_amount"), 1.0)
+	assert_eq(player.current_locomotion_path, "StandingLocomotion", "The legs keep the standing locomotion")
+	await wait_seconds(0.6)
+	assert_eq(emote.get_current_node(), &"Idle", "The pose lets go as the effect lands")
+	assert_eq(player.animation_tree.get("parameters/EmoteSpineBlend2/blend_amount"), 0.0)
+	assert_eq(player.current_locomotion_path, "SpellCastUpwards")
+	# An interrupt lets go too
+	player.health.health = 20.0
+	await wait_seconds(2.5)
+	abilities.cast(heal)
+	await wait_physics_frames(2)
+	assert_eq(emote.get_current_node(), &"ReadyToCastSpell")
+	abilities.interrupt_cast()
+	await wait_physics_frames(1)
+	assert_eq(emote.get_current_node(), &"Idle")

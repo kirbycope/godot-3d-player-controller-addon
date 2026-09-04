@@ -81,7 +81,7 @@ func cast(ability: Ability) -> void:
 		return
 	if casting or not is_ready(ability):
 		return
-	if player.health.energy < ability.energy_cost:
+	if player.health.energy < ability.energy_cost or not ability.can_cast(player):
 		return
 	if ability.cast_time <= 0.0:
 		_activate(ability)
