@@ -9,6 +9,7 @@ const CHARGE_START_DELAY: float = 0.2 ## Seconds "shoot" must be held before a c
 const CHARGE_DURATION: float = 0.6 ## Seconds from charge start to full throw power.
 const MIN_THROW_POWER: float = 0.25 ## Throw power multiplier for a quick tap.
 const MAX_THROW_POWER: float = 1.0 ## Throw power multiplier at full charge.
+const RELEASE_GRACE: float = 0.3 ## Seconds a released body still passes through the Player, so it leaves cleanly instead of being shoved out by depenetration.
 const HOLD_EMOTE: StringName = &"ReadyToCastSpell" ## Emote pose played while carrying.
 
 @export_file("*.tscn") var connector_scene: String ## Scene stretched from [member connector_origin] to the held object; loaded once.
@@ -372,8 +373,7 @@ func _release_held_rigidbody() -> RigidBody3D:
 	held_rigidbody = null
 	body.collision_layer = _original_collision_layer
 	body.freeze = _original_freeze
-	body.remove_collision_exception_with(player)
-	player.remove_collision_exception_with(body)
+	get_tree().create_timer(RELEASE_GRACE).timeout.connect(_end_release_grace.bind(body))
 	var world: Node = player.get_parent() if player.get_parent() else get_tree().current_scene
 	if world:
 		body.reparent(world, true)
@@ -382,6 +382,14 @@ func _release_held_rigidbody() -> RigidBody3D:
 	body.sleeping = false
 	_end_hold()
 	return body
+
+
+## Lets a released body collide with the Player again, unless it has been picked back up meanwhile.
+func _end_release_grace(body: RigidBody3D) -> void:
+	if not is_instance_valid(body) or not is_instance_valid(player) or body == held_rigidbody:
+		return
+	body.remove_collision_exception_with(player)
+	player.remove_collision_exception_with(body)
 
 
 ## Clears the carry pose, look-at, connector and control labels once nothing is held.

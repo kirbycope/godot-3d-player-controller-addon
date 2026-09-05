@@ -4141,8 +4141,8 @@ one_shot = true
 [node name="ItemSpringArm" type="SpringArm3D" parent="CameraMount" unique_id=333552600]
 unique_name_in_owner = true
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
-collision_mask = 0
 spring_length = 2.0
+margin = 0.4
 
 [node name="ProjectileRaycast" type="RayCast3D" parent="CameraMount" unique_id=1969161568]
 transform = Transform3D(1, 0, 0, 0, 1.0000001, 0, 0, 0, 1.0000001, 0, 0, 0)

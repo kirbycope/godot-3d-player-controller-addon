@@ -14,6 +14,8 @@ const FOCUS_AIM_WORLD_RADIUS: float = 0.5 ## World-space radius in units/meters 
 @export var camera_spring_arm: SpringArm3D
 @export var first_person_offset: Vector3 = Vector3(0.0, 0.0, -0.3) ## The offset of the camera from the player's head when in first-person perspective.
 @export var first_person_item_spring_length: float = 0.7 ## Held-item spring length in first-person.
+@export var held_pitch_min: float = -0.35 ## Radians: in third person the item arm never dips below this when the camera looks down, so a held object stays out of the ground and the Player's legs.
+@export var held_pitch_max: float = 0.6 ## Radians: and never rises above this when the camera looks up.
 @export var third_person_item_spring_length: float = 2.0 ## Held-item spring length in third-person.
 @export var interaction_distance: float = 3.0 ## The maximum distance the player can reach to interact with objects.
 @export var joypad_sensitivity: float = 100.0
@@ -77,6 +79,8 @@ func _ready() -> void:
 
 	# Ensure the Camera's [SpringArm3D] doesn't collide with the player
 	camera_spring_arm.add_excluded_object(player.get_rid())
+	# The item arm shortens against walls and the ground, never against the Player carrying the item
+	item_spring_arm.add_excluded_object(player.get_rid())
 
 	_update_raycast()
 
@@ -290,7 +294,20 @@ func _sync_item_spring_arm() -> void:
 			first_person_item_spring_length
 		) if player.held_object else first_person_item_spring_length
 	else:
-		item_spring_arm.transform = item_spring_arm_initial_transform
+		# Third person: the camera's yaw, but only so much of its pitch, so looking down never puts the object in the
+		# ground or inside the Player, where releasing it would shove it out or leave it stuck
+		var up: Vector3 = player.up_direction
+		var forward: Vector3 = -camera_mount.global_basis.z
+		var flat: Vector3 = forward.slide(up)
+		if flat.length_squared() < 0.0001:
+			flat = (-player.global_basis.z).slide(up)
+		flat = flat.normalized()
+		var pitch: float = clampf(asin(clampf(forward.dot(up), -1.0, 1.0)), held_pitch_min, held_pitch_max)
+		var direction: Vector3 = (flat * cos(pitch) + up * sin(pitch)).normalized()
+		item_spring_arm.global_transform = Transform3D(Basis.looking_at(direction, up) * item_spring_arm_initial_transform.basis,
+				camera_mount.global_position + camera_mount.global_basis * item_spring_arm_initial_transform.origin)
+		if player.held_object:
+			item_spring_arm.spring_length = player.held_object.get_held_distance(item_spring_arm.spring_length)
 		item_spring_arm.spring_length = player.held_object.get_held_distance(
 			third_person_item_spring_length
 		) if player.held_object else third_person_item_spring_length
