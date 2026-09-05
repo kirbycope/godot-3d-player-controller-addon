@@ -91,14 +91,17 @@ func test_stealth_toggles_fades_the_model_and_costs_mana_not_stamina() -> void:
 	assert_signal_emitted_with_parameters(abilities, "ability_activated", [stealth])
 	assert_almost_eq(player.health.energy, before - stealth.energy_cost, 0.01, "Abilities draw on the mana pool")
 	assert_eq(player.stamina.stamina, stamina_before, "The stamina wheel is for moving, not casting")
-	for mesh: MeshInstance3D in player.skeleton.find_children("*", "MeshInstance3D"):
-		assert_almost_eq(mesh.transparency, player.stealth_transparency, 0.001)
+	_assert_ghosted(player, 1.0, "The ghost starts solid")
+	await wait_seconds(player.stealth_fade_time + 0.2)
+	_assert_ghosted(player, 1.0 - player.stealth_transparency, "and settles to the stealth alpha over the fade time")
 
 	abilities.cast(stealth)
 	assert_false(player.is_stealthed, "Casting an active toggle ends it")
 	assert_signal_emitted_with_parameters(abilities, "ability_deactivated", [stealth])
+	await wait_seconds(player.stealth_fade_time + 0.2)
 	for mesh: MeshInstance3D in player.skeleton.find_children("*", "MeshInstance3D"):
-		assert_almost_eq(mesh.transparency, 0.0, 0.001)
+		for surface: int in mesh.mesh.get_surface_count():
+			assert_null(mesh.get_surface_override_material(surface), "The original look is back once the fade out lands")
 
 
 func test_attacking_ends_stealth() -> void:
@@ -337,8 +340,8 @@ func test_puppets_fade_when_the_replicated_flag_arrives() -> void:
 	assert_false(puppet.is_multiplayer_authority())
 	assert_false(puppet.abilities.is_processing_unhandled_input(), "Only the authority casts")
 	puppet.is_stealthed = true
-	for mesh: MeshInstance3D in puppet.skeleton.find_children("*", "MeshInstance3D"):
-		assert_almost_eq(mesh.transparency, puppet.stealth_transparency, 0.001)
+	await wait_seconds(puppet.stealth_fade_time + 0.2)
+	_assert_ghosted(puppet, 1.0 - puppet.stealth_transparency)
 
 
 func test_cast_styles_map_to_the_weapon_group_clips() -> void:
@@ -485,6 +488,19 @@ func test_an_unarmed_channel_holds_the_ready_to_cast_emote() -> void:
 	abilities.interrupt_cast()
 	await wait_physics_frames(1)
 	assert_eq(emote.get_current_node(), &"Idle")
+
+
+## Every surface under the skeleton wears the stealth shader, carrying its own colour, at [param alpha].
+func _assert_ghosted(who: Player, alpha: float, text: String = "") -> void:
+	for mesh: MeshInstance3D in who.skeleton.find_children("*", "MeshInstance3D"):
+		for surface: int in mesh.mesh.get_surface_count():
+			var ghost: ShaderMaterial = mesh.get_surface_override_material(surface) as ShaderMaterial
+			assert_not_null(ghost, mesh.name + " wears the ghost")
+			if ghost == null:
+				continue
+			assert_eq(ghost.shader, Player.STEALTH_SHADER)
+			assert_almost_eq(float(ghost.get_shader_parameter(&"alpha")), alpha, 0.02, text)
+			assert_ne(ghost.get_shader_parameter(&"albedo_color"), Color.WHITE, "It keeps the surface's own colour")
 
 
 class HittableDummy extends Area3D: # An Area3D, so the Player's ledge rays never take the box for a wall to climb

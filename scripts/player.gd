@@ -292,9 +292,8 @@ var last_safe_shore_position: Vector3 = Vector3.ZERO ## Last known grounded posi
 var is_stealthed: bool = false: ## Is the Player hidden by Stealth? Replicated, so puppets fade too and followers ignore them.
 	set(value):
 		is_stealthed = value
-		if skeleton:
-			for mesh: MeshInstance3D in skeleton.find_children("*", "MeshInstance3D"):
-				mesh.transparency = stealth_transparency if is_stealthed else 0.0
+		if skeleton and is_inside_tree():
+			_apply_stealth_look(is_stealthed)
 var is_swimming: bool = false ## Is the Player currently swimming?
 var is_diving: bool = false ## Is the Player currently diving underwater (submerged swimming)?
 var swim_vertical_speed: float = 0.0 ## Vertical swim speed (m/s along up_direction) applied while swimming/diving.
@@ -1347,7 +1346,8 @@ func set_look_at_target(target: Node3D) -> void:
 @export_category("Combat")
 @export var skill_level: int = 0 ## Marksmanship: shrinks the spread of ranged equipment per its [Accuracy] resource (0 novice, expert at the resource's expert_level).
 @export_category("Traversal")
-@export var stealth_transparency: float = 0.7 ## How faded the model is while [member is_stealthed].
+@export var stealth_transparency: float = 0.7 ## How faded the model is while [member is_stealthed]: 1 is invisible.
+@export var stealth_fade_time: float = 1.0 ## Seconds the ghost takes to settle in when stealth starts, and to solidify when it ends.
 @export var lethal_fall_speed: float = 15.0 ## Landing at or above this downward speed (m/s) ragdolls the player.
 @export var wall_leap_horizontal_speed: float = 5.0 ## Horizontal impulse away from the wall on a climbing/hanging back-eject.
 @export var wall_leap_vertical_speed: float = 3.5 ## Vertical impulse on a climbing/hanging back-eject.
@@ -1400,6 +1400,76 @@ func slow(factor: float, seconds: float) -> void:
 func _end_slow(timer: SceneTreeTimer) -> void:
 	if timer == _slow_timer: # A newer slow runs on its own timer
 		movement_scale = 1.0
+
+
+const STEALTH_SHADER: Shader = preload("res://addons/3d_player_controller/assets/shaders/stealth.gdshader")
+
+var _stealth_originals: Dictionary[MeshInstance3D, Array] = {} ## Mesh -> its surface override materials before stealth, restored when it ends.
+var _stealth_tween: Tween
+
+
+## Turns every mesh under the skeleton into its ghost, or back. The ghost is the stealth shader carrying the surface's
+## own colour and texture: washed pale, tinted cold, drawn after a depth pre-pass so limbs never show through the body.
+## Its alpha tweens over [member stealth_fade_time] each way; the original materials return once the fade out lands.
+func _apply_stealth_look(stealthed: bool) -> void:
+	if _stealth_tween:
+		_stealth_tween.kill()
+	_stealth_tween = create_tween().set_parallel(true)
+	if stealthed:
+		for mesh: MeshInstance3D in skeleton.find_children("*", "MeshInstance3D"):
+			if mesh.mesh == null or _stealth_originals.has(mesh):
+				continue
+			var originals: Array[Material] = []
+			for surface: int in mesh.mesh.get_surface_count():
+				originals.append(mesh.get_surface_override_material(surface))
+				mesh.set_surface_override_material(surface, _ghost_of(mesh.get_active_material(surface)))
+			_stealth_originals[mesh] = originals
+	var target_alpha: float = 1.0 - stealth_transparency if stealthed else 1.0
+	for ghost: ShaderMaterial in _stealth_ghosts():
+		# A method, not the shader_parameter property: it exists only once the shader is compiled, which a headless run never does
+		_stealth_tween.tween_method(_set_ghost_alpha.bind(ghost), float(ghost.get_shader_parameter(&"alpha")), target_alpha, stealth_fade_time)
+	if not stealthed:
+		_stealth_tween.chain().tween_callback(_restore_stealth_materials)
+
+
+## The stealth shader wearing [param original]'s colours; anything but a StandardMaterial3D ghosts as plain white.
+func _ghost_of(original: Material) -> ShaderMaterial:
+	var ghost: ShaderMaterial = ShaderMaterial.new()
+	ghost.shader = STEALTH_SHADER
+	ghost.set_shader_parameter(&"alpha", 1.0)
+	if original is StandardMaterial3D:
+		var standard: StandardMaterial3D = original as StandardMaterial3D
+		ghost.set_shader_parameter(&"albedo_color", standard.albedo_color)
+		if standard.albedo_texture:
+			ghost.set_shader_parameter(&"albedo_texture", standard.albedo_texture)
+			ghost.set_shader_parameter(&"use_texture", true)
+	return ghost
+
+
+func _set_ghost_alpha(alpha: float, ghost: ShaderMaterial) -> void:
+	ghost.set_shader_parameter(&"alpha", alpha)
+
+
+func _stealth_ghosts() -> Array[ShaderMaterial]:
+	var ghosts: Array[ShaderMaterial] = []
+	for mesh: MeshInstance3D in _stealth_originals:
+		if not is_instance_valid(mesh):
+			continue
+		for surface: int in mesh.mesh.get_surface_count():
+			var material: Material = mesh.get_surface_override_material(surface)
+			if material is ShaderMaterial and (material as ShaderMaterial).shader == STEALTH_SHADER:
+				ghosts.append(material)
+	return ghosts
+
+
+func _restore_stealth_materials() -> void:
+	for mesh: MeshInstance3D in _stealth_originals:
+		if not is_instance_valid(mesh):
+			continue
+		var originals: Array = _stealth_originals[mesh]
+		for surface: int in originals.size():
+			mesh.set_surface_override_material(surface, originals[surface])
+	_stealth_originals.clear()
 
 
 ## Damage lands on the owning peer: it costs health, shoves away from [param from] and rumbles the pad.
