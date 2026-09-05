@@ -9,6 +9,7 @@ extends Resource
 enum Phase { CHANNELING, CASTING, IMPACT } ## Channeling runs for the cast time, casting fires on the caster when the effect lands, impact lands at [method get_impact_position].
 enum Target { SELF, FOCUS } ## SELF lands on the caster; FOCUS lands on the Player's locked-on target (an NPC's `target`), else on whatever the crosshair points at, else where the Player aims.
 enum CastStyle { NONE, FORWARD, UPWARD, SWEEPING_SIDEWAYS, SWEEPING_UPWARD, POWER_UP } ## The cast clip played when the effect lands; NONE plays no animation.
+enum Element { FIRE = 1, WATER = 2 } ## Bits of [member elements]: what the impact does to the world around it.
 
 const SPELL_PROJECTILE_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/spell_projectile.tscn")
 const SPELL_CLIP_GROUPS: Array[String] = ["Shield", "GreatSword"] ## Locomotion groups with their own spell clips: a Spell Casting channel, a Spell Cast and a Power Up.
@@ -33,6 +34,10 @@ const STANDING_CAST_STATES: Dictionary = {
 @export var target_mode: Target = Target.SELF
 @export var cast_range: float = 12.0 ## NPC casters use it only with their target this close.
 @export var cast_style: CastStyle = CastStyle.NONE ## The cast clip played when the effect lands, picked per weapon group by [method get_cast_state]; a timed cast holds the group's Spell Casting channel first.
+@export_group("Environment", "element")
+@export_flags("Fire", "Water") var elements: int = 0 ## What the impact does to the world: Fire lights grass fields and burnable grass within [member element_radius] (as the torch does), Water douses fire there. Pick any mix.
+@export var element_radius: float = 2.0 ## Metres around the impact the elements reach.
+@export var element_fire_duration: float = 6.0 ## Seconds a lit grass field keeps spreading from the impact.
 @export_group("Projectile", "projectile_")
 @export var projectile_speed: float = 0.0 ## Metres per second; above 0 the casting VFX/SFX fly to the target as a [SpellProjectile] and impact lands on arrival.
 @export var projectile_homing: bool = true ## The bolt follows a moving target and always arrives, WoW style.
@@ -92,6 +97,23 @@ func impact(_caster: Node3D, _target: Node3D) -> void:
 	pass
 
 
+## Lets the impact's [member elements] loose on the world at [param at]: Fire lights every grass field and burnable
+## grass within [member element_radius], Water douses them. Runs on every peer with the impact VFX, so all see it.
+func apply_elements(tree: SceneTree, at: Vector3) -> void:
+	if elements == 0 or tree == null:
+		return
+	if elements & Element.FIRE:
+		tree.call_group(&"GrassField", &"ignite_at", at, element_radius, element_fire_duration)
+		for patch: Node in tree.get_nodes_in_group(&"BurnableGrass"):
+			if patch is Node3D and patch.has_method(&"ignite") and (patch as Node3D).global_position.distance_to(at) <= element_radius:
+				patch.call(&"ignite")
+	if elements & Element.WATER:
+		tree.call_group(&"GrassField", &"douse_at", at, element_radius)
+		for patch: Node in tree.get_nodes_in_group(&"BurnableGrass"):
+			if patch is Node3D and patch.has_method(&"extinguish") and (patch as Node3D).global_position.distance_to(at) <= element_radius:
+				patch.call(&"extinguish")
+
+
 ## The node the impact lands on: the caster itself, the Player's focus target (or, with nothing locked on, whatever
 ## the crosshair ray points at that can take a hit, so a spell fires forward like a projectile), or an NPC's `target`.
 func get_target(caster: Node3D) -> Node3D:
@@ -135,6 +157,8 @@ func get_impact_position(caster: Node3D) -> Vector3:
 func spawn_phase(phase: Phase, at: Vector3, fx_root: Node3D, audio: AudioStreamPlayer3D, target: Node3D, destination: Vector3) -> Node3D:
 	if fx_root == null:
 		return null
+	if phase == Phase.IMPACT:
+		apply_elements(fx_root.get_tree(), at)
 	if phase == Phase.CASTING and projectile_speed > 0.0:
 		var bolt: SpellProjectile = SPELL_PROJECTILE_SCENE.instantiate()
 		bolt.speed = projectile_speed

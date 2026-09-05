@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="StealthAbility" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="StealthAbility" format=3 uid="uid://ywtv6gwnislu"]
 
-[ext_resource type="Script" path="res://addons/3d_player_controller/scripts/stealth_ability.gd" id="1_stealth"]
-[ext_resource type="Texture2D" path="res://addons/3d_player_controller/assets/icons/stealth.svg" id="2_icon"]
-[ext_resource type="AudioStream" path="res://addons/3d_player_controller/assets/tommusic/fantasy_sfx/Spells/Ice Freeze 1.ogg" id="3_cast"]
+[ext_resource type="Script" uid="uid://dsttx4kbu28nw" path="res://addons/3d_player_controller/scripts/stealth_ability.gd" id="1_stealth"]
+[ext_resource type="Texture2D" uid="uid://0hmb5bgev0cf" path="res://addons/3d_player_controller/assets/icons/stealth.svg" id="2_icon"]
+[ext_resource type="AudioStream" uid="uid://dvgjfefdyjn8l" path="res://addons/3d_player_controller/assets/tommusic/fantasy_sfx/Spells/Ice Freeze 1.ogg" id="3_cast"]
 
 [resource]
 script = ExtResource("1_stealth")
