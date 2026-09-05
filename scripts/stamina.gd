@@ -45,9 +45,11 @@ func _physics_process(delta: float) -> void:
 	var swimming_fast: bool = swimming_moving and player.is_sprinting
 	var swimming_normal: bool = swimming_moving and not player.is_sprinting
 
-	# Sprinting in place costs nothing; drain requires actual movement input
+	# Sprinting in place costs nothing; drain requires actual movement input. The firearm blend spaces stop at
+	# the run clip (no sprint point), so sprinting with a pistol or rifle buys no speed and costs nothing.
 	var sprinting_on_land: bool = player.is_sprinting \
 			and player.player_input.motion.length() > 0.0 \
+			and not player.has_firearm_equipped \
 			and not player.is_climbing \
 			and not player.is_swimming \
 			and not player.is_paragliding

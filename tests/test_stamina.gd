@@ -113,6 +113,30 @@ class TestStaminaDrain:
 		sender.action_up("sprint")
 		sender.action_up("move_up")
 
+	func test_no_drain_while_sprinting_with_a_firearm():
+		# The pistol and rifle blend spaces end at the run clip: sprinting with one buys no speed, so it costs nothing
+		var rifle: Rifle = Rifle.new()
+		rifle.equipment_type = Equipment.EquipmentType.RIFLE
+		rifle.bone_attachment_bone_name = "RightHand"
+		player.get_parent().add_child(rifle)
+		player.inventory.add_equipment(rifle)
+		await wait_physics_frames(2)
+		assert_true(player.has_firearm_equipped)
+		player.smoothed_motion = Vector2(0, 1.0)
+		var sender = InputSender.new(Input)
+		sender.set_auto_flush_input(true)
+		sender.action_down("move_up")
+		sender.action_down("sprint")
+		await wait_physics_frames(2)
+
+		var before: float = stamina.stamina
+		await wait_physics_frames(30)
+
+		assert_eq(stamina.stamina, before, "No stamina drain while sprinting with a rifle")
+
+		sender.action_up("sprint")
+		sender.action_up("move_up")
+
 	func test_no_drain_while_swimming_normal_speed():
 		player.is_swimming = true
 		player.is_sprinting = false
