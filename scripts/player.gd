@@ -618,6 +618,9 @@ func apply_input(delta: float) -> void:
 		else:
 			target_motion *= 1.5
 
+	# A slow scales the wish, so the blend walks where it would run
+	target_motion *= movement_scale
+
 	var is_first_person: bool = camera is Camera and (camera as Camera).perspective == Camera.Perspective.FIRST_PERSON
 	# Handle movement is strafing
 	if not is_driving and (is_shooting or is_focusing or is_first_person):
@@ -1377,6 +1380,26 @@ func warp_to(target: Transform3D) -> void:
 	orientation = Transform3D(target.basis, Vector3.ZERO)
 	player_model.transform = initial_player_model_transform
 	collision_shape.transform = initial_collision_shape_transform
+
+
+var movement_scale: float = 1.0 ## Fraction of normal movement speed; [method slow] lowers it for a while.
+var _slow_timer: SceneTreeTimer
+
+
+## Slows movement to [param factor] of normal for [param seconds], as a Frostbolt does; lands on the owning peer like a hit.
+@rpc("any_peer", "call_local", "reliable")
+func slow(factor: float, seconds: float) -> void:
+	if not is_multiplayer_authority():
+		slow.rpc_id(get_multiplayer_authority(), factor, seconds)
+		return
+	movement_scale = clampf(factor, 0.0, 1.0)
+	_slow_timer = get_tree().create_timer(seconds)
+	_slow_timer.timeout.connect(_end_slow.bind(_slow_timer))
+
+
+func _end_slow(timer: SceneTreeTimer) -> void:
+	if timer == _slow_timer: # A newer slow runs on its own timer
+		movement_scale = 1.0
 
 
 ## Damage lands on the owning peer: it costs health, shoves away from [param from] and rumbles the pad.
