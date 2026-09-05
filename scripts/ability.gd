@@ -7,7 +7,7 @@ extends Resource
 ## applies the effect and says what to play. [method spawn_phase] is the one place phase VFX/SFX and bolts come from.
 
 enum Phase { CHANNELING, CASTING, IMPACT } ## Channeling runs for the cast time, casting fires on the caster when the effect lands, impact lands at [method get_impact_position].
-enum Target { SELF, FOCUS } ## SELF lands on the caster; FOCUS lands on the Player's locked-on target (an NPC's `target`), or where the Player aims without one.
+enum Target { SELF, FOCUS } ## SELF lands on the caster; FOCUS lands on the Player's locked-on target (an NPC's `target`), else on whatever the crosshair points at, else where the Player aims.
 enum CastStyle { NONE, FORWARD, UPWARD, SWEEPING_SIDEWAYS, SWEEPING_UPWARD, POWER_UP } ## The cast clip played when the effect lands; NONE plays no animation.
 
 const SPELL_PROJECTILE_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/spell_projectile.tscn")
@@ -92,13 +92,27 @@ func impact(_caster: Node3D, _target: Node3D) -> void:
 	pass
 
 
-## The node the impact lands on: the caster itself, the Player's focus target, or an NPC's `target`.
+## The node the impact lands on: the caster itself, the Player's focus target (or, with nothing locked on, whatever
+## the crosshair ray points at that can take a hit, so a spell fires forward like a projectile), or an NPC's `target`.
 func get_target(caster: Node3D) -> Node3D:
 	if target_mode == Target.SELF:
 		return caster
 	if caster is Player:
-		return (caster as Player).current_focus_target
+		var player: Player = caster as Player
+		if is_instance_valid(player.current_focus_target):
+			return player.current_focus_target
+		return get_aimed_target(player)
 	return caster.get("target") as Node3D
+
+
+## Whatever the Player's crosshair ray points at that has `take_hit`, walking up from the collider; null otherwise.
+static func get_aimed_target(player: Player) -> Node3D:
+	var ray: RayCast3D = player.projectile_raycast
+	ray.force_raycast_update()
+	var node: Node = ray.get_collider() as Node if ray.is_colliding() else null
+	while node and not node.has_method("take_hit"):
+		node = node.get_parent()
+	return node as Node3D
 
 
 ## Where the impact lands: the caster, the target, the Player's aim point, or straight ahead of an NPC.

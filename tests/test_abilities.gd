@@ -458,8 +458,8 @@ func test_a_doomed_cast_is_refused_before_its_bar_runs() -> void:
 	bolt.cast_time = 1.0
 	abilities.abilities.append(bolt)
 	abilities.cast(bolt)
-	assert_null(abilities.casting, "A damage spell with nothing locked on never starts channeling")
-	assert_false(player.controls.cast_bar.visible)
+	assert_eq(abilities.casting, bolt, "A damage spell with nothing locked on still casts, forward")
+	abilities.interrupt_cast()
 
 
 func test_an_unarmed_channel_holds_the_ready_to_cast_emote() -> void:
@@ -485,3 +485,55 @@ func test_an_unarmed_channel_holds_the_ready_to_cast_emote() -> void:
 	abilities.interrupt_cast()
 	await wait_physics_frames(1)
 	assert_eq(emote.get_current_node(), &"Idle")
+
+
+class HittableDummy extends Area3D: # An Area3D, so the Player's ledge rays never take the box for a wall to climb
+	var hits: Array[float] = []
+	func take_hit(damage: float, _from: Vector3) -> void:
+		hits.append(damage)
+
+
+func _put_dummy_ahead() -> HittableDummy:
+	var dummy := HittableDummy.new()
+	var shape := CollisionShape3D.new()
+	shape.shape = BoxShape3D.new()
+	shape.shape.size = Vector3(2.0, 2.0, 2.0)
+	dummy.add_child(shape)
+	player.get_parent().add_child(dummy)
+	var ray: RayCast3D = player.projectile_raycast # Put it on the crosshair line, four metres out
+	ray.force_raycast_update()
+	dummy.global_position = ray.global_position - ray.global_basis.z * 4.0
+	return dummy
+
+
+func test_without_a_lock_a_damage_spell_fires_at_whatever_the_crosshair_points_at() -> void:
+	await wait_physics_frames(10) # Let the Player settle on the floor first
+	var ray: RayCast3D = player.projectile_raycast
+	var dummy := _put_dummy_ahead()
+	await wait_physics_frames(2)
+	dummy.global_position = ray.global_position - ray.global_basis.z * 4.0
+	await wait_physics_frames(2)
+	ray.force_raycast_update()
+	var bolt := DamageAbility.new()
+	bolt.projectile_speed = 12.0
+	bolt.damage = 20.0
+	abilities.abilities.append(bolt)
+	assert_null(player.current_focus_target, "Nothing locked on")
+	assert_eq(bolt.get_target(player), dummy, "The crosshair picks the target")
+	abilities.cast(bolt)
+	assert_true(abilities.fx_root.get_child(3) is SpellProjectile, "The bolt is away")
+	await wait_seconds(0.8)
+	assert_eq(dummy.hits, [20.0] as Array[float], "It lands on what the crosshair pointed at")
+
+
+func test_without_anything_ahead_a_damage_spell_still_flies_to_the_aim_point() -> void:
+	var bolt := DamageAbility.new()
+	bolt.projectile_speed = 40.0
+	abilities.abilities.append(bolt)
+	watch_signals(abilities)
+	assert_null(bolt.get_target(player))
+	abilities.cast(bolt)
+	assert_signal_emitted(abilities, "ability_activated", "It casts anyway")
+	var projectile: SpellProjectile = abilities.fx_root.get_child(3)
+	assert_null(projectile.target)
+	assert_gt(projectile.destination.distance_to(player.global_position), 5.0, "It flies off along the crosshair")
