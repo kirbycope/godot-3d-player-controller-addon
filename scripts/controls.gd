@@ -44,7 +44,7 @@ const ACTIONS: Dictionary = {
 	"whistle": {"keys": [KEY_K], "buttons": [JOY_BUTTON_DPAD_DOWN]}, ## Controller: DPad Down, Keyboard: [K]
 	"last_weapon": {"keys": [KEY_J], "buttons": [JOY_BUTTON_DPAD_LEFT]}, ## Controller: DPad Left, Keyboard: [J]
 	"next_weapon": {"keys": [KEY_L], "buttons": [JOY_BUTTON_DPAD_RIGHT]}, ## Controller: DPad Right, Keyboard: [L]
-	"broadcast": {"keys": [KEY_T]}, ## Push-to-talk. Keyboard: [T]
+	"broadcast": {"keys": [KEY_V]}, ## Push-to-talk. Keyboard: [V]
 	"ui_accept": {"deadzone": 0.5, "keycodes": [KEY_ENTER, KEY_KP_ENTER], "keys": [KEY_SPACE], "buttons": [JOY_BUTTON_A]},
 	"ui_left": {"deadzone": 0.5, "buttons": [JOY_BUTTON_DPAD_LEFT]},
 	"ui_right": {"deadzone": 0.5, "buttons": [JOY_BUTTON_DPAD_RIGHT]},

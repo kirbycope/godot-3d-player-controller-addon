@@ -213,7 +213,7 @@
 [ext_resource type="AnimationLibrary" uid="uid://dm38pybh6n2rx" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Standing 1H Spell Cast Upwards.glb" id="167_kbeu1"]
 [ext_resource type="AnimationLibrary" uid="uid://drrxwroiqin7m" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Throw.glb" id="169_xw6m8"]
 [ext_resource type="AnimationLibrary" uid="uid://ch15333whpgme" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Sword and Shield Draw 2.glb" id="172_l7hcw"]
-[ext_resource type="PackedScene" uid="uid://d3807jlpj5vsl" path="res://addons/3d_player_controller/scenes/inventory.tscn" id="173_0fqn4"]
+[ext_resource type="PackedScene" uid="uid://d3807jlpj5vsl" path="res://addons/garp/scenes/inventory.tscn" id="173_0fqn4"]
 [ext_resource type="PackedScene" uid="uid://dgslo5b1yxrd0" path="res://addons/3d_player_controller/scenes/pause.tscn" id="173_errws"]
 [ext_resource type="Texture2D" uid="uid://dsy7pc3ak6vqf" path="res://addons/3d_player_controller/assets/kenney_nl/2D assets/Game Icons/PNG/White/2x/down.png" id="174_07say"]
 [ext_resource type="PackedScene" uid="uid://caww8bymbfsli" path="res://addons/3d_player_controller/scenes/audio_settings.tscn" id="174_audio"]
@@ -221,9 +221,7 @@
 [ext_resource type="PackedScene" uid="uid://c7k68q6a3mvdg" path="res://addons/3d_player_controller/scenes/lobby_manager.tscn" id="174_lobbymgr"]
 [ext_resource type="PackedScene" uid="uid://bsmatt41d3g3p" path="res://addons/3d_player_controller/scenes/video_settings.tscn" id="174_video"]
 [ext_resource type="PackedScene" uid="uid://2crtfw6co0ss" path="res://addons/3d_player_controller/scenes/settings.tscn" id="174_xwibx"]
-[ext_resource type="PackedScene" uid="uid://6n6s0hg75now" path="res://addons/3d_player_controller/scenes/driving_ui.tscn" id="176_gqdy8"]
-[ext_resource type="Script" uid="uid://cm78iyhyfxf3b" path="res://addons/3d_player_controller/scripts/driving.gd" id="177_gfa47"]
-[ext_resource type="Script" uid="uid://r6smcoty1yhi" path="res://addons/3d_player_controller/scripts/skateboarding.gd" id="182_3eyle"]
+[ext_resource type="Script" path="res://addons/3d_player_controller/scripts/riding.gd" id="177_riding"]
 [ext_resource type="Script" uid="uid://cq5xkylmgvf27" path="res://addons/3d_player_controller/scripts/swimming.gd" id="185_sp0uh"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/water_splash.tscn" id="186_splash"]
 [ext_resource type="Script" uid="uid://b1xkqkj2u8i3a" path="res://addons/3d_player_controller/scripts/flying.gd" id="187_8fd3h"]
@@ -2258,7 +2256,7 @@ xfade_time = 0.2
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_5iivw"]
 xfade_time = 0.2
 advance_mode = 2
-advance_expression = "is_entering_vehicle"
+advance_expression = "is_mounting"
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_oa3tv"]
 xfade_time = 0.2
@@ -2273,15 +2271,15 @@ advance_mode = 2
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_qcaj2"]
 xfade_time = 0.2
 advance_mode = 2
-advance_expression = "is_exiting_vehicle"
+advance_expression = "is_dismounting"
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_xdbkn"]
 advance_mode = 2
-advance_expression = "is_skateboarding"
+advance_expression = "false"
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_sjfj8"]
 advance_mode = 2
-advance_expression = "!is_skateboarding"
+advance_expression = "!is_riding"
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_nlnto"]
 xfade_time = 0.2
@@ -2398,7 +2396,7 @@ advance_mode = 2
 advance_expression = "equipped_bow"
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_bidj8"]
-advance_expression = "!is_driving and !is_exiting_vehicle"
+advance_expression = "!is_riding and !is_dismounting"
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_u05ty"]
 xfade_time = 0.2
@@ -2710,7 +2708,7 @@ properties/14/replication_mode = 2
 properties/15/path = NodePath(".:is_flying")
 properties/15/spawn = true
 properties/15/replication_mode = 2
-properties/16/path = NodePath(".:is_skateboarding")
+properties/16/path = NodePath(".:is_riding")
 properties/16/spawn = true
 properties/16/replication_mode = 2
 properties/17/path = NodePath(".:is_sliding")
@@ -2725,7 +2723,7 @@ properties/19/replication_mode = 2
 properties/20/path = NodePath(".:is_hanging_free")
 properties/20/spawn = true
 properties/20/replication_mode = 2
-properties/21/path = NodePath(".:is_driving")
+properties/21/path = NodePath(".:is_mounting")
 properties/21/spawn = true
 properties/21/replication_mode = 2
 properties/22/path = NodePath(".:is_sitting")
@@ -4213,9 +4211,6 @@ autostart = true
 visible = false
 player = NodePath("..")
 
-[node name="DrivingUI" parent="." unique_id=1110728206 node_paths=PackedStringArray("player") instance=ExtResource("176_gqdy8")]
-player = NodePath("..")
-
 [node name="Inventory" parent="." unique_id=509190037 node_paths=PackedStringArray("player") instance=ExtResource("173_0fqn4")]
 player = NodePath("..")
 
@@ -4239,6 +4234,8 @@ abilities = Array[ExtResource("220_ability")]([ExtResource("221_stealth"), ExtRe
 [node name="Pause" parent="." unique_id=498429169 node_paths=PackedStringArray("player") instance=ExtResource("173_errws")]
 visible = false
 player = NodePath("..")
+inventory_screen_scene = "res://addons/garp/scenes/inventory_screen.tscn"
+spells_screen_scene = "res://addons/garp/scenes/spells_screen.tscn"
 
 [node name="Settings" parent="." unique_id=955686872 node_paths=PackedStringArray("player") instance=ExtResource("174_xwibx")]
 visible = false
@@ -4364,11 +4361,6 @@ process_mode = 4
 script = ExtResource("144_x0r6x")
 player = NodePath("../..")
 
-[node name="Driving" type="Node" parent="NodeStateMachine" unique_id=1601209252 node_paths=PackedStringArray("player")]
-process_mode = 4
-script = ExtResource("177_gfa47")
-player = NodePath("../..")
-
 [node name="Falling" type="Node" parent="NodeStateMachine" unique_id=1065851108 node_paths=PackedStringArray("player")]
 process_mode = 4
 script = ExtResource("144_108j8")
@@ -4414,9 +4406,9 @@ process_mode = 4
 script = ExtResource("207_gl6xl")
 player = NodePath("../..")
 
-[node name="Skateboarding" type="Node" parent="NodeStateMachine" unique_id=148693985 node_paths=PackedStringArray("player")]
+[node name="Riding" type="Node" parent="NodeStateMachine" unique_id=148693985 node_paths=PackedStringArray("player")]
 process_mode = 4
-script = ExtResource("182_3eyle")
+script = ExtResource("177_riding")
 player = NodePath("../..")
 
 [node name="Sliding" type="Node" parent="NodeStateMachine" unique_id=1184718739 node_paths=PackedStringArray("player")]
@@ -4455,7 +4447,6 @@ mouse_filter = 2
 
 [connection signal="locomotion_node_changed" from="." to="Abilities" method="_on_locomotion_node_changed"]
 [connection signal="locomotion_node_changed" from="." to="HitDetection" method="_on_locomotion_node_changed"]
-[connection signal="state_changed" from="." to="DrivingUI" method="_on_player_state_changed"]
 [connection signal="state_changed" from="." to="Abilities" method="_on_state_changed"]
 [connection signal="body_entered" from="TargetDetection" to="Focus" method="_on_target_detection_body_entered"]
 [connection signal="body_exited" from="TargetDetection" to="Focus" method="_on_target_detection_body_exited"]

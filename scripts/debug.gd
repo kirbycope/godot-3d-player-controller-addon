@@ -16,7 +16,7 @@ extends CanvasLayer
 @onready var is_attacking: CheckBox = $States/is_attacking
 @onready var is_climbing: CheckBox = $States/is_climbing
 @onready var is_crouching: CheckBox = $States/is_crouching
-@onready var is_driving: CheckBox = $States/is_driving
+@onready var is_riding: CheckBox = $States/is_riding
 @onready var is_emoting: CheckBox = $States/is_emoting
 @onready var is_hanging: CheckBox = $States/is_hanging
 @onready var is_falling: CheckBox = $States/is_falling
@@ -28,7 +28,6 @@ extends CanvasLayer
 @onready var is_ragdolling: CheckBox = $States/is_ragdolling
 @onready var is_shooting: CheckBox = $States/is_shooting
 @onready var is_sitting: CheckBox = $States/is_sitting
-@onready var is_skateboarding: CheckBox = $States/is_skateboarding
 @onready var is_sliding: CheckBox = $States/is_sliding
 @onready var is_sprinting: CheckBox = $States/is_sprinting
 @onready var is_standing: CheckBox = $States/is_standing
@@ -107,7 +106,7 @@ func _on_refresh_timer_timeout() -> void:
 	is_attacking.button_pressed = player.is_attacking
 	is_climbing.button_pressed = player.is_climbing
 	is_crouching.button_pressed = player.is_crouching
-	is_driving.button_pressed = player.is_driving
+	is_riding.button_pressed = player.is_riding
 	is_emoting.button_pressed = player.is_emoting
 	is_hanging.button_pressed = player.is_hanging_braced or player.is_hanging_free
 	is_falling.button_pressed = player.is_falling
@@ -119,7 +118,6 @@ func _on_refresh_timer_timeout() -> void:
 	is_ragdolling.button_pressed = player.is_ragdolling
 	is_shooting.button_pressed = player.is_shooting
 	is_sitting.button_pressed = player.is_sitting
-	is_skateboarding.button_pressed = player.is_skateboarding
 	is_sliding.button_pressed = player.is_sliding
 	is_sprinting.button_pressed = player.is_sprinting
 	is_standing.button_pressed = player.is_standing
@@ -153,9 +151,9 @@ func _on_refresh_timer_timeout() -> void:
 	is_climbing_hopping_up.button_pressed = player.is_climbing_hopping_up
 	is_hopping_from_climbing.button_pressed = player.is_hopping_from_climbing
 
-	driving.visible = player.is_driving
-	is_entering_vehicle.button_pressed = player.is_entering_vehicle
-	is_exiting_vehicle.button_pressed = player.is_exiting_vehicle
+	driving.visible = player.is_riding
+	is_entering_vehicle.button_pressed = player.is_mounting
+	is_exiting_vehicle.button_pressed = player.is_dismounting
 
 	hanging.visible = player.is_hanging_braced or player.is_hanging_free
 	hanging_is_climbing_on.button_pressed = player.is_climbing_on

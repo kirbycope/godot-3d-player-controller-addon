@@ -329,138 +329,207 @@ class TestPauseTransitions:
 		
 		assert_ne(player.current_state, NodeStateMachine.States.RAGDOLLING, "Player should not transition to RAGDOLLING when Pause CanvasLayer is visible.")
 
-class TestSkateboardingTransitions:
+class TestRidingTransitions:
 	extends FsmTestBase
 
-	func test_skateboarding_action_properties():
-		var skateboarding_node: Skateboarding = player.state_machine.get_node("Skateboarding") as Skateboarding
-		assert_not_null(skateboarding_node, "Skateboarding state node should exist.")
-		assert_eq(skateboarding_node.keyboard_dismount_action, &"whistle")
-		assert_eq(skateboarding_node.pad_dismount_action, &"whistle")
-		assert_eq(skateboarding_node.keyboard_jump_action, &"jump")
-		assert_eq(skateboarding_node.pad_jump_action, &"jump")
+	## A rideable that only records what the Riding state does to it and asks for one animation.
+	class MockRideable:
+		extends Node3D
+		signal locomotion_requested(state_path: String, immediate: bool)
+		signal jump_requested
+		var blocks_hands: bool = false
+		var disables_collision: bool = false
+		var mount_animation: String = ""
+		var dismount_animation: String = ""
+		var input_type: int = -1
+		var seat: Node3D
+		var camera: Camera3D
+		var mounted_by: Player
+		var dismounted: bool = false
+		var rides: int = 0
 
-	func test_skateboarding_dismount_keyboard():
-		player.state_machine.travel(player.current_state, NodeStateMachine.States.SKATEBOARDING)
+		func _ready() -> void:
+			camera = Camera3D.new()
+			add_child(camera)
+
+		func mount(p: Player) -> void:
+			mounted_by = p
+			locomotion_requested.emit("StandingLocomotion", true)
+
+		func dismount(_p: Player) -> void:
+			dismounted = true
+
+		func ride(_p: Player, _delta: float) -> void:
+			rides += 1
+
+		func ride_input(p: Player, event: InputEvent) -> void:
+			if event.is_action_pressed("whistle"):
+				p.dismount()
+
+		func get_contextual_controls(_input_type: int) -> Dictionary:
+			return {"key_k": "Dismount", "joypad_button_1": "Fast Push", "no_such": "Dropped"}
+
+	var rideable: MockRideable
+
+	func before_each() -> void:
+		super.before_each()
+		rideable = MockRideable.new()
+		root.add_child(rideable)
+
+	func test_mount_enters_riding_and_hands_the_rideable_the_player():
+		player.mount(rideable)
+		await wait_physics_frames(3)
+		assert_eq(player.current_state, NodeStateMachine.States.RIDING, "mount() enters the RIDING state")
+		assert_true(player.is_riding)
+		assert_eq(player.riding, rideable)
+		assert_eq(rideable.mounted_by, player, "The rideable was given the Player")
+		assert_gt(rideable.rides, 0, "And is ridden every physics frame")
+
+	func test_dismount_returns_to_standing_and_tells_the_rideable():
+		player.mount(rideable)
 		await wait_physics_frames(2)
-		assert_eq(player.current_state, NodeStateMachine.States.SKATEBOARDING, "Player should be in SKATEBOARDING state.")
+		player.dismount()
+		await wait_physics_frames(2)
+		assert_eq(player.current_state, NodeStateMachine.States.STANDING)
+		assert_false(player.is_riding)
+		assert_null(player.riding)
+		assert_true(rideable.dismounted)
 
-		player.controls.current_input_type = Controls.InputType.KEYBOARD_MOUSE
+	func test_rideable_input_can_dismount():
+		player.mount(rideable)
+		await wait_physics_frames(2)
 		var sender = InputSender.new(Input)
 		sender.set_auto_flush_input(true)
 		sender.action_down("whistle")
 		await wait_physics_frames(2)
 		sender.action_up("whistle")
 		await wait_physics_frames(2)
+		assert_eq(player.current_state, NodeStateMachine.States.STANDING, "The rideable's ride_input dismounted on whistle")
 
-		assert_eq(player.current_state, NodeStateMachine.States.STANDING, "Player should transition to STANDING after whistle action.")
-
-	func test_skateboarding_dismount_controller():
-		player.state_machine.travel(player.current_state, NodeStateMachine.States.SKATEBOARDING)
+	func test_held_object_reserves_dpad_down_while_riding():
+		player.mount(rideable)
 		await wait_physics_frames(2)
-		assert_eq(player.current_state, NodeStateMachine.States.SKATEBOARDING, "Player should be in SKATEBOARDING state.")
-
-		player.controls.current_input_type = Controls.InputType.MICROSOFT
-		var sender = InputSender.new(Input)
-		sender.set_auto_flush_input(true)
-		sender.action_down("whistle")
-		await wait_physics_frames(2)
-		sender.action_up("whistle")
-		await wait_physics_frames(2)
-
-		assert_eq(player.current_state, NodeStateMachine.States.STANDING, "Player should transition to STANDING after whistle action.")
-
-	func test_held_object_reserves_dpad_down_while_skateboarding():
-		player.state_machine.travel(player.current_state, NodeStateMachine.States.SKATEBOARDING)
-		await wait_physics_frames(2)
-
 		var held_body: RigidBody3D = RigidBody3D.new()
 		root.add_child(held_body)
 		player.held_object._pickup_rigidbody(held_body)
-
 		var sender = InputSender.new(Input)
 		sender.set_auto_flush_input(true)
 		sender.action_down("whistle")
 		await wait_physics_frames(2)
 		sender.action_up("whistle")
 		await wait_physics_frames(2)
-
-		assert_eq(
-			player.current_state,
-			NodeStateMachine.States.SKATEBOARDING,
-			"Held object controls should reserve D-pad Down from skateboard dismount.",
-		)
+		assert_eq(player.current_state, NodeStateMachine.States.RIDING, "Held object controls reserve D-pad Down from the rideable")
 		player.held_object.drop_held_rigidbody()
 
-	func test_move_down_does_not_dismount():
-		player.state_machine.travel(player.current_state, NodeStateMachine.States.SKATEBOARDING)
+	func test_riding_contextual_controls_come_from_the_rideable_by_label_name():
+		player.mount(rideable)
 		await wait_physics_frames(2)
-		assert_eq(player.current_state, NodeStateMachine.States.SKATEBOARDING, "Player should be in SKATEBOARDING state.")
-
-		var sender = InputSender.new(Input)
-		sender.set_auto_flush_input(true)
-		sender.action_down("move_down")
-		await wait_physics_frames(2)
-		sender.action_up("move_down")
-		await wait_physics_frames(2)
-
-		assert_eq(player.current_state, NodeStateMachine.States.SKATEBOARDING, "Player should remain in SKATEBOARDING state when move_down is pressed.")
-
-	func test_skateboarding_contextual_controls():
-		var skateboarding_node: Skateboarding = player.state_machine.get_node("Skateboarding") as Skateboarding
-		var kb_controls = skateboarding_node.get_contextual_controls(0)
-		assert_eq(kb_controls.get(player.controls.key_k_label), "Dismount")
+		var riding_node: Riding = player.state_machine.get_node("Riding") as Riding
+		var kb_controls = riding_node.get_contextual_controls(0)
+		assert_eq(kb_controls.get(player.controls.key_k_label), "Dismount", "\"key_k\" lands on the Controls' key_k_label")
 		assert_eq(kb_controls.get(player.controls.joypad_button_1_label), "Fast Push")
+		assert_eq(kb_controls.size(), 2, "A name with no label on the Controls is dropped")
 
-		var pad_controls = skateboarding_node.get_contextual_controls(1)
-		assert_eq(pad_controls.get(player.controls.joypad_button_12_label), "Dismount")
-		assert_eq(pad_controls.get(player.controls.joypad_button_1_label), "Fast Push")
-		assert_false(pad_controls.has(player.controls.joypad_button_7_label))
+	func test_riding_keeps_the_rideables_input_type_current():
+		player.controls.current_input_type = Controls.InputType.SONY
+		player.mount(rideable)
+		await wait_physics_frames(2)
+		assert_eq(rideable.input_type, Controls.InputType.SONY, "Handed the Player's device on mount")
+		player.controls.current_input_type = Controls.InputType.KEYBOARD_MOUSE
+		assert_eq(rideable.input_type, Controls.InputType.KEYBOARD_MOUSE, "And every change after")
 
-	func test_held_object_contextual_controls_restore_skateboarding_labels():
-		player.state_machine.travel(player.current_state, NodeStateMachine.States.SKATEBOARDING)
-		player.controls.current_input_type = player.controls.InputType.KEYBOARD_MOUSE
+	func test_riding_makes_the_rideables_camera_current_and_gives_the_view_back():
+		assert_true(player.camera.current)
+		player.mount(rideable)
+		await wait_physics_frames(2)
+		assert_true(rideable.camera.current, "The rideable's camera is the view while ridden")
+		assert_false(player.camera.current)
+		player.dismount()
+		await wait_physics_frames(2)
+		assert_true(player.camera.current, "The Player's own camera returns on dismount")
+		assert_false(rideable.camera.current)
 
-		var held_body: RigidBody3D = RigidBody3D.new()
-		root.add_child(held_body)
-		player.held_object._pickup_rigidbody(held_body)
-		assert_eq(player.controls.key_i_label.text, "Farther")
-		assert_eq(player.controls.key_k_label.text, "Closer")
-		assert_eq(player.controls.key_j_label.text, "")
-		assert_eq(player.controls.key_l_label.text, "")
-		assert_eq(player.controls.joypad_button_10_label.text, "Rotate")
-		assert_eq(player.controls.joypad_axis_5_plus_label.text, "Throw")
+	func test_riding_handles_collision_crosshair_and_step_up_ray():
+		rideable.disables_collision = true
+		rideable.blocks_hands = true
+		player.mount(rideable)
+		await wait_physics_frames(2)
+		assert_true(player.collision_shape.disabled, "disables_collision turns the Player's shape off")
+		assert_true(player.separation_ray_shape.disabled, "The step-up ray is off for every ride")
+		assert_false(player.crosshair.visible, "blocks_hands hides the crosshair")
+		player.dismount()
+		await wait_physics_frames(2)
+		assert_false(player.collision_shape.disabled)
+		assert_false(player.separation_ray_shape.disabled)
+		assert_true(player.crosshair.visible)
 
-		var sender = InputSender.new(Input)
-		sender.set_auto_flush_input(true)
-		sender.action_down("throw")
+	func test_a_seat_pins_the_player_to_the_rideable_every_frame():
+		var seat: Node3D = Node3D.new()
+		rideable.add_child(seat)
+		rideable.set("seat", seat)
+		rideable.global_position = Vector3(4.0, 0.0, 0.0)
+		player.mount(rideable)
+		await wait_physics_frames(2)
+		assert_eq(player.get_parent(), root, "The Player stays where it is in the tree")
+		assert_almost_eq(player.global_position, seat.global_position, Vector3.ONE * 0.01, "But sits on the seat")
+		rideable.rotate_y(1.0)
+		rideable.global_position += Vector3(0.0, 0.0, 2.0)
 		await wait_physics_frames(1)
-		assert_eq(player.controls.key_i_label.text, "Rotate Up")
-		assert_eq(player.controls.key_j_label.text, "Rotate Left")
-		assert_eq(player.controls.key_k_label.text, "Rotate Down")
-		assert_eq(player.controls.key_l_label.text, "Rotate Right")
-		sender.action_up("throw")
-		await wait_physics_frames(1)
-		assert_eq(player.controls.key_j_label.text, "")
-		assert_eq(player.controls.key_l_label.text, "")
+		assert_almost_eq(player.global_basis.z.dot(rideable.global_basis.z), 1.0, 0.01, "Turning the rideable turns the Player with it")
+		assert_almost_eq(player.global_position, seat.global_position, Vector3.ONE * 0.01, "And moving it moves them")
+		player.dismount()
+		await wait_physics_frames(2)
+		assert_almost_eq(player.global_basis.y, Vector3.UP, Vector3.ONE * 0.01, "Upright again on dismount")
 
-		player.controls.current_input_type = player.controls.InputType.MICROSOFT
-		assert_eq(player.controls.joypad_button_11_label.text, "Farther")
-		assert_eq(player.controls.joypad_button_12_label.text, "Closer")
-		assert_eq(player.controls.joypad_button_13_label.text, "")
-		assert_eq(player.controls.joypad_button_14_label.text, "")
-		sender.action_down("throw")
-		await wait_physics_frames(1)
-		assert_eq(player.controls.joypad_button_11_label.text, "Rotate Up")
-		assert_eq(player.controls.joypad_button_12_label.text, "Rotate Down")
-		assert_eq(player.controls.joypad_button_13_label.text, "Rotate Left")
-		assert_eq(player.controls.joypad_button_14_label.text, "Rotate Right")
-		sender.action_up("throw")
-		await wait_physics_frames(1)
+	func test_mount_animation_plays_before_the_ride_and_ends_with_the_clip():
+		rideable.mount_animation = "EnteringCar"
+		player.mount(rideable)
+		await wait_physics_frames(3)
+		assert_true(player.is_mounting, "The get-on clip plays first")
+		assert_eq(player.current_locomotion_node, "EnteringCar")
+		assert_eq(rideable.rides, 0, "The rideable is not ridden while it plays")
+		var riding_node: Riding = player.state_machine.get_node("Riding") as Riding
+		riding_node._on_locomotion_node_changed("StandingLocomotion")
+		await wait_physics_frames(2)
+		assert_false(player.is_mounting, "The clip ending seats the rider")
+		assert_gt(rideable.rides, 0, "And the ride begins")
 
-		player.held_object.drop_held_rigidbody()
-		assert_eq(player.controls.joypad_button_12_label.text, "Dismount")
-		assert_eq(player.controls.joypad_button_1_label.text, "Fast Push")
+	func test_dismount_animation_plays_before_the_dismount_unless_immediate():
+		rideable.dismount_animation = "ExitingCar"
+		player.mount(rideable)
+		await wait_physics_frames(2)
+		player.dismount()
+		await wait_physics_frames(2)
+		assert_true(player.is_dismounting, "The get-off clip plays first")
+		assert_eq(player.current_locomotion_node, "ExitingCar")
+		assert_eq(player.current_state, NodeStateMachine.States.RIDING, "Still riding until it ends")
+		assert_false(rideable.dismounted)
+		var riding_node: Riding = player.state_machine.get_node("Riding") as Riding
+		riding_node._on_locomotion_node_changed("StandingLocomotion")
+		await wait_physics_frames(2)
+		assert_eq(player.current_state, NodeStateMachine.States.STANDING, "The clip ending finishes the dismount")
+		assert_true(rideable.dismounted)
+		player.mount(rideable)
+		await wait_physics_frames(2)
+		player.dismount(true)
+		await wait_physics_frames(2)
+		assert_eq(player.current_state, NodeStateMachine.States.STANDING, "An immediate dismount skips the clip")
+
+	func test_jump_requested_queues_the_players_jump():
+		player.mount(rideable)
+		await wait_physics_frames(2)
+		rideable.jump_requested.emit()
+		assert_true(player.is_jump_queued, "The rideable's jump request queues the Player's jump animation")
+
+	func test_blocks_hands_holsters_equipment():
+		rideable.blocks_hands = true
+		player.mount(rideable)
+		await wait_physics_frames(2)
+		assert_true(player.riding_blocks_hands())
+		player.dismount()
+		await wait_physics_frames(2)
+		assert_false(player.riding_blocks_hands())
+
 
 class TestCrouchingTransitions:
 	extends FsmTestBase

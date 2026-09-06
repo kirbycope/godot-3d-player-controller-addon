@@ -2,6 +2,8 @@ class_name Player
 extends CharacterBody3D
 
 signal state_changed(from_state: int, to_state: int) ## Emitted when [member current_state] changes.
+signal ride_started(rideable: Node3D) ## Emitted when the Player gets on a rideable.
+signal ride_ended(rideable: Node3D) ## Emitted when the Player gets off it.
 signal locomotion_node_changed(state_path: String) ## Emitted when the locomotion path ("Group/Node" or "Node") changes; on puppets this follows replication.
 signal exhausted_changed(is_exhausted: bool) ## Emitted when [member is_exhausted] changes.
 signal navigating_changed(is_navigating: bool) ## Emitted when click-to-move navigation starts or stops.
@@ -21,7 +23,6 @@ const GREATSWORD_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/Locomotion
 const PISTOL_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/Pistol/PistolLocomotion/blend_position"
 const RIFLE_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/Rifle/RifleLocomotion/blend_position"
 const SHIELD_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/Shield/ShieldLocomotion/blend_position"
-const SKATEBOARDING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/SkateboardingLocomotion/blend_position"
 const STANDING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/StandingLocomotion/blend_position"
 const SWIMMING_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/SwimmingLocomotion/blend_position"
 const LOCOMOTION_GROUPS: Array[String] = ["Bow", "Boxing", "GreatSword", "Pistol", "Rifle", "Shield"] ## Grouped sub-state machines inside the LocomotionStateMachine.
@@ -38,7 +39,6 @@ const LOCOMOTION_GROUPS: Array[String] = ["Bow", "Boxing", "GreatSword", "Pistol
 @export var enable_stamina: bool = false
 @export_category("Optional Gadgets & Gear")
 @export var paraglider_scene: PackedScene
-@export var skateboard_scene: PackedScene
 @export_category("Optional Interaction")
 @export var push_force: float = 1.0
 @export var mass: float = 80.0
@@ -167,11 +167,11 @@ var is_climbing_hopping_left: bool = false ## Is the Player currently hopping le
 var is_climbing_hopping_right: bool = false ## Is the Player currently hopping right while climbing?
 var is_climbing_hopping_up: bool = false ## Is the Player currently hopping up while climbing?
 var is_hopping_from_climbing: bool = false ## Is the Player currently hopping while climbing?
-# Driving
-var is_driving: bool = false ## Is the Player currently driving?
-var is_driving_in: Node3D = null ## The VehicleBody3D the Player is currently driving, if any.
-var is_entering_vehicle: bool = false ## Is the Player currently entering a vehicle?
-var is_exiting_vehicle: bool = false ## Is the Player currently exiting a vehicle?
+# Riding
+var is_riding: bool = false ## Riding something (a board, a vehicle, a mount); [member riding] moves the Player.
+var riding: Node3D = null ## What is being ridden; it follows the rideable contract described in [Riding].
+var is_mounting: bool = false ## Playing the get-on animation; the rideable does not move the Player yet.
+var is_dismounting: bool = false ## Playing the get-off animation.
 # Hanging
 var is_hanging_braced: bool = false ## Is the Player currently hanging (braced)?
 var is_hanging_free: bool = false ## Is the Player currently hanging (free)?
@@ -191,7 +191,7 @@ var is_reeling_line: bool = false ## Is the Player currently casting a fishing l
 var is_flying: bool = false ## Is the Player currently flying?
 var is_focusing: bool: ## Is the Player currently focusing (forward or on a target)?
 	get:
-		if not is_multiplayer_authority() or is_driving:
+		if not is_multiplayer_authority() or riding_blocks_hands():
 			return false
 		if held_object and held_object.is_holding_object():
 			return false
@@ -242,7 +242,7 @@ var has_bow_equipped: bool: ## Is a bow currently equipped?
 
 var is_aiming_firearm: bool: ## Is the Player currently aiming with a firearm (Pistol, Rifle)?
 	get:
-		if not is_multiplayer_authority() or is_driving or inventory == null:
+		if not is_multiplayer_authority() or riding_blocks_hands() or inventory == null:
 			return false
 		if held_object and (held_object.is_holding_object() or held_object.is_charging_throw or held_object.is_throwing):
 			return false
@@ -270,7 +270,7 @@ var is_ragdolling: bool = false ## Is the Player currently ragdolling?
 var requires_shoot_release_after_throw: bool = false ## Set during a throw to require releasing the shoot button before shooting weapons.
 var is_shooting: bool: ## Is the Player currently shooting?
 	get:
-		if not is_multiplayer_authority() or is_driving or inventory == null:
+		if not is_multiplayer_authority() or riding_blocks_hands() or inventory == null:
 			return false
 		if is_throwing:
 			return false
@@ -284,7 +284,6 @@ var is_shooting: bool: ## Is the Player currently shooting?
 				requires_shoot_release_after_throw = false
 		return Input.is_action_pressed("shoot") and inventory.can_player_shoot
 var is_sitting: bool = false ## Is the Player currently sitting?
-var is_skateboarding: bool = false ## Is the Player currently skateboarding?
 var is_sliding: bool = false ## Is the Player currently sliding?
 var is_sprinting: bool = false ## Is the Player currently sprinting?
 var is_standing: bool = false ## Is the Player currently standing?
@@ -307,7 +306,6 @@ var orientation := Transform3D()
 var root_motion := Transform3D()
 var smoothed_motion: Vector2 = Vector2.ZERO
 var paraglider: Node3D
-var skateboard: Node3D
 
 @onready var attack_sequence_timer: Timer = $AttackSequenceTimer
 @onready var collision_shape: CollisionShape3D = $CollisionShape3D
@@ -450,22 +448,6 @@ func _ready() -> void:
 				paraglider.set("player", self)
 			paraglider.hide()
 
-	if not skateboard:
-		skateboard = get_node_or_null("PlayerModel/Skateboard")
-	if skateboard_scene and not skateboard:
-		var skateboard_instance = skateboard_scene.instantiate() as Node3D
-		if skateboard_instance:
-			player_model.add_child(skateboard_instance)
-			skateboard = skateboard_instance
-			if "player" in skateboard:
-				skateboard.set("player", self)
-			skateboard.hide()
-
-	if skateboard:
-		for child in skateboard.find_children("*", "CollisionShape3D", true, false):
-			if child is CollisionShape3D:
-				child.disabled = true
-
 	# Update Steam persona name if Steam is enabled
 	var steamworks: Node = get_node_or_null("/root/Steamworks")
 	if steamworks and steamworks.get("steam_id") != 0 and Engine.has_singleton("Steam"):
@@ -523,7 +505,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			if debug.visible:
 				debug.draw_navigation_marker(cursor_position)
 
-	# Push-to-talk voice broadcasting (action="broadcast", key="T")
+	# Push-to-talk voice broadcasting (action="broadcast", key="V")
 	if event.is_action_pressed("broadcast"):
 		start_broadcasting()
 	elif event.is_action_released("broadcast"):
@@ -602,9 +584,9 @@ func apply_input(delta: float) -> void:
 	smoothed_motion = smoothed_motion.lerp(target_motion, motion_weight)
 	target_motion = smoothed_motion
 
-	# While driving, paragliding, skateboarding, flying, or ragdolling, block regular locomotion.
-	# Driving.gd / Paragliding.gd / Skateboarding.gd / Flying.gd / Ragdolling.gd will handle movement.
-	if (is_driving and not is_entering_vehicle and not is_exiting_vehicle) or is_paragliding or is_skateboarding or is_flying or is_ragdolling or is_sitting:
+	# While riding, paragliding, flying, or ragdolling, block regular locomotion.
+	# Riding.gd / Paragliding.gd / Flying.gd / Ragdolling.gd will handle movement.
+	if (is_riding and not is_mounting and not is_dismounting) or is_paragliding or is_flying or is_ragdolling or is_sitting:
 		return
 
 	# Sprint logic
@@ -622,7 +604,7 @@ func apply_input(delta: float) -> void:
 
 	var is_first_person: bool = camera is Camera and (camera as Camera).perspective == Camera.Perspective.FIRST_PERSON
 	# Handle movement is strafing
-	if not is_driving and (is_shooting or is_focusing or is_first_person):
+	if not is_riding and (is_shooting or is_focusing or is_first_person):
 		# Rotate to face the target, or the camera direction when shooting or in first person
 		if not is_firing_arrow and not is_hanging_braced and not is_hanging_free and not is_climbing:
 			var look_dir: Vector3 = Vector3.ZERO
@@ -671,7 +653,7 @@ func apply_input(delta: float) -> void:
 				animation_tree.set(STANDING_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
 
 	# Handle movement when not strafing
-	elif not is_driving:
+	elif not is_riding:
 		# Use camera-relative direction for target_motion direction
 		var camera_basis := spring_arm.global_transform.basis
 		var target_dir := camera_basis * Vector3(target_motion.x, 0.0, -target_motion.y)
@@ -745,8 +727,8 @@ func apply_input(delta: float) -> void:
 		vertical_speed = h_velocity.dot(up_direction)
 	elif is_hanging_braced or is_hanging_free:
 		vertical_speed = 0.0
-	elif is_driving:
-		# While driving, vertical movement is driven by root motion/input, not gravity.
+	elif is_riding:
+		# While riding, vertical movement is driven by root motion/input, not gravity.
 		vertical_speed = h_velocity.dot(up_direction)
 	elif is_swimming:
 		# While swimming, vertical movement is driven by root motion/input, not gravity.
@@ -785,7 +767,9 @@ func detect_ledge() -> bool:
 func execute_jump() -> void:
 	if not is_jump_queued:
 		return
-	velocity = velocity.slide(up_direction) + (up_direction * 5.0)
+	# A rideable applies its own jump on the press; here the keyframe only clears the queue
+	if not is_riding:
+		velocity = velocity.slide(up_direction) + (up_direction * 5.0)
 	is_jump_queued = false
 	is_jumping = true
 	# Flip flags are only needed to enter the flip animation state, so clear them here.
@@ -1182,7 +1166,7 @@ func update_movement_and_rotation(delta: float) -> void:
 
 
 	# Rotate the Player Model (unless entering/exiting a vehicle or ragdolling)
-	if not (is_driving and (is_entering_vehicle or is_exiting_vehicle)) and not is_ragdolling:
+	if not (is_riding and (is_mounting or is_dismounting)) and not is_ragdolling:
 		if is_zero_approx(model_pitch):
 			player_model.global_transform.basis = orientation.basis
 			player_model.transform.origin = initial_player_model_transform.origin
@@ -1202,7 +1186,7 @@ func update_movement_and_rotation(delta: float) -> void:
 ## Called by a water Area3D when the player enters water.
 func enter_water(water_area: Area3D = null) -> void:
 	current_water_area = water_area
-	if not is_swimming and not is_driving and is_driving_in == null and not is_entering_vehicle and not is_exiting_vehicle and not is_ragdolling:
+	if not is_swimming and not is_riding and not is_ragdolling:
 		if state_machine:
 			state_machine.travel(current_state, NodeStateMachine.States.SWIMMING)
 
@@ -1370,6 +1354,41 @@ func clear_ledge_visuals() -> void:
 	ledge_detection_vertical.position = Vector3(0, 0, -1)
 	ledge_detection_horizontal.hide()
 	ledge_detection_marker.hide()
+
+
+## Gets on [param rideable] (a skateboard, a vehicle, a mount): it takes over movement and camera through the
+## [Riding] state until [method dismount].
+func mount(rideable: Node3D) -> void:
+	if rideable == null or is_riding or state_machine == null:
+		return
+	riding = rideable
+	state_machine.travel(current_state, NodeStateMachine.States.RIDING)
+
+
+## Gets off whatever is being ridden, through the rideable's get-off animation when it has one;
+## [param immediate] skips it (a bail out at speed).
+func dismount(immediate: bool = false) -> void:
+	if not is_riding or state_machine == null:
+		return
+	if not immediate:
+		var riding_state: Node = state_machine.get_node_or_null("Riding")
+		if riding_state and riding_state.has_method("begin_dismount") and riding_state.call("begin_dismount"):
+			return
+	state_machine.travel(NodeStateMachine.States.RIDING, NodeStateMachine.States.STANDING)
+
+
+## Re-applies the current state's contextual control labels (after something else borrowed them).
+func refresh_contextual_controls() -> void:
+	if controls == null or state_machine == null:
+		return
+	var state_node: NodeStateMachine = state_machine.get_node_or_null(NodePath(NodeStateMachine.get_state_name(current_state))) as NodeStateMachine
+	if state_node:
+		state_node._on_input_type_changed(controls.current_input_type)
+
+
+## Whether the current rideable keeps weapons and items holstered (a car does, a board does not).
+func riding_blocks_hands() -> bool:
+	return is_riding and riding != null and riding.get("blocks_hands") == true
 
 
 ## Teleports the Player to the given transform, clearing motion and restoring the model and collision poses.

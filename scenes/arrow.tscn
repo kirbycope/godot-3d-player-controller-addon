@@ -1,8 +1,8 @@
 [gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://addons/3d_player_controller/scripts/arrow.gd" id="1_arrow"]
-[ext_resource type="AudioStream" path="res://assets/pixabay/djartmusic-arrow-swish_03-306040.mp3" id="2_swish"]
-[ext_resource type="AudioStream" path="res://assets/pixabay/djartmusic-arrow-twang_01-306041.mp3" id="3_twang"]
+[ext_resource type="AudioStream" path="res://addons/3d_player_controller/assets/pixabay/djartmusic-arrow-swish_03-306040.mp3" id="2_swish"]
+[ext_resource type="AudioStream" path="res://addons/3d_player_controller/assets/pixabay/djartmusic-arrow-twang_01-306041.mp3" id="3_twang"]
 
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_arrow"]
 height = 0.667

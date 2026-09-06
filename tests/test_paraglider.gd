@@ -5,8 +5,8 @@ extends GutTest
 class TestParagliderContrails:
 	extends GutTest
 
-	const Contrail3D = preload("res://scenes/contrail_3d.gd")
-	var paraglider_scene = preload("res://scenes/paraglider.tscn")
+	const Contrail3D = preload("res://addons/3d_player_controller/scripts/contrail_3d.gd")
+	var paraglider_scene = preload("res://addons/3d_player_controller/scenes/paraglider.tscn")
 	var paraglider: Node3D
 
 	func before_each() -> void:

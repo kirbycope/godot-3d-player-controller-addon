@@ -63,8 +63,9 @@ func _update_attachment_offsets() -> void:
 
 
 ## Wired to PlayerDetection.body_entered: the Player that walked over the pickup takes it, and the pickup is spent.
+## A Player who just dropped it (the inventory marks the pickup "dropped_by") has to step away first.
 func _on_player_detection_body_entered(body: Node3D) -> void:
-	if body is Player and body.is_multiplayer_authority() and equip(body):
+	if body is Player and body.is_multiplayer_authority() and not (has_meta("dropped_by") and get_meta("dropped_by") == body) and equip(body):
 		player_detection.set_deferred(&"monitoring", false)
 
 
@@ -72,7 +73,8 @@ func _on_player_detection_body_entered(body: Node3D) -> void:
 ## False when the Player already carries one of this type on this bone, or the item cannot be worn.
 func equip(target_player: Player) -> bool:
 	if target_player == null or bone_attachment_bone_name.is_empty() \
-			or target_player.inventory.has_equipment_in_backpack(equipment_type, bone_attachment_bone_name):
+			or target_player.inventory.has_equipment_in_backpack(equipment_type, bone_attachment_bone_name) \
+			or not target_player.inventory.can_carry_equipment():
 		return false
 
 	target_player.inventory.stow_conflicting(bone_attachment_bone_name, is_exclusive)
@@ -83,6 +85,7 @@ func equip(target_player: Player) -> bool:
 
 	equipment_instance = duplicate() as Equipment
 	equipment_instance.player = target_player
+	equipment_instance.scene_file_path = scene_file_path # so the inventory can save and drop it as its scene
 	attachment.add_child(equipment_instance)
 	# Disable world collision but keep the "Hitbox" shapes so HitDetection can monitor them.
 	for shape: Node in equipment_instance.find_children("*", "CollisionShape3D", true, false):

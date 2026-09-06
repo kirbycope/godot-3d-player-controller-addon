@@ -24,6 +24,7 @@ const STANDING_CAST_STATES: Dictionary = {
 
 @export var display_name: String = ""
 @export var icon: Texture2D
+@export var icon_color: Color = Color.WHITE ## Tints [member icon] on the wheel, the spell tree and the loadout (a fire spell orange, frost pale blue).
 @export var cooldown: float = 0.0 ## Seconds before the ability can be cast again.
 @export var cast_time: float = 0.0 ## Seconds the Player must stand still before the effect lands; 0 is instant.
 @export var energy_cost: float = 0.0 ## Mana or energy from the caster's [Health] pool, spent when the effect lands; the cast is refused with less.

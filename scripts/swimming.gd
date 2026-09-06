@@ -29,8 +29,6 @@ const LEDGE_RAY_DEPTH: float = 0.3 ## While swimming the ledge ray scans this fa
 const SURFACE_EPSILON: float = 0.05 ## Depth (m) below which the player counts as being at the surface.
 
 var _vertical_swim_effort: float = 0.0 ## 0-1 stroke effort from active vertical dive input (drives the swim blend without stick input).
-var _water_material: ShaderMaterial = null ## Water surface material that supports swimmer interaction uniforms.
-var _water_material_resolved: bool = false
 
 var _ledge_ray_default_y: float = 0.0 ## Scene height of the ledge ray, restored when leaving the water.
 @onready var _underwater_overlay: CanvasLayer = player.get_node_or_null(^"UnderwaterOverlay") as CanvasLayer if player else null
@@ -112,7 +110,6 @@ func _physics_process(delta: float) -> void:
 			target_pitch = atan2(-player.swim_vertical_speed, maxf(h_speed, 1.0))
 		player.model_pitch = lerp_angle(player.model_pitch, target_pitch, clampf(delta * dive_model_pitch_speed, 0.0, 1.0))
 
-		_update_water_surface_interaction(depth_below_surface)
 
 		# Show the fullscreen underwater filter while the camera is below the water surface
 		if _underwater_overlay:
@@ -216,54 +213,6 @@ func _spawn_entry_splash(water_surface_along_up: float, impact_speed: float) -> 
 	splash.global_position = player.global_position + up_direction * (water_surface_along_up - up_direction.dot(player.global_position))
 
 
-## Feeds swimmer position/heading/speed to the water surface shader (wake and treading ripples).
-func _update_water_surface_interaction(depth_below_surface: float) -> void:
-	if not _water_material_resolved:
-		_water_material_resolved = true
-		_water_material = _find_water_material()
-	if _water_material == null:
-		return
-	var h_velocity: Vector3 = player.velocity.slide(player.up_direction)
-	var facing: Vector3 = player.get_facing_direction()
-	var direction: Vector2 = Vector2(facing.x, facing.z)
-	if h_velocity.length_squared() > 0.04:
-		direction = Vector2(h_velocity.x, h_velocity.z).normalized()
-	# Root-motion velocity pulses each stroke; blend with input intent for a steady wake
-	var intent_speed: float = player.smoothed_motion.length() * player.swimming_root_motion_multiplier
-	var wake_speed: float = maxf(h_velocity.length(), intent_speed)
-	# Surface effects fade out as the diver goes deep
-	var surface_presence: float = clampf(1.0 - depth_below_surface / 2.0, 0.0, 1.0)
-	_water_material.set_shader_parameter("swimmer_active", surface_presence)
-	_water_material.set_shader_parameter("swimmer_position", player.global_position)
-	_water_material.set_shader_parameter("swimmer_direction", direction)
-	_water_material.set_shader_parameter("swimmer_speed", wake_speed)
-
-
-## Finds a ShaderMaterial whose shader declares the swimmer interaction uniforms on a mesh near the active water area.
-func _find_water_material() -> ShaderMaterial:
-	if not is_instance_valid(player.current_water_area):
-		return null
-	var search_root: Node = player.current_water_area.get_parent()
-	if search_root == null:
-		return null
-	for mesh_node: Node in search_root.find_children("*", "MeshInstance3D", true, false):
-		var mesh_instance: MeshInstance3D = mesh_node as MeshInstance3D
-		var candidates: Array[Material] = []
-		if mesh_instance.material_override:
-			candidates.append(mesh_instance.material_override)
-		if mesh_instance.mesh:
-			for surface_index: int in mesh_instance.mesh.get_surface_count():
-				var surface_material: Material = mesh_instance.mesh.surface_get_material(surface_index)
-				if surface_material:
-					candidates.append(surface_material)
-		for material: Material in candidates:
-			var shader_material: ShaderMaterial = material as ShaderMaterial
-			if shader_material and shader_material.shader \
-			and shader_material.shader.get_shader_uniform_list().any(func(uniform: Dictionary) -> bool: return uniform.name == "swimmer_active"):
-				return shader_material
-	return null
-
-
 ## Stop "swimming".
 func stop() -> void:
 	super.stop()
@@ -284,11 +233,6 @@ func _reset_diving() -> void:
 	_vertical_swim_effort = 0.0
 	if _underwater_overlay:
 		_underwater_overlay.visible = false
-	if _water_material:
-		_water_material.set_shader_parameter("swimmer_active", 0.0)
-		_water_material.set_shader_parameter("swimmer_speed", 0.0)
-	_water_material = null
-	_water_material_resolved = false
 
 
 ## Height of the player's collision shape, guarded against missing/atypical shapes.

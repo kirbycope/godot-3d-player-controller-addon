@@ -1,4 +1,4 @@
-# 3D Player Controller for Godot 4.8+ 🎮
+# 3D Player Controller for Godot 4.8+
 
 A feature-complete, modular 3D character controller built for **Godot 4.8+** using [CharacterBody3D](https://docs.godotengine.org/en/stable/classes/class_characterbody3d.html), [AnimationTree](https://docs.godotengine.org/en/stable/classes/class_animationtree.html), and Root Motion. Includes a full locomotion finite state machine, first- and third-person camera system, equipment and combat system, stamina mechanics, radial inventory, and contextual multi-platform input hints.
 
@@ -10,7 +10,7 @@ A feature-complete, modular 3D character controller built for **Godot 4.8+** usi
 
 ---
 
-## ✨ Features
+## Features
 
 ### 1. Locomotion Finite State Machine (`NodeStateMachine`)
 Organized state machine architecture separating primary lower-body locomotion states from upper-body actions:
@@ -20,13 +20,12 @@ Organized state machine architecture separating primary lower-body locomotion st
 - **Crouching & Sliding**: Crouch walking and momentum-based sprinting slides.
 - **Climbing**: Raycast-assisted wall detection, ledge hopping, and wall climbing. Walls become slippery during rain (BotW style): the climber periodically slides down, sprint climbing is blocked, and the climb animation slows (tunable via the `Rain Slipping` export group).
 - **Hanging & Shimmy**: Braced and free-hang wall gripping with directional shimmy.
-- **Swimming & Fast Swimming**: Water volume detection (`WATER` group), buoyancy, and surface swimming. Hard water entries spawn a one-shot droplet/foam splash (`water_splash.tscn`, tunable impact threshold). While swimming, the player feeds position/heading/speed to any swimmer-aware water shader (V-shaped wake when moving, ripple rings when treading — see WeatherFX `pond_water.gdshader`).
+- **Swimming & Fast Swimming**: Water volume detection (`WATER` group), buoyancy, and surface swimming. Hard water entries spawn a one-shot droplet/foam splash (`water_splash.tscn`, tunable impact threshold). Swimmers ripple the water through WeatherFX's `WaterRipples` node on the water area (it renders every body in the water into the ripple simulation), so the controller knows nothing about the water shader.
 - **Diving**: Hold crouch while swimming to dive below the surface; hold jump to ascend and surface. The player model pitches around a hip pivot to follow the swim direction (camera stays level), gentle buoyancy floats you back to the surface when shallow, and stamina drains constantly underwater as a breath meter — exhaustion respawns you at the last safe shore. A fullscreen underwater filter (tint + wavy refraction + vignette) activates whenever the camera submerges. Contextual HUD controls swap between `Dive`/`Climb Out` and `Dive Deeper`/`Surface` automatically.
 - **Paragliding**: Deployable glider with steering control and mid-air cancel. Thermal updrafts grant an immediate `+6 m/s` catch boost on entry (BotW standard) plus continued lift and stamina recovery; all glide/dive/updraft physics are exported tunables on the `Paragliding` state node.
-- **Skateboarding**: Push acceleration, fast push, jumping, and dismounting.
+- **Riding** (`Riding`): one state for anything the Player gets on. A rideable (a skateboard, a vehicle, a horse) calls `player.mount(self)`; the state hands it the Player, forwards input events and the physics tick, plays the animations it asks for, and `player.dismount()` gets off. The state does the Player's side of getting on and off (the get-on and get-off clips, the camera, the crosshair, the collision shape and the step-up ray), so a rideable never sets Player flags. Skateboarding lives in the `tcps` addon and driving in the `gta` addon, each with its own camera that the state makes current while ridden.
 - **Flying**: 3D spatial flying with vertical ascending/descending.
 - **Sitting & Ragdoll**: Physical bone ragdoll simulation with get-up recovery.
-- **Driving**: Seamless vehicle entry and exit integration.
 
 **State node API** — `state.gd` (`NodeStateMachine`) is both the machine node and the base class of every state node under it:
 - `start()` / `stop()` on the base enable/disable the state node and set/clear `player.current_state` (`States.NONE = -1` when no state is active). States extend them with `super.start()` / `super.stop()`; a node's `state` is derived from its name (`Standing` -> `States.STANDING`). `travel(from, to)` calls them directly.
@@ -46,7 +45,7 @@ Organized state machine architecture separating primary lower-body locomotion st
 - Smooth rotation interpolation and camera smoothing.
 - Interaction targeting: each physics frame the camera's `CameraRayCast` resolves the nearest ancestor of the hit collider that implements `display_menu(player)`, stores it in `looking_at`, and emits `looking_at_changed(previous, current)` only when it changes. The camera calls `hide_menu()` on the previous target and `display_menu(player)` on the new one, so any scene using the player gets prompts without extra code; pressing `action` calls `equip(player)` on look-at targets that implement it (the project's skateboard and push button). `Equipment` is not one of them any more: pickups are walk-over areas, below. The ray ignores every area in the `WATER` group, so you can look at a boat or a prop floating in a pool from the water.
 - Input is handled in `_unhandled_input`, so UI controls consume clicks and scroll first.
-- While driving or skateboarding, manual look input starts a `CAMERA_FOLLOW_DELAY` timer before the camera follows the player again.
+- While riding, the `Riding` state makes the rideable's `camera` current and this one waits; it comes back on dismount.
 
 ### 3. Equipment, Combat & Interactions (`Equipment`, `HeldObject`)
 - **Weapon Classes**: 1H Swords, 2H Greatswords (with tree-logging animation), Sword & Shield, Daggers, Axes, Staffs, and Rifles.
@@ -63,6 +62,7 @@ Organized state machine architecture separating primary lower-body locomotion st
 - **Bow & Arrow**: `Bow` reacts to `Player.locomotion_node_changed` (`Bow/BowDrawArrow` plays the draw sound, `Bow/BowFireArrow` duplicates the template `Arrow` child and launches it through the projectile API). `Arrow` is a `Projectile` that sticks where it lands for `stuck_seconds` (one second) before vanishing, drops its shooter exception after 0.15 s and frees itself after `lifetime` if it never lands.
 
 ### 4. Inventory & Radial Menu (`Inventory`, `RadialMenu`)
+- The inventory is the [GARP addon](../garp/README.md) (`addons/garp`, required): `player.tscn` instances its `inventory.tscn` as the `Inventory` node, so equipment on the skeleton, the radial quick-select, the BOTW style tabs of stacked items, Zelda style `ItemPickup`s and the `user://` save all live there. The `Pause` menu's `inventory_screen_scene` export points at GARP's `inventory_screen.tscn` and shows an Inventory button that opens it, with Back returning to Pause; clear the path to drop the button.
 - Circular weapon/tool selection menu activated by holding assigned keys or controller D-Pad.
 - Quick weapon cycling (`last_weapon` / `next_weapon`).
 - Extensible custom item provider callback for vehicle radios or contextual menus. Items are Dictionaries with `display_name` and `icon` (plus `item` for equipment); a `custom_item_provider` returns the same shape so the addon never knows about stations.
@@ -71,8 +71,8 @@ Organized state machine architecture separating primary lower-body locomotion st
 
 ### 4b. Abilities (`Abilities`, `Ability`)
 World of Warcraft style spells on the Zelda-style controls, so an action RPG never needs a morphing action bar:
-- **Tap** the `ability` action (`Q` / Left Bumper) to cast the picked ability; **hold** it to open the ability wheel and pick another. The wheel is the same `RadialMenu` scene the inventory uses (`radial_menu.tscn`, with `hold_actions` set to `ability`), and the picked ability's name shows on the Left Bumper label.
-- `Ability` is a `Resource` any `Node3D` can cast (the Player through `Abilities`, NPCs through their own caster; `get_target` reads the Player's focus target or an NPC's `target`, and `Ability.spawn_phase` is the shared VFX/SFX/bolt playback) with `display_name`, `icon`, `cooldown`, `cast_time`, `cast_range`, `energy_cost` (mana or energy drawn from the caster's `Health` pool, never from stamina), `channel_while_moving` (off by default, so movement interrupts a timed cast as in WoW while attacks always do), `is_toggle` and `ends_on_attack`; subclass it and override `activate(player) -> bool` (return `false` to refuse, spending nothing) and `deactivate(player)` for toggles. Ship abilities as `.tres` files and list them in the Player's `Abilities.abilities` export.
+- **Tap** the `ability` action (`Q` / Left Bumper) to cast the picked ability; **hold** it to open the ability wheel and pick another. The wheel is the same `RadialMenu` scene the inventory uses (`radial_menu.tscn`, with `hold_actions` set to `ability`), and the picked ability's name shows on the Left Bumper label. The wheel holds eight spells at most; which eight is the [GARP](../garp/README.md) `Spellbook`'s loadout, unlocked from a `SpellTree` with skill points on the Pause menu's Spells screen (`Pause.spells_screen_scene`). `Abilities.abilities` is the starting set, which the Spellbook counts as unlocked.
+- `Ability` is a `Resource` any `Node3D` can cast (the Player through `Abilities`, NPCs through their own caster; `get_target` reads the Player's focus target or an NPC's `target`, and `Ability.spawn_phase` is the shared VFX/SFX/bolt playback) with `display_name`, `icon`, `icon_color` (tints the icon on the wheel and GARP's spell screens), `cooldown`, `cast_time`, `cast_range`, `energy_cost` (mana or energy drawn from the caster's `Health` pool, never from stamina), `channel_while_moving` (off by default, so movement interrupts a timed cast as in WoW while attacks always do), `is_toggle` and `ends_on_attack`; subclass it and override `activate(player) -> bool` (return `false` to refuse, spending nothing) and `deactivate(player)` for toggles. Ship abilities as `.tres` files and list them in the Player's `Abilities.abilities` export.
 - `Ability.can_cast(caster)` is checked before the cast bar starts, so a doomed cast (Heal on a full patient, a damage spell with nothing locked on) is refused at once instead of channeling for nothing; `activate` checks again when the effect lands.
 - `Abilities` (a `CanvasLayer` child of the Player) handles the rest: the `HoldTimer` splits taps from holds, the `CastTimer` runs cast times while `%CastBar` in `controls.tscn` fills through a tween, and any `state_changed` / `locomotion_node_changed` interrupts the cast. Cooldowns are stored as end times (toggles start theirs when they end), so nothing polls. Signals: `cast_started`, `cast_interrupted`, `ability_activated`, `ability_deactivated`.
 - Every `Ability` carries VFX (`PackedScene`) and SFX (`AudioStream`) for three phases: **channeling** (kept on the caster for the cast time, stopped on interrupt), **casting** (one-shot on the caster when the effect fires) and **impact** (one-shot at `get_impact_position(player)`, the caster by default; override it for ranged spells). Channeling VFX are parented to the `Abilities.hand_anchor` (the `SpellHand` bone attachment on the Player's right hand) so a charge rides the hand, bolts leave from it too, and the other VFX are instanced under the Player's `AbilityFx` node and freed after `fx_lifetime`; SFX play through the `ChannelingAudio` / `CastingAudio` / `ImpactAudio` players there on the `SFX` bus. Phases are played on every peer through an authority RPC.
@@ -108,8 +108,8 @@ World of Warcraft style spells on the Zelda-style controls, so an action RPG nev
 - Inspector toggles to enable or disable stamina constraints. The hide delay is the `Stamina/Timer` node's `wait_time` in `player.tscn` (its `timeout` is wired to `hide`).
 - **WeatherFX interop (optional)**: When the `weather_fx` addon is present, precipitation is read via a soft lookup (`Player.get_precipitation_strength()`) — the addon remains fully functional without it. The player scene root belongs to the `Player` group so interoperating addons can find it with an O(1) group lookup.
 
-### 6b. Driving, Focus & Water Splash (`Driving`, `Focus`, `WaterSplash`)
-- **Vehicle contract** (duck typed; the addon does not depend on project vehicle scripts): the vehicle calls `player.state_machine.travel(..., DRIVING)` after `set_driver(player)`; the `Driving` state then calls `vehicle.set_drive_input(accelerate: bool, brake: bool, handbrake: bool, steer: float)` every physics frame while the Player is seated and `vehicle.set_driver(null)` when the driver gets out. The drivetrain (gears, RPM, wheel forces, steering, downforce) belongs to the vehicle; see `scenes/honda_crv.gd`. Optional `DriverSeat`, `EnterCar`/`ExitCar` markers position the Player. `DrivingUI` shows from `Player.state_changed`.
+### 6b. Riding, Focus & Water Splash (`Riding`, `Focus`, `WaterSplash`)
+- **Rideable contract** (duck typed; the addon depends on no rideable). Methods: `mount(player)` and `dismount(player)` on entering and leaving the state, `ride(player, delta)` every physics frame, optional `ride_input(player, event)`, `locomotion_node_changed(player, state_path)` and `get_contextual_controls(input_type)`, which returns label names to text (`{"key_k": "Dismount"}` goes on `Controls.key_k_label`; unknown names are dropped). Optional properties the state reads: `blocks_hands` (weapons and items stay holstered, the crosshair hides), `disables_collision` (the Player's collision shape is off while ridden, for a seat inside a body), `seat` (a `Node3D` the state pins the Player to, transform and all, after every ride, so they turn and move with the rideable in the same frame and their own camera comes along; the Player is not reparented, so the spawner, the synchronizer and every path to it keep working; the horse uses it, the car positions its driver itself around the enter animation), `camera` (a `Camera3D` the state makes current; without one the Player's own camera stays the view and keeps looking around), `mount_animation` / `dismount_animation` (locomotion nodes the state plays on the way on and off, during which the rideable is not ridden; `player.dismount(true)` skips the get-off clip, a bail out) and `input_type` (kept equal to the Player's current `Controls.InputType`, so the rideable resolves its own keyboard and pad action exports). The Player's step-up ray is off for every ride, since the rideable owns the ground contact. Animations stay in the Player: the rideable emits `locomotion_requested(state_path, immediate)`, `locomotion_blend_requested(path, value)` and `jump_requested`. Beyond the contract a rideable uses the Player as a `CharacterBody3D` plus its movement API (`orientation`, `model_pitch`, `rotate_model_to_direction`, `turn_model_toward_direction`, `update_movement_and_rotation`, `warp_to`, `player_model`, `player_input`, `camera` and the state flags). `ride_started` / `ride_ended` signals and the `riding` reference tell everyone else what is being ridden. `ActionPrompt.show_for(player, "Get In")` names the Action button while a prompt is up and `hide_for(player)` gives the label back.
 - **Focus**: candidates are bodies in the `Focusable` group overlapping the `TargetDetection` area; a target that leaves the area is dropped after `Focus/TargetLossTimer` elapses. Lock-on is disabled while a firearm is equipped (`Inventory.equipment_changed`). Put a `Marker3D_FocusTarget` on a body to set its focus point.
 - **WaterSplash**: `emitters: Array[GPUParticles3D]` is exported from `water_splash.tscn`; the splash frees itself once every emitter's `finished` signal has fired.
 
@@ -142,7 +142,7 @@ World of Warcraft style spells on the Zelda-style controls, so an action RPG nev
 - **World objects**: `SyncedBody` is a `MultiplayerSynchronizer` for physics props; peers that do not own the body freeze it kinematically and take the replicated transform. `resources/rigid_body_replication.tres` and `resources/character_body_replication.tres` are ready-made replication configs. Hit-driven state such as balloons and harvestables should resolve on the server and replicate back (`register_projectile_hit` → RPC to the server → `call_local` broadcast).
 - **Signals and spawn state**: `Player.state_changed` only fires once the node is ready, because the spawner applies replicated spawn state while a puppet's children are still entering the tree.
 
-## 📦 Installation
+## Installation
 
 ### Option 1: Manual Installation (Recommended)
 
@@ -167,7 +167,7 @@ World of Warcraft style spells on the Zelda-style controls, so an action RPG nev
 3. Open your project in **Godot 4.8+**.
 4. Go to **Project > Project Settings > Plugins** and toggle the **Enable** checkbox next to **3D Player Controller**.
 
-The addon needs no `project.godot` edits. The Steam lobby UI and the `Loading` screen are inside `addons/3d_player_controller/scenes/` and work without GodotSteam installed.
+The addon needs no `project.godot` edits. The Steam lobby UI and the `Loading` screen are inside `addons/3d_player_controller/scenes/` and work without GodotSteam installed. Copy `addons/garp/` alongside it: the Player's `Inventory` node is GARP's scene.
 
 ### Option 2: Download Release Zip
 
@@ -176,7 +176,7 @@ The addon needs no `project.godot` edits. The Steam lobby UI and the `Loading` s
 
 ---
 
-## 🎮 Interactive Demo Scene
+## Interactive Demo Scene
 
 Open and run **`res://addons/3d_player_controller/scenes/demo/demo.tscn`** to explore the entire locomotion, combat, and interaction sandbox:
 - **Playground Arena**: Features a courtyard, climbable walls, slopes/ramps, high towers for paragliding, and a water pool for swimming.
@@ -185,7 +185,7 @@ Open and run **`res://addons/3d_player_controller/scenes/demo/demo.tscn`** to ex
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Instantiate the Player Scene
 
@@ -197,9 +197,36 @@ res://addons/3d_player_controller/scenes/player.tscn
 
 ### 2. Scene Setup Requirements
 
-- **Floors & Walls**: Ensure geometry has collision shapes (`CollisionShape3D` or `CSGBox3D` with `use_collision = true`).
-- **Water Bodies**: Add an `Area3D` with collision shapes in the **`WATER`** group and call `player.enter_water(area)` / `player.exit_water(area)` on `body_entered`/`body_exited`.
-- **Lighting & Camera**: The Player scene includes its own `Camera3D` and `SpringArm3D`.
+| Node | Where it goes | Set in the Inspector |
+|---|---|---|
+| `Player` (instance `scenes/player.tscn`) | A child of your level root, standing above the floor | `enable_flying`, `enable_paraglider`, `enable_ragdoll`, `enable_stamina`; `paraglider_scene` for the optional glider (the addon ships `scenes/paraglider.tscn`; `scenes/action_prompt.tscn` is the interaction prompt your props can use); `mass` and `push_force` for shoving rigid bodies |
+| Floors and walls | `StaticBody3D` + `CollisionShape3D`, or CSG with `use_collision = true` | Put them in the `GRASS`, `DIRT`, `STONE` or `WOOD` group to pick the footstep sounds |
+| `NavigationRegion3D` | Wrapped around the walkable floor and baked | Needed for the player's `NavigationAgent3D` (auto-walk and teleports) |
+| Water | An `Area3D` in the `WATER` group with a `CollisionShape3D` | Connect `body_entered` / `body_exited` to a script that calls `player.enter_water(area)` / `player.exit_water(area)` |
+| Lighting and camera | Your own `WorldEnvironment` and `DirectionalLight3D` | The Player scene brings its own `Camera3D` on a `SpringArm3D`, so add no camera |
+
+Minimum scene:
+
+```text
+Level (Node3D)
+├── WorldEnvironment
+├── DirectionalLight3D
+├── NavigationRegion3D
+│   └── Ground (StaticBody3D, group GRASS)
+└── Player (player.tscn)
+```
+
+The player's HUD (`Controls`, `Debug`, `Pause`, `Settings`, `Inventory`, `Stamina`, `Crosshair`) lives inside `player.tscn`, so nothing else is needed on screen.
+
+### How `demo.tscn` does it
+
+| Demo node | What it demonstrates |
+|---|---|
+| `Player` | `player.tscn` instanced with `paraglider_scene` (`scenes/paraglider.tscn`) set in the Inspector; `demo.gd` switches on `enable_paraglider` and `enable_stamina` in `_ready()`. |
+| `NavigationRegion3D/Ground` (group `GRASS`) | The baked floor the `NavigationAgent3D` walks on, with grass footsteps. |
+| `Structures/Tower`, `ClimbingWall` (group `STONE`), `Ramp` (group `WOOD`) | Climbing, hanging, sliding and a high launch for the paraglider, with stone and wood footsteps. |
+| `Structures/PoolBasin/WaterPool` (`Area3D`, group `WATER`) | `body_entered` / `body_exited` are connected in the scene to `_on_water_pool_body_entered` / `_on_water_pool_body_exited`, which call `enter_water(water_pool)` / `exit_water(water_pool)` for swimming and diving. |
+| `Markers/Courtyard`, `Tower`, `Pool`, `ClimbingWall` + `HUD/TeleportPanel` buttons | Each button's `pressed` is connected in the scene to `_on_teleport_pressed` with the marker's NodePath bound, and the handler moves the player there. |
 
 ### 3. Default Keybindings
 
@@ -219,13 +246,14 @@ res://addons/3d_player_controller/scenes/player.tscn
 | **Toggle Perspective** | `F5` | `View / Back` |
 | **Debug HUD** | `F3` | — |
 | **Pause Menu** | `Escape` | `Start` |
-| **Skateboard Dismount** (`whistle`) | `K` | `D-Pad Down` |
+| **Dismount** (`whistle`, a rideable's exit) | `K` | `D-Pad Down` |
+| **Push-to-talk** (`broadcast`, voice chat) | `V` (Hold) | none |
 
 All of the above are registered at runtime from `Controls.ACTIONS` when missing from the project's InputMap; the old `emote` (`M`) action was removed.
 
 ---
 
-## 🛠️ Adding New Mixamo Animations
+## Adding New Mixamo Animations
 
 To prepare and import custom Mixamo animations with Root Motion:
 
@@ -244,7 +272,7 @@ To prepare and import custom Mixamo animations with Root Motion:
 
 ---
 
-## 🧪 Testing
+## Testing
 
 The controller includes an automated test suite powered by [GUT (Godot Unit Test)](https://github.com/bitwes/Gut).
 
@@ -262,19 +290,23 @@ godot --headless --path . -s addons/gut/gut_cmdln.gd -gdir=res://addons/3d_playe
 
 ---
 
-## 🎨 Assets
+## Assets
 
 | Folder | Source | License |
 |---|---|---|
 | `assets/game_icons/` | [game-icons.net](https://game-icons.net/) (authors listed in the `.txt` file next to each icon, e.g. Lorc) | CC BY 3.0 |
 | `assets/icons/` (`stealth.svg`, `heal.svg`) | Drawn for this addon | CC0 |
 | `assets/kenney_nl/` (incl. `Lobby Icons/`, copied from Kenney's Game Icons pack) | [Kenney](https://www.kenney.nl/) | CC0 |
-| `assets/quaternius/` | [Quaternius](https://quaternius.com/) | CC0 1.0 |
+| `assets/quaternius/` (characters, `paraglider/`) | [Quaternius](https://quaternius.com/) | CC0 1.0 |
+| `assets/freesound/72853__benboncan__parachute.wav` | [Benboncan on Freesound](https://freesound.org/s/72853/) | CC BY 4.0 |
+| `assets/freesound/570701__robinhood76__10136-flag-flicking-on-strong-wind-isolated.wav` | [Robinhood76 on Freesound](https://freesound.org/s/570701/) | CC BY-NC 4.0 (non-commercial) |
 | `assets/tommusic/` | [TomMusic](https://tommusic.itch.io/) | Not stated (the pack's `ReadMe.txt` contains no license) |
 | `assets/mixamo/` | [Adobe Mixamo](https://www.mixamo.com/) | Adobe Mixamo terms |
+| `assets/pixabay/` (arrow swish and twang) | [djartmusic on Pixabay](https://pixabay.com) | Not recorded - fill in |
+| `assets/le_lu/wind/` (the paraglider's wind streaks: two visual shaders, four textures, two meshes copied from the Wind VFX pack, so the addon stands alone without `weather_fx`) | [Le Lu](https://www.patreon.com/Le_Lu) | Not recorded - fill in (Patreon pack, no license file) |
 
 ---
 
-## 📄 License
+## License
 
 MIT License.

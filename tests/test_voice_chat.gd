@@ -11,12 +11,15 @@ func test_broadcast_action_in_input_map() -> void:
 	assert_true(InputMap.has_action("broadcast"), "InputMap should have 'broadcast' action")
 
 	var events = InputMap.action_get_events("broadcast")
+	var has_key_v: bool = false
 	var has_key_t: bool = false
 	for event in events:
+		if event is InputEventKey and event.physical_keycode == KEY_V:
+			has_key_v = true
 		if event is InputEventKey and event.physical_keycode == KEY_T:
 			has_key_t = true
-			break
-	assert_true(has_key_t, "'broadcast' action should be mapped to physical key T")
+	assert_true(has_key_v, "'broadcast' action should be mapped to physical key V")
+	assert_false(has_key_t, "T belongs to throw, not push-to-talk")
 
 
 func test_player_voice_chat_nodes_and_default_state() -> void:

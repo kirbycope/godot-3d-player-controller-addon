@@ -2,8 +2,7 @@
 
 [ext_resource type="Script" uid="uid://drpnelwdn38te" path="res://addons/3d_player_controller/scenes/demo/demo.gd" id="1_demogd"]
 [ext_resource type="PackedScene" uid="uid://ct7n8imyllhbo" path="res://addons/3d_player_controller/scenes/player.tscn" id="2_playerscene"]
-[ext_resource type="PackedScene" uid="uid://bra3khigbuanl" path="res://scenes/paraglider.tscn" id="3_glider"]
-[ext_resource type="PackedScene" uid="uid://drmvyehu4dq43" path="res://scenes/skateboard.tscn" id="4_skate"]
+[ext_resource type="PackedScene" uid="uid://bra3khigbuanl" path="res://addons/3d_player_controller/scenes/paraglider.tscn" id="3_glider"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_demo"]
 sky_horizon_color = Color(0.65, 0.72, 0.8, 1)
@@ -217,7 +216,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0.5, -8)
 
 [node name="Player" parent="." unique_id=1402932886 instance=ExtResource("2_playerscene")]
 paraglider_scene = ExtResource("3_glider")
-skateboard_scene = ExtResource("4_skate")
 
 [node name="HUD" type="CanvasLayer" parent="." unique_id=1179813114]
 

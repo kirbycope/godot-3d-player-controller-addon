@@ -58,7 +58,7 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if player == null or player.is_driving or player.held_object.is_holding_object():
+	if player == null or player.riding_blocks_hands() or player.held_object.is_holding_object():
 		hold_timer.stop()
 		return
 
@@ -133,7 +133,7 @@ func deactivate(ability: Ability) -> void:
 func get_wheel_items() -> Array[Dictionary]:
 	var items: Array[Dictionary] = []
 	for ability: Ability in abilities:
-		items.append({"display_name": ability.display_name, "icon": ability.icon, "item": ability})
+		items.append({"display_name": ability.display_name, "icon": ability.icon, "icon_color": ability.icon_color, "item": ability})
 	return items
 
 

@@ -264,11 +264,11 @@ text = "DRIVING"
 
 [node name="is_entering_vehicle" type="CheckBox" parent="Driving" unique_id=1140580919]
 layout_mode = 2
-text = "is_entering_vehicle"
+text = "is_mounting"
 
 [node name="is_exiting_vehicle" type="CheckBox" parent="Driving" unique_id=30727147]
 layout_mode = 2
-text = "is_exiting_vehicle"
+text = "is_dismounting"
 
 [node name="Hanging" type="VBoxContainer" parent="." unique_id=2123646781]
 anchors_preset = 6
@@ -346,9 +346,9 @@ text = "is_crouching"
 layout_mode = 2
 text = "is_emoting"
 
-[node name="is_driving" type="CheckBox" parent="States" unique_id=737133500]
+[node name="is_riding" type="CheckBox" parent="States" unique_id=737133500]
 layout_mode = 2
-text = "is_driving"
+text = "is_riding"
 
 [node name="is_hanging" type="CheckBox" parent="States" unique_id=819864313]
 layout_mode = 2
@@ -389,10 +389,6 @@ text = "is_shooting"
 [node name="is_sitting" type="CheckBox" parent="States" unique_id=1097586866]
 layout_mode = 2
 text = "is_sitting"
-
-[node name="is_skateboarding" type="CheckBox" parent="States" unique_id=962007147]
-layout_mode = 2
-text = "is_skateboarding"
 
 [node name="is_sliding" type="CheckBox" parent="States" unique_id=1734099729]
 layout_mode = 2

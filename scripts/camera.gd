@@ -126,7 +126,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	# Rotate the [Camera3D]'s [SpringArm3D] using the mouse motion input event
 	if event is InputEventMouseMotion \
 	and (DisplayServer.get_name() == "headless" or Input.mouse_mode == Input.MOUSE_MODE_CAPTURED) \
-	and (not player.is_driving or perspective == Perspective.THIRD_PERSON) \
+	and not (player.is_riding and not current) \
 	and not is_radial_menu_open():
 		if player.is_focusing and not player.has_firearm_equipped:
 			if player.is_shooting:
@@ -136,9 +136,6 @@ func _unhandled_input(event: InputEvent) -> void:
 				focus_aim_offset = focus_aim_offset.limit_length(get_max_focus_aim_angle())
 		else:
 			rotate_camera_using_mouse_motion(event)
-			if (player.is_driving or player.is_skateboarding) \
-			and event.relative.length_squared() > 0.0:
-				camera_follow_timer.start()
 
 	# Only continue if the perspective is third-person
 	if perspective == Perspective.THIRD_PERSON:
@@ -165,7 +162,7 @@ func _process(delta: float) -> void:
 	if joypad_motion_input != Vector2.ZERO \
 	and not player.is_paused \
 	and not player.is_ragdolling \
-	and (not player.is_driving or perspective == Perspective.THIRD_PERSON) \
+	and not (player.is_riding and not current) \
 	and not is_radial_menu_open():
 		if player.is_focusing and not player.has_firearm_equipped:
 			if player.is_shooting:
@@ -178,9 +175,6 @@ func _process(delta: float) -> void:
 			if player.held_object and player.held_object.is_holding_object():
 				look_multiplier = held_joypad_look_multiplier
 			rotate_camera_using_joypad_motion(delta * look_multiplier)
-			# Add a delay before the camera starts following the player again
-			if player.is_skateboarding or player.is_driving:
-				camera_follow_timer.start()
 
 	# Only continue if the perspective is third-person
 	if perspective != Perspective.THIRD_PERSON: return
@@ -211,15 +205,6 @@ func _process(delta: float) -> void:
 			camera_mount.rotation.x = lerp_angle(camera_mount.rotation.x, deg_to_rad(-15.0) + focus_aim_offset.y, delta * 8.0)
 	else:
 		focus_aim_offset = Vector2.ZERO
-		if (player.is_driving or player.is_skateboarding) and camera_follow_timer.is_stopped():
-			var target_yaw: float = player.player_model.rotation.y + PI
-			var vehicle: RigidBody3D = player.is_driving_in as RigidBody3D
-			# GTA chase camera: follow where the car is travelling once it moves the way the camera looks, so slides swing the view
-			if vehicle and Vector2(vehicle.linear_velocity.x, vehicle.linear_velocity.z).length() > 3.0 \
-			and vehicle.linear_velocity.dot(-camera_mount.global_basis.z) > 0.0:
-				var travel: Vector3 = player.global_basis.inverse() * vehicle.linear_velocity
-				target_yaw = atan2(-travel.x, -travel.z)
-			camera_mount.rotation.y = lerp_angle(camera_mount.rotation.y, target_yaw, delta * 5.0)
 
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.

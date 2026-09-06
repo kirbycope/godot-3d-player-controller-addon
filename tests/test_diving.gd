@@ -199,30 +199,6 @@ func test_gentle_water_entry_spawns_no_splash() -> void:
 	assert_null(_find_splash(), "A gentle water entry should not splash")
 
 
-func test_swimmer_params_feed_water_shader() -> void:
-	# Water surface mesh with a swimmer-aware ShaderMaterial next to the WATER area
-	var shader := Shader.new()
-	shader.code = "shader_type spatial;\nuniform float swimmer_active;\nuniform vec3 swimmer_position;\nuniform vec2 swimmer_direction;\nuniform float swimmer_speed;\nvoid fragment() {}"
-	var material := ShaderMaterial.new()
-	material.shader = shader
-	var surface_mesh := MeshInstance3D.new()
-	surface_mesh.mesh = QuadMesh.new()
-	surface_mesh.material_override = material
-	water.add_child(surface_mesh)
-	player.current_water_area = water
-
-	player.velocity = Vector3(2.0, 0.0, 0.0)
-	swimming_node._physics_process(0.05)
-
-	assert_gt(float(material.get_shader_parameter("swimmer_active")), 0.5, "Surface swimming should activate the water interaction")
-	var fed_position: Vector3 = material.get_shader_parameter("swimmer_position")
-	assert_lt(fed_position.distance_to(player.global_position), 0.01, "Water shader should receive the swimmer position")
-	assert_almost_eq(float(material.get_shader_parameter("swimmer_speed")), 2.0, 0.01, "Water shader should receive the horizontal swim speed")
-
-	swimming_node.stop()
-	assert_almost_eq(float(material.get_shader_parameter("swimmer_active")), 0.0, 0.001, "Leaving the water must clear the interaction")
-
-
 func test_underwater_overlay_follows_camera_submersion() -> void:
 	var overlay: CanvasLayer = player.get_node("UnderwaterOverlay") as CanvasLayer
 	assert_not_null(overlay, "Player scene should contain the UnderwaterOverlay")

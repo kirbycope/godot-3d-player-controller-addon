@@ -1,6 +1,14 @@
 extends PlayerMenuLayer
 
+@export_file("*.tscn") var inventory_screen_scene: String = "" ## A GARP InventoryScreen scene; when set, the Inventory button shows and opens it.
+@export_file("*.tscn") var spells_screen_scene: String = "" ## A GARP SpellsScreen scene; when set, the Spells button shows and opens it.
+
+var inventory_screen: PlayerMenuLayer ## The instanced inventory screen, a sibling of this menu on the Player.
+var spells_screen: PlayerMenuLayer ## The instanced spells screen, a sibling of this menu on the Player.
+
 @onready var lobby: Button = $Panel/VBoxContainer/Lobby
+@onready var inventory_button: Button = $Panel/VBoxContainer/Inventory
+@onready var spells_button: Button = $Panel/VBoxContainer/Spells
 
 
 ## Called when the node enters the scene tree for the first time.
@@ -12,6 +20,23 @@ func _ready() -> void:
 		or OS.has_feature("web") \
 		or not Engine.has_singleton("Steam")
 	lobby.disabled = lobby_unavailable
+	inventory_screen = _instance_screen(inventory_screen_scene, inventory_button)
+	spells_screen = _instance_screen(spells_screen_scene, spells_button)
+
+
+## Instances a menu scene beside this one on the Player and shows its button; an empty or bad path hides the button.
+func _instance_screen(scene_path: String, button: Button) -> PlayerMenuLayer:
+	button.visible = not scene_path.is_empty()
+	if not button.visible or player == null or not is_multiplayer_authority():
+		return null
+	var scene: PackedScene = load(scene_path) as PackedScene
+	var screen: PlayerMenuLayer = scene.instantiate() as PlayerMenuLayer if scene else null
+	if screen == null:
+		button.hide()
+		return null
+	screen.player = player
+	player.add_child.call_deferred(screen)
+	return screen
 
 
 ## Called when there is an input event; "start" toggles the pause menu.
@@ -44,6 +69,28 @@ func _on_resume_pressed() -> void:
 
 func _on_resume_touch_screen_button_pressed() -> void:
 	_on_resume_pressed()
+
+
+func _on_inventory_pressed() -> void:
+	if inventory_screen == null:
+		return
+	hide()
+	inventory_screen.show_menu()
+
+
+func _on_inventory_touch_screen_button_pressed() -> void:
+	_on_inventory_pressed()
+
+
+func _on_spells_pressed() -> void:
+	if spells_screen == null:
+		return
+	hide()
+	spells_screen.show_menu()
+
+
+func _on_spells_touch_screen_button_pressed() -> void:
+	_on_spells_pressed()
 
 
 func _on_restart_pressed() -> void:
