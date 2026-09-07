@@ -168,9 +168,12 @@ func _bolt_origin() -> Vector3:
 	return hand_anchor.global_position if is_instance_valid(hand_anchor) else player.global_position + player.up_direction * PROJECTILE_HEIGHT
 
 
-## The impact phase: the ability's effect on the target, then its impact VFX/SFX.
+## The impact phase: the ability's effect on the target, then its impact VFX/SFX. An ability that reports
+## `hit_anything` (a melee swing) plays no impact when it whiffed: no sound, no elements at the caster's feet.
 func _land(ability: Ability, target: Node3D, at: Vector3) -> void:
 	ability.impact(player, target)
+	if ability.get(&"hit_anything") == false:
+		return
 	_play(ability, Ability.Phase.IMPACT, at)
 
 
