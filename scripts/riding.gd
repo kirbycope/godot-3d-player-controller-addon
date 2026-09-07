@@ -14,8 +14,9 @@ extends NodeStateMachine
 ## Optional properties: [code]blocks_hands[/code] (weapons and items stay holstered, the crosshair hides),
 ## [code]disables_collision[/code] (the Player's collision shape is off while ridden, for a seat inside a body),
 ## [code]seat[/code] (a [Node3D] the Player is pinned to every physics frame after the ride, transform and all, so
-## they turn and move with the rideable in the same frame and their own camera comes along; the Player stays
-## where it is in the tree, so the spawner, the synchronizer and every path to it keep working),
+## they turn and move with the rideable in the same frame while their camera keeps the view it had, as on foot; the
+## rider faces along the seat's -Z, Godot's forward, so point the seat the way the rideable travels; the Player
+## stays where it is in the tree, so the spawner, the synchronizer and every path to it keep working),
 ## [code]camera[/code] (a [Camera3D] made current while ridden; the Player's own returns on dismount),
 ## [code]mount_animation[/code] / [code]dismount_animation[/code] (locomotion nodes played on the way on and off;
 ## the rideable is not ridden while they play), and [code]input_type[/code] (kept equal to the Player's current
@@ -210,24 +211,32 @@ func get_contextual_controls(input_type: int) -> Dictionary:
 	return controls
 
 
-## Puts the Player on the seat, body and all: its transform, facing and up are the seat's, the model sits straight
-## on the body and the camera mount rides along.
+## Puts the Player on the seat, body and all: its transform, facing and up are the seat's and the model sits straight
+## on the body, while the camera mount keeps the view it had, as it does on foot where the body never turns. The
+## model's rest transform turns it to face the body's -Z, so the rider looks where the seat points;
+## [member Player.orientation] (whose +Z is the model's facing) says the same.
 func _pin_to_seat() -> void:
 	if not is_instance_valid(_seat):
 		_seat = null
 		return
+	var facing_before: Vector3 = -player.global_basis.z
 	player.global_transform = _seat.global_transform
+	# Undo the body's turn on the camera mount's yaw so the view stays where the rider left it
+	player.camera_mount.rotate_y(-facing_before.signed_angle_to(-player.global_basis.z, player.global_basis.y))
 	player.velocity = Vector3.ZERO
 	player.up_direction = _seat.global_basis.y.normalized()
-	player.orientation = Transform3D(_seat.global_basis, Vector3.ZERO)
+	player.orientation = Transform3D(_seat.global_basis.rotated(player.up_direction, PI), Vector3.ZERO)
 
 
-## Leaves the Player where the seat was, upright and facing the way it faced.
+## Leaves the Player where the seat was, upright, the model still facing the way it faced on the seat.
 func _leave_seat() -> void:
 	var where: Transform3D = player.global_transform
+	var facing: Vector3 = player.player_model.global_basis.z.slide(Vector3.UP)
+	if facing.length_squared() < 0.001:
+		facing = -where.basis.z.slide(Vector3.UP)
 	player.global_transform = Transform3D(Basis(Vector3.UP, where.basis.get_euler().y), where.origin)
 	player.up_direction = Vector3.UP
-	player.orientation = Transform3D(player.global_basis, Vector3.ZERO)
+	player.orientation = Transform3D(Basis.looking_at(-facing.normalized(), Vector3.UP), Vector3.ZERO)
 	_seat = null
 
 

@@ -4348,6 +4348,10 @@ player = NodePath("../..")
 process_callback = 0
 one_shot = true
 
+[node name="AttackTimeoutTimer" type="Timer" parent="NodeStateMachine/Attacking" unique_id=1782114044]
+process_callback = 0
+one_shot = true
+
 [node name="Climbing" type="Node" parent="NodeStateMachine" unique_id=735495711 node_paths=PackedStringArray("player")]
 process_mode = 4
 script = ExtResource("142_barxw")
@@ -4465,6 +4469,7 @@ mouse_filter = 2
 [connection signal="timeout" from="Stamina/Timer" to="Stamina" method="hide"]
 [connection signal="timeout" from="Focus/TargetLossTimer" to="Focus" method="_clear_focus_target"]
 [connection signal="timeout" from="NodeStateMachine/Attacking/BoxingInactivityTimer" to="NodeStateMachine/Attacking" method="_on_boxing_inactivity_timer_timeout"]
+[connection signal="timeout" from="NodeStateMachine/Attacking/AttackTimeoutTimer" to="NodeStateMachine/Attacking" method="_on_attack_timeout_timer_timeout"]
 [connection signal="timeout" from="NodeStateMachine/Climbing/RainSlipTimer" to="NodeStateMachine/Climbing" method="_on_rain_slip_timer_timeout"]
 [connection signal="timeout" from="NodeStateMachine/Pushing/StopGraceTimer" to="NodeStateMachine/Pushing" method="_on_stop_grace_timer_timeout"]
 

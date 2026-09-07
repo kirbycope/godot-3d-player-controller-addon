@@ -2,13 +2,17 @@ extends PlayerMenuLayer
 
 @export_file("*.tscn") var inventory_screen_scene: String = "" ## A GARP InventoryScreen scene; when set, the Inventory button shows and opens it.
 @export_file("*.tscn") var spells_screen_scene: String = "" ## A GARP SpellsScreen scene; when set, the Spells button shows and opens it.
+@export_file("*.tscn") var extra_screen_scene: String = "" ## Any PlayerMenuLayer scene of the game's (a journal, a fish index); when set, the Extra button shows and opens it.
+@export var extra_screen_label: String = "Journal" ## What the Extra button says.
 
 var inventory_screen: PlayerMenuLayer ## The instanced inventory screen, a sibling of this menu on the Player.
 var spells_screen: PlayerMenuLayer ## The instanced spells screen, a sibling of this menu on the Player.
+var extra_screen: PlayerMenuLayer ## The instanced extra screen, a sibling of this menu on the Player.
 
 @onready var lobby: Button = $Panel/VBoxContainer/Lobby
 @onready var inventory_button: Button = $Panel/VBoxContainer/Inventory
 @onready var spells_button: Button = $Panel/VBoxContainer/Spells
+@onready var extra_button: Button = $Panel/VBoxContainer/Extra
 
 
 ## Called when the node enters the scene tree for the first time.
@@ -22,6 +26,8 @@ func _ready() -> void:
 	lobby.disabled = lobby_unavailable
 	inventory_screen = _instance_screen(inventory_screen_scene, inventory_button)
 	spells_screen = _instance_screen(spells_screen_scene, spells_button)
+	extra_button.text = extra_screen_label
+	extra_screen = _instance_screen(extra_screen_scene, extra_button)
 
 
 ## Instances a menu scene beside this one on the Player and shows its button; an empty or bad path hides the button.
@@ -87,6 +93,17 @@ func _on_spells_pressed() -> void:
 		return
 	hide()
 	spells_screen.show_menu()
+
+
+func _on_extra_pressed() -> void:
+	if extra_screen == null:
+		return
+	hide()
+	extra_screen.show_menu()
+
+
+func _on_extra_touch_screen_button_pressed() -> void:
+	_on_extra_pressed()
 
 
 func _on_spells_touch_screen_button_pressed() -> void:

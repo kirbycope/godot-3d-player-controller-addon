@@ -29,6 +29,8 @@ enum EquipmentType {
 @export var can_mine: bool = false ## Can this equipment mine ore? (See [Mineable].)
 @export var can_shoot: bool = false ## Does this equipment have a shooting/ranged action that the player can perform?
 @export var display_name: String = "" ## Name displayed in the UI. If empty, falls back to equipment type name.
+@export_multiline var description: String = "" ## Flavour text under the name in the inventory.
+@export var model_scene: PackedScene ## A 3D model the inventory shows turning in place of the icon; empty keeps the icon.
 @export var equipment_type: EquipmentType ## The type of equipment (e.g. AXE_1H, BOW, RIFLE, etc.)
 @export var icon: Texture2D ## Icon to display in the UI for this equipment
 @export var is_exclusive: bool = false ## Is this equipment exclusive, meaning it cannot be equipped with other equipment types simultaneously?
@@ -52,6 +54,11 @@ var equipment_instance: Equipment ## The equipped copy of this item, once [metho
 var player: Player
 
 @onready var player_detection: Area3D = get_node_or_null("PlayerDetection") as Area3D ## The walk-over pickup volume, on world copies.
+
+
+## Extra lines the inventory prints under [member description]; a rod says what bait is on the line. Empty by default.
+func get_details() -> String:
+	return ""
 
 
 func _update_attachment_offsets() -> void:

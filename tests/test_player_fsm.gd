@@ -146,6 +146,63 @@ class TestStandingTransitions:
 		
 		assert_eq(player.current_state, NodeStateMachine.States.ATTACKING, "Player should transition to ATTACKING state after attack action.")
 
+	## Drains the stamina bar so exhaustion sticks (it clears again only once the bar has refilled).
+	func _exhaust() -> void:
+		player.enable_stamina = true
+		player.get_node("Stamina").set("stamina", 0.0)
+		player.is_exhausted = true
+		await wait_physics_frames(15)
+
+	func test_exhausted_player_cannot_attack():
+		# Catching their breath: HeavyBreathing has no way into the attack animations, so the press is ignored
+		await _exhaust()
+		assert_eq(player.current_locomotion_node, "HeavyBreathing")
+		var sender = InputSender.new(Input)
+		sender.set_auto_flush_input(true)
+		sender.action_down("attack")
+		await wait_physics_frames(2)
+		sender.action_up("attack")
+		await wait_physics_frames(2)
+
+		assert_eq(player.current_state, NodeStateMachine.States.STANDING, "An exhausted Player stays standing.")
+		assert_false(player.is_attacking, "And is never flagged as attacking.")
+
+	func test_exhausted_crouching_player_cannot_attack():
+		await _exhaust()
+		player.state_machine.travel(NodeStateMachine.States.STANDING, NodeStateMachine.States.CROUCHING)
+		await wait_physics_frames(2)
+		var sender = InputSender.new(Input)
+		sender.set_auto_flush_input(true)
+		sender.action_down("attack")
+		await wait_physics_frames(2)
+		sender.action_up("attack")
+		await wait_physics_frames(2)
+
+		assert_eq(player.current_state, NodeStateMachine.States.CROUCHING, "An exhausted crouching Player stays crouching.")
+		assert_false(player.is_attacking)
+
+	func test_attack_that_never_reaches_an_animation_times_out_to_standing():
+		# The 2H axe while exhausted: the state was entered but HeavyBreathing never travels to a slash
+		var axe: Equipment = Equipment.new()
+		axe.equipment_type = Equipment.EquipmentType.AXE_2H
+		root.add_child(axe)
+		player.inventory.add_equipment(axe)
+		await _exhaust()
+		assert_eq(player.current_locomotion_node, "HeavyBreathing")
+		var attacking: Attacking = player.state_machine.get_node("Attacking")
+		attacking.attack_timeout = 0.3
+		player.state_machine.travel(NodeStateMachine.States.STANDING, NodeStateMachine.States.ATTACKING)
+		assert_eq(player.current_state, NodeStateMachine.States.ATTACKING)
+		assert_true(player.is_attacking)
+		assert_false(attacking.attack_timeout_timer.is_stopped(), "The safety timer runs until an attack animation starts.")
+
+		await wait_seconds(0.5)
+		await wait_physics_frames(2)
+
+		assert_eq(player.current_state, NodeStateMachine.States.STANDING, "No attack animation within the timeout returns to standing.")
+		assert_false(player.is_attacking, "The attacking flag is cleared with the state.")
+		assert_eq(player.current_locomotion_node, "HeavyBreathing", "Still catching their breath, not stuck mid-swing.")
+
 class TestSprintingTransitions:
 	extends FsmTestBase
 	
@@ -477,9 +534,13 @@ class TestRidingTransitions:
 		await wait_physics_frames(1)
 		assert_almost_eq(player.global_basis.z.dot(rideable.global_basis.z), 1.0, 0.01, "Turning the rideable turns the Player with it")
 		assert_almost_eq(player.global_position, seat.global_position, Vector3.ONE * 0.01, "And moving it moves them")
+		var facing: Vector3 = player.player_model.global_basis.z
+		assert_almost_eq(facing.dot(-seat.global_basis.z), 1.0, 0.01, "The rider faces along the seat's -Z, Godot's forward")
+		assert_almost_eq(player.orientation.basis.z.dot(facing), 1.0, 0.01, "And orientation agrees with the model")
 		player.dismount()
 		await wait_physics_frames(2)
 		assert_almost_eq(player.global_basis.y, Vector3.UP, Vector3.ONE * 0.01, "Upright again on dismount")
+		assert_almost_eq(player.orientation.basis.z.dot(facing), 1.0, 0.05, "Still facing the way they sat, no spin on the way off")
 
 	func test_mount_animation_plays_before_the_ride_and_ends_with_the_clip():
 		rideable.mount_animation = "EnteringCar"

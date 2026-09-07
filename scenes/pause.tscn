@@ -110,6 +110,18 @@ text = "Spells"
 position = Vector2(36, 15)
 shape = SubResource("RectangleShape2D_senyo")
 
+[node name="Extra" type="Button" parent="Panel/VBoxContainer"]
+visible = false
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+text = "Journal"
+
+[node name="ExtraTouchScreenButton" type="TouchScreenButton" parent="Panel/VBoxContainer/Extra"]
+position = Vector2(36, 15)
+shape = SubResource("RectangleShape2D_senyo")
+
 [node name="Restart" type="Button" parent="Panel/VBoxContainer" unique_id=465491467]
 custom_minimum_size = Vector2(72, 0)
 layout_mode = 2
@@ -161,6 +173,8 @@ shape = SubResource("RectangleShape2D_senyo")
 [connection signal="pressed" from="Panel/VBoxContainer/Inventory/InventoryTouchScreenButton" to="." method="_on_inventory_touch_screen_button_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/Spells" to="." method="_on_spells_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/Spells/SpellsTouchScreenButton" to="." method="_on_spells_touch_screen_button_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Extra" to="." method="_on_extra_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Extra/ExtraTouchScreenButton" to="." method="_on_extra_touch_screen_button_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/Restart" to="." method="_on_restart_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/Restart/RestartTouchScreenButton" to="." method="_on_restart_touch_screen_button_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/Settings" to="." method="_on_settings_pressed"]

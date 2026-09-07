@@ -2,6 +2,7 @@ class_name Attacking
 extends NodeStateMachine
 
 @export var boxing_inactivity_delay: float = 2.0 ## Seconds without an attack before the boxing stance is dropped.
+@export var attack_timeout: float = 1.0 ## Seconds to reach an attack animation before the state gives up and returns to standing.
 
 ## Locomotion nodes that count as an active attack animation.
 const ATTACK_NODES: Array[String] = [
@@ -16,6 +17,7 @@ const ATTACK_NODES: Array[String] = [
 ]
 
 @onready var boxing_inactivity_timer: Timer = $BoxingInactivityTimer ## Restarted on every attack while boxing; its timeout ends the boxing stance.
+@onready var attack_timeout_timer: Timer = $AttackTimeoutTimer ## Runs until an attack animation starts; if none ever does (no transition from the current locomotion), its timeout leaves the state.
 var _has_entered_attack: bool = false
 
 
@@ -68,6 +70,7 @@ func _on_locomotion_node_changed(_state_path: String) -> void:
 
 	if player.current_locomotion_node in ATTACK_NODES:
 		_has_entered_attack = true
+		attack_timeout_timer.stop()
 	elif _has_entered_attack:
 		if player.inventory.is_unarmed() and player.is_boxing:
 			# Finished attack animation while boxing: clear the attack but stay in the boxing stance until the inactivity timer fires
@@ -84,12 +87,21 @@ func _on_boxing_inactivity_timer_timeout() -> void:
 	player.state_machine.travel(state, States.STANDING)
 
 
+## No attack animation started within [member attack_timeout] (the locomotion had no way into one) -> back to standing
+## rather than staying flagged as attacking.
+func _on_attack_timeout_timer_timeout() -> void:
+	if not _has_entered_attack:
+		player.state_machine.travel(state, States.STANDING)
+
+
 ## Start "attacking".
 func start() -> void:
 	super.start()
 	# Flag the player as "attacking"
 	player.is_attacking = true
 	_has_entered_attack = player.current_locomotion_node in ATTACK_NODES
+	if not _has_entered_attack:
+		attack_timeout_timer.start(attack_timeout)
 	# Flag as boxing if unarmed and start the inactivity delay
 	if player.inventory.is_unarmed():
 		player.is_boxing = true
@@ -108,6 +120,7 @@ func stop() -> void:
 	player.is_boxing = false
 	_has_entered_attack = false
 	boxing_inactivity_timer.stop()
+	attack_timeout_timer.stop()
 	# Stop the attack sequence timer
 	player.attack_sequence_timer.stop()
 	# Reset the state variables
