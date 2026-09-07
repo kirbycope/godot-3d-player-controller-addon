@@ -9,6 +9,25 @@ extends CanvasLayer
 ## Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	set_process_input(is_multiplayer_authority())
+	fit_touch_buttons(self)
+
+
+## Sizes every [TouchScreenButton] under [param root] to the [Control] it sits on, now and whenever that control is
+## laid out again, so a button a container stretches keeps a touch target to match.
+static func fit_touch_buttons(root: Node) -> void:
+	for found: Node in root.find_children("*", "TouchScreenButton", true, false):
+		var touch: TouchScreenButton = found as TouchScreenButton
+		var host: Control = touch.get_parent() as Control
+		if host == null or not (touch.shape is RectangleShape2D):
+			continue
+		touch.shape = touch.shape.duplicate() # A scene shares one shape between its buttons
+		_fit_touch_button(touch, host)
+		host.resized.connect(_fit_touch_button.bind(touch, host))
+
+
+static func _fit_touch_button(touch: TouchScreenButton, host: Control) -> void:
+	(touch.shape as RectangleShape2D).size = host.size
+	touch.position = host.size * 0.5
 
 
 ## Called when there is an input event.
