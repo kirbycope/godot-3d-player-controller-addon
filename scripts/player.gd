@@ -8,6 +8,7 @@ signal locomotion_node_changed(state_path: String) ## Emitted when the locomotio
 signal exhausted_changed(is_exhausted: bool) ## Emitted when [member is_exhausted] changes.
 signal navigating_changed(is_navigating: bool) ## Emitted when click-to-move navigation starts or stops.
 signal paused_changed(is_paused: bool) ## Emitted when [member is_paused] changes (a menu opened or closed).
+signal whistled(player: Player) ## Emitted on the authority when the `whistle` action is pressed on foot (not while riding); the world decides who answers.
 
 const EMOTE_STATE_PLAYBACK_PATH: String = "parameters/EmoteStateMachine/playback"
 const CAST_CHANNEL_EMOTE: StringName = &"ReadyToCastSpell" ## Upper-body pose held while an unarmed cast channels.
@@ -521,6 +522,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			is_navigating = true
 			if debug.visible:
 				debug.draw_navigation_marker(cursor_position)
+
+	# Whistle (action="whistle", key="K", D-Pad Down): the horse and whoever else listens answer; a rideable takes it first
+	if event.is_action_pressed("whistle") and not event.is_echo() and not is_riding:
+		whistled.emit(self)
 
 	# Push-to-talk voice broadcasting (action="broadcast", key="V")
 	if event.is_action_pressed("broadcast"):
