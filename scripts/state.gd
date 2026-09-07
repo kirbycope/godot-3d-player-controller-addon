@@ -54,7 +54,7 @@ func travel(from_state: States, to_state: States) -> void:
 	match to_state:
 		States.FLYING when not player.enable_flying: return
 		States.PARAGLIDING when not player.enable_paraglider: return
-		States.RAGDOLLING when not player.enable_ragdoll or player.is_paused or (player.pause and player.pause.visible): return
+		States.RAGDOLLING when not player.enable_ragdoll or player.is_paused or player.is_typing or (player.pause and player.pause.visible): return
 	if player.is_ragdolling and to_state != States.RAGDOLLING and from_state != States.RAGDOLLING:
 		return
 

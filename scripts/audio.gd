@@ -1,7 +1,7 @@
 class_name Audio
 extends Node3D
 
-const BUSES: Array[StringName] = [&"Dialog", &"Menu", &"Music", &"SFX"] ## Buses the settings menus adjust; created at runtime when the project's bus layout lacks them.
+const BUSES: Array[StringName] = [&"Dialog", &"Menu", &"Music", &"SFX", &"Voice"] ## Buses the settings menus adjust; created at runtime when the project's bus layout lacks them.
 
 @export var player: Player
 

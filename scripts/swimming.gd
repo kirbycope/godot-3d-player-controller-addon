@@ -38,7 +38,7 @@ var _ledge_ray_default_y: float = 0.0 ## Scene height of the ledge ray, restored
 func _input(event: InputEvent) -> void:
 
 	# Do nothing if the player is not set or is paused/ragdolling
-	if not player or player.is_paused or player.is_ragdolling: return
+	if not player or player.is_paused or player.is_typing or player.is_ragdolling: return
 
 	# Swimming, Climbing-On [Input]
 	if player.current_locomotion_node == "SwimmingAtEdge" \
@@ -87,7 +87,9 @@ func _physics_process(delta: float) -> void:
 		var vertical_input: float = 0.0
 		_vertical_swim_effort = 0.0
 		if player.is_swimming and not player.is_climbing_on:
-			if enable_diving and Input.is_action_pressed(action(keyboard_crouch_action, pad_crouch_action)):
+			if player.is_typing:
+				pass # Typed keys never dive or climb out
+			elif enable_diving and Input.is_action_pressed(action(keyboard_crouch_action, pad_crouch_action)):
 				vertical_input = -1.0
 				_vertical_swim_effort = 1.0
 			elif depth_below_surface > SURFACE_EPSILON and Input.is_action_pressed(action(keyboard_climb_out_action, pad_climb_out_action)):
@@ -144,6 +146,7 @@ func _physics_process(delta: float) -> void:
 	var has_swim_movement: bool = (player.smoothed_motion.y > 0.0 if player.is_focusing else player.smoothed_motion.length() > 0.0)
 	if player.is_swimming \
 	and not player.is_exhausted \
+	and not player.is_typing \
 	and has_swim_movement \
 	and Input.is_action_pressed(action(keyboard_sprint_action, pad_sprint_action)):
 		player.animation_tree.set("parameters/LocomotionTimeScale/scale", 1.5)

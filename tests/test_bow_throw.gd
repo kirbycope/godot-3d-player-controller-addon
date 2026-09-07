@@ -116,6 +116,12 @@ func test_fire_node_spawns_one_arrow_along_the_projectile_ray():
 	template.set_script(ARROW_SCRIPT)
 	bow.add_child(template)
 	bow.arrow_node = template
+	# Arrows come out of the inventory now: one AmmoItem for the bow, built here so no .tres is loaded
+	var quiver := AmmoItem.new()
+	quiver.id = &"test_arrow"
+	quiver.weapon_type = Equipment.EquipmentType.BOW
+	quiver.rounds_per_unit = 1
+	player.inventory.add_item(quiver, 3)
 	await wait_physics_frames(1)
 	assert_true(template.freeze, "The template arrow stays frozen.")
 
@@ -123,6 +129,7 @@ func test_fire_node_spawns_one_arrow_along_the_projectile_ray():
 	bow._on_locomotion_node_changed("Bow/BowFireArrow")
 	var arrows: Array = root.get_children().filter(func(n): return n is Arrow)
 	assert_eq(arrows.size(), arrows_before + 1, "Firing should spawn exactly one arrow.")
+	assert_eq(player.inventory.count_of(quiver), 2, "The shot took one arrow from the inventory.")
 
 	var arrow: Arrow = arrows.back()
 	assert_false(arrow.is_template, "The fired arrow is not a template.")

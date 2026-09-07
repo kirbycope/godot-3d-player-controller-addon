@@ -96,7 +96,7 @@ func _on_looking_at_changed(previous: Node3D, current: Node3D) -> void:
 ## Called when an input event has not been consumed by the UI.
 func _unhandled_input(event: InputEvent) -> void:
 	# Do nothing if the player is not set or is paused/ragdolling
-	if not player or player.is_paused or player.is_ragdolling: return
+	if not player or player.is_paused or player.is_typing or player.is_ragdolling: return
 
 	# Look-at interactables that take "action" (the skateboard, the push button); Equipment pickups are walk-over areas instead
 	if looking_at and event.is_action_pressed("action") and looking_at.has_method("equip"):
@@ -161,6 +161,7 @@ func _process(delta: float) -> void:
 	var joypad_motion_input: Vector2 = Input.get_vector("look_left", "look_right", "look_up", "look_down")
 	if joypad_motion_input != Vector2.ZERO \
 	and not player.is_paused \
+	and not player.is_typing \
 	and not player.is_ragdolling \
 	and not (player.is_riding and not current) \
 	and not is_radial_menu_open():

@@ -60,7 +60,7 @@ func _ready() -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if player == null or player.is_paused or player.is_ragdolling:
+	if player == null or player.is_paused or player.is_typing or player.is_ragdolling:
 		return
 
 	if is_holding_rigidbody() and _is_held_object_control_event(event):
@@ -411,15 +411,15 @@ func _end_hold() -> void:
 
 
 func _update_held_object_transform(delta: float) -> void:
-	var dpad_input: Vector2 = Input.get_vector("last_weapon", "next_weapon", "seeker", "whistle")
-	if Input.is_action_pressed("throw"):
+	var dpad_input: Vector2 = Vector2.ZERO if player.is_typing else Input.get_vector("last_weapon", "next_weapon", "seeker", "whistle")
+	if Input.is_action_pressed("throw") and not player.is_typing:
 		var rotation_delta: Vector2 = dpad_input * held_rotation_speed * delta
 		held_rigidbody.rotate_object_local(Vector3.RIGHT, deg_to_rad(rotation_delta.y))
 		held_rigidbody.rotate_object_local(Vector3.UP, deg_to_rad(-rotation_delta.x))
 	else:
 		_held_distance = clampf(_held_distance - dpad_input.y * held_depth_speed * delta, held_min_distance, held_max_distance)
 
-	var move_input: Vector2 = Input.get_vector("look_left", "look_right", "look_up", "look_down")
+	var move_input: Vector2 = Vector2.ZERO if player.is_typing else Input.get_vector("look_left", "look_right", "look_up", "look_down")
 	var move_multiplier: float = 1.0
 	if player.controls.current_input_type != player.controls.InputType.KEYBOARD_MOUSE:
 		move_multiplier = held_joypad_move_multiplier

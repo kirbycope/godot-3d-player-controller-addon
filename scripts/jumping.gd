@@ -6,7 +6,7 @@ extends NodeStateMachine
 func _input(event: InputEvent) -> void:
 
 	# Do nothing if the player is not set
-	if not player or player.is_paused or player.is_ragdolling: return
+	if not player or player.is_paused or player.is_typing or player.is_ragdolling: return
 
 	# Jump action triggers while jumping
 	if event.is_action_pressed("jump") and not player.is_on_floor():

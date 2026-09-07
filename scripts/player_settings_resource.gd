@@ -12,6 +12,8 @@ static var _cached: PlayerSettingsResource ## One shared instance so every menu 
 @export var menu_volume: float = 50.0
 @export var music_volume: float = 50.0
 @export var sfx_volume: float = 50.0
+@export var voice_volume: float = 50.0 ## Steam voice chat playback; local like the other volumes.
+@export var voice_muted: bool = false ## Mutes the Voice bus on this machine only.
 
 # Video Settings
 @export var vsync_enabled: bool = true
@@ -21,6 +23,10 @@ static var _cached: PlayerSettingsResource ## One shared instance so every menu 
 @export var ssrl_enabled: bool = false
 @export var taa_enabled: bool = false
 @export var fsr_index: int = 0 ## [enum Viewport.Scaling3DMode] index; mutually exclusive with [member ssaa_index].
+@export var toon_enabled: bool = false ## The [ToonFilter] under the Player's camera; local to this machine like the rest.
+
+# Chat Settings
+@export var chat_rect: Rect2 = Rect2() ## Where the [ChatWindow] sits and how big it is; zero size means bottom-left at the default size.
 
 
 ## Returns the shared settings instance, loading it from disk the first time.
@@ -43,6 +49,8 @@ func apply_audio_settings(player: Player = null) -> void:
 	set_bus_volume(&"Menu", menu_volume)
 	set_bus_volume(&"Music", music_volume)
 	set_bus_volume(&"SFX", sfx_volume)
+	set_bus_volume(&"Voice", voice_volume)
+	set_bus_mute(&"Voice", voice_muted)
 	if player:
 		player.update_sfx_volume(sfx_volume)
 		player.update_music_volume(music_volume)
@@ -52,6 +60,12 @@ static func set_bus_volume(bus_name: StringName, value: float) -> void:
 	var bus_index: int = AudioServer.get_bus_index(bus_name)
 	if bus_index != -1:
 		AudioServer.set_bus_volume_db(bus_index, linear_to_db(value / 100.0) if value > 0.0 else -80.0)
+
+
+static func set_bus_mute(bus_name: StringName, muted: bool) -> void:
+	var bus_index: int = AudioServer.get_bus_index(bus_name)
+	if bus_index != -1:
+		AudioServer.set_bus_mute(bus_index, muted)
 
 
 func apply_video_settings(viewport: Viewport) -> void:

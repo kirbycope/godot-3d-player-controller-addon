@@ -20,7 +20,7 @@ func _ready() -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if player == null or player.is_paused or player.is_ragdolling:
+	if player == null or player.is_paused or player.is_typing or player.is_ragdolling:
 		return
 	# Tapping focus while already locked on cycles to the next target.
 	if event.is_action_pressed("focus") and not event.is_echo() and is_instance_valid(current_focus_target):

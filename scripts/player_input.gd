@@ -15,7 +15,7 @@ func _ready() -> void:
 ## Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta: float) -> void:
 	var player := get_parent() as Player
-	if player and (player.is_paused or player.is_ragdolling):
+	if player and (player.is_paused or player.is_typing or player.is_ragdolling):
 		motion = Vector2.ZERO
 		return
 

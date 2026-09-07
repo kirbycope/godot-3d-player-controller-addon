@@ -4,6 +4,9 @@ extends PlayerMenuLayer
 @onready var menu_slider: HSlider = $Panel/VBoxContainer/Menu/VolumeSlider
 @onready var music_slider: HSlider = $Panel/VBoxContainer/Music/VolumeSlider
 @onready var sfx_slider: HSlider = $Panel/VBoxContainer/SFX/VolumeSlider
+@onready var voice_settings: VBoxContainer = $Panel/VBoxContainer/VoiceSettings ## Steam voice chat rows; shown only when Steam is loaded.
+@onready var voice_slider: HSlider = $Panel/VBoxContainer/VoiceSettings/Voice/VolumeSlider
+@onready var mute_voice: CheckButton = $Panel/VBoxContainer/VoiceSettings/MuteVoice
 
 var settings_res: PlayerSettingsResource
 
@@ -16,6 +19,25 @@ func _ready() -> void:
 	menu_slider.set_value_no_signal(settings_res.menu_volume)
 	music_slider.set_value_no_signal(settings_res.music_volume)
 	sfx_slider.set_value_no_signal(settings_res.sfx_volume)
+	voice_slider.set_value_no_signal(settings_res.voice_volume)
+	mute_voice.set_pressed_no_signal(settings_res.voice_muted)
+	voice_settings.visible = is_steam_loaded()
+
+
+## Voice chat runs on Steam only, so its rows show only with the Steam singleton; a test overrides this to see both layouts.
+func is_steam_loaded() -> bool:
+	return Engine.has_singleton("Steam")
+
+
+## Mutes or unmutes the Voice bus on this machine only and saves at once (a toggle has no drag to end).
+func _on_mute_voice_toggled(toggled_on: bool) -> void:
+	settings_res.voice_muted = toggled_on
+	PlayerSettingsResource.set_bus_mute(&"Voice", toggled_on)
+	settings_res.save()
+
+
+func _on_mute_voice_touch_screen_button_pressed() -> void:
+	mute_voice.button_pressed = not mute_voice.button_pressed # Emits toggled
 
 
 ## Applies a slider value to its bus (bound in the scene) without saving.
@@ -79,6 +101,14 @@ func _on_sfx_volume_minus_touch_screen_button_pressed() -> void:
 
 func _on_sfx_volume_plus_touch_screen_button_pressed() -> void:
 	_on_volume_plus_pressed(sfx_slider.get_path())
+
+
+func _on_voice_volume_minus_touch_screen_button_pressed() -> void:
+	_on_volume_minus_pressed(voice_slider.get_path())
+
+
+func _on_voice_volume_plus_touch_screen_button_pressed() -> void:
+	_on_volume_plus_pressed(voice_slider.get_path())
 
 
 ## Return to main settings menu.

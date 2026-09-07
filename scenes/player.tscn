@@ -244,6 +244,8 @@
 [ext_resource type="Resource" uid="uid://cfpp5cv2gcskg" path="res://addons/3d_player_controller/resources/abilities/heal.tres" id="222_heal"]
 [ext_resource type="PackedScene" uid="uid://dt6iufipvx42w" path="res://addons/3d_player_controller/scenes/health.tscn" id="223_health"]
 [ext_resource type="PackedScene" uid="uid://b7nievqli2b5" path="res://addons/3d_player_controller/scenes/status_bars_3d.tscn" id="224_bars"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/toon_filter.tscn" id="225_toon"]
+[ext_resource type="PackedScene" uid="uid://d0mxfe0dnkn0n" path="res://addons/3d_player_controller/scenes/chat.tscn" id="226_chat"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_ym3ug"]
 radius = 0.009999072
@@ -4055,6 +4057,8 @@ collide_with_areas = true
 wait_time = 0.8
 one_shot = true
 
+[node name="ToonFilter" parent="CameraMount/CameraSpringArm/Camera3D" instance=ExtResource("225_toon")]
+
 [node name="ItemSpringArm" type="SpringArm3D" parent="CameraMount" unique_id=333552600]
 unique_name_in_owner = true
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
@@ -4116,6 +4120,7 @@ playback_type = 1
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 0)
 stream = SubResource("AudioStreamGenerator_voice")
 autoplay = true
+bus = &"Voice"
 
 [node name="AttackSequenceTimer" type="Timer" parent="." unique_id=724736604]
 wait_time = 0.4
@@ -4126,6 +4131,9 @@ wait_time = 0.2
 autostart = true
 
 [node name="Controls" parent="." unique_id=1181235604 instance=ExtResource("13_fjdng")]
+
+[node name="Chat" parent="." node_paths=PackedStringArray("player") instance=ExtResource("226_chat")]
+player = NodePath("..")
 
 [node name="Debug" parent="." unique_id=2032410064 node_paths=PackedStringArray("player") instance=ExtResource("20_07327")]
 visible = false
@@ -4378,6 +4386,7 @@ mouse_filter = 2
 [connection signal="equipment_changed" from="Inventory" to="HitDetection" method="_on_equipment_changed"]
 [connection signal="ability_activated" from="Abilities" to="." method="_on_abilities_ability_activated"]
 [connection signal="cast_interrupted" from="Abilities" to="." method="_on_abilities_cast_interrupted"]
+[connection signal="toggled" from="CameraMount/CameraSpringArm/Camera3D/ToonFilter" to="VideoSettings" method="_on_toon_filter_toggled"]
 [connection signal="cast_started" from="Abilities" to="." method="_on_abilities_cast_started"]
 [connection signal="died" from="Health" to="." method="_on_health_died"]
 [connection signal="energy_changed" from="Health" to="StatusBars3D" method="set_energy"]
@@ -4390,4 +4399,6 @@ mouse_filter = 2
 [connection signal="timeout" from="NodeStateMachine/Climbing/RainSlipTimer" to="NodeStateMachine/Climbing" method="_on_rain_slip_timer_timeout"]
 [connection signal="timeout" from="NodeStateMachine/Pushing/StopGraceTimer" to="NodeStateMachine/Pushing" method="_on_stop_grace_timer_timeout"]
 
+[connection signal="paused_changed" from="." to="Chat" method="_on_player_paused_changed"]
+[connection signal="typing_changed" from="Chat" to="." method="_on_chat_typing_changed"]
 [editable path="PlayerModel"]

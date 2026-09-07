@@ -12,7 +12,7 @@ extends NodeStateMachine
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:
 	# Do nothing if the player is not set or is paused/ragdolling
-	if not player or player.is_paused or player.is_ragdolling: return
+	if not player or player.is_paused or player.is_typing or player.is_ragdolling: return
 
 	# Stand up
 	if event.is_action_pressed(action(keyboard_stand_action, pad_stand_action)):

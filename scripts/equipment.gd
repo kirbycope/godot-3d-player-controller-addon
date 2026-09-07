@@ -7,7 +7,13 @@ extends Node3D
 ## then stops monitoring, so each pickup is taken once with no prompt or button.
 ##
 ## Melee weapons that should register hits need a child [Area3D] named "Hitbox"; [HitDetection]
-## enables its monitoring during attack swings.
+## enables its monitoring during attack swings. A weapon that should shove props needs a child
+## [AnimatableBody3D] named "WeaponBody" (a shape along the blade, on the Weapons physics layer masking
+## Hittable, sync_to_physics off: a synced body reverts to its own last transform and ignores the bone
+## attachment carrying it): it rides the bone animation and pushes with the swing's real velocity,
+## [HitDetection] puts it on its layer only while a swing is live, and it never touches the Player carrying it.
+
+signal details_changed ## What [method get_details] prints has changed (a rod's bait, say); the inventory screen redraws it.
 
 enum EquipmentType {
 	AXE_1H,
@@ -54,9 +60,21 @@ var equipment_instance: Equipment ## The equipped copy of this item, once [metho
 var player: Player
 
 @onready var player_detection: Area3D = get_node_or_null("PlayerDetection") as Area3D ## The walk-over pickup volume, on world copies.
+@onready var weapon_body: AnimatableBody3D = get_node_or_null("WeaponBody") as AnimatableBody3D ## The blade's physical body, on melee weapons.
+
+
+## An equipped copy's weapon body ignores its Player and their ragdoll bones, whatever layers they end up on.
+func _ready() -> void:
+	if weapon_body == null or not is_instance_valid(player):
+		return
+	weapon_body.add_collision_exception_with(player)
+	if is_instance_valid(player.physical_bone_simulator):
+		for bone: Node in player.physical_bone_simulator.find_children("*", "PhysicalBone3D", true, false):
+			weapon_body.add_collision_exception_with(bone as PhysicsBody3D)
 
 
 ## Extra lines the inventory prints under [member description]; a rod says what bait is on the line. Empty by default.
+## Emit [signal details_changed] when they change, so an open inventory screen redraws them.
 func get_details() -> String:
 	return ""
 

@@ -31,7 +31,7 @@ var is_diving: bool = false
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:
 	# Do nothing if the player is not set or is paused/ragdolling
-	if not player or player.is_paused or player.is_ragdolling: return
+	if not player or player.is_paused or player.is_typing or player.is_ragdolling: return
 
 	# Stop "paragliding" and start "falling"
 	if event.is_action_pressed(action(keyboard_stop_action, pad_stop_action)) and not event.is_echo():
@@ -58,7 +58,7 @@ func _physics_process(delta: float) -> void:
 	# Check for thermal updraft areas
 	var was_in_updraft: bool = is_in_updraft
 	is_in_updraft = player.is_in_updraft()
-	is_diving = Input.is_action_pressed(action(keyboard_dive_action, pad_dive_action))
+	is_diving = not player.is_typing and Input.is_action_pressed(action(keyboard_dive_action, pad_dive_action))
 
 	# While paragliding, regular locomotion is blocked and movement is driven directly (below)
 	# Use camera-relative input, then remove any component along up_direction so glide steering stays tangential.

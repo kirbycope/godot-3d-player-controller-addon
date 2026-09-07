@@ -21,7 +21,7 @@ var _double_tap_timer: SceneTreeTimer ## Runs after a stop-action press; a secon
 func _input(event: InputEvent) -> void:
 
 	# Do nothing if the player is not set or is paused/ragdolling
-	if not player or player.is_paused or player.is_ragdolling: return
+	if not player or player.is_paused or player.is_typing or player.is_ragdolling: return
 
 	# Stop flying on a double-press of the stop action
 	if event.is_action_pressed(action(keyboard_stop_action, pad_stop_action)) and not event.is_echo():
@@ -50,7 +50,7 @@ func _physics_process(delta: float) -> void:
 	var target_motion: Vector2 = player.player_input.motion
 
 	# Update sprint flag and locomotion blend position in FlyingLocomotion
-	player.is_sprinting = Input.is_action_pressed("sprint") and not player.is_exhausted
+	player.is_sprinting = Input.is_action_pressed("sprint") and not player.is_exhausted and not player.is_typing
 	var speed_blend: float = target_motion.length()
 	if player.is_sprinting:
 		speed_blend *= 1.5
@@ -75,7 +75,9 @@ func _physics_process(delta: float) -> void:
 
 	# Vertical control along player.up_direction (jump to fly upward along up_dir, crouch/down to fly downward along -up_dir)
 	var v_speed: float = 0.0
-	if Input.is_action_pressed(action(keyboard_up_action, pad_up_action)):
+	if player.is_typing:
+		pass # Typed keys never fly
+	elif Input.is_action_pressed(action(keyboard_up_action, pad_up_action)):
 		v_speed = 6.0
 	elif Input.is_action_pressed(action(keyboard_down_action, pad_down_action)):
 		v_speed = -6.0

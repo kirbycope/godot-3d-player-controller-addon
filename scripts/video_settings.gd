@@ -1,6 +1,7 @@
 extends PlayerMenuLayer
 
 @onready var vsync_button: CheckButton = $Panel/VBoxContainer/VSYNC
+@onready var toon_button: CheckButton = $Panel/VBoxContainer/ToonShading
 @onready var msaa_button: OptionButton = $Panel/VBoxContainer/MSAA
 @onready var ssaa_button: OptionButton = $Panel/VBoxContainer/SSAA
 @onready var fxaa_button: CheckButton = $Panel/VBoxContainer/FXAA
@@ -21,6 +22,7 @@ func _ready() -> void:
 
 	# Available in all renderers
 	vsync_button.set_pressed_no_signal(settings_res.vsync_enabled)
+	toon_button.set_pressed_no_signal(settings_res.toon_enabled)
 	msaa_button.selected = settings_res.msaa_index
 	ssaa_button.selected = settings_res.ssaa_index
 	# Forward+ and Mobile only
@@ -48,6 +50,24 @@ func _on_vsync_toggled(toggled_on: bool) -> void:
 
 func _on_vsync_touch_screen_button_pressed() -> void:
 	_on_vsync_toggled(not vsync_button.button_pressed)
+
+
+## The switch drives the Player's [ToonFilter] and saves the choice with the rest.
+func _on_toon_shading_toggled(toggled_on: bool) -> void:
+	settings_res.toon_enabled = toggled_on
+	_apply_and_save()
+	if player and is_instance_valid(player.toon_filter):
+		player.toon_filter.enabled = toggled_on
+
+
+func _on_toon_shading_touch_screen_button_pressed() -> void:
+	_on_toon_shading_toggled(not toon_button.button_pressed)
+
+
+## Wired to the ToonFilter's toggled: the [F6] key keeps the switch honest.
+func _on_toon_filter_toggled(enabled: bool) -> void:
+	if is_node_ready():
+		toon_button.set_pressed_no_signal(enabled)
 
 
 func _on_msaa_item_selected(index: int) -> void:

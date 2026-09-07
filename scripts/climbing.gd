@@ -29,7 +29,7 @@ const HOP_INPUT_DEADZONE: float = 0.1
 func _input(event: InputEvent) -> void:
 
 	# Do nothing if the player is not set or is paused/ragdolling
-	if not player or player.is_paused or player.is_ragdolling: return
+	if not player or player.is_paused or player.is_typing or player.is_ragdolling: return
 
 	# Drop / Let go
 	if event.is_action_pressed(action(keyboard_drop_action, pad_drop_action)):
@@ -137,6 +137,7 @@ func _physics_process(delta: float) -> void:
 	# Climbing, Speed Up [Input] — sprint climbing is blocked on wet walls
 	if player.is_climbing \
 	and not player.is_exhausted \
+	and not player.is_typing \
 	and not wall_is_wet \
 	and Input.is_action_pressed(action(keyboard_sprint_action, pad_sprint_action)):
 		player.animation_tree.set("parameters/LocomotionTimeScale/scale", 1.5)

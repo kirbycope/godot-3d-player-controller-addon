@@ -45,12 +45,14 @@ const ACTIONS: Dictionary = {
 	"last_weapon": {"keys": [KEY_J], "buttons": [JOY_BUTTON_DPAD_LEFT]}, ## Controller: DPad Left, Keyboard: [J]
 	"next_weapon": {"keys": [KEY_L], "buttons": [JOY_BUTTON_DPAD_RIGHT]}, ## Controller: DPad Right, Keyboard: [L]
 	"broadcast": {"keys": [KEY_V]}, ## Push-to-talk. Keyboard: [V]
+	"chat": {"keycodes": [KEY_ENTER, KEY_KP_ENTER]}, ## Opens the chat window; handled in _unhandled_input so menus keep Enter. Keyboard: [Enter]
 	"ui_accept": {"deadzone": 0.5, "keycodes": [KEY_ENTER, KEY_KP_ENTER], "keys": [KEY_SPACE], "buttons": [JOY_BUTTON_A]},
 	"ui_left": {"deadzone": 0.5, "buttons": [JOY_BUTTON_DPAD_LEFT]},
 	"ui_right": {"deadzone": 0.5, "buttons": [JOY_BUTTON_DPAD_RIGHT]},
 	"ui_up": {"deadzone": 0.5, "buttons": [JOY_BUTTON_DPAD_UP]},
 	"ui_down": {"deadzone": 0.5, "buttons": [JOY_BUTTON_DPAD_DOWN]},
 	"debug": {"keycodes": [KEY_F3]}, ## Debug HUD. Keyboard: [F3]
+	"toggle_toon": {"keycodes": [KEY_F6]}, ## Toon shading filter on or off. Keyboard: [F6]
 }
 
 @export var player: Player

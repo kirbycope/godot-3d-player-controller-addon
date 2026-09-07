@@ -146,19 +146,24 @@ func _gun(player: Player) -> Firearm:
 	return gun
 
 
-func test_magazine_empties_and_reloads_from_the_reserve() -> void:
+func test_magazine_empties_and_reloads_from_the_inventory() -> void:
 	var player: Player = PLAYER_SCENE.instantiate()
 	root.add_child(player)
 	var gun: Firearm = _gun(player)
+	gun.equipment_type = Equipment.EquipmentType.PISTOL
 	gun.magazine_size = 2
-	gun.reserve_rounds = 3
 	gun.reload_time = 0.2
 	gun.rounds = 2
+	# The reserve is the inventory: one two-round magazine (an AmmoItem built here, so no .tres is loaded)
+	var magazine := AmmoItem.new()
+	magazine.id = &"test_pistol_magazine"
+	magazine.weapon_type = Equipment.EquipmentType.PISTOL
+	player.inventory.add_item(magazine, 1)
 	await wait_physics_frames(1)
 	watch_signals(gun)
 	assert_not_null(gun.fire())
 	assert_eq(gun.rounds, 1)
-	assert_signal_emitted_with_parameters(gun, "ammo_changed", [1, 3])
+	assert_signal_emitted_with_parameters(gun, "ammo_changed", [1, 2])
 	gun.fire_timer.stop()
 	assert_not_null(gun.fire())
 	assert_eq(gun.rounds, 0)
@@ -168,12 +173,13 @@ func test_magazine_empties_and_reloads_from_the_reserve() -> void:
 	assert_false(gun.fire_timer.is_stopped(), "Reloading blocks the trigger")
 	await wait_seconds(0.3)
 	assert_false(gun.is_reloading)
-	assert_eq(gun.rounds, 2, "The magazine refills from the reserve")
-	assert_eq(gun.reserve_rounds, 1)
+	assert_eq(gun.rounds, 2, "The magazine refills from the inventory")
+	assert_eq(player.inventory.count_of(magazine), 0, "The magazine item is spent")
+	assert_eq(gun.reserve_rounds, 0)
 	gun.reload()
 	assert_false(gun.is_reloading, "A full magazine does not reload")
 	player.controls.set_ammo(gun.rounds, gun.reserve_rounds)
-	assert_eq(player.controls.ammo_label.text, "2 / 1")
+	assert_eq(player.controls.ammo_label.text, "2 / 0")
 	assert_true(player.controls.ammo_label.visible)
 	player.controls.hide_ammo()
 	assert_false(player.controls.ammo_label.visible)

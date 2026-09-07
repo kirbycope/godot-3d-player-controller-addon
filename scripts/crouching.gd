@@ -6,7 +6,7 @@ extends NodeStateMachine
 func _input(event: InputEvent) -> void:
 
 	# Do nothing if the player is not set
-	if not player or player.is_paused or player.is_ragdolling: return
+	if not player or player.is_paused or player.is_typing or player.is_ragdolling: return
 
 	# Attack; an exhausted Player is catching their breath, and HeavyBreathing has no path into the attack animations
 	if event.is_action_pressed("attack") and player.inventory.can_player_attack and not player.is_exhausted:

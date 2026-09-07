@@ -25,7 +25,7 @@ var _has_entered_attack: bool = false
 func _input(event: InputEvent) -> void:
 
 	# Do nothing if the player is not set
-	if not player or player.is_paused or player.is_ragdolling: return
+	if not player or player.is_paused or player.is_typing or player.is_ragdolling: return
 
 	# Attack { Microsoft: Ⓧ, Nintendo: Ⓨ, Sony: 🟗, Keyboard: [Alt] }
 	if not event.is_action_pressed("attack") or not player.inventory.can_player_attack:

@@ -42,7 +42,7 @@ var _disabled_separation_ray: bool = false
 
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:
-	if not player or player.riding == null or player.is_paused or player.is_ragdolling: return
+	if not player or player.riding == null or player.is_paused or player.is_typing or player.is_ragdolling: return
 	if player.is_mounting or player.is_dismounting: return
 	if player.held_object and player.held_object.is_holding_object(): return
 	if player.riding.has_method("ride_input"):

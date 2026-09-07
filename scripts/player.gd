@@ -7,6 +7,7 @@ signal ride_ended(rideable: Node3D) ## Emitted when the Player gets off it.
 signal locomotion_node_changed(state_path: String) ## Emitted when the locomotion path ("Group/Node" or "Node") changes; on puppets this follows replication.
 signal exhausted_changed(is_exhausted: bool) ## Emitted when [member is_exhausted] changes.
 signal navigating_changed(is_navigating: bool) ## Emitted when click-to-move navigation starts or stops.
+signal paused_changed(is_paused: bool) ## Emitted when [member is_paused] changes (a menu opened or closed).
 
 const EMOTE_STATE_PLAYBACK_PATH: String = "parameters/EmoteStateMachine/playback"
 const CAST_CHANNEL_EMOTE: StringName = &"ReadyToCastSpell" ## Upper-body pose held while an unarmed cast channels.
@@ -191,7 +192,7 @@ var is_reeling_line: bool = false ## Is the Player currently casting a fishing l
 var is_flying: bool = false ## Is the Player currently flying?
 var is_focusing: bool: ## Is the Player currently focusing (forward or on a target)?
 	get:
-		if not is_multiplayer_authority() or riding_blocks_hands():
+		if not is_multiplayer_authority() or is_typing or riding_blocks_hands():
 			return false
 		if held_object and held_object.is_holding_object():
 			return false
@@ -264,13 +265,18 @@ var is_navigating: bool = false: ## Is the Player currently navigating (click to
 			is_navigating = value
 			navigating_changed.emit(value)
 var is_paragliding: bool = false ## Is the Player currently paragliding?
-var is_paused: bool = false ## Is the Player currently paused?
+var is_paused: bool = false: ## Is the Player currently paused?
+	set(value):
+		if value != is_paused:
+			is_paused = value
+			paused_changed.emit(value)
+var is_typing: bool = false ## Is the local Player typing in the chat window? Gameplay input is blocked while true.
 var is_pushing: bool = false ## Is the Player currently pushing?
 var is_ragdolling: bool = false ## Is the Player currently ragdolling?
 var requires_shoot_release_after_throw: bool = false ## Set during a throw to require releasing the shoot button before shooting weapons.
 var is_shooting: bool: ## Is the Player currently shooting?
 	get:
-		if not is_multiplayer_authority() or riding_blocks_hands() or inventory == null:
+		if not is_multiplayer_authority() or is_typing or riding_blocks_hands() or inventory == null:
 			return false
 		if is_throwing:
 			return false
@@ -313,6 +319,7 @@ var paraglider: Node3D
 @onready var separation_ray_shape: CollisionShape3D = $SeparationRayShape3D
 @onready var initial_separation_ray_transform: Transform3D = separation_ray_shape.transform
 @onready var controls: CanvasLayer = $Controls
+@onready var chat: ChatWindow = get_node_or_null("Chat") as ChatWindow ## The local chat window; puppets keep a hidden copy that relays RPCs.
 @onready var crosshair: TextureRect = $Crosshair
 @onready var debug: Debug = $Debug
 @onready var inventory: Inventory = $Inventory
@@ -350,6 +357,7 @@ var _ragdoll_was_enabled: bool = true ## enable_ragdoll before death forced it o
 @onready var physical_bone_simulator: PhysicalBoneSimulator3D = $PlayerModel/Armature/GeneralSkeleton/PhysicalBoneSimulator3D
 @onready var spring_arm: SpringArm3D = $CameraMount/CameraSpringArm
 @onready var camera: Camera3D = $CameraMount/CameraSpringArm/Camera3D
+@onready var toon_filter: ToonFilter = $CameraMount/CameraSpringArm/Camera3D/ToonFilter ## Screen-space toon shading; a local video setting.
 @onready var state_machine: NodeStateMachine = $NodeStateMachine ## Enables/Disables the scripts that run when various States are entered/exited.
 @onready var audio: Audio = $Audio
 @onready var steam_persona_name: Label3D = $SteamPersonaName
@@ -474,8 +482,14 @@ func _ready() -> void:
 
 ## Called when there is an unhandled input event.
 func _unhandled_input(event: InputEvent) -> void:
-	# Do nothing if not the authority
-	if is_paused or is_ragdolling: return
+	# Do nothing while paused, typing in the chat, or ragdolling
+	if is_paused or is_typing or is_ragdolling: return
+
+	# Chat; handled here rather than in _input so a menu that consumes Enter through the GUI wins
+	if event.is_action_pressed("chat") and chat:
+		chat.open_input()
+		get_viewport().set_input_as_handled()
+		return
 
 
 	# Toggle mouse capture
@@ -569,8 +583,8 @@ func apply_input(delta: float) -> void:
 	# Get the target motion from the synchronized input.
 	var target_motion: Vector2 = player_input.motion
 
-	# Block player movement control if paused or ragdolling.
-	if is_paused or is_ragdolling:
+	# Block player movement control if paused, typing or ragdolling.
+	if is_paused or is_typing or is_ragdolling:
 		target_motion = Vector2.ZERO
 		smoothed_motion = Vector2.ZERO
 		is_sprinting = false
@@ -913,6 +927,11 @@ func _on_abilities_cast_started(ability: Ability) -> void:
 		_travel_spell_state(state_path)
 	elif is_standing and ability.cast_style != Ability.CastStyle.NONE and get_spell_group().is_empty():
 		_start_channel_emote()
+
+
+## Wired to Chat.typing_changed: gameplay input stays blocked while the chat input row is open.
+func _on_chat_typing_changed(typing: bool) -> void:
+	is_typing = typing
 
 
 ## Wired to Abilities.ability_activated: plays the cast (or power up) clip for the ability's cast style.

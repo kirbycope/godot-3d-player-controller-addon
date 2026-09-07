@@ -104,15 +104,22 @@ func apply_elements(tree: SceneTree, at: Vector3) -> void:
 	if elements == 0 or tree == null:
 		return
 	if elements & Element.FIRE:
-		tree.call_group(&"GrassField", &"ignite_at", at, element_radius, element_fire_duration)
-		for patch: Node in tree.get_nodes_in_group(&"BurnableGrass"):
-			if patch is Node3D and patch.has_method(&"ignite") and (patch as Node3D).global_position.distance_to(at) <= element_radius:
-				patch.call(&"ignite")
+		ignite_grass(tree, at, element_radius, element_fire_duration)
 	if elements & Element.WATER:
 		tree.call_group(&"GrassField", &"douse_at", at, element_radius)
 		for patch: Node in tree.get_nodes_in_group(&"BurnableGrass"):
 			if patch is Node3D and patch.has_method(&"extinguish") and (patch as Node3D).global_position.distance_to(at) <= element_radius:
 				patch.call(&"extinguish")
+
+
+## Lights every grass field and burnable grass within [param radius] of [param at] for [param duration] seconds, the
+## way a torch does: through the GrassField and BurnableGrass groups, duck-typed, and never in the rain (no force).
+## Fire spells and burning projectiles (a fire arrow, an incendiary round) all light the world through here.
+static func ignite_grass(tree: SceneTree, at: Vector3, radius: float, duration: float) -> void:
+	tree.call_group(&"GrassField", &"ignite_at", at, radius, duration)
+	for patch: Node in tree.get_nodes_in_group(&"BurnableGrass"):
+		if patch is Node3D and patch.has_method(&"ignite") and (patch as Node3D).global_position.distance_to(at) <= radius:
+			patch.call(&"ignite")
 
 
 ## The node the impact lands on: the caster itself, the Player's focus target (or, with nothing locked on, whatever
