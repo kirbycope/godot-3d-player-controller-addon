@@ -56,6 +56,12 @@ enum EquipmentType {
 	set(val):
 		scale_offset = val
 		_update_attachment_offsets()
+@export_group("Sounds")
+@export var equip_sfx: AudioStream ## Played through the Player's [WeaponAudio] when this is drawn; empty plays its default, the TomMusic sword unsheath.
+@export var stow_sfx: AudioStream ## Played when this is stowed; empty plays the default sword sheath.
+@export var attack_sfx: AudioStream ## Played at the start of each swing (a [Bow]: each shot); empty plays the default sword swing.
+@export var hit_sfx: AudioStream ## Played when a swing lands on something that takes a hit; empty plays the default sword impact.
+@export_group("")
 
 var equipment_instance: Equipment ## The equipped copy of this item, once [method equip] has run.
 var player: Player

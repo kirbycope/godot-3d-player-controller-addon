@@ -247,6 +247,11 @@
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/toon_filter.tscn" id="225_toon"]
 [ext_resource type="PackedScene" uid="uid://d0mxfe0dnkn0n" path="res://addons/3d_player_controller/scenes/chat.tscn" id="226_chat"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/seeker_wheel.tscn" id="227_seeker"]
+[ext_resource type="Script" path="res://addons/3d_player_controller/scripts/weapon_audio.gd" id="228_weapon_audio"]
+[ext_resource type="AudioStream" path="res://addons/3d_player_controller/resources/audio/sword_unsheath.tres" id="229_sword_unsheath"]
+[ext_resource type="AudioStream" path="res://addons/3d_player_controller/resources/audio/sword_sheath.tres" id="230_sword_sheath"]
+[ext_resource type="AudioStream" path="res://addons/3d_player_controller/resources/audio/sword_attack.tres" id="231_sword_attack"]
+[ext_resource type="AudioStream" path="res://addons/3d_player_controller/resources/audio/sword_impact.tres" id="232_sword_impact"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_ym3ug"]
 radius = 0.009999072
@@ -4379,8 +4384,30 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
+[node name="WeaponAudio" type="Node3D" parent="." node_paths=PackedStringArray("player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
+script = ExtResource("228_weapon_audio")
+player = NodePath("..")
+
+[node name="EquipAudio" type="AudioStreamPlayer3D" parent="WeaponAudio"]
+stream = ExtResource("229_sword_unsheath")
+bus = &"SFX"
+
+[node name="StowAudio" type="AudioStreamPlayer3D" parent="WeaponAudio"]
+stream = ExtResource("230_sword_sheath")
+bus = &"SFX"
+
+[node name="AttackAudio" type="AudioStreamPlayer3D" parent="WeaponAudio"]
+stream = ExtResource("231_sword_attack")
+bus = &"SFX"
+
+[node name="HitAudio" type="AudioStreamPlayer3D" parent="WeaponAudio"]
+stream = ExtResource("232_sword_impact")
+bus = &"SFX"
+
 [connection signal="locomotion_node_changed" from="." to="Abilities" method="_on_locomotion_node_changed"]
 [connection signal="locomotion_node_changed" from="." to="HitDetection" method="_on_locomotion_node_changed"]
+[connection signal="locomotion_node_changed" from="." to="WeaponAudio" method="_on_locomotion_node_changed"]
 [connection signal="state_changed" from="." to="Abilities" method="_on_state_changed"]
 [connection signal="body_entered" from="TargetDetection" to="Focus" method="_on_target_detection_body_entered"]
 [connection signal="body_exited" from="TargetDetection" to="Focus" method="_on_target_detection_body_exited"]
@@ -4389,6 +4416,8 @@ mouse_filter = 2
 [connection signal="equipment_changed" from="Inventory" to="Abilities" method="_on_equipment_changed"]
 [connection signal="equipment_changed" from="Inventory" to="Focus" method="_on_equipment_changed"]
 [connection signal="equipment_changed" from="Inventory" to="HitDetection" method="_on_equipment_changed"]
+[connection signal="equipment_changed" from="Inventory" to="WeaponAudio" method="_on_equipment_changed"]
+[connection signal="weapon_hit" from="HitDetection" to="WeaponAudio" method="_on_weapon_hit"]
 [connection signal="ability_activated" from="Abilities" to="." method="_on_abilities_ability_activated"]
 [connection signal="cast_interrupted" from="Abilities" to="." method="_on_abilities_cast_interrupted"]
 [connection signal="toggled" from="CameraMount/CameraSpringArm/Camera3D/ToonFilter" to="VideoSettings" method="_on_toon_filter_toggled"]

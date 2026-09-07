@@ -325,6 +325,7 @@ var paraglider: Node3D
 @onready var debug: Debug = $Debug
 @onready var inventory: Inventory = $Inventory
 @onready var abilities: Abilities = $Abilities
+@onready var weapon_audio: WeaponAudio = get_node_or_null("WeaponAudio") as WeaponAudio ## The weapon one-shots (draw, stow, swing, hit); optional.
 @onready var radial_menu: RadialMenu = $Inventory/RadialMenu
 @onready var navigation_agent: NavigationAgent3D = $NavigationAgent3D
 @onready var pause: PlayerMenuLayer = $Pause

@@ -9,6 +9,8 @@ extends Node
 ## and props are shoved by the weapon's [AnimatableBody3D] named "WeaponBody" (see [Equipment]), which
 ## is only on the Weapons physics layer while a swing is live.
 
+signal weapon_hit(equipment: Node, target: Node) ## A swing landed: [param target] was told once this swing; [param equipment] is the weapon, or the Player when unarmed. [WeaponAudio] plays the impact.
+
 const WEAPONS_LAYER: int = 10 ## The "Weapons" 3D physics layer in project.godot; a WeaponBody is on it only mid-swing.
 ## The locomotion nodes that are melee swings (the same nodes behind [member Player.is_attacking_1] to 3).
 ## The path arrives on every peer, so the weapon body also swings on puppets, where the server simulates the props.
@@ -89,5 +91,6 @@ func _register_weapon_hit(collider: Node, equipment: Node) -> void:
 			if node not in _swing_hit_targets:
 				_swing_hit_targets.append(node)
 				node.call("register_weapon_hit", equipment, collider)
+				weapon_hit.emit(equipment, node)
 			return
 		node = node.get_parent()

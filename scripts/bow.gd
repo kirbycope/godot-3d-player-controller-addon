@@ -9,7 +9,9 @@ extends Equipment
 ## the crosshair's aim point ([method arc_direction]), so it lands where the crosshair is, give or take
 ## [member Equipment.accuracy].
 ## Expects a template [Arrow] child named "Arrow" and optional "BowDrawArrow"/"BowFireArrow"
-## audio players. While a kind with its own scene is what [method get_ammo] names, a frozen template copy of that
+## audio players; without a "BowFireArrow" the shot plays [member Equipment.attack_sfx] (the TomMusic bow attack) through
+## the Player's [WeaponAudio], and drawing and stowing the bow play its take-out and put-away there too.
+## While a kind with its own scene is what [method get_ammo] names, a frozen template copy of that
 ## scene sits on the string in its place ([member nocked_arrow]), so a fire arrow burns and an ice arrow frosts
 ## while drawing. Only the equipped copy on the Player's multiplayer authority (with [member player] set) reacts;
 ## peers get the arrow through the [ProjectileSpawner]. The nocked copy is cosmetic and local: the other peers'
@@ -18,6 +20,9 @@ extends Equipment
 signal ammo_selected(ammo: AmmoItem) ## Emitted when Use on an [AmmoItem] for the bow picks the arrows it fires.
 
 const RAY_MISS_DISTANCE: float = 40.0 ## Aim point distance when the projectile ray hits nothing.
+const TAKE_OUT_SFX: AudioStream = preload("res://addons/3d_player_controller/assets/tommusic/fantasy_sfx/Attacks/Bow Attacks Hits and Blocks/Bow Take Out 1.ogg")
+const PUT_AWAY_SFX: AudioStream = preload("res://addons/3d_player_controller/assets/tommusic/fantasy_sfx/Attacks/Bow Attacks Hits and Blocks/Bow Put Away 1.ogg")
+const ATTACK_SFX: AudioStream = preload("res://addons/3d_player_controller/resources/audio/bow_attack.tres")
 
 @export var arrow_scene: PackedScene ## Fired arrow scene; falls back to duplicating the template "Arrow" child when empty.
 
@@ -28,6 +33,13 @@ var nocked_scene: PackedScene ## The scene [member nocked_arrow] is a copy of; n
 @onready var arrow_node: Arrow = get_node_or_null("Arrow") as Arrow ## Template duplicated for every shot.
 @onready var draw_sfx: AudioStreamPlayer3D = get_node_or_null("BowDrawArrow") as AudioStreamPlayer3D
 @onready var fire_sfx: AudioStreamPlayer3D = get_node_or_null("BowFireArrow") as AudioStreamPlayer3D
+
+
+## The bow's own sounds stand in for the sword defaults; a scene that sets others keeps them.
+func _init() -> void:
+	equip_sfx = TAKE_OUT_SFX
+	stow_sfx = PUT_AWAY_SFX
+	attack_sfx = ATTACK_SFX
 
 
 func _ready() -> void:
@@ -54,7 +66,9 @@ func _on_locomotion_node_changed(state_path: String) -> void:
 		"Bow/BowFireArrow":
 			if fire_arrow():
 				if fire_sfx:
-					fire_sfx.play()
+					fire_sfx.play() # the scene's own release sound stands in for attack_sfx
+				elif player.weapon_audio:
+					player.weapon_audio.play_attack(attack_sfx)
 				player.controls.rumble(0.4, 0.0, 0.5)
 
 

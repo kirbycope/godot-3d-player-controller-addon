@@ -3,6 +3,8 @@ extends Projectile
 ## A bow projectile: flies nose-first and sticks where it lands. It flies without drag, so the arc the [Bow] solves
 ## for the crosshair is the arc it flies.
 ## The template arrow on the bow model has [member is_template] set and never flies.
+## arrow.tscn wires [signal Projectile.hit] to its "Impact" player (the TomMusic bow impact), so a landing is heard
+## on every peer, each of which simulates the same round.
 
 
 func _init() -> void:
