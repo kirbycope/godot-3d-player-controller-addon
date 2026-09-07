@@ -257,3 +257,81 @@ func test_firearm_aiming_does_not_lock_on_and_updates_contextual_label() -> void
 func after_each() -> void:
 	Input.action_release("focus")
 	Input.action_release("shoot")
+
+
+## Spawns a Player with the body turned by body_yaw_deg and the focus action held; the caller sets the target.
+func _spawn_focusing_player(body_yaw_deg: float) -> Player:
+	var controls: Node = CONTROLS_SCENE.instantiate()
+	add_child_autofree(controls)
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	var player: Player = PLAYER_SCENE.instantiate() as Player
+	add_child_autofree(player)
+	player.rotation.y = deg_to_rad(body_yaw_deg)
+	Input.action_press("focus")
+	return player
+
+
+## Degrees between where the camera looks and the direction to a world point, both flattened to the ground plane.
+func _flat_angle_to_deg(camera: Camera, world_direction: Vector3) -> float:
+	var forward: Vector3 = (-camera.camera_mount.global_basis.z).slide(Vector3.UP).normalized()
+	return rad_to_deg(forward.angle_to(world_direction.slide(Vector3.UP).normalized()))
+
+
+func test_focus_camera_faces_target_regardless_of_body_yaw() -> void:
+	for body_yaw_deg: float in [0.0, 90.0, 180.0]:
+		var player: Player = _spawn_focusing_player(body_yaw_deg)
+		var camera: Camera = player.camera as Camera
+		var target: Node3D = Node3D.new()
+		add_child_autofree(target)
+		target.global_position = player.global_position + Vector3(5.0, 3.0, -5.0)
+		player.focus.current_focus_target = target
+		assert_true(player.is_focusing, "player.is_focusing should be true")
+
+		camera.camera_mount.rotation = Vector3(0.0, deg_to_rad(120.0), 0.0)
+		for i: int in range(40):
+			camera._process(0.1)
+
+		var to_target: Vector3 = target.global_position - camera.camera_mount.global_position
+		assert_lt(_flat_angle_to_deg(camera, to_target), 3.0,
+			"Camera yaw should face the locked target with the body turned %d deg" % int(body_yaw_deg))
+		var full_angle_deg: float = rad_to_deg((-camera.camera_mount.global_basis.z).angle_to(to_target.normalized()))
+		assert_lt(full_angle_deg, 3.0,
+			"Camera pitch should also look at the locked target with the body turned %d deg" % int(body_yaw_deg))
+		Input.action_release("focus")
+
+
+func test_focus_camera_settles_behind_model_without_target_regardless_of_body_yaw() -> void:
+	for body_yaw_deg: float in [0.0, 90.0, 180.0]:
+		var player: Player = _spawn_focusing_player(body_yaw_deg)
+		var camera: Camera = player.camera as Camera
+		assert_null(player.current_focus_target, "No target should be locked")
+
+		camera.camera_mount.rotation = Vector3(0.0, deg_to_rad(120.0), 0.0)
+		for i: int in range(40):
+			camera._process(0.1)
+
+		# The model's +Z is its facing (see riding.gd); the camera looks the same way from behind it
+		var model_facing: Vector3 = player.player_model.global_basis.z
+		assert_lt(_flat_angle_to_deg(camera, model_facing), 3.0,
+			"Camera should look the way the model faces with the body turned %d deg" % int(body_yaw_deg))
+		assert_almost_eq(camera.camera_mount.rotation.x, deg_to_rad(-15.0), 0.01, "Default focus pitch is -15 deg")
+		Input.action_release("focus")
+
+
+func test_focus_camera_unchanged_with_zero_body_yaw() -> void:
+	var player: Player = _spawn_focusing_player(0.0)
+	var camera: Camera = player.camera as Camera
+	var target: Node3D = Node3D.new()
+	add_child_autofree(target)
+	target.global_position = player.global_position + Vector3(4.0, 2.0, -6.0)
+	player.focus.current_focus_target = target
+
+	for i: int in range(40):
+		camera._process(0.1)
+
+	# With no body yaw the local mount angles equal the world-space formula the camera used before
+	var to_target: Vector3 = target.global_position - camera.camera_mount.global_position
+	var expected_yaw: float = atan2(-to_target.x, -to_target.z)
+	var expected_pitch: float = atan2(to_target.y, Vector2(to_target.x, to_target.z).length())
+	assert_almost_eq(camera.camera_mount.rotation.y, expected_yaw, 0.01, "Yaw matches the previous world-space result")
+	assert_almost_eq(camera.camera_mount.rotation.x, expected_pitch, 0.01, "Pitch matches the previous world-space result")

@@ -4417,6 +4417,7 @@ bus = &"SFX"
 [connection signal="equipment_changed" from="Inventory" to="Focus" method="_on_equipment_changed"]
 [connection signal="equipment_changed" from="Inventory" to="HitDetection" method="_on_equipment_changed"]
 [connection signal="equipment_changed" from="Inventory" to="WeaponAudio" method="_on_equipment_changed"]
+[connection signal="equipment_changed" from="Inventory" to="." method="refresh_contextual_controls"]
 [connection signal="weapon_hit" from="HitDetection" to="WeaponAudio" method="_on_weapon_hit"]
 [connection signal="ability_activated" from="Abilities" to="." method="_on_abilities_ability_activated"]
 [connection signal="cast_interrupted" from="Abilities" to="." method="_on_abilities_cast_interrupted"]

@@ -42,12 +42,16 @@ func _on_hold_timer_timeout() -> void:
 	radial_menu._on_hold_timer_timeout()
 
 
-## The Bow or Firearm the Player is aiming with, else null.
+## The Bow or Firearm the Player is aiming with, else null: a firearm while focus is held, a bow while focus is
+## held or the string is drawn (is_shooting, is_drawing_arrow, is_aiming_bow), so arrows can be swapped mid-draw.
 func get_aimed_weapon() -> Equipment:
-	if player == null or not player.is_focusing:
+	if player == null:
 		return null
+	var bow_drawn: bool = player.is_shooting or player.is_drawing_arrow or player.is_aiming_bow
 	for weapon: Equipment in player.inventory.equipment:
-		if weapon is Bow or weapon is Firearm:
+		if weapon is Bow and (player.is_focusing or bow_drawn):
+			return weapon
+		if weapon is Firearm and player.is_focusing:
 			return weapon
 	return null
 

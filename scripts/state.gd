@@ -140,11 +140,15 @@ func _on_input_type_changed(input_type: int) -> void:
 	if controls.is_empty():
 		player.controls.reset_labels()
 	else:
-		player.controls.set_labels(controls.merged({
+		var labels: Dictionary = controls.merged({
 			player.controls.joypad_button_4_label: "Perspective",
 			player.controls.joypad_button_15_label: "Screenshot",
 			player.controls.joypad_button_6_label: "Pause Menu",
-		}))
+		})
+		var seeker: String = player.controls.seeker_label_text()
+		if seeker != "" and not labels.has(player.controls.joypad_button_11_label) and not labels.has(player.controls.key_i_label):
+			labels[player.controls.joypad_button_11_label] = seeker
+		player.controls.set_labels(labels)
 
 
 ## State-specific control labels keyed by label node; return {} to keep the default labels.

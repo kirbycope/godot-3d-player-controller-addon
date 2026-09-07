@@ -3,6 +3,7 @@ extends GutTest
 ## Purpose: To test bow firing, and that throwing a held object while a bow is equipped does not trigger the bow.
 
 const PLAYER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player.tscn")
+const ARROW_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/arrow.tscn")
 const BOW_SCRIPT: Script = preload("res://addons/3d_player_controller/scripts/bow.gd")
 const ARROW_SCRIPT: Script = preload("res://addons/3d_player_controller/scripts/arrow.gd")
 
@@ -141,6 +142,23 @@ func test_fire_node_spawns_one_arrow_along_the_projectile_ray():
 	assert_almost_eq(arrow.linear_velocity.normalized().dot(ray_dir), 1.0, 0.05, "Arrow velocity should follow the projectile ray.")
 	assert_gt(arrow.linear_velocity.normalized().y, ray_dir.y, "The arrow is lobbed above the straight line, to allow for the drop.")
 	assert_almost_eq(arrow.linear_velocity.length(), bow.projectile_speed, 0.01, "Arrow speed should match the bow's projectile_speed.")
+	arrow.free()
+
+
+func test_the_arrow_scene_has_a_tip_marker_at_the_head_that_leads_in_flight() -> void:
+	var arrow: Arrow = ARROW_SCENE.instantiate()
+	arrow.is_template = false
+	root.add_child(arrow)
+	var tip: Marker3D = arrow.get_node("Tip")
+	var mesh: MeshInstance3D = arrow.get_node("MeshInstance3D")
+	var head: float = mesh.position.y + (mesh.mesh as CylinderMesh).height * 0.5
+	assert_almost_eq(tip.position.y, head, 0.02, "The Tip marker sits at the head end of the shaft, like a gun's Muzzle")
+	assert_almost_eq(tip.position.x, 0.0, 0.001)
+	assert_almost_eq(tip.position.z, 0.0, 0.001)
+	arrow.launch(Transform3D(Basis.IDENTITY, Vector3(0.0, 5.0, -3.0)), Vector3.RIGHT, 20.0, null)
+	await wait_physics_frames(3)
+	var along: Vector3 = arrow.linear_velocity.normalized()
+	assert_almost_eq((tip.global_position - arrow.global_position).normalized().dot(along), 1.0, 0.01, "In flight the tip leads: the shaft's +Y is turned along the velocity")
 	arrow.free()
 
 

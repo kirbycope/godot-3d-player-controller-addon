@@ -187,3 +187,36 @@ func test_a_copy_off_the_authority_never_opens_the_wheel() -> void:
 	sender.action_up("seeker")
 	sender.release_all()
 	sender.clear()
+
+
+func test_drawing_the_bow_lists_the_arrow_kinds_without_focus() -> void:
+	var bow: Bow = _equip_bow()
+	bow.can_shoot = true
+	player.inventory.can_player_shoot = true # add_equipment read the flag before it was set on this bare bow
+	var arrows: AmmoItem = _ammo(&"arrow", Equipment.EquipmentType.BOW)
+	player.inventory.add_item(arrows, 5)
+	await wait_physics_frames(1)
+	assert_null(wheel.get_aimed_weapon(), "Nothing aimed while the bow just hangs there")
+	Input.action_press("shoot")
+	await wait_physics_frames(2)
+	assert_eq(wheel.get_aimed_weapon(), bow, "A drawn bow counts as aimed, so arrows can be swapped mid-draw")
+	var labels: Array = wheel.get_wheel_items().map(func(item: Dictionary) -> String: return str(item.get("display_name")))
+	assert_true(labels.any(func(text: String) -> bool: return text.begins_with("Arrow")), "The wheel lists the arrow kinds: %s" % [labels])
+	Input.action_release("shoot")
+
+
+func test_the_seeker_label_names_what_the_wheel_opens() -> void:
+	var controls: Controls = player.controls
+	assert_eq(controls.joypad_button_11_label.text, "Seeker", "The default label with nothing out")
+	var bow: Bow = _equip_bow()
+	await wait_physics_frames(1)
+	assert_eq(controls.joypad_button_11_label.text, "Arrows", "A bow out: Seeker opens the arrow wheel")
+	assert_eq(controls.key_i_label.text, "Arrows", "and the keyboard hint says the same")
+	player.inventory.unequip_all()
+	await wait_physics_frames(1)
+	assert_eq(controls.joypad_button_11_label.text, "Seeker", "Back to the default once the bow is stowed")
+	var gun: Firearm = _equip_rifle()
+	await wait_physics_frames(1)
+	assert_eq(controls.joypad_button_11_label.text, "Ammo", "A gun out: Seeker opens the ammunition wheel")
+	assert_true(is_instance_valid(gun) and is_instance_valid(bow))
+

@@ -195,7 +195,8 @@ func _process(delta: float) -> void:
 
 		if is_instance_valid(player.current_focus_target):
 			var target_pos: Vector3 = Focus.get_focus_target_position(player.current_focus_target)
-			var to_target: Vector3 = target_pos - camera_mount.global_position
+			# CameraMount is a child of the Player body, so its rotation is local: put the target direction in the body frame first
+			var to_target: Vector3 = player.global_basis.inverse() * (target_pos - camera_mount.global_position)
 			var target_yaw: float = atan2(-to_target.x, -to_target.z) + focus_aim_offset.x
 			var horiz_dist: float = Vector2(to_target.x, to_target.z).length()
 			var target_pitch: float = clampf(atan2(to_target.y, horiz_dist) + focus_aim_offset.y, deg_to_rad(-80.0), deg_to_rad(80.0))

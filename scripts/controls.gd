@@ -397,8 +397,24 @@ func reset_labels() -> void:
 
 	if player != null and player.has_firearm_equipped:
 		joypad_axis_4_plus_label.text = "Aim"
+	var seeker: String = seeker_label_text()
+	if seeker != "":
+		joypad_button_11_label.text = seeker
+		key_i_label.text = seeker
 	if player != null and player.abilities != null and player.abilities.active_ability:
 		joypad_button_9_label.text = player.abilities.active_ability.display_name
+
+
+## What Seeker (D-pad Up / I) opens right now: the arrow kinds with a bow out, the ammunition with a gun out, else
+## the scene's default label (empty means keep it).
+func seeker_label_text() -> String:
+	if player == null or player.inventory == null:
+		return ""
+	if player.has_bow_equipped:
+		return "Arrows"
+	if player.has_firearm_equipped:
+		return "Ammo"
+	return ""
 
 
 func set_labels(label_texts: Dictionary) -> void:
