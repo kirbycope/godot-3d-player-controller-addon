@@ -40,6 +40,8 @@ func _ready() -> void:
 	if is_template:
 		freeze = true
 		set_physics_process(false)
+		for audio: Node in find_children("*", "AudioStreamPlayer3D", true, false):
+			(audio as AudioStreamPlayer3D).stop() # a nocked copy of a scene makes no flight sound
 	elif not pending_launch.is_empty():
 		var data: Dictionary = pending_launch
 		pending_launch = {}
@@ -96,9 +98,9 @@ func _physics_process(_delta: float) -> void:
 
 
 ## Contact fallback for rounds physics resolves before the sweep runs (wired in the scene); a character still
-## gets its hurtbox looked up along the flight line through the contact.
+## gets its hurtbox looked up along the flight line through the contact. A template never lands.
 func _on_body_entered(body: Node) -> void:
-	if has_hit or body == shooter or body is Projectile:
+	if has_hit or is_template or body == shooter or body is Projectile:
 		return
 	var along: Vector3 = _flight_velocity.normalized()
 	if body is CharacterBody3D and along.length_squared() > 0.0:

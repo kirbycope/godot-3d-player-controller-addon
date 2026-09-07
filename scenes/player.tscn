@@ -246,6 +246,7 @@
 [ext_resource type="PackedScene" uid="uid://b7nievqli2b5" path="res://addons/3d_player_controller/scenes/status_bars_3d.tscn" id="224_bars"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/toon_filter.tscn" id="225_toon"]
 [ext_resource type="PackedScene" uid="uid://d0mxfe0dnkn0n" path="res://addons/3d_player_controller/scenes/chat.tscn" id="226_chat"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/seeker_wheel.tscn" id="227_seeker"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_ym3ug"]
 radius = 0.009999072
@@ -4159,6 +4160,9 @@ casting_audio = NodePath("../AbilityFx/CastingAudio")
 impact_audio = NodePath("../AbilityFx/ImpactAudio")
 abilities = Array[ExtResource("220_ability")]([ExtResource("221_stealth"), ExtResource("222_heal")])
 
+[node name="SeekerWheel" parent="." node_paths=PackedStringArray("player") instance=ExtResource("227_seeker")]
+player = NodePath("..")
+
 [node name="Pause" parent="." unique_id=498429169 node_paths=PackedStringArray("player") instance=ExtResource("173_errws")]
 visible = false
 inventory_screen_scene = "res://addons/garp/scenes/inventory_screen.tscn"
@@ -4249,10 +4253,11 @@ target_loss_timer = NodePath("TargetLossTimer")
 wait_time = 0.5
 one_shot = true
 
-[node name="HeldObject" type="Node" parent="." unique_id=194795531 node_paths=PackedStringArray("player", "throw_charge_bar")]
+[node name="HeldObject" type="Node" parent="." unique_id=194795531 node_paths=PackedStringArray("player", "throw_charge_bar", "throw_hand")]
 script = ExtResource("209_heldobj")
 player = NodePath("..")
 throw_charge_bar = NodePath("../Controls/ThrowChargeBar")
+throw_hand = NodePath("../PlayerModel/Armature/GeneralSkeleton/HeldItemConnector")
 
 [node name="HitDetection" type="Node" parent="." unique_id=486677887 node_paths=PackedStringArray("player", "left_hand_hitbox", "right_hand_hitbox")]
 script = ExtResource("210_hitdet")
@@ -4400,5 +4405,6 @@ mouse_filter = 2
 [connection signal="timeout" from="NodeStateMachine/Pushing/StopGraceTimer" to="NodeStateMachine/Pushing" method="_on_stop_grace_timer_timeout"]
 
 [connection signal="paused_changed" from="." to="Chat" method="_on_player_paused_changed"]
+[connection signal="paused_changed" from="." to="HeldObject" method="_on_player_paused_changed"]
 [connection signal="typing_changed" from="Chat" to="." method="_on_chat_typing_changed"]
 [editable path="PlayerModel"]

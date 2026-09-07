@@ -40,7 +40,8 @@ enum EquipmentType {
 @export var equipment_type: EquipmentType ## The type of equipment (e.g. AXE_1H, BOW, RIFLE, etc.)
 @export var icon: Texture2D ## Icon to display in the UI for this equipment
 @export var is_exclusive: bool = false ## Is this equipment exclusive, meaning it cannot be equipped with other equipment types simultaneously?
-@export var is_throwable: bool = false ## Can this equipment be thrown?
+@export var is_throwable: bool = false ## Can this equipment be thrown? The "throw" action throws the equipped piece ([HeldObject]); it lands as a walk-over pickup of its own scene.
+@export var throw_damage: float = 0.0 ## What a thrown one does to whatever it lands on that can take a hit; 0 hurts nothing.
 @export var projectile_speed: float = 50.0 ## meters/second (Arrows, Bullets, etc.)
 @export var accuracy: Accuracy ## Spread cone for ranged equipment, shrinking with the Player's [code]skill_level[/code]; empty fires dead straight.
 @export var position_offset: Vector3: ## Positional offset applied to the equipment when attached to the player.

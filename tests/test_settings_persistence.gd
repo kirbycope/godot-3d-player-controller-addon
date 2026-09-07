@@ -141,3 +141,25 @@ func test_chat_rect_persists() -> void:
 	settings.save()
 	var loaded: PlayerSettingsResource = ResourceLoader.load(PlayerSettingsResource.SAVE_PATH, "", ResourceLoader.CACHE_MODE_IGNORE)
 	assert_eq(loaded.chat_rect, Rect2(40.0, 50.0, 300.0, 150.0), "The chat window's rect persists")
+
+
+func test_toon_mode_persists() -> void:
+	var settings: PlayerSettingsResource = PlayerSettingsResource.new()
+	assert_eq(settings.toon_mode, 0, "Toon shading is off by default")
+	settings.toon_mode = 2
+	settings.save()
+	var loaded: PlayerSettingsResource = ResourceLoader.load(PlayerSettingsResource.SAVE_PATH, "", ResourceLoader.CACHE_MODE_IGNORE)
+	assert_eq(loaded.toon_mode, 2, "The toon mode persists")
+
+
+func test_an_old_toon_enabled_setting_migrates_to_newspaper() -> void:
+	var script_path: String = (PlayerSettingsResource.new().get_script() as Script).resource_path
+	for old_value: Array in [[true, PlayerSettingsResource.TOON_NEWSPAPER], [false, 0]]:
+		var file: FileAccess = FileAccess.open(PlayerSettingsResource.SAVE_PATH, FileAccess.WRITE)
+		file.store_string('[gd_resource type="Resource" script_class="PlayerSettingsResource" load_steps=2 format=3]\n\n'
+			+ '[ext_resource type="Script" path="%s" id="1"]\n\n[resource]\nscript = ExtResource("1")\nmsaa_index = 2\ntoon_enabled = %s\n' % [script_path, str(old_value[0]).to_lower()])
+		file.close()
+		var loaded: PlayerSettingsResource = ResourceLoader.load(PlayerSettingsResource.SAVE_PATH, "", ResourceLoader.CACHE_MODE_IGNORE)
+		assert_eq(loaded.toon_mode, old_value[1], "toon_enabled = %s from before toon_mode loads as mode %d" % [old_value[0], old_value[1]])
+		assert_eq(loaded.msaa_index, 2, "and the rest of the file still loads")
+		assert_false("toon_enabled" in loaded, "The old property is gone")

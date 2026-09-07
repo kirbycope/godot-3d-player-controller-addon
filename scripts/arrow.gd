@@ -1,6 +1,7 @@
 class_name Arrow
 extends Projectile
-## A bow projectile: flies nose-first and sticks where it lands.
+## A bow projectile: flies nose-first and sticks where it lands. It flies without drag, so the arc the [Bow] solves
+## for the crosshair is the arc it flies.
 ## The template arrow on the bow model has [member is_template] set and never flies.
 
 
@@ -8,6 +9,8 @@ func _init() -> void:
 	is_template = true # the arrow on the bow model; fire_arrow() clears this on the copy it launches
 	sticks_on_hit = true
 	lifetime = 10.0
+	linear_damp_mode = RigidBody3D.DAMP_MODE_REPLACE
+	linear_damp = 0.0
 
 
 ## Point the arrow along its trajectory while in flight, then sweep for hits.

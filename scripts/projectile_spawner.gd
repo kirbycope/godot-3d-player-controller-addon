@@ -26,8 +26,9 @@ static func find_for(node: Node) -> ProjectileSpawner:
 
 
 ## Launches [param scene] from [param origin] along [param direction]; returns the local copy on the
-## server and null on clients (their copy arrives through the spawner).
-func fire(scene: PackedScene, origin: Transform3D, direction: Vector3, speed: float, shooter: Node3D, weapon: Node = null) -> Projectile:
+## server and null on clients (their copy arrives through the spawner). [param extra] rides along in the launch
+## data for scenes that read more than a [Projectile] does (a [ThrownItem] reads which item it is).
+func fire(scene: PackedScene, origin: Transform3D, direction: Vector3, speed: float, shooter: Node3D, weapon: Node = null, extra: Dictionary = {}) -> Node:
 	var data: Dictionary = {
 		"scene": scene.resource_path,
 		"origin": origin,
@@ -36,13 +37,17 @@ func fire(scene: PackedScene, origin: Transform3D, direction: Vector3, speed: fl
 		"shooter": String(shooter.get_path()) if shooter else "",
 		"weapon": String(weapon.get_path()) if weapon else "",
 	}
-	return _spawn_everywhere(data) as Projectile
+	data.merge(extra)
+	return _spawn_everywhere(data)
 
 
 ## Puts [param scene] down at world [param position] on every peer (an ice block where an arrow landed); returns the
-## local copy on the server and null on clients.
-func place(scene: PackedScene, position: Vector3) -> Node3D:
-	return _spawn_everywhere({"scene": scene.resource_path, "position": position}) as Node3D
+## local copy on the server and null on clients. [param extra] may carry "properties" (name to value, set on the
+## node) and "resources" (name to resource path, loaded and set), so a placed [ItemPickup] knows its item.
+func place(scene: PackedScene, position: Vector3, extra: Dictionary = {}) -> Node3D:
+	var data: Dictionary = {"scene": scene.resource_path, "position": position}
+	data.merge(extra)
+	return _spawn_everywhere(data) as Node3D
 
 
 ## Lights the grass around [param position] on every peer, as a fire spell's impact does. Rounds belong to the
@@ -70,13 +75,20 @@ func _ignite(position: Vector3, radius: float, duration: float) -> void:
 	Ability.ignite_grass(get_tree(), position, radius, duration)
 
 
-## Runs on every peer: builds the scene. A projectile launches itself once it enters the tree; anything else is
-## put down at the data's position, relative to the spawn path's node.
+## Runs on every peer: builds the scene. A projectile (or anything else with a [code]pending_launch[/code], a
+## [ThrownItem]) launches itself once it enters the tree; anything else is put down at the data's position,
+## relative to the spawn path's node, with the data's "properties" and "resources" set on it.
 func _spawn_scene(data: Dictionary) -> Node:
 	var node: Node = (load(data["scene"]) as PackedScene).instantiate()
-	if node is Projectile:
-		(node as Projectile).pending_launch = data
+	if "pending_launch" in node:
+		node.set("pending_launch", data)
 	elif node is Node3D and data.has("position"):
 		var parent: Node3D = get_node_or_null(spawn_path) as Node3D
 		(node as Node3D).position = parent.to_local(data["position"]) if parent else data["position"]
+	var properties: Dictionary = data.get("properties", {})
+	for property: String in properties:
+		node.set(property, properties[property])
+	var resources: Dictionary = data.get("resources", {})
+	for property: String in resources:
+		node.set(property, load(resources[property]))
 	return node

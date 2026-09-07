@@ -274,6 +274,7 @@ var is_typing: bool = false ## Is the local Player typing in the chat window? Ga
 var is_pushing: bool = false ## Is the Player currently pushing?
 var is_ragdolling: bool = false ## Is the Player currently ragdolling?
 var requires_shoot_release_after_throw: bool = false ## Set during a throw to require releasing the shoot button before shooting weapons.
+var selected_throwable: Item = null ## The throwable [Item] the seeker wheel picked; "throw" throws it when the equipped equipment is not throwable (see [HeldObject]).
 var is_shooting: bool: ## Is the Player currently shooting?
 	get:
 		if not is_multiplayer_authority() or is_typing or riding_blocks_hands() or inventory == null:
@@ -348,6 +349,7 @@ var _ragdoll_was_enabled: bool = true ## enable_ragdoll before death forced it o
 @onready var player_input: InputSynchronizer = $InputSynchronizer
 @onready var focus: Focus = $Focus
 @onready var held_object: HeldObject = $HeldObject
+@onready var seeker_wheel: SeekerWheel = get_node_or_null("SeekerWheel") as SeekerWheel ## The ammunition and throwable picker, held open with "seeker".
 @onready var initial_player_model_transform: Transform3D = player_model.transform
 @onready var paraglider_raycast: RayCast3D = $ParagliderRaycast
 @onready var projectile_raycast: RayCast3D = $CameraMount/ProjectileRaycast

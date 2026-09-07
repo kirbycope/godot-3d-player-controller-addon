@@ -1,10 +1,18 @@
 class_name HeldObject
 extends Node
-## Picks up, carries, charges, and throws [RigidBody3D] objects targeted by the crosshair.
+## Picks up, carries, charges, and throws [RigidBody3D] objects targeted by the crosshair, and throws inventory items.
 ##
 ## The "action" input picks up or drops the crosshair target; holding "shoot" charges a
 ## throw. Throw animations fire [method Player.execute_throw] via a "Call Method Track".
+##
+## With nothing in hand, pressing "throw" takes a throwable out of the inventory (the equipped [Equipment] if it
+## [member Equipment.is_throwable], else [member Player.selected_throwable] or the first throwable [Item]) and puts
+## its model in [member throw_hand] while the same charge runs; releasing (or a full charge) throws it as a
+## [ThrownItem] with the same emote, on the spine blend, so the Player keeps moving. Only the Player's multiplayer
+## authority throws; the body reaches every peer through the [ProjectileSpawner]. Pausing mid-charge puts the
+## item back.
 
+const THROWN_ITEM_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/thrown_item.tscn")
 const CHARGE_START_DELAY: float = 0.2 ## Seconds "shoot" must be held before a charged throw starts.
 const CHARGE_DURATION: float = 0.6 ## Seconds from charge start to full throw power.
 const MIN_THROW_POWER: float = 0.25 ## Throw power multiplier for a quick tap.
@@ -17,6 +25,8 @@ const HOLD_EMOTE: StringName = &"ReadyToCastSpell" ## Emote pose played while ca
 @export var connector_origin: Node3D
 @export var throw_charge_bar: ProgressBar ## Charge indicator; hidden whenever a charge ends.
 @export var throw_force: float = 5.0 ## Impulse strength applied to thrown [RigidBody3D] objects.
+@export var throw_hand: Node3D ## Where a throwable item sits while its throw charges (a bone attachment on the throwing hand); the Player model when unset.
+@export var throw_speed: float = 14.0 ## Speed (m/s) of a thrown inventory item or piece of equipment at full charge.
 @export var connector_origin_height: float = 1.0 ## Fallback height when connector_origin is unset.
 @export_group("Held Object Controls")
 @export var held_move_speed: float = 1.5
@@ -40,6 +50,10 @@ var throw_charge_time: float = 0.0 ## Elapsed charge duration for the current th
 var throw_power: float = 1.0 ## Throw power multiplier (MIN_THROW_POWER to MAX_THROW_POWER).
 var queued_throw_direction: Vector3 = Vector3.ZERO ## Direction applied when executing a queued throw.
 var held_rigidbody: RigidBody3D = null
+var held_throwable: Node3D = null ## The model of the inventory item or equipment in the throwing hand while its throw charges.
+var throwable_item: Item = null ## The item [member held_throwable] is one of; null for equipment.
+var throwable_equipment: PackedScene = null ## The scene the equipment in hand was equipped from; null for items.
+var throwable_damage: float = 0.0 ## What the throwable in hand does to what it lands on.
 var _original_collision_layer: int = 0
 var _original_freeze: bool = false
 var _connector_node: Node3D
@@ -85,6 +99,16 @@ func _input(event: InputEvent) -> void:
 				held_rigidbody.rotate_object_local(Vector3.RIGHT, deg_to_rad(rotation_snap_angle))
 
 		get_viewport().set_input_as_handled()
+
+	if event.is_action_pressed("throw") and not event.is_echo() and not is_holding_object():
+		if start_throwable_throw():
+			get_viewport().set_input_as_handled()
+		return
+
+	if event.is_action_released("throw") and is_holding_throwable():
+		release_charging_throw()
+		get_viewport().set_input_as_handled()
+		return
 
 	if event.is_action_pressed("action") and not event.is_echo():
 		if is_holding_rigidbody():
@@ -145,7 +169,12 @@ func is_holding_rigidbody() -> bool:
 
 ## True while shared controls belong exclusively to the held object manipulator.
 func is_holding_object() -> bool:
-	return is_instance_valid(held_rigidbody) or (player != null and player.item_spring_arm.get_child_count() > 0)
+	return is_instance_valid(held_rigidbody) or is_holding_throwable() or (player != null and player.item_spring_arm.get_child_count() > 0)
+
+
+## True while a throwable inventory item or piece of equipment sits in the throwing hand.
+func is_holding_throwable() -> bool:
+	return is_instance_valid(held_throwable)
 
 
 ## Returns the held-object spring length requested by held object controls.
@@ -188,11 +217,10 @@ func execute_instant_throw(throw_dir: Vector3, power: float) -> void:
 	if not is_holding_object():
 		return
 	player.rotate_model_to_direction(throw_dir)
-	var held_node: Node = player.item_spring_arm.get_child(0)
 	clear_throw_queue()
 	is_charging_throw = false
 	is_throwing = false
-	_throw_held_node(held_node, throw_dir, power)
+	_throw_what_is_held(throw_dir, power)
 
 
 ## Queues a held-object throw to be executed by the animation call track or charge timeout.
@@ -228,7 +256,6 @@ func execute_throw() -> void:
 		is_throwing = false
 		return
 
-	var held_node: Node = player.item_spring_arm.get_child(0)
 	var throw_dir: Vector3 = queued_throw_direction
 	if throw_dir.length_squared() <= 0.001:
 		throw_dir = _get_crosshair_throw_direction()
@@ -239,7 +266,7 @@ func execute_throw() -> void:
 	is_charging_throw = false
 	if not player.is_emoting:
 		is_throwing = false
-	_throw_held_node(held_node, throw_dir, power)
+	_throw_what_is_held(throw_dir, power)
 
 
 ## Drops the held [RigidBody3D] back into the world without applying an impulse.
@@ -249,6 +276,84 @@ func drop_held_rigidbody() -> void:
 	else:
 		held_rigidbody = null
 		_end_hold()
+
+
+## Starts a throw with nothing in hand: the equipped [Equipment] if it [member Equipment.is_throwable], else
+## [method get_selected_throwable]. One leaves the inventory and its model goes into [member throw_hand] while the
+## charge runs; releasing "throw" (or a full charge) throws it. Only the Player's multiplayer authority throws.
+## False, and nothing is taken, with nothing throwable or while the hands are busy.
+func start_throwable_throw() -> bool:
+	if player == null or not player.is_multiplayer_authority() or is_holding_object() or is_charging_throw or is_throwing \
+			or player.riding_blocks_hands() or player.is_climbing or player.is_hanging_braced or player.is_hanging_free \
+			or player.is_paragliding:
+		return false
+	var equipment: Equipment = get_throwable_equipment()
+	if equipment:
+		var damage: float = equipment.throw_damage
+		var scene_path: String = player.inventory.forget_equipment(equipment)
+		if scene_path.is_empty():
+			return false
+		throwable_equipment = load(scene_path) as PackedScene
+		throwable_damage = damage
+	else:
+		var item: Item = get_selected_throwable()
+		if item == null or player.inventory.remove_item(item, 1) == 0:
+			return false
+		throwable_item = item
+		throwable_damage = item.throw_damage
+	held_throwable = ThrownItem.build_model(throwable_item, throwable_equipment)
+	if held_throwable == null:
+		held_throwable = _icon_in_hand(throwable_item)
+	var hand: Node3D = throw_hand if is_instance_valid(throw_hand) else player.player_model
+	hand.add_child(held_throwable)
+	refresh_contextual_controls()
+	start_charging_throw()
+	return true
+
+
+## The equipped piece of equipment that can be thrown, if any.
+func get_throwable_equipment() -> Equipment:
+	for equipment: Equipment in player.inventory.equipment:
+		if equipment.is_throwable:
+			return equipment
+	return null
+
+
+## The item the next throw takes: [member Player.selected_throwable] while some is carried, else the first
+## throwable item in the inventory, else null.
+func get_selected_throwable() -> Item:
+	var selected: Item = player.selected_throwable
+	if selected and selected.throwable and player.inventory.count_of(selected) > 0:
+		return selected
+	var throwables: Array[Item] = player.inventory.get_throwable_items()
+	return throwables[0] if not throwables.is_empty() else null
+
+
+## Puts the throwable in hand back where it came from and drops the charge (the pause menu opened mid-charge).
+func cancel_throwable_throw() -> void:
+	if not is_holding_throwable():
+		return
+	if throwable_equipment:
+		player.inventory.add_equipment_scene(throwable_equipment)
+	elif throwable_item:
+		player.inventory.add_item(throwable_item, 1)
+	_drop_throwable_model()
+	clear_throw_queue()
+	is_charging_throw = false
+	is_throwing = false
+	var emote_state: AnimationNodeStateMachinePlayback = player.animation_tree.get(Player.EMOTE_STATE_PLAYBACK_PATH)
+	if emote_state and player.is_emoting:
+		emote_state.start("Idle")
+		player.animation_tree.set("parameters/EmoteSpineBlend2/blend_amount", 0.0)
+		player.is_emoting = false
+		player.has_started_emoting = false
+	_end_hold()
+
+
+## Wired to Player.paused_changed: a menu opening mid-charge cancels the throw.
+func _on_player_paused_changed(is_paused: bool) -> void:
+	if is_paused:
+		cancel_throwable_throw()
 
 
 ## Pushes the held-object control labels; states call this on travel while an object is held.
@@ -266,6 +371,12 @@ func _on_input_type_changed(input_type: int) -> void:
 
 
 func get_contextual_controls(input_type: int) -> Dictionary:
+	if is_holding_throwable():
+		return {
+			player.controls.joypad_button_10_label: "Throw",
+			player.controls.joypad_button_6_label: "Pause Menu",
+			player.controls.left_joystick_label: "Move",
+		}
 	var controls: Dictionary = {
 		player.controls.joypad_button_0_label: "Drop",
 		player.controls.joypad_button_4_label: "Perspective",
@@ -296,6 +407,63 @@ func get_contextual_controls(input_type: int) -> Dictionary:
 			controls[player.controls.joypad_button_11_label] = "Farther"
 			controls[player.controls.joypad_button_12_label] = "Closer"
 	return controls
+
+
+## Throws whatever is held: the throwable in hand, else the node on the item spring arm.
+func _throw_what_is_held(throw_dir: Vector3, power: float) -> void:
+	if is_holding_throwable():
+		_launch_throwable(throw_dir, power)
+	else:
+		_throw_held_node(player.item_spring_arm.get_child(0), throw_dir, power)
+
+
+## Sends the throwable in hand flying as a [ThrownItem] from the hand along [param throw_dir] at [member throw_speed]
+## times [param power]: through the world's [ProjectileSpawner] (every peer gets the same body, the server's copy
+## lands it), or locally without one.
+func _launch_throwable(throw_dir: Vector3, power: float) -> void:
+	var origin: Transform3D = Transform3D(Basis.IDENTITY, held_throwable.global_position)
+	var item: Item = throwable_item
+	var equipment_scene: PackedScene = throwable_equipment
+	var damage: float = throwable_damage
+	_drop_throwable_model()
+	var speed: float = throw_speed * power
+	var spawner: ProjectileSpawner = ProjectileSpawner.find_for(player)
+	if spawner and (item == null or not item.resource_path.is_empty()):
+		spawner.fire(THROWN_ITEM_SCENE, origin, throw_dir, speed, player, null, {
+			"item": item.resource_path if item else "",
+			"equipment": equipment_scene.resource_path if equipment_scene else "",
+			"damage": damage,
+		})
+	else:
+		var thrown: ThrownItem = THROWN_ITEM_SCENE.instantiate() as ThrownItem
+		thrown.item = item
+		thrown.equipment_scene = equipment_scene
+		thrown.damage = damage
+		var world: Node = player.get_parent() if player.get_parent() else get_tree().current_scene
+		world.add_child(thrown)
+		thrown.launch(origin, throw_dir, speed, player)
+	_end_hold()
+
+
+## Frees the model in the throwing hand and forgets what it was.
+func _drop_throwable_model() -> void:
+	if is_instance_valid(held_throwable):
+		held_throwable.queue_free()
+	held_throwable = null
+	throwable_item = null
+	throwable_equipment = null
+	throwable_damage = 0.0
+
+
+## The item's icon as a billboard, for a throwable with no model.
+func _icon_in_hand(item: Item) -> Node3D:
+	var sprite: Sprite3D = Sprite3D.new()
+	sprite.texture = item.icon if item else null
+	sprite.modulate = item.get_icon_color() if item else Color.WHITE
+	sprite.pixel_size = 0.0006
+	sprite.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	sprite.shaded = true
+	return sprite
 
 
 ## Throws the held node, preferring its own throw methods over a raw impulse.
