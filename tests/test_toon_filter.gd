@@ -135,6 +135,28 @@ func test_newspaper_shows_the_quad_and_cel_puts_the_effect_on_the_camera() -> vo
 	assert_false(filter.visible)
 
 
+func test_cel_keeps_the_world_environments_effects() -> void:
+	var environment: WorldEnvironment = WorldEnvironment.new()
+	environment.compositor = Compositor.new()
+	var clouds: CompositorEffect = CompositorEffect.new() # Stands in for the SunshineClouds effect
+	environment.compositor.compositor_effects = [clouds]
+	add_child_autofree(environment)
+	var camera: Camera3D = _camera_with_filter()
+	var filter: ToonFilter = camera.get_child(0)
+	filter.set_mode(ToonFilter.Mode.CEL)
+	assert_eq(camera.compositor.compositor_effects.size(), 2, "A camera compositor replaces the WorldEnvironment's, so its effects are carried over")
+	assert_same(camera.compositor.compositor_effects[0], clouds, "the world's effect first")
+	assert_true(camera.compositor.compositor_effects[1] is CelCompositorEffect, "then the cel effect")
+	assert_eq(environment.compositor.compositor_effects.size(), 1, "Copied, not moved")
+	filter.set_mode(ToonFilter.Mode.OFF)
+	assert_null(camera.compositor, "Off hands the view back to the WorldEnvironment's compositor")
+	assert_same(environment.compositor.compositor_effects[0], clouds, "which still has its effect")
+	filter.set_mode(ToonFilter.Mode.CEL)
+	assert_eq(camera.compositor.compositor_effects.size(), 2, "and Cel picks it up again")
+	filter.set_mode(ToonFilter.Mode.NEWSPAPER)
+	assert_null(camera.compositor)
+
+
 func test_the_cel_effect_is_inert_without_a_rendering_device() -> void:
 	assert_null(RenderingServer.get_rendering_device(), "Headless has no RenderingDevice, so the GLSL is never compiled here")
 	var effect: CelCompositorEffect = CelCompositorEffect.new()

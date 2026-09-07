@@ -5,8 +5,10 @@ extends MeshInstance3D
 ## buffer jumps; it reads only the screen and depth textures, so it runs in every renderer, and it is drawn in the 3D
 ## pass, so every CanvasLayer (the HUD, the menus) sits above it. CEL is a [CelCompositorEffect] on the camera's
 ## [member Camera3D.compositor]: hard light bands and bold ink from depth and normal discontinuities, Forward+ only.
-## Purely local: a video setting kept in [PlayerSettingsResource], never replicated. The "toggle_toon" action ([F6])
-## cycles Off, Newspaper, Cel (Cel skipped off Forward+); the Video settings' "Toon shading" option picks one directly.
+## Purely local: a video setting kept in [PlayerSettingsResource], never replicated. A camera compositor replaces the
+## [WorldEnvironment]'s, so CEL copies that one's effects (the volumetric clouds) in ahead of its own and hands the
+## view back to it when it leaves. The "toggle_toon" action ([F6]) cycles Off, Newspaper, Cel (Cel skipped off
+## Forward+); the Video settings' "Toon shading" option picks one directly.
 
 signal toggled(enabled: bool) ## The filter went on or off, by the key or the setting.
 signal mode_changed(mode: Mode) ## The look changed, by the key or the setting.
@@ -24,7 +26,7 @@ var enabled: bool: ## True in any mode but OFF; setting it picks NEWSPAPER or OF
 	set(value):
 		set_mode(Mode.NEWSPAPER if value else Mode.OFF)
 
-var compositor: Compositor ## The compositor CEL puts on the camera; null in the other modes.
+var compositor: Compositor ## The compositor CEL puts on the camera, the world's effects plus the cel one; null in the other modes.
 
 
 func _ready() -> void:
@@ -86,9 +88,26 @@ func _apply_compositor() -> void:
 	if mode == Mode.CEL:
 		if compositor == null:
 			compositor = Compositor.new()
-			compositor.compositor_effects = [CelCompositorEffect.new()]
+			var effects: Array[CompositorEffect] = _world_effects()
+			effects.append(CelCompositorEffect.new())
+			compositor.compositor_effects = effects
 		camera.compositor = compositor
 	elif compositor != null:
 		if camera.compositor == compositor:
 			camera.compositor = null
-		compositor = null # Drops the effect, which frees its shader
+		compositor = null # Drops the cel effect, which frees its shader; the world's effects live on in its compositor
+
+
+## The effects of the first [WorldEnvironment]'s compositor (the volumetric clouds on Forward+), which a camera
+## compositor would otherwise replace. Copied, not moved: the WorldEnvironment keeps its own.
+func _world_effects() -> Array[CompositorEffect]:
+	var effects: Array[CompositorEffect] = []
+	if not is_inside_tree():
+		return effects
+	var environments: Array[Node] = get_tree().root.find_children("*", "WorldEnvironment", true, false)
+	if environments.is_empty():
+		return effects
+	var environment: WorldEnvironment = environments[0] as WorldEnvironment
+	if environment.compositor != null:
+		effects.append_array(environment.compositor.compositor_effects)
+	return effects

@@ -208,3 +208,21 @@ func test_rumble_only_reaches_a_pad() -> void:
 	assert_false(controls.rumble(0.0, 0.8, 0.1), "Touch players get no rumble")
 	controls.current_input_type = Controls.InputType.MICROSOFT
 	assert_true(controls.rumble(0.0, 0.8, 0.1), "A pad gets the kick")
+
+
+func test_a_peers_copy_of_a_round_waits_for_the_spawners_despawn_instead_of_freeing_itself() -> void:
+	# A spawner-owned round belongs to the server; a client's copy must not free on its own hit, or the server's
+	# despawn arrives for a node the client no longer has (ERR_UNAUTHORIZED in on_despawn_receive).
+	var target := _make_area_target(Vector3(0, 0, -6))
+	var bullet: Projectile = BULLET_SCENE.instantiate()
+	root.add_child(bullet)
+	bullet.set_multiplayer_authority(2) # Somebody else's round
+	bullet.launch(Transform3D(Basis.IDENTITY, Vector3.ZERO), Vector3.FORWARD, 300.0, null)
+	await wait_physics_frames(4)
+	assert_eq(target.hits, 1, "The copy still simulates the hit")
+	assert_true(is_instance_valid(bullet) and bullet.is_inside_tree(), "but it stays for the spawner's despawn")
+	assert_true(bullet.freeze, "stopped where it landed")
+	assert_false(bullet.visible, "and out of sight")
+	var mine := _shoot(Vector3.ZERO, Vector3.FORWARD, 300.0)
+	await wait_physics_frames(4)
+	assert_false(is_instance_valid(mine) and mine.is_inside_tree(), "A round this peer owns frees itself as before")

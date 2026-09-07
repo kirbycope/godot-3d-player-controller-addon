@@ -125,9 +125,9 @@ func _apply_hit(collider: Node, point: Vector3, normal: Vector3) -> void:
 		global_position = point
 		freeze = true
 		set_physics_process(false)
-		get_tree().create_timer(stuck_seconds).timeout.connect(queue_free)
+		get_tree().create_timer(stuck_seconds).timeout.connect(_free_on_authority)
 	else:
-		queue_free()
+		_free_on_authority()
 
 
 ## Casts the same ray on the hurtbox layer, past the capsule, for a hurtbox that belongs to [param body].
@@ -163,4 +163,16 @@ func _on_shooter_exception_timeout() -> void:
 ## Only an unlanded projectile is still around to free; a stuck one frees itself after [member stuck_seconds].
 func _on_lifetime_timeout() -> void:
 	if not has_hit:
+		_free_on_authority()
+
+
+## Frees the round on its multiplayer authority (the server for spawner-owned rounds, this peer offline or for a local
+## copy); a peer's copy stops where it is, hidden, and waits for the spawner's despawn, so the server's despawn never
+## arrives for a node the peer has already freed.
+func _free_on_authority() -> void:
+	if is_multiplayer_authority():
 		queue_free()
+		return
+	freeze = true
+	set_physics_process(false)
+	hide()
