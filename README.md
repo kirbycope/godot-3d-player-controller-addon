@@ -67,7 +67,7 @@ Organized state machine architecture separating primary lower-body locomotion st
 - Circular weapon/tool selection menu activated by holding assigned keys or controller D-Pad.
 - Quick weapon cycling (`last_weapon` / `next_weapon`).
 - Extensible custom item provider callback for vehicle radios or contextual menus. Items are Dictionaries with `display_name` and `icon` (plus `item` for equipment); a `custom_item_provider` returns the same shape so the addon never knows about stations.
-- `Inventory.equipment` is a typed `Array[Equipment]`; `get_equipment_by_type(type) -> Equipment`, and `equipment_changed` fires after every change (`cycle_weapon`, `equip_from_backpack`, `unequip_all`, `Equipment.equip`). Each `BoneAttachment3D` holds exactly one `Equipment`; stowed attachments are hidden children of `Inventory`.
+- `Inventory.equipment` is a typed `Array[Equipment]`; `get_equipment_by_type(type) -> Equipment`, and `equipment_changed` fires after every change (`cycle_weapon`, `equip_from_backpack`, `unequip_all`, `Inventory.equip_pickup`, which `Equipment.equip` and the walk-over pickups go through: it makes the `BoneAttachment3D` on the skeleton, duplicates the pickup onto it with the scene's offsets, and `Equipment.equip` keeps the copy as `equipment_instance`). Each `BoneAttachment3D` holds exactly one `Equipment`; stowed attachments are hidden children of `Inventory`.
 - Hold detection uses the `HoldTimer` in `inventory.tscn` (`wait_time` = hold threshold); a release before timeout cycles, a timeout opens the menu.
 
 ### 4b. Abilities (`Abilities`, `Ability`)
@@ -270,6 +270,25 @@ To prepare and import custom Mixamo animations with Root Motion:
    ```
 5. In Godot, reimport the resulting `.glb` as an **Animation Library** retargeted to `mixamo_root_bone_map.tres`.
 6. Open `player.tscn`, select `AnimationPlayer`, and load the animation into the library.
+
+---
+
+## Example resources
+
+`addons/3d_player_controller/resources/` holds the resources the addon needs to run alone: two abilities, three accuracy profiles and three replication configs. They reference only this addon (its scripts, icons and TomMusic sounds), never a host project's `res://resources/...` or `res://scenes/...`, so the addon works by itself and in the [GARP](../garp/README.md#example-resources) repo, whose demo tree is built from the two abilities. A game's own spells, fish and items live in its project-level `resources/` (see the [project README](../../README.md#example-resources)).
+
+| File | Class | What it is | Used by | Tests that load it |
+|---|---|---|---|---|
+| `resources/abilities/stealth.tres` | `StealthAbility` (`scripts/stealth_ability.gd`) | Instant toggle, sets `Player.is_stealthed` | `scenes/player.tscn` (`Abilities.abilities`), GARP's `spell_tree_demo.tres`, the host's `world_player.tscn` and QA tree | `tests/test_abilities.gd`, GARP's `test_spellbook.gd`, `test_spells_screen.gd`, `test_spell_tree_editor.gd` |
+| `resources/abilities/heal.tres` | `HealAbility` (`scripts/heal_ability.gd`) | 1.5 s cast, restores `amount` health | `player.tscn`, GARP's demo tree, the host's `enemy_spellcaster.tscn` | The same |
+| `resources/accuracy/pistol.tres`, `rifle.tres`, `bow.tres` | `Accuracy` (`scripts/accuracy.gd`) | Spread cones per weapon (`spread_degrees`, `expert_spread_degrees`, `expert_level`) | Nothing in the addon's own scenes; the host's weapons in `world.tscn` and its `enemy_archer.tscn` and `enemy_rifleman.tscn` take them in the `accuracy` export | `tests/test_accuracy.gd` |
+| `resources/boss_replication.tres`, `character_body_replication.tres`, `rigid_body_replication.tres` | `SceneReplicationConfig` | Multiplayer property lists for a boss, a character body and a rigid body | `scenes/boss.tscn`; the host's NPCs and props | None directly |
+
+Adding more here:
+
+- An ability: New Resource, `HealAbility` or `StealthAbility`, or a new script under `scripts/` that extends `Ability` (override `activate`, `impact`, and `deactivate` for toggles). Save it under `resources/abilities/` with an icon from `assets/game_icons/` or `assets/icons/` and sounds from `assets/tommusic/`. List it in the Player's `Abilities.abilities` to put it on the wheel, or on a GARP `SpellTree`; the Spell Tree panel's palette finds it on its own.
+- An accuracy profile: New Resource, `Accuracy`, saved under `resources/accuracy/`, assigned to the weapon's `accuracy` export.
+- `test_abilities.gd` and `test_accuracy.gd` preload these files by name, so renaming one means updating them.
 
 ---
 

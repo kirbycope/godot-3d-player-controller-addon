@@ -76,33 +76,16 @@ func _on_player_detection_body_entered(body: Node3D) -> void:
 		player_detection.set_deferred(&"monitoring", false)
 
 
-## Duplicates this item onto a new [BoneAttachment3D] on the player's skeleton and registers it with the inventory.
+## Equips this item on [param target_player]: the inventory duplicates it onto a new [BoneAttachment3D] on the
+## skeleton ([method Inventory.equip_pickup]) and this pickup remembers the copy as [member equipment_instance].
 ## False when the Player already carries one of this type on this bone, or the item cannot be worn.
 func equip(target_player: Player) -> bool:
-	if target_player == null or bone_attachment_bone_name.is_empty() \
-			or target_player.inventory.has_equipment_in_backpack(equipment_type, bone_attachment_bone_name) \
-			or not target_player.inventory.can_carry_equipment():
+	if target_player == null:
 		return false
-
-	target_player.inventory.stow_conflicting(bone_attachment_bone_name, is_exclusive)
-
-	var attachment: BoneAttachment3D = BoneAttachment3D.new()
-	attachment.bone_name = bone_attachment_bone_name
-	target_player.skeleton.add_child(attachment)
-
-	equipment_instance = duplicate() as Equipment
-	equipment_instance.player = target_player
-	equipment_instance.scene_file_path = scene_file_path # so the inventory can save and drop it as its scene
-	attachment.add_child(equipment_instance)
-	# Disable world collision but keep the "Hitbox" shapes so HitDetection can monitor them.
-	for shape: Node in equipment_instance.find_children("*", "CollisionShape3D", true, false):
-		(shape as CollisionShape3D).disabled = shape.get_parent().name != "Hitbox"
-	for tree: Node in equipment_instance.find_children("*", "AnimationTree", true, false):
-		(tree as AnimationTree).active = true
-		(tree as AnimationTree).advance_expression_base_node = tree.get_path_to(equipment_instance)
-	_update_attachment_offsets()
-
-	target_player.inventory.add_equipment(equipment_instance)
+	var copy: Equipment = target_player.inventory.equip_pickup(self)
+	if copy == null:
+		return false
+	equipment_instance = copy
 	return true
 
 
