@@ -12,7 +12,7 @@ const MAX_THROW_POWER: float = 1.0 ## Throw power multiplier at full charge.
 const RELEASE_GRACE: float = 0.3 ## Seconds a released body still passes through the Player, so it leaves cleanly instead of being shoved out by depenetration.
 const HOLD_EMOTE: StringName = &"ReadyToCastSpell" ## Emote pose played while carrying.
 
-@export_file("*.tscn") var connector_scene: String ## Scene stretched from [member connector_origin] to the held object; loaded once.
+@export var connector_scene: PackedScene ## Scene stretched from [member connector_origin] to the held object; instanced once on ready.
 @export var player: Player
 @export var connector_origin: Node3D
 @export var throw_charge_bar: ProgressBar ## Charge indicator; hidden whenever a charge ends.
@@ -51,11 +51,10 @@ var _is_held_rotation_mode: bool = false
 func _ready() -> void:
 	set_physics_process(is_multiplayer_authority())
 	set_process_input(is_multiplayer_authority())
-	if connector_scene.is_empty():
+	if connector_scene == null:
 		return
-	var scene: PackedScene = load(connector_scene) as PackedScene
-	if scene:
-		_connector_node = scene.instantiate() as Node3D
+	_connector_node = connector_scene.instantiate() as Node3D
+	if _connector_node:
 		_connector_node.hide()
 		add_child(_connector_node)
 

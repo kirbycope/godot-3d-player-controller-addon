@@ -29,6 +29,7 @@ func test_player_voice_chat_nodes_and_default_state() -> void:
 	assert_not_null(player.voice_chat_indicator, "VoiceChatIndicator should exist on Player")
 	assert_false(player.voice_chat_indicator.visible, "VoiceChatIndicator should be hidden by default")
 	assert_not_null(player.voice_audio_player, "VoiceAudioPlayer should exist on Player")
+	assert_eq(player.voice_audio_player.playback_type, AudioServer.PLAYBACK_TYPE_STREAM, "Voice is streamed, so the web build can play it too")
 	assert_false(player.is_broadcasting, "is_broadcasting should be false by default")
 
 
