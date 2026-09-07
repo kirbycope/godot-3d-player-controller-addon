@@ -283,6 +283,16 @@ class BoltAbility extends Ability:
 		hits.append(target)
 
 
+## A crosshair-aimed spell that hurts what it lands on, standing in for the host project's DamageAbility.
+class FocusBolt extends Ability:
+	var damage: float = 20.0
+	func _init() -> void:
+		target_mode = Target.FOCUS
+	func impact(caster: Node3D, target: Node3D) -> void:
+		if is_instance_valid(target) and target.has_method("take_hit"):
+			target.take_hit(damage, caster.global_position)
+
+
 func _make_bolt(at: Vector3) -> BoltAbility:
 	var bolt := BoltAbility.new()
 	bolt.dummy = Node3D.new()
@@ -457,7 +467,7 @@ func test_a_doomed_cast_is_refused_before_its_bar_runs() -> void:
 	abilities.cast(heal)
 	assert_null(abilities.casting, "Heal at full health never starts channeling")
 	assert_signal_not_emitted(abilities, "cast_started")
-	var bolt := DamageAbility.new()
+	var bolt := FocusBolt.new()
 	bolt.cast_time = 1.0
 	abilities.abilities.append(bolt)
 	abilities.cast(bolt)
@@ -530,7 +540,7 @@ func test_without_a_lock_a_damage_spell_fires_at_whatever_the_crosshair_points_a
 	dummy.global_position = ray.global_position - ray.global_basis.z * 4.0
 	await wait_physics_frames(2)
 	ray.force_raycast_update()
-	var bolt := DamageAbility.new()
+	var bolt := FocusBolt.new()
 	bolt.projectile_speed = 12.0
 	bolt.damage = 20.0
 	abilities.abilities.append(bolt)
@@ -543,7 +553,7 @@ func test_without_a_lock_a_damage_spell_fires_at_whatever_the_crosshair_points_a
 
 
 func test_without_anything_ahead_a_damage_spell_still_flies_to_the_aim_point() -> void:
-	var bolt := DamageAbility.new()
+	var bolt := FocusBolt.new()
 	bolt.projectile_speed = 40.0
 	abilities.abilities.append(bolt)
 	watch_signals(abilities)
