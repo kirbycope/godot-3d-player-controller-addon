@@ -4389,6 +4389,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
 script = ExtResource("228_weapon_audio")
 player = NodePath("..")
 
+[node name="SettleTimer" type="Timer" parent="WeaponAudio"]
+wait_time = 1.5
+one_shot = true
+autostart = true
+
 [node name="EquipAudio" type="AudioStreamPlayer3D" parent="WeaponAudio"]
 stream = ExtResource("229_sword_unsheath")
 bus = &"SFX"
@@ -4419,6 +4424,7 @@ bus = &"SFX"
 [connection signal="equipment_changed" from="Inventory" to="WeaponAudio" method="_on_equipment_changed"]
 [connection signal="equipment_changed" from="Inventory" to="." method="refresh_contextual_controls"]
 [connection signal="weapon_hit" from="HitDetection" to="WeaponAudio" method="_on_weapon_hit"]
+[connection signal="timeout" from="WeaponAudio/SettleTimer" to="WeaponAudio" method="_on_settle_timer_timeout"]
 [connection signal="ability_activated" from="Abilities" to="." method="_on_abilities_ability_activated"]
 [connection signal="cast_interrupted" from="Abilities" to="." method="_on_abilities_cast_interrupted"]
 [connection signal="toggled" from="CameraMount/CameraSpringArm/Camera3D/ToonFilter" to="VideoSettings" method="_on_toon_filter_toggled"]

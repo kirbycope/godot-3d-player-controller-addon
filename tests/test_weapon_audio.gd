@@ -43,6 +43,7 @@ func before_each() -> void:
 	audio = player.weapon_audio
 	hit_detection = player.get_node("HitDetection")
 	await wait_physics_frames(2)
+	audio.armed = true # Past the spawn settle window; the settle test below arms itself
 
 
 func after_each() -> void:
@@ -212,3 +213,21 @@ func test_a_landing_arrow_plays_its_impact() -> void:
 	arrow._apply_hit(wall, Vector3.ZERO, Vector3.UP)
 	assert_true(arrow.has_hit)
 	assert_true(impact.playing, "Landing plays the impact, on every peer that simulates the round")
+
+
+func test_the_spawn_kit_arrives_in_silence_and_later_changes_are_heard() -> void:
+	audio.armed = false
+	var timer: Timer = audio.get_node("SettleTimer")
+	assert_true(timer.one_shot, "The settle window is a scene-wired one-shot timer")
+	assert_false(timer.is_stopped(), "counting down from spawn (autostart clears itself once the timer has entered the tree)")
+	assert_true(timer.timeout.is_connected(audio._on_settle_timer_timeout))
+	var sword: Equipment = _equip_sword()
+	assert_not_null(sword)
+	assert_false(audio.equip_audio.playing, "Equipment granted at spawn makes no sound")
+	player.inventory.stow_equipment(sword)
+	assert_false(audio.stow_audio.playing, "nor does stowing the kit")
+	audio._on_settle_timer_timeout()
+	assert_true(audio.armed)
+	player.inventory.equip_from_backpack(sword.get_parent())
+	assert_true(audio.equip_audio.playing, "Once settled, drawing is heard")
+

@@ -20,6 +20,8 @@ const UNARMED_NODES: Array[String] = ["ShortHeadJab", "BackHandCross"] ## Boxing
 var _equipped: Array[Equipment] = [] ## The equipment set last seen, so a change tells a draw from a stow.
 var _defaults: Dictionary[AudioStreamPlayer3D, AudioStream] = {} ## Each slot's scene stream, used when a weapon names none.
 
+var armed: bool = false ## Off until the scene-wired SettleTimer runs out, so the kit and a saved loadout arriving at spawn draw and stow in silence.
+
 @onready var equip_audio: AudioStreamPlayer3D = $EquipAudio
 @onready var stow_audio: AudioStreamPlayer3D = $StowAudio
 @onready var attack_audio: AudioStreamPlayer3D = $AttackAudio
@@ -34,12 +36,16 @@ func _ready() -> void:
 
 
 ## Wired to Inventory.equipment_changed: what joined the set was drawn, what left it was stowed. Changes before this
-## node is ready (a saved loadout coming back in the Inventory's own ready) make no sound.
+## node is ready (a saved loadout coming back in the Inventory's own ready) or before the SettleTimer has run out
+## (the spawn kit being granted and stowed) only update the snapshot and make no sound.
 func _on_equipment_changed() -> void:
 	if not is_node_ready() or player == null or player.inventory == null:
 		return
 	var now: Array[Equipment] = []
 	now.assign(player.inventory.equipment)
+	if not armed:
+		_equipped = now
+		return
 	for item: Equipment in now:
 		if item not in _equipped:
 			_play(equip_audio, item.equip_sfx)
@@ -47,6 +53,11 @@ func _on_equipment_changed() -> void:
 		if is_instance_valid(item) and item not in now:
 			_play(stow_audio, item.stow_sfx)
 	_equipped = now
+
+
+## Wired to the SettleTimer: from here on equipment changes are the player's own doing and are heard.
+func _on_settle_timer_timeout() -> void:
+	armed = true
 
 
 ## Wired to Player.locomotion_node_changed, on every peer: a weapon swing node plays the attack sound.
