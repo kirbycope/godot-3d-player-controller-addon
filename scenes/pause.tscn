@@ -17,6 +17,7 @@ bg_color = Color(0.1, 0.1, 0.1, 0.6)
 [node name="Pause" type="CanvasLayer" unique_id=498429169 node_paths=PackedStringArray("focus_on_show")]
 script = ExtResource("1_7mqg8")
 focus_on_show = NodePath("Panel/VBoxContainer/Resume")
+pauses_world = true
 
 [node name="Panel" type="PanelContainer" parent="." unique_id=1926347412]
 anchors_preset = 8

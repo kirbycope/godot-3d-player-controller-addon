@@ -2,20 +2,17 @@
 
 [ext_resource type="Script" uid="uid://dkhddjjalxbjj" path="res://addons/3d_player_controller/scripts/settings.gd" id="1_sje0d"]
 
-[sub_resource type="LabelSettings" id="LabelSettings_sje0d"]
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_sje0d"]
-size = Vector2(72, 30)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_p63df"]
-size = Vector2(193, 24)
-
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_menu"]
 content_margin_left = 12.0
 content_margin_top = 8.0
 content_margin_right = 12.0
 content_margin_bottom = 12.0
 bg_color = Color(0.1, 0.1, 0.1, 0.6)
+
+[sub_resource type="LabelSettings" id="LabelSettings_sje0d"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_p63df"]
+size = Vector2(193, 24)
 
 [node name="Settings" type="CanvasLayer" unique_id=1733087109 node_paths=PackedStringArray("focus_on_show")]
 script = ExtResource("1_sje0d")
@@ -59,8 +56,8 @@ size_flags_horizontal = 3
 text = "Audio"
 
 [node name="AudioTouchScreenButton" type="TouchScreenButton" parent="Panel/VBoxContainer/Audio" unique_id=820870155]
-position = Vector2(36, 15)
-shape = SubResource("RectangleShape2D_sje0d")
+position = Vector2(100, 16)
+shape = SubResource("RectangleShape2D_p63df")
 
 [node name="Video" type="Button" parent="Panel/VBoxContainer" unique_id=694630801]
 custom_minimum_size = Vector2(0, 32)
@@ -69,8 +66,8 @@ size_flags_horizontal = 3
 text = "Video"
 
 [node name="VideoTouchScreenButton" type="TouchScreenButton" parent="Panel/VBoxContainer/Video" unique_id=890439010]
-position = Vector2(36, 15)
-shape = SubResource("RectangleShape2D_sje0d")
+position = Vector2(100, 16)
+shape = SubResource("RectangleShape2D_p63df")
 
 [node name="BACK" type="Button" parent="Panel/VBoxContainer" unique_id=967526644]
 custom_minimum_size = Vector2(0, 32)

@@ -125,8 +125,11 @@ func _report_newly_cached_dependencies() -> void:
 		)
 
 
+## Adds a line to the on-screen log and prints it too, so a browser console (or a headless run) shows the load.
 func _append_detail(message: String) -> void:
-	details.append_text(_get_log_prefix() + message + "\n")
+	var line: String = _get_log_prefix() + message
+	details.append_text(line + "\n")
+	print(line)
 
 
 func _get_log_prefix() -> String:

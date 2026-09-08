@@ -115,15 +115,15 @@ func test_a_bow_takes_out_and_puts_away() -> void:
 	var bow := Bow.new()
 	bow.equipment_type = Equipment.EquipmentType.BOW
 	root.add_child(bow)
-	assert_eq(bow.equip_sfx.resource_path, BOW_DIR + "Bow Take Out 1.ogg", "The bow brings its own draw")
-	assert_eq(bow.stow_sfx.resource_path, BOW_DIR + "Bow Put Away 1.ogg", "and put-away")
+	assert_eq(bow.equip_sfx.resource_path, AUDIO_DIR + "bow_take_out.tres", "The bow brings its own draw")
+	assert_eq(bow.stow_sfx.resource_path, AUDIO_DIR + "bow_put_away.tres", "and put-away")
 	assert_eq(bow.attack_sfx.resource_path, AUDIO_DIR + "bow_attack.tres", "and shot")
 	player.inventory.add_equipment(bow)
 	assert_true(audio.equip_audio.playing, "Equipping the bow plays")
-	assert_eq(audio.equip_audio.stream.resource_path, BOW_DIR + "Bow Take Out 1.ogg", "the bow's take-out, not the sword's")
+	assert_eq(audio.equip_audio.stream.resource_path, AUDIO_DIR + "bow_take_out.tres", "the bow's take-out, not the sword's")
 	player.inventory.remove_equipment(bow)
 	assert_true(audio.stow_audio.playing, "Unequipping the bow plays")
-	assert_eq(audio.stow_audio.stream.resource_path, BOW_DIR + "Bow Put Away 1.ogg", "the bow's put-away")
+	assert_eq(audio.stow_audio.stream.resource_path, AUDIO_DIR + "bow_put_away.tres", "the bow's put-away")
 
 
 func test_a_weapon_swing_node_plays_the_attack_and_a_punch_does_not() -> void:
@@ -231,3 +231,25 @@ func test_the_spawn_kit_arrives_in_silence_and_later_changes_are_heard() -> void
 	player.inventory.equip_from_backpack(sword.get_parent())
 	assert_true(audio.equip_audio.playing, "Once settled, drawing is heard")
 
+
+
+func test_a_staff_draws_and_stows_in_silence_while_an_axe_uses_the_sword_set() -> void:
+	var staff := Equipment.new()
+	staff.equipment_type = Equipment.EquipmentType.STAFF
+	root.add_child(staff)
+	player.inventory.add_equipment(staff)
+	assert_false(audio.equip_audio.playing, "A staff is not a blade: no unsheath")
+	player.inventory.remove_equipment(staff)
+	assert_false(audio.stow_audio.playing, "and no sheath")
+	var axe := Equipment.new()
+	axe.equipment_type = Equipment.EquipmentType.AXE_1H
+	root.add_child(axe)
+	player.inventory.add_equipment(axe)
+	assert_true(audio.equip_audio.playing, "An axe is metal: the sword unsheath stands in")
+	assert_eq(audio.equip_audio.stream.resource_path, AUDIO_DIR + "sword_unsheath.tres")
+	player.inventory.remove_equipment(axe)
+	assert_true(audio.stow_audio.playing)
+	for type: Equipment.EquipmentType in [Equipment.EquipmentType.PISTOL, Equipment.EquipmentType.RIFLE, Equipment.EquipmentType.FISHING_ROD, Equipment.EquipmentType.STAFF, Equipment.EquipmentType.BOW]:
+		var quiet := Equipment.new()
+		quiet.equipment_type = type
+		assert_false(WeaponAudio.is_bladed(quiet), "%s draws in silence unless its scene says otherwise" % Equipment.EquipmentType.keys()[type])

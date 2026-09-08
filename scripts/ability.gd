@@ -11,6 +11,9 @@ enum Target { SELF, FOCUS } ## SELF lands on the caster; FOCUS lands on the Play
 enum CastStyle { NONE, FORWARD, UPWARD, SWEEPING_SIDEWAYS, SWEEPING_UPWARD, POWER_UP } ## The cast clip played when the effect lands; NONE plays no animation.
 enum Element { FIRE = 1, WATER = 2 } ## Bits of [member elements]: what the impact does to the world around it.
 
+const BURN_SECONDS: float = 3.0 ## Fire sets what stands in it ablaze for this long (anything in the Burnable group with a `burn` method: an enemy).
+const BURN_DAMAGE_PER_SECOND: float = 5.0 ## What burning costs per second, in ticks, over [constant BURN_SECONDS].
+
 const SPELL_PROJECTILE_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/spell_projectile.tscn")
 const SPELL_CLIP_GROUPS: Array[String] = ["Shield", "GreatSword"] ## Locomotion groups with their own spell clips: a Spell Casting channel, a Spell Cast and a Power Up.
 ## The standing one-handed clip for each style; unarmed has no power up clip, so the upward cast stands in.
@@ -36,7 +39,7 @@ const STANDING_CAST_STATES: Dictionary = {
 @export var cast_range: float = 12.0 ## NPC casters use it only with their target this close.
 @export var cast_style: CastStyle = CastStyle.NONE ## The cast clip played when the effect lands, picked per weapon group by [method get_cast_state]; a timed cast holds the group's Spell Casting channel first.
 @export_group("Environment", "element")
-@export_flags("Fire", "Water") var elements: int = 0 ## What the impact does to the world: Fire lights grass fields and burnable grass within [member element_radius] (as the torch does), Water douses fire there. Pick any mix.
+@export_flags("Fire", "Water") var elements: int = 0 ## What the impact does to the world: Fire lights grass fields and burnable grass within [member element_radius] (as the torch does) and sets enemies there ablaze ([constant BURN_SECONDS] of [constant BURN_DAMAGE_PER_SECOND]), Water douses fire there, on the ground and on the enemies. Pick any mix.
 @export var element_radius: float = 2.0 ## Metres around the impact the elements reach.
 @export var element_fire_duration: float = 6.0 ## Seconds a lit grass field keeps spreading from the impact.
 @export_group("Projectile", "projectile_")
@@ -99,7 +102,8 @@ func impact(_caster: Node3D, _target: Node3D) -> void:
 
 
 ## Lets the impact's [member elements] loose on the world at [param at]: Fire lights every grass field and burnable
-## grass within [member element_radius], Water douses them. Runs on every peer with the impact VFX, so all see it.
+## grass within [member element_radius] and sets the enemies there ablaze, Water douses them all. Runs on every peer
+## with the impact VFX, so all see it; an enemy only burns on its own authority.
 func apply_elements(tree: SceneTree, at: Vector3) -> void:
 	if elements == 0 or tree == null:
 		return
@@ -107,19 +111,40 @@ func apply_elements(tree: SceneTree, at: Vector3) -> void:
 		ignite_grass(tree, at, element_radius, element_fire_duration)
 	if elements & Element.WATER:
 		tree.call_group(&"GrassField", &"douse_at", at, element_radius)
-		for patch: Node in tree.get_nodes_in_group(&"BurnableGrass"):
+		for patch: Node in tree.get_nodes_in_group(&"BurnableGrass") + tree.get_nodes_in_group(&"Burnable"):
 			if patch is Node3D and patch.has_method(&"extinguish") and (patch as Node3D).global_position.distance_to(at) <= element_radius:
 				patch.call(&"extinguish")
 
 
+## What the impact does to the world, for the spells screen; subclasses put their own lines first.
+func get_details() -> String:
+	var lines: PackedStringArray = []
+	if elements & Element.FIRE:
+		lines.append("Lights grass and sets enemies ablaze: %d damage over %d s" % [roundi(BURN_DAMAGE_PER_SECOND * BURN_SECONDS), roundi(BURN_SECONDS)])
+	if elements & Element.WATER:
+		lines.append("Douses fire")
+	return "\n".join(lines)
+
+
 ## Lights every grass field and burnable grass within [param radius] of [param at] for [param duration] seconds, the
-## way a torch does: through the GrassField and BurnableGrass groups, duck-typed, and never in the rain (no force).
-## Fire spells and burning projectiles (a fire arrow, an incendiary round) all light the world through here.
+## way a torch does: through the GrassField and BurnableGrass groups, duck-typed, and never in the rain (no force),
+## and sets every enemy there ablaze ([method burn_around]). Fire spells and burning projectiles (a fire arrow, an
+## incendiary round) all light the world through here.
 static func ignite_grass(tree: SceneTree, at: Vector3, radius: float, duration: float) -> void:
 	tree.call_group(&"GrassField", &"ignite_at", at, radius, duration)
 	for patch: Node in tree.get_nodes_in_group(&"BurnableGrass"):
 		if patch is Node3D and patch.has_method(&"ignite") and (patch as Node3D).global_position.distance_to(at) <= radius:
 			patch.call(&"ignite")
+	burn_around(tree, at, radius)
+
+
+## Sets everything in the Burnable group within [param radius] of [param at] ablaze for [constant BURN_SECONDS] at
+## [constant BURN_DAMAGE_PER_SECOND] a second (an enemy: [code]EnemyNpc.burn[/code]); each burns only on its own
+## multiplayer authority and shows the flame everywhere through its synchronizer.
+static func burn_around(tree: SceneTree, at: Vector3, radius: float) -> void:
+	for body: Node in tree.get_nodes_in_group(&"Burnable"):
+		if body is Node3D and body.has_method(&"burn") and (body as Node3D).global_position.distance_to(at) <= radius:
+			body.call(&"burn", BURN_SECONDS, BURN_DAMAGE_PER_SECOND)
 
 
 ## The node the impact lands on: the caster itself, the Player's focus target (or, with nothing locked on, whatever

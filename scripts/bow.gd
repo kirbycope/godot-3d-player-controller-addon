@@ -20,8 +20,8 @@ extends Equipment
 signal ammo_selected(ammo: AmmoItem) ## Emitted when Use on an [AmmoItem] for the bow picks the arrows it fires.
 
 const RAY_MISS_DISTANCE: float = 40.0 ## Aim point distance when the projectile ray hits nothing.
-const TAKE_OUT_SFX: AudioStream = preload("res://addons/3d_player_controller/assets/tommusic/fantasy_sfx/Attacks/Bow Attacks Hits and Blocks/Bow Take Out 1.ogg")
-const PUT_AWAY_SFX: AudioStream = preload("res://addons/3d_player_controller/assets/tommusic/fantasy_sfx/Attacks/Bow Attacks Hits and Blocks/Bow Put Away 1.ogg")
+const TAKE_OUT_SFX: AudioStream = preload("res://addons/3d_player_controller/resources/audio/bow_take_out.tres") ## Randomizer resources rather than the clips: an exported scene list walks a resource for its clip, never a script preload.
+const PUT_AWAY_SFX: AudioStream = preload("res://addons/3d_player_controller/resources/audio/bow_put_away.tres")
 const ATTACK_SFX: AudioStream = preload("res://addons/3d_player_controller/resources/audio/bow_attack.tres")
 
 @export var arrow_scene: PackedScene ## Fired arrow scene; falls back to duplicating the template "Arrow" child when empty.

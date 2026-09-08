@@ -39,21 +39,29 @@ func _ready() -> void:
 
 
 ## Shows only the sub-prompt matching the player's current input type (child names mirror `Controls.InputType` keys in PascalCase).
-## [param action_label] names the Action button on the player's controls while the prompt is up ("Get In").
+## [param action_label] names the Action button on the player's controls while the prompt is up ("Get In"): it is
+## kept on the Player ([member Player.prompt_action_label]) so every label refresh meanwhile re-applies it.
 func show_for(player: Player, action_label: String = "") -> void:
 	var type_name: String = String(player.controls.InputType.keys()[player.controls.current_input_type]).to_pascal_case()
 	for child: Node3D in get_children():
 		child.visible = child.name == type_name
-	if action_label != "" and player.controls.joypad_button_0_label:
-		player.controls.joypad_button_0_label.text = action_label
+	if action_label != "":
+		player.prompt_action_label = action_label
+		player.action_prompt = self
+		if player.controls.joypad_button_0_label:
+			player.controls.joypad_button_0_label.text = action_label
 	show()
 
 
-## Hides the prompt and gives the player's state its Action label back.
+## Hides the prompt and gives the player's state its Action label back (unless another prompt has taken it since).
 func hide_for(player: Player) -> void:
 	hide()
-	if is_instance_valid(player):
-		player.refresh_contextual_controls()
+	if not is_instance_valid(player):
+		return
+	if player.action_prompt == self:
+		player.prompt_action_label = ""
+		player.action_prompt = null
+	player.refresh_contextual_controls()
 
 
 ## Hides the prompt and every sub-prompt.

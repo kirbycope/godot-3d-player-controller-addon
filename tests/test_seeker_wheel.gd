@@ -205,18 +205,32 @@ func test_drawing_the_bow_lists_the_arrow_kinds_without_focus() -> void:
 	Input.action_release("shoot")
 
 
-func test_the_seeker_label_names_what_the_wheel_opens() -> void:
+func test_the_seeker_hint_reads_arrows_only_while_the_bow_is_aimed() -> void:
 	var controls: Controls = player.controls
-	assert_eq(controls.joypad_button_11_label.text, "Seeker", "The default label with nothing out")
-	var bow: Bow = _equip_bow()
-	await wait_physics_frames(1)
-	assert_eq(controls.joypad_button_11_label.text, "Arrows", "A bow out: Seeker opens the arrow wheel")
-	assert_eq(controls.key_i_label.text, "Arrows", "and the keyboard hint says the same")
+	controls.current_input_type = Controls.InputType.KEYBOARD_MOUSE
+	_equip_bow()
+	player.refresh_contextual_controls()
+	assert_eq(controls.key_i_label.text, "Seeker", "A slung bow opens the throwables, so the hint stays Seeker")
+	assert_eq(controls.joypad_button_11_label.text, "Seeker")
+	Input.action_press("focus")
+	assert_true(player.is_focusing)
+	var press := InputEventAction.new()
+	press.action = "focus"
+	press.pressed = true
+	controls._input(press)
+	assert_eq(controls.key_i_label.text, "Arrows", "Aiming the bow: the wheel lists arrows and the hint says so")
+	assert_eq(controls.joypad_button_11_label.text, "Arrows")
+	Input.action_release("focus")
+	var release := InputEventAction.new()
+	release.action = "focus"
+	release.pressed = false
+	controls._input(release)
+	assert_eq(controls.key_i_label.text, "Seeker", "Letting go of the aim takes the hint back")
 	player.inventory.unequip_all()
-	await wait_physics_frames(1)
-	assert_eq(controls.joypad_button_11_label.text, "Seeker", "Back to the default once the bow is stowed")
-	var gun: Firearm = _equip_rifle()
-	await wait_physics_frames(1)
-	assert_eq(controls.joypad_button_11_label.text, "Ammo", "A gun out: Seeker opens the ammunition wheel")
-	assert_true(is_instance_valid(gun) and is_instance_valid(bow))
-
+	_equip_rifle()
+	player.refresh_contextual_controls()
+	assert_eq(controls.key_i_label.text, "Seeker", "A gun at rest likewise")
+	Input.action_press("focus")
+	controls.refresh_seeker_label()
+	assert_eq(controls.key_i_label.text, "Ammo", "Aiming the gun lists its ammunition")
+	Input.action_release("focus")

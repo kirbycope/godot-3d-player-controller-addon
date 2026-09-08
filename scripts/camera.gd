@@ -267,37 +267,41 @@ func move_camera_to_player_head() -> void:
 	global_position += global_transform.basis.x * first_person_offset.x
 
 
-## Keeps the held-item spring arm aligned with perspective/camera behavior.
+## Keeps the held-item spring arm aligned with perspective/camera behavior. The arm is aimed at where the held object
+## belongs, sideways and up offsets included ([method HeldObject.get_held_offset]), rather than straight ahead with the
+## object hung off its axis: a SpringArm3D only sweeps along its own axis, so this way a wall beside the Player stops
+## an object moved beside them the way one ahead stops it ahead, and it never ends up inside geometry.
 func _sync_item_spring_arm() -> void:
 	if not is_instance_valid(item_spring_arm):
 		return
-
+	var up: Vector3 = player.up_direction
+	var origin: Vector3
+	var forward: Vector3
+	var fallback_length: float
 	if perspective == Perspective.FIRST_PERSON:
-		# Preserve arm's authored local orientation (typically 180deg yaw)
-		# so SpringArm extension remains in front of the first-person camera.
-		item_spring_arm.global_basis = global_basis * item_spring_arm_initial_transform.basis
-		item_spring_arm.global_position = global_position
-		item_spring_arm.spring_length = player.held_object.get_held_distance(
-			first_person_item_spring_length
-		) if player.held_object else first_person_item_spring_length
+		origin = global_position
+		forward = -global_basis.z
+		fallback_length = first_person_item_spring_length
 	else:
 		# Third person: the camera's yaw, but only so much of its pitch, so looking down never puts the object in the
 		# ground or inside the Player, where releasing it would shove it out or leave it stuck
-		var up: Vector3 = player.up_direction
-		var forward: Vector3 = -camera_mount.global_basis.z
-		var flat: Vector3 = forward.slide(up)
+		var camera_forward: Vector3 = -camera_mount.global_basis.z
+		var flat: Vector3 = camera_forward.slide(up)
 		if flat.length_squared() < 0.0001:
 			flat = (-player.global_basis.z).slide(up)
 		flat = flat.normalized()
-		var pitch: float = clampf(asin(clampf(forward.dot(up), -1.0, 1.0)), held_pitch_min, held_pitch_max)
-		var direction: Vector3 = (flat * cos(pitch) + up * sin(pitch)).normalized()
-		item_spring_arm.global_transform = Transform3D(Basis.looking_at(direction, up) * item_spring_arm_initial_transform.basis,
-				camera_mount.global_position + camera_mount.global_basis * item_spring_arm_initial_transform.origin)
-		if player.held_object:
-			item_spring_arm.spring_length = player.held_object.get_held_distance(item_spring_arm.spring_length)
-		item_spring_arm.spring_length = player.held_object.get_held_distance(
-			third_person_item_spring_length
-		) if player.held_object else third_person_item_spring_length
+		var pitch: float = clampf(asin(clampf(camera_forward.dot(up), -1.0, 1.0)), held_pitch_min, held_pitch_max)
+		forward = (flat * cos(pitch) + up * sin(pitch)).normalized()
+		origin = camera_mount.global_position + camera_mount.global_basis * item_spring_arm_initial_transform.origin
+		fallback_length = third_person_item_spring_length
+	var offset: Vector3 = player.held_object.get_held_offset(fallback_length) if player.held_object else Vector3(0.0, 0.0, fallback_length)
+	var right: Vector3 = forward.cross(up).normalized()
+	var reach: Vector3 = forward * offset.z + right * offset.x + up * offset.y
+	var direction: Vector3 = reach.normalized()
+	var arm_up: Vector3 = up if absf(direction.dot(up)) < 0.99 else global_basis.y
+	# The authored local orientation (a 180 degree yaw) keeps the arm extending along its +Z, in front of the view
+	item_spring_arm.global_transform = Transform3D(Basis.looking_at(direction, arm_up) * item_spring_arm_initial_transform.basis, origin)
+	item_spring_arm.spring_length = reach.length()
 
 
 ## Updates the [RayCast3D] position and target_position based on current perspective/depth.

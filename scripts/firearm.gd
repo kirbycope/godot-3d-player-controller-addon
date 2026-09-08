@@ -32,7 +32,7 @@ const RAY_MISS_DISTANCE: float = 100.0 ## Aim point distance when the projectile
 @export var muzzle: Marker3D ## Where rounds spawn; its -Z is the barrel direction.
 @export var fire_timer: Timer ## One-shot timer that spaces rounds and times reloads (child of the weapon).
 @export var laser_sight: LaserSight ## Optional pointer shown while aiming.
-@export var fire_sfx: AudioStreamPlayer3D ## Optional shot sound.
+@export var fire_sfx: AudioStreamPlayer3D ## Optional shot sound: its stream travels with the round ([method Projectile.play_launch_sfx]), so every peer hears the shot where the muzzle was; the node itself never plays.
 @export var reload_sfx: AudioStreamPlayer3D ## Optional reload sound.
 
 var rounds: int = 0: ## Rounds left in the magazine.
@@ -147,16 +147,17 @@ func fire() -> Projectile:
 	origin.origin = ray.global_position + along * maxf((muzzle.global_position - ray.global_position).dot(along), 0.0)
 	var direction: Vector3 = scatter(aim - origin.origin)
 	var projectile: Projectile
+	var shot_sound: String = fire_sfx.stream.resource_path if fire_sfx and fire_sfx.stream else ""
 	var spawner: ProjectileSpawner = get_tree().get_first_node_in_group(&"ProjectileSpawner") as ProjectileSpawner
 	if spawner:
-		projectile = spawner.fire(scene, origin, direction, projectile_speed, player, self)
+		projectile = spawner.fire(scene, origin, direction, projectile_speed, player, self, {"fire_sfx": shot_sound} if not shot_sound.is_empty() else {})
 	else:
 		projectile = scene.instantiate() as Projectile
 		var world: Node = get_tree().current_scene if get_tree().current_scene else player.get_parent()
 		world.add_child(projectile)
 		projectile.launch(origin, direction, projectile_speed, player, self)
-	if fire_sfx:
-		fire_sfx.play()
+		if not shot_sound.is_empty():
+			projectile.play_launch_sfx(shot_sound)
 	player.controls.rumble(0.0, 0.8, 0.1)
 	fired.emit(projectile)
 	return projectile

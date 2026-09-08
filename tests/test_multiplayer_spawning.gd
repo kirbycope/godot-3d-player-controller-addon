@@ -110,3 +110,27 @@ func test_client_fire_request_is_spawned_by_the_host() -> void:
 	await wait_process_frames(15)
 	assert_eq(server_root.get_node("Projectiles").get_child_count(), 1, "The host spawns the requested round")
 	assert_eq(client_root.get_node("Projectiles").get_child_count(), 1, "…and it replicates back to the client")
+
+
+func test_a_shot_sound_sent_with_the_round_plays_at_the_muzzle_on_the_client() -> void:
+	await wait_process_frames(30)
+	var shot: AudioStreamRandomizer = AudioStreamRandomizer.new()
+	shot.add_stream(0, AudioStreamGenerator.new())
+	var path: String = "user://test_shot_sound.tres"
+	assert_eq(ResourceSaver.save(shot, path), OK)
+	var host_spawner: ProjectileSpawner = server_root.get_node("ProjectileSpawner")
+	var shooter: Node3D = server_root.get_node("Players/1")
+	var origin: Vector3 = Vector3(200, 50, 0)
+	var bullet: Projectile = host_spawner.fire(BULLET_SCENE, Transform3D(Basis.IDENTITY, origin), Vector3.FORWARD, 30.0, shooter, null, {"fire_sfx": path})
+	assert_not_null(bullet)
+	var host_speaker: AudioStreamPlayer3D = server_root.get_node_or_null("Projectiles/LaunchSfx") as AudioStreamPlayer3D
+	assert_not_null(host_speaker, "The host's copy plays the shot beside the round")
+	assert_eq(host_speaker.stream.resource_path, path)
+	assert_true(host_speaker.playing)
+	assert_almost_eq(host_speaker.global_position, origin, Vector3.ONE * 0.01, "at the muzzle, not riding the round")
+	await wait_process_frames(10)
+	var remote_speaker: AudioStreamPlayer3D = client_root.get_node_or_null("Projectiles/LaunchSfx") as AudioStreamPlayer3D
+	assert_not_null(remote_speaker, "The client's copy plays it too, from the same launch data")
+	assert_eq(remote_speaker.stream.resource_path, path)
+	assert_almost_eq(remote_speaker.global_position, origin, Vector3.ONE * 0.01)
+	DirAccess.remove_absolute(path)

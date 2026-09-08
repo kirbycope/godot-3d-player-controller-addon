@@ -46,6 +46,8 @@ func _ready() -> void:
 		var data: Dictionary = pending_launch
 		pending_launch = {}
 		launch(data["origin"], data["direction"], data["speed"], get_node_or_null(data["shooter"]) as Node3D, get_node_or_null(data["weapon"]) as Equipment)
+		if data.has("fire_sfx"):
+			play_launch_sfx(data["fire_sfx"])
 
 
 ## Places the projectile at [param origin] and sends it along [param direction] at [param speed].
@@ -67,6 +69,23 @@ func launch(origin: Transform3D, direction: Vector3, speed: float, from_shooter:
 		add_collision_exception_with(shooter)
 		get_tree().create_timer(SHOOTER_EXCEPTION_SECONDS).timeout.connect(_on_shooter_exception_timeout)
 	get_tree().create_timer(lifetime).timeout.connect(_on_lifetime_timeout)
+
+
+## Plays the stream at [param stream_path] where the round is now (the muzzle, on launch) through a speaker beside the
+## round that frees itself when the clip ends, so the shot is heard where it was fired however far the round flies or
+## how soon it lands. A [Firearm] sends its shot sound along in the launch data, so every peer's copy calls this.
+func play_launch_sfx(stream_path: String) -> void:
+	var stream: AudioStream = load(stream_path) as AudioStream
+	if stream == null or not is_inside_tree():
+		return
+	var speaker: AudioStreamPlayer3D = AudioStreamPlayer3D.new()
+	speaker.name = "LaunchSfx"
+	speaker.stream = stream
+	speaker.bus = &"SFX"
+	speaker.finished.connect(speaker.queue_free)
+	get_parent().add_child(speaker)
+	speaker.global_position = global_position
+	speaker.play()
 
 
 ## Sweeps a ray from the previous step's position to the current one to catch anything physics stepped over.

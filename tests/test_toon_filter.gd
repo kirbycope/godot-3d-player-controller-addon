@@ -92,7 +92,10 @@ func test_the_key_cycles_off_newspaper_cel_on_forward_plus() -> void:
 	assert_eq(filter.mode, ToonFilter.Mode.BINBUN, "Cel goes to Binbun")
 	assert_eq(_saved_mode(), ToonFilter.Mode.BINBUN)
 	filter.cycle()
-	assert_eq(filter.mode, ToonFilter.Mode.OFF, "Binbun goes back to Off")
+	assert_eq(filter.mode, ToonFilter.Mode.BOTW, "Binbun goes to BotW")
+	assert_eq(_saved_mode(), ToonFilter.Mode.BOTW)
+	filter.cycle()
+	assert_eq(filter.mode, ToonFilter.Mode.OFF, "BotW goes back to Off")
 	assert_signal_emitted_with_parameters(filter, "toggled", [false])
 	assert_eq(_saved_mode(), ToonFilter.Mode.OFF)
 	var second: ToonFilter = TOON_SCENE.instantiate()
@@ -109,7 +112,9 @@ func test_the_key_skips_cel_off_forward_plus() -> void:
 	filter.cycle()
 	assert_eq(filter.mode, ToonFilter.Mode.BINBUN, "Newspaper goes straight to Binbun; no Cel without Forward+")
 	filter.cycle()
-	assert_eq(filter.mode, ToonFilter.Mode.OFF, "Binbun goes back to Off")
+	assert_eq(filter.mode, ToonFilter.Mode.BOTW, "Binbun goes to BotW, which runs everywhere too")
+	filter.cycle()
+	assert_eq(filter.mode, ToonFilter.Mode.OFF, "BotW goes back to Off")
 	assert_eq(_saved_mode(), ToonFilter.Mode.OFF)
 	filter.set_mode(ToonFilter.Mode.CEL)
 	assert_eq(filter.mode, ToonFilter.Mode.NEWSPAPER, "A saved Cel opened on Compatibility falls back to Newspaper")
@@ -194,8 +199,9 @@ func test_the_cel_option_is_greyed_off_forward_plus() -> void:
 	var video: PlayerMenuLayer = VIDEO_SETTINGS_SCENE.instantiate() as PlayerMenuLayer
 	add_child_autofree(video)
 	var option: OptionButton = video.toon_button
-	assert_eq(option.item_count, 4, "Off, Newspaper, Cel, Binbun")
+	assert_eq(option.item_count, 5, "Off, Newspaper, Cel, Binbun, BotW")
 	assert_eq(option.get_item_text(ToonFilter.Mode.BINBUN), "Binbun")
+	assert_eq(option.get_item_text(ToonFilter.Mode.BOTW), "BotW")
 	assert_eq(option.get_item_text(ToonFilter.Mode.NEWSPAPER), "Newspaper")
 	assert_eq(option.get_item_text(ToonFilter.Mode.CEL), "Cel")
 	assert_false(option.is_item_disabled(ToonFilter.Mode.CEL), "Headless reports forward_plus, so Cel is offered")
@@ -236,6 +242,9 @@ func test_the_option_and_the_key_drive_the_players_filter_under_the_hud() -> voi
 	assert_eq(video.toon_button.selected, ToonFilter.Mode.BINBUN)
 	assert_null(player.camera.compositor, "which needs no compositor")
 	assert_false(filter.visible, "nor the quad")
+	await send_key(KEY_F6)
+	assert_eq(filter.mode, ToonFilter.Mode.BOTW, "F6 steps on to BotW")
+	assert_eq(video.toon_button.selected, ToonFilter.Mode.BOTW)
 	await send_key(KEY_F6)
 	assert_eq(filter.mode, ToonFilter.Mode.OFF, "F6 turns it off again")
 	assert_eq(video.toon_button.selected, ToonFilter.Mode.OFF)
@@ -326,3 +335,30 @@ func test_binbun_overrides_opaque_standard_surfaces_and_restores_them() -> void:
 	textured.free()
 	camera.free()
 	assert_null(after.get_surface_override_material(0), "Leaving the tree restores what is left; a freed mesh is skipped")
+
+
+func test_the_botw_shader_compiles_and_paints_the_tree_in_place_of_binbun() -> void:
+	var root: Node3D = Node3D.new()
+	add_child_autofree(root)
+	var box: MeshInstance3D = _box(_standard(Color.RED), root)
+	var camera: Camera3D = _camera_with_filter()
+	var filter: ToonFilter = camera.get_child(0)
+	var names: Array[String] = []
+	for parameter: Dictionary in RenderingServer.get_shader_parameter_list(filter.botw_material.shader.get_rid()):
+		names.append(parameter.name)
+	for uniform: String in ["albedo_texture", "albedo_color", "shadow_threshold", "shadow_color", "warble_amount", "specular_softness", "rim_backlight"]:
+		assert_has(names, uniform, "The BotW shader compiled and exposes " + uniform)
+	assert_true(filter.botw_material.shader.resource_path.ends_with("botw_toon.gdshader"), "The addon's own shader")
+	filter.set_mode(ToonFilter.Mode.BINBUN)
+	var binbun: ShaderMaterial = box.get_surface_override_material(0) as ShaderMaterial
+	assert_same(binbun.shader, filter.binbun_material.shader)
+	filter.set_mode(ToonFilter.Mode.BOTW)
+	var botw: ShaderMaterial = box.get_surface_override_material(0) as ShaderMaterial
+	assert_not_null(botw, "BotW paints the tree the way Binbun does")
+	assert_same(botw.shader, filter.botw_material.shader, "with the BotW shader")
+	assert_eq(botw.get_shader_parameter(&"albedo_color"), Color.RED, "wearing the surface's own colour")
+	assert_false(filter.visible, "no quad")
+	assert_null(camera.compositor, "no compositor")
+	filter.set_mode(ToonFilter.Mode.OFF)
+	assert_null(box.get_surface_override_material(0), "Off puts the original back")
+	camera.free()

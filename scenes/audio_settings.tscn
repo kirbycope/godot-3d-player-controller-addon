@@ -1,23 +1,7 @@
-[gd_scene load_steps=9 format=3 uid="uid://caww8bymbfsli"]
+[gd_scene format=3 uid="uid://caww8bymbfsli"]
 
 [ext_resource type="Script" uid="uid://2ci8veitkhtr" path="res://addons/3d_player_controller/scripts/audio_settings.gd" id="1_kygss"]
 [ext_resource type="Texture2D" uid="uid://50q2mf64emfu" path="res://addons/3d_player_controller/assets/kenney_nl/2D assets/Game Icons/Vector/vector_whiteIcons.svg" id="1_prya7"]
-
-[sub_resource type="LabelSettings" id="LabelSettings_kygss"]
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_kygss"]
-atlas = ExtResource("1_prya7")
-region = Rect2(305, 52, 32, 32)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_5xw05"]
-size = Vector2(32, 32)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_5xw05"]
-atlas = ExtResource("1_prya7")
-region = Rect2(355, 52, 32, 32)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_nh3kh"]
-size = Vector2(193, 24)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_menu"]
 content_margin_left = 12.0
@@ -25,6 +9,22 @@ content_margin_top = 8.0
 content_margin_right = 12.0
 content_margin_bottom = 12.0
 bg_color = Color(0.1, 0.1, 0.1, 0.6)
+
+[sub_resource type="LabelSettings" id="LabelSettings_kygss"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_kygss"]
+atlas = ExtResource("1_prya7")
+region = Rect2(205, 31, 32, 32)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_5xw05"]
+size = Vector2(32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_5xw05"]
+atlas = ExtResource("1_prya7")
+region = Rect2(240, 31, 32, 32)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_nh3kh"]
+size = Vector2(193, 24)
 
 [node name="AudioSettings" type="CanvasLayer" unique_id=1733087109 node_paths=PackedStringArray("focus_on_show")]
 script = ExtResource("1_kygss")
@@ -282,16 +282,16 @@ texture_normal = SubResource("AtlasTexture_5xw05")
 position = Vector2(16, 16)
 shape = SubResource("RectangleShape2D_5xw05")
 
-[node name="VoiceSettings" type="VBoxContainer" parent="Panel/VBoxContainer"]
+[node name="VoiceSettings" type="VBoxContainer" parent="Panel/VBoxContainer" unique_id=795294055]
 layout_mode = 2
 
-[node name="Voice" type="Label" parent="Panel/VBoxContainer/VoiceSettings"]
+[node name="Voice" type="Label" parent="Panel/VBoxContainer/VoiceSettings" unique_id=1427057411]
 custom_minimum_size = Vector2(0, 54)
 layout_mode = 2
 text = "Voice Chat Volume"
 horizontal_alignment = 1
 
-[node name="VolumeMinus" type="TextureButton" parent="Panel/VBoxContainer/VoiceSettings/Voice"]
+[node name="VolumeMinus" type="TextureButton" parent="Panel/VBoxContainer/VoiceSettings/Voice" unique_id=345948713]
 custom_maximum_size = Vector2(32, 32)
 layout_mode = 1
 anchors_preset = 2
@@ -302,11 +302,11 @@ offset_right = 32.0
 grow_vertical = 0
 texture_normal = SubResource("AtlasTexture_kygss")
 
-[node name="TouchScreenButton" type="TouchScreenButton" parent="Panel/VBoxContainer/VoiceSettings/Voice/VolumeMinus"]
+[node name="TouchScreenButton" type="TouchScreenButton" parent="Panel/VBoxContainer/VoiceSettings/Voice/VolumeMinus" unique_id=1062903318]
 position = Vector2(16, 16)
 shape = SubResource("RectangleShape2D_5xw05")
 
-[node name="VolumeSlider" type="HSlider" parent="Panel/VBoxContainer/VoiceSettings/Voice"]
+[node name="VolumeSlider" type="HSlider" parent="Panel/VBoxContainer/VoiceSettings/Voice" unique_id=1285529010]
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
@@ -321,7 +321,7 @@ grow_horizontal = 2
 grow_vertical = 0
 value = 50.0
 
-[node name="VolumePlus" type="TextureButton" parent="Panel/VBoxContainer/VoiceSettings/Voice"]
+[node name="VolumePlus" type="TextureButton" parent="Panel/VBoxContainer/VoiceSettings/Voice" unique_id=981801429]
 custom_maximum_size = Vector2(32, 32)
 layout_mode = 1
 anchors_preset = 3
@@ -335,15 +335,15 @@ grow_horizontal = 0
 grow_vertical = 0
 texture_normal = SubResource("AtlasTexture_5xw05")
 
-[node name="TouchScreenButton" type="TouchScreenButton" parent="Panel/VBoxContainer/VoiceSettings/Voice/VolumePlus"]
+[node name="TouchScreenButton" type="TouchScreenButton" parent="Panel/VBoxContainer/VoiceSettings/Voice/VolumePlus" unique_id=951837559]
 position = Vector2(16, 16)
 shape = SubResource("RectangleShape2D_5xw05")
 
-[node name="MuteVoice" type="CheckButton" parent="Panel/VBoxContainer/VoiceSettings"]
+[node name="MuteVoice" type="CheckButton" parent="Panel/VBoxContainer/VoiceSettings" unique_id=495691893]
 layout_mode = 2
 text = "Mute voice chat"
 
-[node name="TouchScreenButton" type="TouchScreenButton" parent="Panel/VBoxContainer/VoiceSettings/MuteVoice"]
+[node name="TouchScreenButton" type="TouchScreenButton" parent="Panel/VBoxContainer/VoiceSettings/MuteVoice" unique_id=1642465768]
 position = Vector2(100, 16)
 shape = SubResource("RectangleShape2D_nh3kh")
 

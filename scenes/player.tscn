@@ -4413,6 +4413,7 @@ bus = &"SFX"
 [connection signal="locomotion_node_changed" from="." to="Abilities" method="_on_locomotion_node_changed"]
 [connection signal="locomotion_node_changed" from="." to="HitDetection" method="_on_locomotion_node_changed"]
 [connection signal="locomotion_node_changed" from="." to="WeaponAudio" method="_on_locomotion_node_changed"]
+[connection signal="locomotion_node_changed" from="." to="Controls" method="_on_locomotion_node_changed"]
 [connection signal="state_changed" from="." to="Abilities" method="_on_state_changed"]
 [connection signal="body_entered" from="TargetDetection" to="Focus" method="_on_target_detection_body_entered"]
 [connection signal="body_exited" from="TargetDetection" to="Focus" method="_on_target_detection_body_exited"]

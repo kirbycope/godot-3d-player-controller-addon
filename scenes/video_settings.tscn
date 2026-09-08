@@ -85,40 +85,6 @@ vertical_alignment = 1
 position = Vector2(100, 12)
 shape = SubResource("RectangleShape2D_p63df")
 
-[node name="ToonShading" type="OptionButton" parent="Panel/VBoxContainer" unique_id=1902337711]
-layout_mode = 2
-size_flags_horizontal = 8
-selected = 0
-item_count = 4
-popup/item_0/text = "Off"
-popup/item_0/id = 0
-popup/item_1/text = "Newspaper"
-popup/item_1/id = 1
-popup/item_2/text = "Cel"
-popup/item_2/id = 2
-popup/item_3/text = "Binbun"
-popup/item_3/id = 3
-
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ToonShading" unique_id=1902337712]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -142.5
-offset_top = -11.5
-offset_right = 50.5
-offset_bottom = 11.5
-grow_horizontal = 2
-grow_vertical = 2
-text = " Toon shading"
-vertical_alignment = 1
-
-[node name="ToonShadingTouchScreenButton" type="TouchScreenButton" parent="Panel/VBoxContainer/ToonShading" unique_id=1902337713]
-position = Vector2(8, 15)
-shape = SubResource("RectangleShape2D_p63df")
-
 [node name="MSAA" type="OptionButton" parent="Panel/VBoxContainer" unique_id=1502894789]
 layout_mode = 2
 size_flags_horizontal = 8
@@ -280,6 +246,42 @@ vertical_alignment = 1
 position = Vector2(-35, 16)
 shape = SubResource("RectangleShape2D_p63df")
 
+[node name="ToonShading" type="OptionButton" parent="Panel/VBoxContainer" unique_id=1902337711]
+layout_mode = 2
+size_flags_horizontal = 8
+selected = 0
+item_count = 5
+popup/item_0/text = "None"
+popup/item_0/id = 0
+popup/item_1/text = "Toon"
+popup/item_1/id = 1
+popup/item_2/text = "Cell"
+popup/item_2/id = 2
+popup/item_3/text = "Binbun"
+popup/item_3/id = 3
+popup/item_4/text = "BotW"
+popup/item_4/id = 4
+
+[node name="Label" type="Label" parent="Panel/VBoxContainer/ToonShading" unique_id=1902337712]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -148.5
+offset_top = -11.5
+offset_right = 44.5
+offset_bottom = 11.5
+grow_horizontal = 2
+grow_vertical = 2
+text = " Filter"
+vertical_alignment = 1
+
+[node name="ToonShadingTouchScreenButton" type="TouchScreenButton" parent="Panel/VBoxContainer/ToonShading" unique_id=1902337713]
+position = Vector2(-4, 15)
+shape = SubResource("RectangleShape2D_p63df")
+
 [node name="BACK" type="Button" parent="Panel/VBoxContainer" unique_id=967526644]
 layout_mode = 2
 size_flags_vertical = 10
@@ -291,8 +293,6 @@ shape = SubResource("RectangleShape2D_p63df")
 
 [connection signal="toggled" from="Panel/VBoxContainer/VSYNC" to="." method="_on_vsync_toggled"]
 [connection signal="pressed" from="Panel/VBoxContainer/VSYNC/VSYNCTouchScreenButton" to="." method="_on_vsync_touch_screen_button_pressed"]
-[connection signal="item_selected" from="Panel/VBoxContainer/ToonShading" to="." method="_on_toon_shading_item_selected"]
-[connection signal="pressed" from="Panel/VBoxContainer/ToonShading/ToonShadingTouchScreenButton" to="." method="_on_toon_shading_touch_screen_button_pressed"]
 [connection signal="item_selected" from="Panel/VBoxContainer/MSAA" to="." method="_on_msaa_item_selected"]
 [connection signal="pressed" from="Panel/VBoxContainer/MSAA/MSAATouchScreenButton" to="." method="_on_msaa_touch_screen_button_pressed"]
 [connection signal="item_selected" from="Panel/VBoxContainer/SSAA" to="." method="_on_ssaa_item_selected"]
@@ -305,5 +305,7 @@ shape = SubResource("RectangleShape2D_p63df")
 [connection signal="pressed" from="Panel/VBoxContainer/TAA/TAATouchScreenButton" to="." method="_on_taa_touch_screen_button_pressed"]
 [connection signal="item_selected" from="Panel/VBoxContainer/FSR" to="." method="_on_fsr_item_selected"]
 [connection signal="pressed" from="Panel/VBoxContainer/FSR/FSRTouchScreenButton" to="." method="_on_fsr_touch_screen_button_pressed"]
+[connection signal="item_selected" from="Panel/VBoxContainer/ToonShading" to="." method="_on_toon_shading_item_selected"]
+[connection signal="pressed" from="Panel/VBoxContainer/ToonShading/ToonShadingTouchScreenButton" to="." method="_on_toon_shading_touch_screen_button_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/BACK" to="." method="_on_back_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/BACK/BACKTouchScreenButton" to="." method="_on_back_touch_screen_button_pressed"]

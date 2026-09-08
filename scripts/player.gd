@@ -272,6 +272,8 @@ var is_paused: bool = false: ## Is the Player currently paused?
 			is_paused = value
 			paused_changed.emit(value)
 var is_typing: bool = false ## Is the local Player typing in the chat window? Gameplay input is blocked while true.
+var prompt_action_label: String = "" ## What the Action button reads while a world prompt is in range ("Pick Up"); [method ActionPrompt.show_for] sets it and [method ActionPrompt.hide_for] clears it, and [Controls] keeps it through every label refresh.
+var action_prompt: Node ## The [ActionPrompt] that set [member prompt_action_label]; only it clears the label, so leaving one prompt inside another keeps the other's.
 var is_pushing: bool = false ## Is the Player currently pushing?
 var is_ragdolling: bool = false ## Is the Player currently ragdolling?
 var requires_shoot_release_after_throw: bool = false ## Set during a throw to require releasing the shoot button before shooting weapons.

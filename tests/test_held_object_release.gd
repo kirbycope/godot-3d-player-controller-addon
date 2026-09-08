@@ -73,3 +73,35 @@ func test_picking_the_body_back_up_inside_the_grace_keeps_the_exception() -> voi
 	await wait_seconds(HeldObject.RELEASE_GRACE + 0.15)
 	assert_true(player.held_object.is_holding_rigidbody())
 	assert_true(player.get_collision_exceptions().has(body), "The grace ending must not strip the exception from a body held again")
+
+
+func test_the_arm_aims_at_an_object_moved_beside_the_player_and_a_wall_there_stops_it() -> void:
+	player.held_object._pickup_rigidbody(body)
+	player.camera_mount.rotation = Vector3.ZERO
+	await wait_physics_frames(3)
+	var arm: SpringArm3D = player.item_spring_arm
+	var forward: Vector3 = (-player.camera_mount.global_basis.z).slide(Vector3.UP).normalized()
+	var right: Vector3 = forward.cross(Vector3.UP).normalized()
+	var offset: Vector3 = body.global_position - arm.global_position
+	assert_lt(absf(offset.dot(right)), 0.15, "Held straight ahead to start")
+	player.held_object._held_offset = Vector2(1.0, 0.0) # the look stick pushed it a metre to the right
+	await wait_physics_frames(3)
+	offset = body.global_position - arm.global_position
+	assert_almost_eq(offset.dot(right), 1.0, 0.15, "The object sits a metre to the right")
+	assert_almost_eq(arm.spring_length, Vector2(player.held_object._held_distance, 1.0).length(), 0.05, "and the arm reaches for it on the diagonal, so its cast covers where it is")
+	assert_lt(absf(body.position.x) + absf(body.position.y), 0.01, "not hung off the arm's axis")
+	# A wall half a metre to the right of the aim line
+	var wall := StaticBody3D.new()
+	var shape := CollisionShape3D.new()
+	shape.shape = BoxShape3D.new()
+	(shape.shape as BoxShape3D).size = Vector3(0.2, 4.0, 8.0)
+	wall.add_child(shape)
+	player.get_parent().add_child(wall)
+	wall.global_position = arm.global_position + right * 0.6 + forward * 2.0
+	wall.global_basis = Basis.looking_at(forward, Vector3.UP)
+	await wait_physics_frames(3)
+	offset = body.global_position - arm.global_position
+	assert_lt(arm.get_hit_length(), arm.spring_length - 0.5, "The wall stops the arm short")
+	assert_lt(offset.dot(right), 0.8, "so the object is pulled back before the wall instead of hung beyond it")
+	player.held_object.drop_held_rigidbody()
+	wall.free()

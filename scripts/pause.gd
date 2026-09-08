@@ -111,6 +111,7 @@ func _on_spells_touch_screen_button_pressed() -> void:
 
 
 func _on_restart_pressed() -> void:
+	resume_world()
 	get_tree().reload_current_scene()
 
 

@@ -6,6 +6,10 @@ extends Node3D
 ## [member Equipment.attack_sfx] and [member Equipment.hit_sfx] stand in for the defaults on that weapon (a [Bow]
 ## brings its own take-out, put-away and shot).
 ##
+## The draw and stow defaults are a blade leaving and entering a scabbard, so only metal melee weapons (an axe, a
+## dagger, a sword, see [constant BLADED_TYPES]) fall back to them: a staff, a rod, a gun or a shield draws in
+## silence unless its scene names its own sounds.
+##
 ## Wired in player.tscn: [code]Inventory.equipment_changed[/code] (drawn and stowed), [signal Player.locomotion_node_changed]
 ## (a weapon swing node) and [signal HitDetection.weapon_hit] (a swing landing on something that takes a hit).
 ##
@@ -14,6 +18,15 @@ extends Node3D
 ## and relayed by [method _play_hit] with [code]call_local[/code], the way [Abilities] sends its casting sounds.
 
 const UNARMED_NODES: Array[String] = ["ShortHeadJab", "BackHandCross"] ## Boxing swings: no weapon to hear.
+## The metal melee weapons: the only equipment whose draw and stow fall back to the sword unsheath and sheath.
+const BLADED_TYPES: Array[Equipment.EquipmentType] = [
+	Equipment.EquipmentType.AXE_1H,
+	Equipment.EquipmentType.AXE_2H,
+	Equipment.EquipmentType.DAGGER,
+	Equipment.EquipmentType.SWORD_1H,
+	Equipment.EquipmentType.SWORD_2H,
+	Equipment.EquipmentType.SWORD_AND_SHIELD,
+]
 
 @export var player: Player
 
@@ -48,11 +61,16 @@ func _on_equipment_changed() -> void:
 		return
 	for item: Equipment in now:
 		if item not in _equipped:
-			_play(equip_audio, item.equip_sfx)
+			_play(equip_audio, item.equip_sfx, is_bladed(item))
 	for item: Equipment in _equipped:
 		if is_instance_valid(item) and item not in now:
-			_play(stow_audio, item.stow_sfx)
+			_play(stow_audio, item.stow_sfx, is_bladed(item))
 	_equipped = now
+
+
+## A metal melee weapon, the kind the default sheath sounds were recorded for.
+static func is_bladed(item: Equipment) -> bool:
+	return item != null and item.equipment_type in BLADED_TYPES
 
 
 ## Wired to the SettleTimer: from here on equipment changes are the player's own doing and are heard.
@@ -98,7 +116,9 @@ func _weapon_stream(property: StringName) -> AudioStream:
 	return null
 
 
-func _play(audio: AudioStreamPlayer3D, stream: AudioStream) -> void:
-	audio.stream = stream if stream else _defaults.get(audio)
+## Plays [param stream] on the slot, or with none the slot's scene default when [param fall_back] allows; without
+## either the slot stays quiet.
+func _play(audio: AudioStreamPlayer3D, stream: AudioStream, fall_back: bool = true) -> void:
+	audio.stream = stream if stream else (_defaults.get(audio) if fall_back else null)
 	if audio.stream:
 		audio.play()

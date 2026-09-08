@@ -182,6 +182,15 @@ func get_held_distance(fallback_distance: float) -> float:
 	return _held_distance if is_holding_object() else fallback_distance
 
 
+## Where the held body sits, relative to the camera's view: sideways, up and ahead in metres, as the look stick and
+## the D-pad have moved it. The [Camera] aims the item spring arm along it, so the arm's collision cast sweeps the
+## line the body actually sits on. Straight ahead at [param fallback_distance] with nothing held.
+func get_held_offset(fallback_distance: float) -> Vector3:
+	if not is_holding_object():
+		return Vector3(0.0, 0.0, fallback_distance)
+	return Vector3(_held_offset.x, -_held_offset.y, _held_distance)
+
+
 ## Starts charging a throw when the shoot button is pressed.
 func start_charging_throw() -> void:
 	if not is_holding_object():
@@ -593,8 +602,7 @@ func _update_held_object_transform(delta: float) -> void:
 		move_multiplier = held_joypad_move_multiplier
 	_held_offset += move_input * held_move_speed * move_multiplier * delta
 	_held_offset = _held_offset.clamp(-held_max_offset, held_max_offset)
-	held_rigidbody.position.x = -_held_offset.x
-	held_rigidbody.position.y = -_held_offset.y
+	# The spring arm carries the body: the Camera aims it along get_held_offset(), offset included
 
 
 func _lay_held_rigidbody_flat() -> void:
