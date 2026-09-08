@@ -71,7 +71,7 @@ func _on_toon_shading_item_selected(index: int) -> void:
 func _on_toon_shading_touch_screen_button_pressed() -> void:
 	var next: int = (toon_button.selected + 1) % toon_button.item_count
 	if toon_button.is_item_disabled(next):
-		next = ToonFilter.Mode.OFF
+		next = (next + 1) % toon_button.item_count
 	toon_button.selected = next
 	_on_toon_shading_item_selected(next)
 

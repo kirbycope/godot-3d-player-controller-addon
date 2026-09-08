@@ -1,8 +1,9 @@
 extends IntegrationTestBase
 
 ## Purpose: the ToonFilter's quad shader compiles, the filter starts off, the toggle_toon action and its [F6] key cycle
-## Off, Newspaper, Cel (Cel skipped off Forward+), Newspaper shows the quad while Cel puts a CelCompositorEffect on the
-## camera and takes it off again, the Video settings option and the key stay in step, the choice is saved in
+## Off, Newspaper, Cel, Binbun (Cel skipped off Forward+), Newspaper shows the quad while Cel puts a CelCompositorEffect
+## on the camera and takes it off again, Binbun overrides the tree's opaque standard materials with Binbun's shader and
+## restores them, the Video settings option and the key stay in step, the choice is saved in
 ## user://settings.tres (backed up and restored here), and the CelCompositorEffect stays inert without a RenderingDevice.
 
 const TOON_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/toon_filter.tscn")
@@ -88,7 +89,10 @@ func test_the_key_cycles_off_newspaper_cel_on_forward_plus() -> void:
 	assert_eq(filter.mode, ToonFilter.Mode.CEL, "Newspaper goes to Cel")
 	assert_eq(_saved_mode(), ToonFilter.Mode.CEL)
 	filter.cycle()
-	assert_eq(filter.mode, ToonFilter.Mode.OFF, "Cel goes back to Off")
+	assert_eq(filter.mode, ToonFilter.Mode.BINBUN, "Cel goes to Binbun")
+	assert_eq(_saved_mode(), ToonFilter.Mode.BINBUN)
+	filter.cycle()
+	assert_eq(filter.mode, ToonFilter.Mode.OFF, "Binbun goes back to Off")
 	assert_signal_emitted_with_parameters(filter, "toggled", [false])
 	assert_eq(_saved_mode(), ToonFilter.Mode.OFF)
 	var second: ToonFilter = TOON_SCENE.instantiate()
@@ -103,7 +107,9 @@ func test_the_key_skips_cel_off_forward_plus() -> void:
 	filter.cycle()
 	assert_eq(filter.mode, ToonFilter.Mode.NEWSPAPER, "Off goes to Newspaper")
 	filter.cycle()
-	assert_eq(filter.mode, ToonFilter.Mode.OFF, "Newspaper goes straight back to Off; no Cel without Forward+")
+	assert_eq(filter.mode, ToonFilter.Mode.BINBUN, "Newspaper goes straight to Binbun; no Cel without Forward+")
+	filter.cycle()
+	assert_eq(filter.mode, ToonFilter.Mode.OFF, "Binbun goes back to Off")
 	assert_eq(_saved_mode(), ToonFilter.Mode.OFF)
 	filter.set_mode(ToonFilter.Mode.CEL)
 	assert_eq(filter.mode, ToonFilter.Mode.NEWSPAPER, "A saved Cel opened on Compatibility falls back to Newspaper")
@@ -188,7 +194,8 @@ func test_the_cel_option_is_greyed_off_forward_plus() -> void:
 	var video: PlayerMenuLayer = VIDEO_SETTINGS_SCENE.instantiate() as PlayerMenuLayer
 	add_child_autofree(video)
 	var option: OptionButton = video.toon_button
-	assert_eq(option.item_count, 3, "Off, Newspaper, Cel")
+	assert_eq(option.item_count, 4, "Off, Newspaper, Cel, Binbun")
+	assert_eq(option.get_item_text(ToonFilter.Mode.BINBUN), "Binbun")
 	assert_eq(option.get_item_text(ToonFilter.Mode.NEWSPAPER), "Newspaper")
 	assert_eq(option.get_item_text(ToonFilter.Mode.CEL), "Cel")
 	assert_false(option.is_item_disabled(ToonFilter.Mode.CEL), "Headless reports forward_plus, so Cel is offered")
@@ -198,8 +205,8 @@ func test_the_cel_option_is_greyed_off_forward_plus() -> void:
 	assert_false(option.is_item_disabled(ToonFilter.Mode.NEWSPAPER), "Newspaper stays available everywhere")
 	option.selected = ToonFilter.Mode.NEWSPAPER
 	video._on_toon_shading_touch_screen_button_pressed()
-	assert_eq(option.selected, ToonFilter.Mode.OFF, "The touch button skips the greyed Cel")
-	assert_eq(_saved_mode(), ToonFilter.Mode.OFF)
+	assert_eq(option.selected, ToonFilter.Mode.BINBUN, "The touch button skips the greyed Cel")
+	assert_eq(_saved_mode(), ToonFilter.Mode.BINBUN)
 
 
 func test_the_option_and_the_key_drive_the_players_filter_under_the_hud() -> void:
@@ -225,6 +232,11 @@ func test_the_option_and_the_key_drive_the_players_filter_under_the_hud() -> voi
 	assert_eq(video.toon_button.selected, ToonFilter.Mode.CEL, "The option follows the key")
 	assert_not_null(player.camera.compositor, "and the camera got its compositor")
 	await send_key(KEY_F6)
+	assert_eq(filter.mode, ToonFilter.Mode.BINBUN, "F6 steps on to Binbun")
+	assert_eq(video.toon_button.selected, ToonFilter.Mode.BINBUN)
+	assert_null(player.camera.compositor, "which needs no compositor")
+	assert_false(filter.visible, "nor the quad")
+	await send_key(KEY_F6)
 	assert_eq(filter.mode, ToonFilter.Mode.OFF, "F6 turns it off again")
 	assert_eq(video.toon_button.selected, ToonFilter.Mode.OFF)
 	assert_null(player.camera.compositor)
@@ -235,3 +247,82 @@ func _f6() -> InputEventKey:
 	var key: InputEventKey = InputEventKey.new()
 	key.keycode = KEY_F6
 	return key
+
+
+## A MeshInstance3D with one surface wearing [param material].
+func _box(material: Material, parent: Node) -> MeshInstance3D:
+	var mesh_instance: MeshInstance3D = MeshInstance3D.new()
+	mesh_instance.mesh = BoxMesh.new()
+	mesh_instance.mesh.surface_set_material(0, material)
+	parent.add_child(mesh_instance)
+	return mesh_instance
+
+
+func _standard(color: Color, texture: Texture2D = null) -> StandardMaterial3D:
+	var material: StandardMaterial3D = StandardMaterial3D.new()
+	material.albedo_color = color
+	material.albedo_texture = texture
+	return material
+
+
+func test_the_binbun_shader_compiles_and_the_template_keeps_the_albedo() -> void:
+	var filter: ToonFilter = TOON_SCENE.instantiate()
+	add_child_autofree(filter)
+	var names: Array[String] = []
+	for parameter: Dictionary in RenderingServer.get_shader_parameter_list(filter.binbun_material.shader.get_rid()):
+		names.append(parameter.name)
+	for uniform: String in ["albedo_texture", "albedo_color", "albedo_affect", "steps", "shadow_tint", "rim_color", "use_pattern"]:
+		assert_has(names, uniform, "Binbun's stylized shader compiled and exposes " + uniform)
+	assert_eq(filter.binbun_material.get_shader_parameter(&"albedo_affect"), 1.0, "The template lights the surface's own albedo")
+	assert_false(filter.binbun_material.get_shader_parameter(&"use_pattern"), "and needs no pattern texture")
+
+
+func test_binbun_overrides_opaque_standard_surfaces_and_restores_them() -> void:
+	var root: Node3D = Node3D.new()
+	add_child_autofree(root)
+	var texture: GradientTexture2D = GradientTexture2D.new()
+	var textured: MeshInstance3D = _box(_standard(Color.RED, texture), root)
+	var twin: MeshInstance3D = _box(_standard(Color.RED, texture), root)
+	var plain: MeshInstance3D = _box(_standard(Color.GREEN), root)
+	var shader_surface: MeshInstance3D = _box(ShaderMaterial.new(), root)
+	var glass_material: StandardMaterial3D = _standard(Color.WHITE)
+	glass_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	var glass: MeshInstance3D = _box(glass_material, root)
+	var overridden: MeshInstance3D = _box(_standard(Color.BLUE), root)
+	overridden.material_override = _standard(Color.BLACK)
+	var previous: StandardMaterial3D = _standard(Color.YELLOW)
+	plain.set_surface_override_material(0, previous)
+	var camera: Camera3D = _camera_with_filter()
+	var filter: ToonFilter = camera.get_child(0)
+	filter.set_mode(ToonFilter.Mode.BINBUN)
+	assert_false(filter.visible, "Binbun needs no quad")
+	assert_null(camera.compositor, "and no compositor")
+	var toon: ShaderMaterial = textured.get_surface_override_material(0) as ShaderMaterial
+	assert_not_null(toon, "The textured surface got a ShaderMaterial")
+	assert_same(toon.shader, filter.binbun_material.shader, "with Binbun's shader")
+	assert_same(toon.get_shader_parameter(&"albedo_texture"), texture, "wearing its own albedo texture")
+	assert_eq(toon.get_shader_parameter(&"albedo_color"), Color.RED, "and colour")
+	assert_same(twin.get_surface_override_material(0), toon, "A surface with the same albedo shares the material")
+	var plain_toon: ShaderMaterial = plain.get_surface_override_material(0) as ShaderMaterial
+	assert_eq(plain_toon.get_shader_parameter(&"albedo_color"), Color.YELLOW, "The active material counts, an earlier surface override included")
+	assert_null(plain_toon.get_shader_parameter(&"albedo_texture"), "no texture where there was none")
+	assert_null(shader_surface.get_surface_override_material(0), "A ShaderMaterial surface (water, grass, VFX) keeps its own")
+	assert_null(glass.get_surface_override_material(0), "A transparent surface keeps its own")
+	assert_null(overridden.get_surface_override_material(0), "A mesh with a material_override is left alone")
+	assert_null(filter.get_surface_override_material(0), "and so is the filter's own quad")
+	var late: MeshInstance3D = _box(_standard(Color.WHITE), root)
+	await wait_process_frames(1)
+	assert_true(late.get_surface_override_material(0) is ShaderMaterial, "A mesh added while Binbun is on gets it too")
+	filter.set_mode(ToonFilter.Mode.OFF)
+	assert_null(textured.get_surface_override_material(0), "Off puts the originals back")
+	assert_null(twin.get_surface_override_material(0))
+	assert_same(plain.get_surface_override_material(0), previous, "an earlier override included")
+	assert_null(late.get_surface_override_material(0))
+	var after: MeshInstance3D = _box(_standard(Color.WHITE), root)
+	await wait_process_frames(1)
+	assert_null(after.get_surface_override_material(0), "and stops watching the tree")
+	filter.set_mode(ToonFilter.Mode.BINBUN)
+	assert_true(after.get_surface_override_material(0) is ShaderMaterial)
+	textured.free()
+	camera.free()
+	assert_null(after.get_surface_override_material(0), "Leaving the tree restores what is left; a freed mesh is skipped")
