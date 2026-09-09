@@ -1,0 +1,6 @@
+# The addon is copied in from the repository root before the demo runs; see the README.
+addons/
+
+# Godot's import cache and the web export the Pages workflow builds.
+.godot/
+build/

@@ -190,6 +190,24 @@ Open and run **`res://addons/3d_player_controller/scenes/demo/demo.tscn`** to ex
 
 ---
 
+## Playing the demo
+
+The demo runs in a browser at <http://timothycope.com/godot-3d-player-controller-addon/>. A GitHub Action exports it on every
+push to `main` and hands it straight to Pages, so the export itself is never committed: this repository is a
+submodule of the projects that use the addon, and a web export is tens of megabytes that git cannot compress.
+
+`demo/` is the project that export is built from. It expects the addon at `res://addons/3d_player_controller/`, which is
+where a consuming project puts it, so nothing in the addon needs a second set of paths. `demo/addons/` is
+ignored by git; fill it before running the demo locally:
+
+```powershell
+robocopy . demo/addons/3d_player_controller /MIR /XD .git .github demo /XF .gitignore .gitattributes
+```
+
+Then open `demo/` in Godot.
+
+---
+
 ## Quick Start
 
 ### 1. Instantiate the Player Scene
