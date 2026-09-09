@@ -1,15 +1,6 @@
-# Texture .import files carry each consuming project's importer settings, so they cannot be shared;
-# Godot regenerates them harmlessly on import.
-#
-# Model .import files are different and must be tracked. They define the imported node structure -
-# skeleton naming, root type, animation handling - so regenerating them with defaults renames or
-# removes nodes and breaks any scene that inherits from the model.
-*.import
-!*.glb.import
-!*.gltf.import
-!*.fbx.import
-!*.obj.import
-!*.dae.import
-!*.blend.import
+# Godot's .import files are tracked deliberately. They carry the UID of every imported resource, so
+# regenerating them breaks any .tres or .tscn that references a texture or model by uid://, and for
+# models they also define the imported node structure. Every consuming project sets the same
+# [importer_defaults], so these files stay stable across projects rather than churning.
 
 .godot/
