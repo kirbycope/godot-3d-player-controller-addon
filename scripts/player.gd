@@ -272,8 +272,6 @@ var is_paused: bool = false: ## Is the Player currently paused?
 			is_paused = value
 			paused_changed.emit(value)
 var is_typing: bool = false ## Is the local Player typing in the chat window? Gameplay input is blocked while true.
-var prompt_action_label: String = "" ## What the Action button reads while a world prompt is in range ("Pick Up"); [method ActionPrompt.show_for] sets it and [method ActionPrompt.hide_for] clears it, and [Controls] keeps it through every label refresh.
-var action_prompt: Node ## The [ActionPrompt] that set [member prompt_action_label]; only it clears the label, so leaving one prompt inside another keeps the other's.
 var is_pushing: bool = false ## Is the Player currently pushing?
 var is_ragdolling: bool = false ## Is the Player currently ragdolling?
 var requires_shoot_release_after_throw: bool = false ## Set during a throw to require releasing the shoot button before shooting weapons.
@@ -322,7 +320,7 @@ var paraglider: Node3D
 @onready var initial_collision_shape_transform: Transform3D = collision_shape.transform
 @onready var separation_ray_shape: CollisionShape3D = $SeparationRayShape3D
 @onready var initial_separation_ray_transform: Transform3D = separation_ray_shape.transform
-@onready var controls: CanvasLayer = $Controls
+@onready var controls: PlayerControls = $Controls
 @onready var chat: ChatWindow = get_node_or_null("Chat") as ChatWindow ## The local chat window; puppets keep a hidden copy that relays RPCs.
 @onready var crosshair: TextureRect = $Crosshair
 @onready var debug: Debug = $Debug

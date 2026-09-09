@@ -3,7 +3,7 @@ extends GutTest
 ## Purpose: To test held object rotation snapping, hit detection delivery and the water splash lifetime.
 
 const PLAYER_SCENE = preload("res://addons/3d_player_controller/scenes/player.tscn")
-const CONTROLS_SCENE = preload("res://addons/3d_player_controller/scenes/controls.tscn")
+const CONTROLS_SCENE = preload("res://addons/3d_player_controller/scenes/player_controls.tscn")
 const SPLASH_SCENE = preload("res://addons/3d_player_controller/scenes/water_splash.tscn")
 
 

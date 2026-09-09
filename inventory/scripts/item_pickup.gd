@@ -35,7 +35,7 @@ func _ready() -> void:
 ## Freed while a Player stands by it (someone else took it, the level changed): the prompt lets the label go.
 func _exit_tree() -> void:
 	if player:
-		action_prompt.hide_for(player)
+		action_prompt.hide_for(player.controls)
 		player = null
 
 
@@ -57,7 +57,7 @@ func take() -> void:
 	count = left
 	picked_up.emit(player, taken)
 	if count == 0:
-		action_prompt.hide_for(player)
+		action_prompt.hide_for(player.controls)
 		player = null
 		queue_free()
 
@@ -67,13 +67,13 @@ func take() -> void:
 func _on_player_detection_body_entered(body: Node3D) -> void:
 	if body is Player and body.is_multiplayer_authority() and not (body as Player).is_riding:
 		player = body
-		action_prompt.show_for(player, "Pick Up")
+		action_prompt.show_for(player.controls, "Pick Up")
 
 
 ## Wired to PlayerDetection.body_exited: walking away takes the prompt and the label with it.
 func _on_player_detection_body_exited(body: Node3D) -> void:
 	if body == player:
-		action_prompt.hide_for(player)
+		action_prompt.hide_for(player.controls)
 		player = null
 
 

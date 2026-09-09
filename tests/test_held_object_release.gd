@@ -3,7 +3,7 @@ extends GutTest
 ## passes through the Player for a moment so it leaves cleanly instead of being shoved out.
 
 const PLAYER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player.tscn")
-const CONTROLS_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/controls.tscn")
+const CONTROLS_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player_controls.tscn")
 
 var player: Player
 var body: RigidBody3D

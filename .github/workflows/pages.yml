@@ -30,6 +30,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          # The demo needs the Controls addon at demo/addons/controls, which is a submodule.
+          submodules: recursive
 
       - name: Install Godot and its export templates
         shell: bash

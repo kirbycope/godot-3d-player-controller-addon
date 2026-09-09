@@ -1,6 +1,9 @@
-# The addon is copied in from the repository root before the demo runs; see the README.
-addons/
+# The addon is the repository root; the demo project takes a copy of it, which is never committed twice.
+# See the README for the one command that fills it in. Everything else the demo needs - the Controls
+# addon - is a submodule and is committed.
+addons/3d_player_controller/
 
 # Godot's import cache and the web export the Pages workflow builds.
 .godot/
 build/
+.mcp/

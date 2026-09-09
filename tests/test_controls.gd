@@ -1,6 +1,6 @@
 extends GutTest
 
-## Purpose: To test the actions and keybindings in `res://addons/3d_player_controller/scripts/controls.gd`.
+## Purpose: To test the actions and keybindings in `res://addons/3d_player_controller/scripts/player_controls.gd`.
 
 
 ## Shared base setup/teardown for test classes that inherit from _this_ one.
@@ -298,36 +298,52 @@ class TestInputTypeSwapping:
 		controls.current_input_type = controls.InputType.MICROSOFT
 		assert_eq(dpad_up.texture_normal, outline_texture, "DPad Up texture should return to outline texture when released after input swap")
 
-
 ## Tests related to the runtime InputMap action table.
 class TestActionTable:
 	extends ControlsTestBase
 
-	func test_every_table_action_is_registered_with_its_bindings():
-		for action_name: String in Controls.ACTIONS:
+	## Every event one binding describes is on the action.
+	func _assert_bindings(action_name: String, binding: Dictionary) -> void:
+		for key in binding.get("keys", []):
+			var key_event := InputEventKey.new()
+			key_event.physical_keycode = key
+			assert_true(InputMap.action_has_event(action_name, key_event), "%s should have physical key %s." % [action_name, key])
+		for keycode in binding.get("keycodes", []):
+			var key_event := InputEventKey.new()
+			key_event.keycode = keycode
+			assert_true(InputMap.action_has_event(action_name, key_event), "%s should have keycode %s." % [action_name, keycode])
+		for button in binding.get("buttons", []):
+			var button_event := InputEventJoypadButton.new()
+			button_event.button_index = button
+			assert_true(InputMap.action_has_event(action_name, button_event), "%s should have joypad button %s." % [action_name, button])
+		for axis in binding.get("axes", []):
+			var motion_event := InputEventJoypadMotion.new()
+			motion_event.axis = axis[0]
+			motion_event.axis_value = axis[1]
+			assert_true(InputMap.action_has_event(action_name, motion_event), "%s should have joypad axis %s." % [action_name, axis])
+		for mouse_button in binding.get("mouse", []):
+			var mouse_event := InputEventMouseButton.new()
+			mouse_event.button_index = mouse_button
+			assert_true(InputMap.action_has_event(action_name, mouse_event), "%s should have mouse button %s." % [action_name, mouse_button])
+
+	## The keys, mouse buttons and buttonless actions the HUD's own slots cannot supply.
+	func test_every_player_action_is_registered_with_its_bindings():
+		for action_name: String in PlayerControls.PLAYER_ACTIONS:
 			assert_true(InputMap.has_action(action_name), "Action %s should be registered." % action_name)
-			var binding: Dictionary = Controls.ACTIONS[action_name]
-			for key in binding.get("keys", []):
-				var key_event := InputEventKey.new()
-				key_event.physical_keycode = key
-				assert_true(InputMap.action_has_event(action_name, key_event), "%s should have physical key %s." % [action_name, key])
-			for keycode in binding.get("keycodes", []):
-				var key_event := InputEventKey.new()
-				key_event.keycode = keycode
-				assert_true(InputMap.action_has_event(action_name, key_event), "%s should have keycode %s." % [action_name, keycode])
-			for button in binding.get("buttons", []):
-				var button_event := InputEventJoypadButton.new()
-				button_event.button_index = button
-				assert_true(InputMap.action_has_event(action_name, button_event), "%s should have joypad button %s." % [action_name, button])
-			for axis in binding.get("axes", []):
-				var motion_event := InputEventJoypadMotion.new()
-				motion_event.axis = axis[0]
-				motion_event.axis_value = axis[1]
-				assert_true(InputMap.action_has_event(action_name, motion_event), "%s should have joypad axis %s." % [action_name, axis])
-			for mouse_button in binding.get("mouse", []):
-				var mouse_event := InputEventMouseButton.new()
-				mouse_event.button_index = mouse_button
-				assert_true(InputMap.action_has_event(action_name, mouse_event), "%s should have mouse button %s." % [action_name, mouse_button])
+			_assert_bindings(action_name, PlayerControls.PLAYER_ACTIONS[action_name])
+
+	## Every button on the HUD is mapped to one of this addon's actions, and answers to the pad button it is
+	## drawn on. That is what makes the addon drop-in: none of these are in project.godot.
+	func test_every_slot_is_mapped_and_bound_to_its_own_button():
+		var controls: PlayerControls = player_instance.controls
+		var slot_actions: Dictionary = controls.get_slot_actions()
+		assert_eq(slot_actions.size(), Controls.SLOT_EVENTS.size(), "Every slot the HUD has should be accounted for.")
+		for slot: String in slot_actions:
+			var action_name: StringName = slot_actions[slot]
+			assert_ne(action_name, &"", "Slot %s should be mapped by the player controller." % slot)
+			assert_true(InputMap.has_action(action_name), "Action %s should be registered." % action_name)
+			_assert_bindings(String(action_name), Controls.SLOT_EVENTS[slot])
 
 	func test_emote_action_is_not_registered():
-		assert_false(Controls.ACTIONS.has("emote"), "The unused emote action should be gone from the table.")
+		assert_false(PlayerControls.PLAYER_ACTIONS.has("emote"), "The unused emote action should be gone from the table.")
+		assert_false(InputMap.has_action("emote"), "and nothing else should have added it.")

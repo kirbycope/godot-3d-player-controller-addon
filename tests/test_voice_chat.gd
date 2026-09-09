@@ -1,7 +1,7 @@
 extends GutTest
 
 const PLAYER_SCENE = preload("res://addons/3d_player_controller/scenes/player.tscn")
-const CONTROLS_SCENE = preload("res://addons/3d_player_controller/scenes/controls.tscn")
+const CONTROLS_SCENE = preload("res://addons/3d_player_controller/scenes/player_controls.tscn")
 const AUDIO_SETTINGS_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/audio_settings.tscn")
 
 

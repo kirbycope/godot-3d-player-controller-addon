@@ -1,7 +1,7 @@
 extends GutTest
 
 const PLAYER_SCENE = preload("res://addons/3d_player_controller/scenes/player.tscn")
-const CONTROLS_SCENE = preload("res://addons/3d_player_controller/scenes/controls.tscn")
+const CONTROLS_SCENE = preload("res://addons/3d_player_controller/scenes/player_controls.tscn")
 
 
 func test_focus_levels_vertical_camera_pitch_without_target() -> void:
