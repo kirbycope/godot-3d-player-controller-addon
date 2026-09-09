@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b6hcc6xo03qnc"
-path="res://.godot/imported/ore.svg-1def04451023c718646fa791be122f04.ctex"
+path="res://.godot/imported/ore.svg-7eebdb8ce8b5f2418f4593ee61cf6924.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://addons/3d_player_controller/garp/assets/icons/ore.svg"
-dest_files=["res://.godot/imported/ore.svg-1def04451023c718646fa791be122f04.ctex"]
+dest_files=["res://.godot/imported/ore.svg-7eebdb8ce8b5f2418f4593ee61cf6924.ctex"]
 
 [params]
 

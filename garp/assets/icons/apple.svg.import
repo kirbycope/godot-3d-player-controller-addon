@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://53kr0d3ulxfw"
-path="res://.godot/imported/apple.svg-ab8dd0c22ba67b6052fbf51fb13e2a99.ctex"
+path="res://.godot/imported/apple.svg-14c042f8244bf9b0b8ac598349373226.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://addons/3d_player_controller/garp/assets/icons/apple.svg"
-dest_files=["res://.godot/imported/apple.svg-ab8dd0c22ba67b6052fbf51fb13e2a99.ctex"]
+dest_files=["res://.godot/imported/apple.svg-14c042f8244bf9b0b8ac598349373226.ctex"]
 
 [params]
 

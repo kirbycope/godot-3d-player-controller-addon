@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://fgvvdnu4mk64"
-path="res://.godot/imported/materials.svg-b00efea3be79147ff354c0233f85a877.ctex"
+path="res://.godot/imported/materials.svg-1eb6de3b57202040d84beae4b83f102e.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://addons/3d_player_controller/garp/assets/icons/materials.svg"
-dest_files=["res://.godot/imported/materials.svg-b00efea3be79147ff354c0233f85a877.ctex"]
+dest_files=["res://.godot/imported/materials.svg-1eb6de3b57202040d84beae4b83f102e.ctex"]
 
 [params]
 
