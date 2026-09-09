@@ -7,7 +7,7 @@ extends GutTest
 ## its impact.
 
 const PLAYER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player.tscn")
-const SWORD_SCENE: PackedScene = preload("res://addons/garp/scenes/demo/wooden_sword.tscn")
+const SWORD_SCENE: PackedScene = preload("res://addons/3d_player_controller/garp/scenes/demo/wooden_sword.tscn")
 const ARROW_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/arrow.tscn")
 const ARROW_SCRIPT: Script = preload("res://addons/3d_player_controller/scripts/arrow.gd")
 const AUDIO_DIR: String = "res://addons/3d_player_controller/resources/audio/"

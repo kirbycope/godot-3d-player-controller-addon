@@ -6,7 +6,7 @@ extends GutTest
 ## has take_hit, and pausing mid-charge puts it back. The Throw emote rides the spine blend, so locomotion goes on.
 
 const PLAYER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player.tscn")
-const WOODEN_SWORD_SCENE: PackedScene = preload("res://addons/garp/scenes/demo/wooden_sword.tscn")
+const WOODEN_SWORD_SCENE: PackedScene = preload("res://addons/3d_player_controller/garp/scenes/demo/wooden_sword.tscn")
 
 class HitTarget extends StaticBody3D:
 	var hits: Array[float] = []

@@ -12,7 +12,7 @@ extends RigidBody3D
 
 signal landed(collider: Node) ## Emitted on every peer the first time the body touches anything.
 
-const ITEM_PICKUP_SCENE: PackedScene = preload("res://addons/garp/scenes/item_pickup.tscn")
+const ITEM_PICKUP_SCENE: PackedScene = preload("res://addons/3d_player_controller/garp/scenes/item_pickup.tscn")
 const THROWER_EXCEPTION_SECONDS: float = 0.3 ## How long it ignores the body that threw it, so it leaves the hand cleanly.
 const LOST_SECONDS: float = 30.0 ## A throw that never lands (off the world) frees itself after this.
 
