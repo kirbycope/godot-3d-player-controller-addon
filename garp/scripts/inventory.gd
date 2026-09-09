@@ -302,10 +302,31 @@ func save() -> Error:
 	return ResourceSaver.save(data, save_path)
 
 
+## GARP shipped as its own addon at res://addons/garp/ until it moved inside the player controller. A save
+## written before the move names its scripts by the old path, so it fails to load and the player loses
+## everything they were carrying. Rewriting the paths in place repairs it, and only ever runs once per save.
+func _migrate_legacy_save() -> void:
+	if not save_path.ends_with(".tres"): # a binary save is not ours to rewrite as text
+		return
+	var file: FileAccess = FileAccess.open(save_path, FileAccess.READ)
+	if file == null:
+		return
+	var text: String = file.get_as_text()
+	file.close()
+	if not text.contains("res://addons/garp/"):
+		return
+	file = FileAccess.open(save_path, FileAccess.WRITE)
+	if file == null:
+		return
+	file.store_string(text.replace("res://addons/garp/", "res://addons/3d_player_controller/garp/"))
+	file.close()
+
+
 ## Replaces the inventory with what [member save_path] holds; nothing happens when there is no file.
 func load_save() -> bool:
 	if not ResourceLoader.exists(save_path):
 		return false
+	_migrate_legacy_save()
 	var data: InventorySave = ResourceLoader.load(save_path, "", ResourceLoader.CACHE_MODE_IGNORE) as InventorySave
 	if data == null:
 		return false

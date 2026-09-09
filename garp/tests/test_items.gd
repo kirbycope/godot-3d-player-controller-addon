@@ -183,6 +183,32 @@ func test_save_and_load_round_trip() -> void:
 	assert_eq(stowed.inventory.get_all_weapons().size(), 1, "But still owned")
 
 
+
+func test_a_save_written_before_garp_moved_still_loads() -> void:
+	inventory.add_item(APPLE, 5)
+	inventory.add_item(SWORD)
+	assert_eq(inventory.save(), OK)
+
+	# Rewind the file to how GARP wrote it as a standalone addon, when its scripts lived at res://addons/garp/.
+	var file: FileAccess = FileAccess.open(TEST_SAVE, FileAccess.READ)
+	var text: String = file.get_as_text()
+	file.close()
+	assert_true(text.contains("res://addons/3d_player_controller/garp/"), "The save names its scripts by path")
+	file = FileAccess.open(TEST_SAVE, FileAccess.WRITE)
+	file.store_string(text.replace("res://addons/3d_player_controller/garp/", "res://addons/garp/"))
+	file.close()
+
+	var loaded: Player = _spawn_player()
+	await wait_physics_frames(2)
+	assert_true(loaded.inventory.load_save(), "The old paths are repaired rather than throwing the save away")
+	assert_eq(loaded.inventory.count_of(APPLE), 5)
+	assert_true(loaded.inventory.has_equipment(Equipment.EquipmentType.SWORD_1H))
+
+	file = FileAccess.open(TEST_SAVE, FileAccess.READ)
+	assert_false(file.get_as_text().contains("res://addons/garp/"), "And the repair is written back, so it runs once")
+	file.close()
+
+
 func test_persist_writes_the_file_on_every_change_and_reads_it_on_ready() -> void:
 	inventory.persist = true
 	inventory.add_item(APPLE, 2)

@@ -99,7 +99,7 @@ offset_top = 70.0
 offset_right = 340.0
 offset_bottom = 120.0
 grow_horizontal = 2
-text = "The bundled player controller is a contract stub with no movement, so this demo is the inventory itself: Pause, then Inventory. Q and T (or the bumpers) switch tabs, Confirm lifts a stack and drops it on another slot, Use and Drop act on it, Back returns to Pause. The inventory is saved to user://garp_inventory.tres."
+text = "Walk over the pickups to collect them, then Pause and choose Inventory. Q and T (or the bumpers) switch tabs, Confirm lifts a stack and drops it on another slot, Use and Drop act on it, Back returns to Pause. The inventory is saved to user://garp_inventory.tres."
 horizontal_alignment = 1
 autowrap_mode = 3
 

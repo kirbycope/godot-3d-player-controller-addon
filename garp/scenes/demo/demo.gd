@@ -3,8 +3,8 @@ extends Node3D
 ## only signals, so the demo shows the signal on the hint label; a game would apply the effect there.
 
 const DEMO_TREE: SpellTree = preload("res://addons/3d_player_controller/garp/resources/spell_tree_demo.tres")
-## The real player controller registers the InputMap actions GARP listens for; the bundled contract stub
-## does not, so the demo adds the missing ones itself, from the same list the contract tests use.
+## The player controller's Controls node registers the InputMap actions GARP listens for. The demo tops up
+## anything still missing, from the same list the tests use, so it works even with Controls removed.
 const CONTRACT_ACTIONS := preload("res://addons/3d_player_controller/garp/tests/contract_actions.gd")
 
 @onready var player: Player = $Player
@@ -26,8 +26,8 @@ func _ready() -> void:
 	player.inventory.load_save()
 
 
-## The bundled player controller is a contract stub with no camera, so the demo carries one to see the yard
-## by. Alongside the real addon the Player brings its own, and that one should win.
+## The demo carries a camera so the yard can be seen without a Player, but the Player brings its own and
+## that one should win.
 func _drop_camera_if_the_player_has_one() -> void:
 	if not is_instance_valid(camera):
 		return

@@ -1,10 +1,11 @@
 # GARP's contract with the 3D Player Controller
 
-Everything GARP (`addons/garp`: scripts, scenes, resources, the editor panel and the tests in `tests/`) touches on
-`addons/3d_player_controller`. The garp repo ships a stub package at the same paths that implements exactly this
-surface, so `tests/` passes against the stub there and against the real addon in the player controller project.
-`tests/integration/` needs the real addon and is not covered by this contract. Anything not listed here is not
-GARP's to use; widen the table before widening the code.
+Everything GARP (`addons/3d_player_controller/garp/`: scripts, scenes, resources and the tests in `tests/`)
+touches on the rest of the player controller. GARP used to be its own addon and this table was what its stub had
+to implement; now that it ships as a subfolder the table is a boundary rather than a build requirement, and it
+earns its keep by keeping the subfolder liftable instead of letting it grow into everything around it.
+`tests/integration/` reaches past this surface deliberately and is not covered by it. Anything not listed here is
+not GARP's to use; widen the table before widening the code.
 
 ## Player (`scripts/player.gd`, `class_name Player extends CharacterBody3D`)
 
