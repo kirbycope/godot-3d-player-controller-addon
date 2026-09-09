@@ -87,7 +87,7 @@ Both tiers, in the player controller project:
 & 'C:\Godot\godot.exe' --headless --path . -s addons/gut/gut_cmdln.gd -gdir=res://addons/3d_player_controller/garp/tests,res://addons/3d_player_controller/garp/tests/integration -gexit
 ```
 
-Every file under `tests/integration/` starts with a comment saying it needs the real player controller. A contract test may use only what `CONTRACT.md` lists, and adds the InputMap actions it presses itself through `tests/contract_actions.gd` (`before_all` / `after_all`), since the stub registers none; when GARP needs more, widen the contract and the stub first.
+A test in `tests/` may use only what `CONTRACT.md` lists, and registers the InputMap actions it presses itself through `tests/contract_actions.gd` (`before_all` / `after_all`) rather than assuming the Controls node put them there; when GARP needs more of the player controller, widen the contract first. The files under `tests/integration/` reach past it deliberately, and each says so in a comment at the top.
 
 ---
 

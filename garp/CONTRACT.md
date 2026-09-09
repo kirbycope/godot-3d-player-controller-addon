@@ -33,7 +33,7 @@ not GARP's to use; widen the table before widening the code.
 | `InputType` | enum `KEYBOARD_MOUSE, MICROSOFT, NINTENDO, SONY, TOUCH` | `current_input_type` values |
 | `current_input_type` | `InputType` (default `TOUCH`) | `KEYBOARD_MOUSE` puts a held stack or spell under the mouse instead of the focused cell; the wheel reads the mouse or the right stick |
 | `reset_labels()` | `-> void` | Restores every label's scene text; called after the equipped set changes |
-| Actions GARP listens for | `action`, `start`, `ability`, `throw`, `last_weapon`, `next_weapon`, `look_up/down/left/right` | The player controller registers them in the InputMap at runtime; GARP only presses and reads them (the built in `ui_accept` and `ui_cancel` are used as they are). The contract tests add any the project lacks themselves (`tests/contract_actions.gd`, in `before_all`) and take those back out in `after_all`, so the stub registers none |
+| Actions GARP listens for | `action`, `start`, `ability`, `throw`, `last_weapon`, `next_weapon`, `look_up/down/left/right` | The player controller registers them in the InputMap at runtime; GARP only presses and reads them (the built in `ui_accept` and `ui_cancel` are used as they are). The tests in `tests/` add any the project lacks themselves (`tests/contract_actions.gd`, in `before_all`) and take those back out in `after_all`, so they do not depend on a Controls node having readied first |
 
 ## HeldObject (`scripts/held_object.gd`, `class_name HeldObject extends Node`)
 
@@ -64,8 +64,8 @@ not GARP's to use; widen the table before widening the code.
 How Pause opens the screens is the player controller's use of GARP, not GARP's of the player controller: the real
 `pause.gd` has `inventory_screen_scene` and `spells_screen_scene` exports that `player.tscn` points at GARP's
 screens, instances them beside itself on the Player with `player` set, and shows an Inventory and a Spells button
-that hide Pause and `show_menu()` the screen. That flow is covered only in `tests/integration/test_pause_menu_flow.gd`;
-the stub's Pause is a bare `PlayerMenuLayer` with a Resume button.
+that hide Pause and `show_menu()` the screen. That flow is covered only in `tests/integration/test_pause_menu_flow.gd`, since it
+is the one direction of the coupling this table does not govern.
 
 ## ActionPrompt (`scripts/action_prompt.gd`, `class_name ActionPrompt extends Node3D`, scene `scenes/action_prompt.tscn`)
 
@@ -95,12 +95,12 @@ hides) is behind `show_for` / `hide_for` and is the player controller's; the con
 | `display_name` | `@export String` | Node buttons, details, wheel slots, palette labels, button names |
 | `icon` | `@export Texture2D` | Node buttons, details, wheel slots, the held icon, the palette |
 | `icon_color` | `@export Color` | Tints the icon everywhere it is drawn |
-| `get_details()` | `-> String`, optional | The details panel's `DetailInfo` line (damage, ticks, slows); `SpellsScreen` checks `has_method` first, so the stub need not have it |
+| `get_details()` | `-> String`, optional | The details panel's `DetailInfo` line (damage, ticks, slows); `SpellsScreen` checks `has_method` first, so an ability need not have it |
 | `HealAbility` | `scripts/heal_ability.gd extends Ability` | `heal.tres` (`script_class="HealAbility"`); the editor's class chain test |
 | `StealthAbility` | `scripts/stealth_ability.gd extends Ability` | `stealth.tres` (`script_class="StealthAbility"`); the editor's class chain test |
 
-The real resources carry cooldowns, cast times, costs, cast styles and audio as well; GARP saves the resource, not
-the fields, so the stub's `heal.tres` and `stealth.tres` set only the three above.
+Abilities carry cooldowns, cast times, costs, cast styles and audio as well; GARP saves the resource rather than
+the fields, so only the three above are its business.
 
 ## Equipment (`scripts/equipment.gd`, `class_name Equipment extends Node3D`)
 

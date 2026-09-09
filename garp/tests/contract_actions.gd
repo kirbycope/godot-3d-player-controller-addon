@@ -1,8 +1,9 @@
 extends RefCounted
 ## The InputMap actions GARP listens for. The player controller registers them at runtime, so a bare project has
 ## none: a contract test makes one of these, calls [method add_missing] in before_all and [method remove_added] in
-## after_all, and the suite runs on the stub and the real addon alike. Only the actions this added are erased, so a
-## project that had them already (project.godot, or a Controls that readied first) is left as it was.
+## after_all, and the suite runs without depending on a Controls node having readied first. Only the actions this
+## call added are erased, so a project that had them already (project.godot, or a Controls that readied first) is
+## left as it was.
 
 const ACTIONS: Array[StringName] = [
 	&"action", &"start", &"ability", &"throw", &"last_weapon", &"next_weapon",
