@@ -1,0 +1,5 @@
+# Godot rewrites .import files with each consuming project's importer settings, so they cannot be
+# shared between projects. Godot regenerates them on first import, and this repository is not a
+# Godot project in its own right, so nothing here needs them.
+*.import
+.godot/
