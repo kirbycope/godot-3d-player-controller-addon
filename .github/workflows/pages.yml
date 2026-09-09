@@ -62,6 +62,10 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p demo/build
+          # One import pass is not enough: the first registers the files, and resources that depend on
+          # another resource are only written on the second. Exporting after one pass ships scenes whose
+          # textures are missing from .godot/imported, which the browser reports as a corrupt texture.
+          godot --headless --path demo --import
           godot --headless --path demo --import
           godot --headless --path demo --export-release "Web" build/index.html
 
