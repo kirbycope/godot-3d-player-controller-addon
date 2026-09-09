@@ -62,18 +62,13 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p demo/build
-          # Import until it settles. One pass only registers the files, and each further pass writes
-          # the resources whose dependencies the previous pass produced, so an asset-heavy addon needs
-          # several. Exporting early ships scenes whose textures were never written to .godot/imported,
-          # which the browser reports as a corrupt texture.
-          previous=0
-          for _ in 1 2 3 4 5 6; do
-            godot --headless --path demo --import || true
-            current=$(find demo/.godot/imported -type f 2>/dev/null | wc -l)
-            [ "$current" = "$previous" ] && break
-            previous=$current
+          # Import repeatedly before exporting. One pass only registers the files; each further pass
+          # writes the resources whose dependencies the previous pass produced, and an asset-heavy
+          # addon needs several. Exporting early ships scenes whose textures were never written to
+          # .godot/imported, which the browser reports as a corrupt texture.
+          for _ in 1 2 3 4; do
+            godot --headless --path demo --import
           done
-          echo "imported files: $previous"
           godot --headless --path demo --export-release "Web" build/index.html
 
       - name: Upload the export
