@@ -207,8 +207,10 @@ func test_a_save_written_before_inventory_moved_still_loads(legacy: String = use
 	assert_true(loaded.inventory.has_equipment(Equipment.EquipmentType.SWORD_1H))
 
 	file = FileAccess.open(TEST_SAVE, FileAccess.READ)
-	assert_false(file.get_as_text().contains("res://addons/3d_player_controller/inventory/"), "And the repair is written back, so it runs once")
+	var repaired: String = file.get_as_text()
 	file.close()
+	assert_false(repaired.contains(legacy), "And the repair is written back, so it runs once")
+	assert_true(repaired.contains(Inventory.SCRIPT_PATH), "naming the scripts where they live now")
 
 
 func test_persist_writes_the_file_on_every_change_and_reads_it_on_ready() -> void:
