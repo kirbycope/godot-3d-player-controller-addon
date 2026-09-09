@@ -214,8 +214,11 @@ where a consuming project puts it, so nothing in the addon needs a second set of
 ignored by git; fill it before running the demo locally:
 
 ```powershell
-robocopy . demo/addons/3d_player_controller /MIR /XD .git .github demo /XF .gitignore .gitattributes
+robocopy . demo\addons\3d_player_controller /MIR /XD "$PWD\.git" "$PWD\.github" "$PWD\demo" "$PWD\.godot" /XF .gitignore .gitattributes
 ```
+
+The excluded folders are given as full paths on purpose. `robocopy /XD demo` would exclude any folder called
+`demo` at any depth, which includes `scenes/demo/` - the demo scene itself.
 
 Then open `demo/` in Godot.
 
