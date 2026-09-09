@@ -4,3 +4,6 @@
 # [importer_defaults], so these files stay stable across projects rather than churning.
 
 .godot/
+
+# Windows leaves these behind when Godot rewrites a file in place.
+*~RF*.TMP
