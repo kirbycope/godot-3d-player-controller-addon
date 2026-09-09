@@ -1,7 +1,7 @@
 extends PlayerMenuLayer
 
-@export_file("*.tscn") var inventory_screen_scene: String = "" ## A GARP InventoryScreen scene; when set, the Inventory button shows and opens it.
-@export_file("*.tscn") var spells_screen_scene: String = "" ## A GARP SpellsScreen scene; when set, the Spells button shows and opens it.
+@export_file("*.tscn") var inventory_screen_scene: String = "" ## An InventoryScreen scene; when set, the Inventory button shows and opens it.
+@export_file("*.tscn") var spells_screen_scene: String = "" ## A SpellsScreen scene; when set, the Spells button shows and opens it.
 @export_file("*.tscn") var extra_screen_scene: String = "" ## Any PlayerMenuLayer scene of the game's (a journal, a fish index); when set, the Extra button shows and opens it.
 @export var extra_screen_label: String = "Journal" ## What the Extra button says.
 

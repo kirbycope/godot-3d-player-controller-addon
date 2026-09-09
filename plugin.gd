@@ -6,15 +6,15 @@ extends EditorPlugin
 
 ## 3D Player Controller plugin editor integration.
 ##
-## GARP's editor tooling lives here too. Godot only reads plugin.cfg one level under addons/, so now that
-## GARP sits at addons/3d_player_controller/garp/ its own plugin.cfg is never seen and its Spell Tree
+## The inventory's editor tooling lives here too. Godot only reads plugin.cfg one level under addons/, so
+## with the inventory at addons/3d_player_controller/inventory/ a plugin.cfg of its own is never seen and its Spell Tree
 ## editor would simply not appear. Rather than leave it unreachable, its behaviour is merged in: the
 ## bottom panel opens whenever a SpellTree resource is selected, the way AnimationTree opens its own.
 ##
-## GARP registers no custom types; Inventory, InventoryScreen, ItemPickup, Item and the save resources
+## The inventory registers no custom types; Inventory, InventoryScreen, ItemPickup, Item and the save resources
 ## carry class_name and icons of their own.
 
-const SPELL_TREE_EDITOR: GDScript = preload("res://addons/3d_player_controller/garp/editor/spell_tree_editor.gd")
+const SPELL_TREE_EDITOR: GDScript = preload("res://addons/3d_player_controller/inventory/editor/spell_tree_editor.gd")
 
 var editor: SpellTreeEditor
 var panel_button: Button

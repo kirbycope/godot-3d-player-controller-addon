@@ -5,7 +5,7 @@ extends GutTest
 ## HitDetection applies no synthetic knockback of its own.
 
 const PLAYER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player.tscn")
-const SWORD_SCENE: PackedScene = preload("res://addons/3d_player_controller/garp/scenes/demo/wooden_sword.tscn")
+const SWORD_SCENE: PackedScene = preload("res://addons/3d_player_controller/inventory/scenes/demo/wooden_sword.tscn")
 
 const WEAPONS_BIT: int = 1 << (HitDetection.WEAPONS_LAYER - 1)
 const HITTABLE_LAYER: int = 11

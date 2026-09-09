@@ -6,7 +6,7 @@ extends GutTest
 ## has take_hit, and pausing mid-charge puts it back. The Throw emote rides the spine blend, so locomotion goes on.
 
 const PLAYER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player.tscn")
-const WOODEN_SWORD_SCENE: PackedScene = preload("res://addons/3d_player_controller/garp/scenes/demo/wooden_sword.tscn")
+const WOODEN_SWORD_SCENE: PackedScene = preload("res://addons/3d_player_controller/inventory/scenes/demo/wooden_sword.tscn")
 
 class HitTarget extends StaticBody3D:
 	var hits: Array[float] = []
@@ -52,7 +52,7 @@ func after_each() -> void:
 		root = null
 
 
-## The GARP demo sword, flagged throwable on the world copy so the equipped copy inherits it; it has a scene to come back from.
+## The inventory demo's sword, flagged throwable on the world copy so the equipped copy inherits it; it has a scene to come back from.
 func _equip_throwable_sword() -> Equipment:
 	var pickup: Equipment = WOODEN_SWORD_SCENE.instantiate()
 	pickup.is_throwable = true
