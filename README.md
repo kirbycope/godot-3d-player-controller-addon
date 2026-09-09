@@ -192,7 +192,7 @@ Open and run **`res://addons/3d_player_controller/scenes/demo/demo.tscn`** to ex
 
 ## Playing the demo
 
-The demo runs in a browser at <http://timothycope.com/godot-3d-player-controller-addon/>. A GitHub Action exports it on every
+The demo runs in a browser at <https://timothycope.com/godot-3d-player-controller-addon/>. A GitHub Action exports it on every
 push to `main` and hands it straight to Pages, so the export itself is never committed: this repository is a
 submodule of the projects that use the addon, and a web export is tens of megabytes that git cannot compress.
 

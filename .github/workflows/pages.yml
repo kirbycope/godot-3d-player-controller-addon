@@ -52,8 +52,10 @@ jobs:
           set -euo pipefail
           mkdir -p "demo/addons/${ADDON}"
           # Everything the addon ships, which is the repository minus its own scaffolding.
-          rsync -a --exclude '.git' --exclude '.github' --exclude 'demo' \
-                --exclude '.gitignore' --exclude '.gitattributes' ./ "demo/addons/${ADDON}/"
+          # Anchored with a leading slash: unanchored, 'demo' also matches scenes/demo/,
+          # which is where most of these addons keep the demo scene itself.
+          rsync -a --exclude '/.git' --exclude '/.github' --exclude '/demo' \
+                --exclude '/.gitignore' --exclude '/.gitattributes' ./ "demo/addons/${ADDON}/"
 
       - name: Export the demo
         shell: bash
