@@ -113,7 +113,13 @@ func test_chat_action_opens_the_input_and_a_submit_appends_and_closes() -> void:
 	assert_false(chat.has_focus(), "The embedded focus went back to the game")
 	assert_true(chat.unfocusable, "The window is unfocusable again")
 	assert_string_contains(chat.history.get_parsed_text(), chat.get_display_name() + ": hello there", "The message shows with the sender's name (Steam persona, else the peer id)")
-	assert_eq(chat.get_display_name(), Steamworks.username if Steamworks.steam_id != 0 else "Player 1", "The name is the Steam persona while Steam runs, else Player <peer id>")
+	# GodotSteamKit supplies the /root/Steamworks autoload; the addon reads it through the tree so it
+	# works without the Kit installed, and so does this.
+	var steamworks: Node = chat.get_node_or_null("/root/Steamworks")
+	var expected: String = "Player 1"
+	if steamworks and steamworks.get("steam_id") != 0:
+		expected = str(steamworks.get("username"))
+	assert_eq(chat.get_display_name(), expected, "The name is the Steam persona while Steam runs, else Player <peer id>")
 
 
 func test_escape_cancels_and_an_empty_submit_just_closes() -> void:
