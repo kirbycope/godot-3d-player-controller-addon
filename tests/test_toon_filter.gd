@@ -199,11 +199,12 @@ func test_the_cel_option_is_greyed_off_forward_plus() -> void:
 	var video: PlayerMenuLayer = VIDEO_SETTINGS_SCENE.instantiate() as PlayerMenuLayer
 	add_child_autofree(video)
 	var option: OptionButton = video.toon_button
-	assert_eq(option.item_count, 5, "Off, Newspaper, Cel, Binbun, BotW")
+	assert_eq(option.item_count, 5, "None, Toon, Cell, Binbun, BotW")
 	assert_eq(option.get_item_text(ToonFilter.Mode.BINBUN), "Binbun")
 	assert_eq(option.get_item_text(ToonFilter.Mode.BOTW), "BotW")
-	assert_eq(option.get_item_text(ToonFilter.Mode.NEWSPAPER), "Newspaper")
-	assert_eq(option.get_item_text(ToonFilter.Mode.CEL), "Cel")
+	# The menu labels and the Mode names have drifted apart: NEWSPAPER is offered as "Toon" and CEL as "Cell".
+	assert_eq(option.get_item_text(ToonFilter.Mode.NEWSPAPER), "Toon")
+	assert_eq(option.get_item_text(ToonFilter.Mode.CEL), "Cell")
 	assert_false(option.is_item_disabled(ToonFilter.Mode.CEL), "Headless reports forward_plus, so Cel is offered")
 	video.update_cel_availability(false)
 	assert_true(option.is_item_disabled(ToonFilter.Mode.CEL), "Off Forward+ the Cel option is greyed")
