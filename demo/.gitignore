@@ -7,3 +7,4 @@ addons/3d_player_controller/
 .godot/
 build/
 .mcp/
+test-results/
