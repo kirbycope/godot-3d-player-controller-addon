@@ -1,6 +1,5 @@
 name: Demo on Pages
 
-# The addon is what this repository ships, so consuming projects take it as a submodule and clone
 # everything on this branch. A web export is tens of megabytes and git cannot delta a .wasm, so the
 # export is built here and handed straight to Pages rather than committed.
 
@@ -30,8 +29,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
         with:
-          # The demo needs the Controls addon at addons/controls, which is a submodule.
-          submodules: recursive
+      - name: Fetch the addon dependencies
+        shell: bash
+        run: python tools/pull_addons.py
+
 
       - name: Install Godot and its export templates
         shell: bash

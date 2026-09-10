@@ -1,3 +1,0 @@
-[submodule "addons/controls"]
-	path = addons/controls
-	url = https://github.com/kirbycope/godot-controls.git

@@ -3,7 +3,6 @@ name: GUT Unit Tests
 # The addon's scenes are saved by a Godot 4.8 build (nodes carry a unique_id), so the 4.7 container the
 # other addons here test in cannot parse them. This downloads the same Godot the Pages workflow uses.
 #
-# Unlike the other addons, this demo needs a submodule: the player controller instances PlayerControls,
 # which inherits the Controls addon's controls.tscn, so the checkout has to be recursive or the demo
 # project cannot open.
 
@@ -26,7 +25,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
         with:
-          submodules: recursive
+      - name: Fetch the addon dependencies
+        shell: bash
+        run: python tools/pull_addons.py
+
 
       - name: Install Godot
         shell: bash

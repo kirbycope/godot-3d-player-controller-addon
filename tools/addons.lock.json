@@ -1,0 +1,9 @@
+{
+  "controls": {
+    "commit": "a670d73c100bf28a78c77daf467c6fd867406b12",
+    "pulled": "2026-09-10T21:57:32Z",
+    "ref": "main",
+    "repo": "https://github.com/kirbycope/godot-controls.git",
+    "subject": "Restructure to the Godot Asset Library layout"
+  }
+}
