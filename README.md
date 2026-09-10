@@ -303,13 +303,24 @@ To prepare and import custom Mixamo animations with Root Motion:
    - Format: **FBX Binary (.fbx)**
    - Skin: **Without Skin**
    - Frames per Second: **30** or **60**
-3. Move the downloaded `.fbx` into `addons/3d_player_controller/assets/mixamo/animations/source/`.
-4. Process root motion using the Blender script:
+3. Move the downloaded `.fbx` into `assets/mixamo/animations/source/` **in this repository**. The
+   animations belong to the addon, so they are added here and pulled into a game as a submodule
+   bump, never added inside a consuming project's `addons/` copy.
+4. Process root motion with the Blender script, from the root of this repository:
    ```bash
    blender --background --python tools/bake_root_motion.py
    ```
-5. In Godot, reimport the resulting `.glb` as an **Animation Library** retargeted to `mixamo_root_bone_map.tres`.
-6. Open `player.tscn`, select `AnimationPlayer`, and load the animation into the library.
+   It reads `assets/mixamo/animations/source/` and writes `.glb` files to
+   `assets/mixamo/animations/root_motion/`, adding a `root` bone and reparenting `hips` to it so the
+   positional data moves from `hips` to `root`. Pass `--source` and `--dest` to override either.
+   `tools/add_root_to_character.py` does the same for the character mesh itself
+   (`assets/mixamo/characters/y_bot.fbx`).
+5. In Godot, reimport the resulting `.glb` as an **Animation Library** retargeted to
+   `mixamo_root_bone_map.tres`, and set Loop Mode to Linear for cycles (not for one-shots such as
+   emotes).
+6. Open `scenes/player.tscn`, select `AnimationPlayer`, and load the animation into the library.
+7. Commit and push here, then bump the submodule pointer in each consuming project. From a project
+   using the addon, `tools\sync_submodules.ps1` pulls the new commit in.
 
 ---
 
