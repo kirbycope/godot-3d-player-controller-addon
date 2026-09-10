@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Godot 3D Player Controller v3"
-config/version="3.0.15"
+config/version="3.0.1"
 run/main_scene="uid://b8qyk1m2p3d5x"
 config/features=PackedStringArray("4.8", "Forward Plus")
 
