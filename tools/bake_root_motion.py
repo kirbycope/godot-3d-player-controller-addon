@@ -108,8 +108,8 @@ if __name__ == "__main__":
         argv = []
         
     parser = argparse.ArgumentParser(description="Headless Blender Mixamo Root Motion Baker")
-    parser.add_argument("--source", default="assets/mixamo/animations/source/", help="Path to source files")
-    parser.add_argument("--dest", default="assets/mixamo/animations/root_motion/", help="Path to output files")
+    parser.add_argument("--source", default="addons/3d_player_controller/assets/mixamo/animations/source/", help="Path to source files")
+    parser.add_argument("--dest", default="addons/3d_player_controller/assets/mixamo/animations/root_motion/", help="Path to output files")
     
     args = parser.parse_args(argv)
     

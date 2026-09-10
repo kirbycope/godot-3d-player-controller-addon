@@ -69,8 +69,8 @@ if __name__ == "__main__":
         argv = []
         
     parser = argparse.ArgumentParser(description="Inject Root Bone into Character Base Mesh")
-    parser.add_argument("--source", default="assets/mixamo/characters/y_bot.fbx", help="Path to raw character FBX")
-    parser.add_argument("--dest", default="assets/mixamo/characters/y_bot_root.glb", help="Path to output GLB")
+    parser.add_argument("--source", default="addons/3d_player_controller/assets/mixamo/characters/y_bot.fbx", help="Path to raw character FBX")
+    parser.add_argument("--dest", default="addons/3d_player_controller/assets/mixamo/characters/y_bot_root.glb", help="Path to output GLB")
     
     args = parser.parse_args(argv)
     
