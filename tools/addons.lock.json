@@ -1,9 +1,9 @@
 {
   "controls": {
-    "commit": "a670d73c100bf28a78c77daf467c6fd867406b12",
-    "pulled": "2026-09-10T21:57:32Z",
+    "commit": "29b92c66195a580bb5c558481d782a6fa1ba514e",
+    "pulled": "2026-09-10T22:42:05Z",
     "ref": "main",
     "repo": "https://github.com/kirbycope/godot-controls.git",
-    "subject": "Restructure to the Godot Asset Library layout"
+    "subject": "Restore the README, preview image and all"
   }
 }
