@@ -76,7 +76,7 @@ func test_a_host_message_arrives_in_the_clients_chat_and_back() -> void:
 
 	var host_name: String = host_chat.get_display_name() # The Steam persona when Steam runs, else "Player 1"
 	var client_name: String = client_chat.get_display_name()
-	# GodotSteamKit supplies the /root/Steamworks autoload, which need not be installed.
+	# The addon's own Steamworks autoload supplies /root/Steamworks, which need not be registered.
 	var steamworks: Node = host_chat.get_node_or_null("/root/Steamworks")
 	if not Engine.has_singleton("Steam") or steamworks == null or steamworks.get("steam_id") == 0:
 		assert_eq(host_name, "Player 1", "Without Steam the host is named by its peer id")

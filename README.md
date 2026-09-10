@@ -334,19 +334,34 @@ Adding more here:
 
 ## Testing
 
-The controller includes an automated test suite powered by [GUT (Godot Unit Test)](https://github.com/bitwes/Gut).
+The controller carries its own test suite, powered by [GUT (Godot Unit Test)](https://github.com/bitwes/Gut)
+9.7.1, vendored at `demo/addons/gut/`. The tests belong to this repository and run here, against this
+repository's `demo` project, not from a game that consumes the addon: the demo imports a fraction of a
+full game's assets, so a run answers in seconds.
 
-### Running Tests Headless (CLI)
+First fill `demo/addons/3d_player_controller` with the robocopy line from
+[Installation](#option-1-manual-installation-recommended); it is git-ignored and starts empty. The
+Controls addon beside it is a submodule, so clone with `--recurse-submodules` or run
+`git submodule update --init --recursive`.
 
-```bash
-godot --headless --path . -s addons/gut/gut_cmdln.gd -gdir=res://addons/3d_player_controller/tests -gexit
+### Running the tests headless
+
+```powershell
+& 'C:\Godot\godot.exe' --headless --path demo -s addons/gut/gut_cmdln.gd -gdir=res://addons/3d_player_controller/tests,res://addons/3d_player_controller/inventory/tests,res://addons/3d_player_controller/inventory/tests/integration -gexit
 ```
 
-### Running Tests in Editor
+Add `-gtest=res://addons/3d_player_controller/tests/test_chat.gd` to run a single file.
 
-1. Open the **GUT** panel at the bottom of the Godot editor.
-2. Select directory `res://addons/3d_player_controller/tests/`.
-3. Click **Run All**.
+### Running the tests in the editor
+
+1. Open `demo/project.godot`.
+2. Open the **GUT** panel at the bottom of the editor.
+3. The three directories above are already listed in `.gutconfig.json`, so click **Run All**.
+
+CI runs the same three directories on every push and pull request to `main`, in
+`.github/workflows/gut-tests.yml`. It installs Godot 4.8-dev4 directly rather than using the
+`barichello/godot-ci:4.7` container the other addons here test in, because scenes saved by a 4.8 build
+carry a `unique_id` that 4.7 cannot parse.
 
 ---
 

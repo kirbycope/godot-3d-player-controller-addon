@@ -2,10 +2,14 @@
 	"background_color": "262626ff",
 	"compact_mode": false,
 	"configured_dirs": [
-		"res://addons/3d_player_controller/tests"
+		"res://addons/3d_player_controller/tests",
+		"res://addons/3d_player_controller/inventory/tests",
+		"res://addons/3d_player_controller/inventory/tests/integration"
 	],
 	"dirs": [
-		"res://addons/3d_player_controller/tests"
+		"res://addons/3d_player_controller/tests",
+		"res://addons/3d_player_controller/inventory/tests",
+		"res://addons/3d_player_controller/inventory/tests/integration"
 	],
 	"disable_colors": false,
 	"double_strategy": 1,
