@@ -19,8 +19,6 @@ config/features=PackedStringArray("4.8", "Forward Plus")
 
 driver/enable_input=true
 
-[autoload]
-
 [debug]
 
 file_logging/enable_file_logging=true

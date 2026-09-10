@@ -11,3 +11,8 @@
 # Python bytecode caches from the scripts in tools/
 __pycache__/
 *.pyc
+
+# The repository root is a Godot project now, so its build artefacts are ignored here.
+build/
+.mcp/
+test-results/

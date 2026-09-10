@@ -84,12 +84,10 @@ jobs:
 
           rm -rf dist
           mkdir -p dist
-          mkdir -p "dist/3d_player_controller"
-          # The addon is the repository root; everything but its own scaffolding goes in the zip. dist is
-          # excluded because it sits inside the source: without that, rsync copies its own output back into
-          # itself, trips over the temp files it is writing, and exits 24 with "file has vanished".
-          rsync -a --exclude '/.git' --exclude '/.github' --exclude '/demo' --exclude '/dist' \
-                --exclude '/.gitignore' --exclude '/.gitattributes' ./ "dist/3d_player_controller/"
+          # The addon is addons/3d_player_controller/ now, the layout the Asset Library
+          # expects, so the zip is a copy of that folder rather than an rsync that has to
+          # exclude the repository's own scaffolding.
+          cp -R addons/3d_player_controller dist/3d_player_controller
 
           (
             cd dist

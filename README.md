@@ -209,18 +209,25 @@ The demo runs in a browser at <https://timothycope.com/godot-3d-player-controlle
 push to `main` and hands it straight to Pages, so the export itself is never committed: this repository is a
 submodule of the projects that use the addon, and a web export is tens of megabytes that git cannot compress.
 
-`demo/` is the project that export is built from. It expects the addon at `res://addons/3d_player_controller/`, which is
-where a consuming project puts it, so nothing in the addon needs a second set of paths. `demo/addons/` is
-ignored by git; fill it before running the demo locally:
+This repository **is** that project. It follows the layout the
+[Godot Asset Library](https://docs.godotengine.org/en/stable/community/asset_library/submitting_to_assetlib.html)
+expects, with the addon at `addons/3d_player_controller/` and a `project.godot` at the root, so you can
+clone it, open it in Godot and edit the addon in place. Nothing is copied anywhere first.
 
-```powershell
-robocopy . demo\addons\3d_player_controller /MIR /XD "$PWD\.git" "$PWD\.github" "$PWD\demo" "$PWD\.godot" /XF .gitignore .gitattributes
+```
+project.godot                    the demo project, which is this repository
+addons/3d_player_controller/     the addon, plugin.cfg and all
+addons/controls/                 what the addon needs, a submodule
+addons/gut/                      the test runner
 ```
 
-The excluded folders are given as full paths on purpose. `robocopy /XD demo` would exclude any folder called
-`demo` at any depth, which includes `scenes/demo/` - the demo scene itself.
+Installing from the Asset Library takes `addons/` and leaves the rest; Godot flags the root
+`project.godot` as a conflict and skips it, which is why it can live here harmlessly.
 
-Then open `demo/` in Godot.
+There used to be a second Godot project under `demo/`, filled with a `robocopy` mirror of this
+repository. It is gone. It made the addon effectively uneditable: the only project that mounted the
+addon held a throwaway copy of it, so edits to a scene there, the AnimationPlayer especially, were
+destroyed by the next mirror.
 
 ---
 
@@ -348,26 +355,24 @@ Adding more here:
 ## Testing
 
 The controller carries its own test suite, powered by [GUT (Godot Unit Test)](https://github.com/bitwes/Gut)
-9.7.1, vendored at `demo/addons/gut/`. The tests belong to this repository and run here, against this
-repository's `demo` project, not from a game that consumes the addon: the demo imports a fraction of a
-full game's assets, so a run answers in seconds.
+9.7.1, vendored at `addons/gut/`. The tests belong to this repository and run here, not from a game
+that consumes the addon: this project imports a fraction of a full game's assets, so a run answers in
+seconds rather than minutes.
 
-First fill `demo/addons/3d_player_controller` with the robocopy line from
-[Installation](#option-1-manual-installation-recommended); it is git-ignored and starts empty. The
-Controls addon beside it is a submodule, so clone with `--recurse-submodules` or run
-`git submodule update --init --recursive`.
+The Controls addon is a submodule, so clone with `--recurse-submodules` or run
+`git submodule update --init --recursive`; otherwise `addons/controls` is empty and nothing loads.
 
 ### Running the tests headless
 
 ```powershell
-& 'C:\Godot\godot.exe' --headless --path demo -s addons/gut/gut_cmdln.gd -gdir=res://addons/3d_player_controller/tests,res://addons/3d_player_controller/inventory/tests,res://addons/3d_player_controller/inventory/tests/integration -gexit
+& 'C:\Godot\godot.exe' --headless --audio-driver Dummy --path . -s addons/gut/gut_cmdln.gd -gconfig=res://.gutconfig.json -gexit
 ```
 
 Add `-gtest=res://addons/3d_player_controller/tests/test_chat.gd` to run a single file.
 
 ### Running the tests in the editor
 
-1. Open `demo/project.godot`.
+1. Open `project.godot` at the root of this repository.
 2. Open the **GUT** panel at the bottom of the editor.
 3. The three directories above are already listed in `.gutconfig.json`, so click **Run All**.
 
