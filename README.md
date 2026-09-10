@@ -304,8 +304,9 @@ To prepare and import custom Mixamo animations with Root Motion:
    - Skin: **Without Skin**
    - Frames per Second: **30** or **60**
 3. Move the downloaded `.fbx` into `assets/mixamo/animations/source/` **in this repository**. The
-   animations belong to the addon, so they are added here and pulled into a game as a submodule
-   bump, never added inside a consuming project's `addons/` copy.
+   animations belong to the addon, so they are added here and picked up by a game when it next
+   takes this repository. A consuming project's `addons/` copy is a copy: work added there is
+   overwritten the next time it updates.
 4. Process root motion with the Blender script, from the root of this repository:
    ```bash
    blender --background --python tools/bake_root_motion.py
@@ -319,8 +320,9 @@ To prepare and import custom Mixamo animations with Root Motion:
    `mixamo_root_bone_map.tres`, and set Loop Mode to Linear for cycles (not for one-shots such as
    emotes).
 6. Open `scenes/player.tscn`, select `AnimationPlayer`, and load the animation into the library.
-7. Commit and push here, then bump the submodule pointer in each consuming project. From a project
-   using the addon, `tools\sync_submodules.ps1` pulls the new commit in.
+7. Commit and push here, then update each consuming project. `godot-3d-player-controller-v3`
+   vendors this addon and takes new work with `python tools/pull_addons.py 3d_player_controller`;
+   the projects that still consume it as a git submodule bump their pointer instead.
 
 ---
 
