@@ -1,9 +1,9 @@
 {
   "controls": {
-    "commit": "004ca46df86b1e1ef1714377af04a7fa6841fa2c",
-    "pulled": "2026-09-11T00:16:34Z",
+    "commit": "b4ad573582c5c2181306981c9afc6f21ccd74ac8",
+    "pulled": "2026-09-11T22:22:10Z",
     "ref": "main",
     "repo": "https://github.com/kirbycope/godot-controls.git",
-    "subject": "Give every root README the same shape, preview included"
+    "subject": "Space the HUD and the world prompt from what is actually in them"
   }
 }
