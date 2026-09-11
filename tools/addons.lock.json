@@ -1,9 +1,9 @@
 {
   "controls": {
-    "commit": "29b92c66195a580bb5c558481d782a6fa1ba514e",
-    "pulled": "2026-09-10T22:42:05Z",
+    "commit": "004ca46df86b1e1ef1714377af04a7fa6841fa2c",
+    "pulled": "2026-09-11T00:16:34Z",
     "ref": "main",
     "repo": "https://github.com/kirbycope/godot-controls.git",
-    "subject": "Restore the README, preview image and all"
+    "subject": "Give every root README the same shape, preview included"
   }
 }
