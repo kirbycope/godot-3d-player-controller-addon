@@ -1,9 +1,9 @@
 {
   "controls": {
-    "commit": "374e3813d624c6faebb7de21f720aa86a36a739b",
-    "pulled": "2026-09-11T22:38:52Z",
+    "commit": "245fb4fe291f63777e20b115f23619185970bddb",
+    "pulled": "2026-09-11T22:46:37Z",
     "ref": "main",
     "repo": "https://github.com/kirbycope/godot-controls.git",
-    "subject": "Show in the editor what the HUD will actually look like"
+    "subject": "Let the game name its own buttons, and leave the labels blank"
   }
 }
