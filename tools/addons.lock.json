@@ -1,9 +1,9 @@
 {
   "controls": {
-    "commit": "b4ad573582c5c2181306981c9afc6f21ccd74ac8",
-    "pulled": "2026-09-11T22:22:10Z",
+    "commit": "374e3813d624c6faebb7de21f720aa86a36a739b",
+    "pulled": "2026-09-11T22:38:52Z",
     "ref": "main",
     "repo": "https://github.com/kirbycope/godot-controls.git",
-    "subject": "Space the HUD and the world prompt from what is actually in them"
+    "subject": "Show in the editor what the HUD will actually look like"
   }
 }
