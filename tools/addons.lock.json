@@ -1,9 +1,9 @@
 {
   "controls": {
-    "commit": "245fb4fe291f63777e20b115f23619185970bddb",
-    "pulled": "2026-09-11T22:46:37Z",
+    "commit": "26f391adec064695d1e90a21e386aa7924646982",
+    "pulled": "2026-09-11T23:01:58Z",
     "ref": "main",
     "repo": "https://github.com/kirbycope/godot-controls.git",
-    "subject": "Let the game name its own buttons, and leave the labels blank"
+    "subject": "Name the screenshot button after what it does, and give Sony the Share glyph"
   }
 }
