@@ -295,6 +295,7 @@ var is_sitting: bool = false ## Is the Player currently sitting?
 var is_sliding: bool = false ## Is the Player currently sliding?
 var is_sprinting: bool = false ## Is the Player currently sprinting?
 var is_standing: bool = false ## Is the Player currently standing?
+var is_typing_at_keyboard: bool = false ## Is the Player seated and typing? The AnimationTree advances the Sitting -> SittingToTyping -> SittingTyping chain off this, the way [member is_sitting] drives Sitting itself; it is the keyboard pose, unrelated to [member is_typing], which means a text field has focus.
 var last_safe_shore_position: Vector3 = Vector3.ZERO ## Last known grounded position on dry land.
 var is_stealthed: bool = false: ## Is the Player hidden by Stealth? Replicated, so puppets fade too and followers ignore them.
 	set(value):
@@ -357,6 +358,7 @@ var _ragdoll_was_enabled: bool = true ## enable_ragdoll before death forced it o
 @onready var projectile_raycast: RayCast3D = $CameraMount/ProjectileRaycast
 @onready var skeleton: Skeleton3D = $PlayerModel/Armature/GeneralSkeleton
 @onready var look_at_modifier = $PlayerModel/Armature/GeneralSkeleton/LookAtModifier3D
+@onready var head_look_at_modifier = $PlayerModel/Armature/GeneralSkeleton/HeadLookAtModifier3D ## Turns the head alone; the spine one above is for aiming.
 @onready var right_hand_ik: TwoBoneIK3D = $PlayerModel/Armature/GeneralSkeleton/RightHandIK
 @onready var physical_bone_simulator: PhysicalBoneSimulator3D = $PlayerModel/Armature/GeneralSkeleton/PhysicalBoneSimulator3D
 @onready var spring_arm: SpringArm3D = $CameraMount/CameraSpringArm
@@ -1348,6 +1350,19 @@ func _apply_synced_blend_position(blend_pos: Vector2) -> void:
 ## [HeldObject] (carried body) and [Bow] (crosshair while aiming) are the only callers.
 func set_look_at_target(target: Node3D) -> void:
 	var modifier: LookAtModifier3D = look_at_modifier as LookAtModifier3D
+	if modifier == null:
+		return
+	modifier.target_node = modifier.get_path_to(target) if target else NodePath("")
+	modifier.active = target != null
+
+
+## Points the head [LookAtModifier3D] at [param target], or clears it when [param target] is null. Separate
+## from [method set_look_at_target], which turns the spine to aim: this one turns the head only, so it can sit
+## on top of whatever the body is doing (reading a screen while the hands keep typing). The modifier is last
+## among the skeleton's children so it applies after the spine look-at and the hand IK, and its angle limits
+## keep the neck inside a plausible range, so a target behind the Player is simply not followed all the way.
+func set_head_look_at_target(target: Node3D) -> void:
+	var modifier: LookAtModifier3D = head_look_at_modifier as LookAtModifier3D
 	if modifier == null:
 		return
 	modifier.target_node = modifier.get_path_to(target) if target else NodePath("")
