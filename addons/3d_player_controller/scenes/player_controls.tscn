@@ -139,6 +139,63 @@ text = "Focus"
 [node name="Label" parent="TopCenter/JoypadButton4" index="0"]
 text = "Perspective"
 
+[node name="Label" parent="BottomRight/JoypadButton0" index="0"]
+text = "Action"
+
+[node name="Label" parent="BottomRight/JoypadButton1" index="0"]
+text = "Sprint"
+
+[node name="Label" parent="BottomRight/JoypadButton2" index="0"]
+text = "Attack"
+
+[node name="Label" parent="BottomRight/JoypadButton3" index="0"]
+text = "Jump"
+
+[node name="Label" parent="BottomLeft/JoypadButton7" index="0"]
+text = "Crouch"
+
+[node name="Label" parent="TopLeft/JoypadButton9" index="0"]
+text = "Ability"
+
+[node name="Label" parent="TopRight/JoypadButton10" index="0"]
+text = "Throw"
+
+[node name="Label" parent="TopRight/JoypadAxis5Plus" index="0"]
+text = "Shoot"
+
+[node name="Label" parent="TopCenter/JoypadButton6" index="0"]
+text = "Pause Menu"
+
+[node name="Label" parent="BottomLeft/LeftJoystick" index="0"]
+text = "Move"
+
+[node name="Label" parent="BottomLeft/KeyW" index="0"]
+text = "Move"
+
+[node name="Label" parent="BottomLeft/KeyA" index="0"]
+text = "Move"
+
+[node name="Label" parent="BottomLeft/KeyS" index="0"]
+text = "Move"
+
+[node name="Label" parent="BottomLeft/KeyD" index="0"]
+text = "Move"
+
+[node name="Label" parent="BottomRight/RightJoystick" index="0"]
+text = "Camera"
+
+[node name="Label" parent="BottomRight/KeyUp" index="0"]
+text = "Camera"
+
+[node name="Label" parent="BottomRight/KeyLeft" index="0"]
+text = "Camera"
+
+[node name="Label" parent="BottomRight/KeyDown" index="0"]
+text = "Camera"
+
+[node name="Label" parent="BottomRight/KeyRight" index="0"]
+text = "Camera"
+
 [node name="ThrowChargeBar" type="ProgressBar" parent="."]
 unique_name_in_owner = true
 visible = false
