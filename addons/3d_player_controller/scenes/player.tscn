@@ -2827,6 +2827,9 @@ properties/38/replication_mode = 2
 properties/39/path = NodePath(".:display_name")
 properties/39/spawn = true
 properties/39/replication_mode = 2
+properties/40/path = NodePath(".:emote_spine_blend")
+properties/40/spawn = true
+properties/40/replication_mode = 2
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_underwater"]
 shader = ExtResource("218_uwshd")

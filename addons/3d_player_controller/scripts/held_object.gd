@@ -243,7 +243,7 @@ func queue_throw(throw_direction: Vector3) -> void:
 
 	var emote_state: AnimationNodeStateMachinePlayback = player.animation_tree.get(Player.EMOTE_STATE_PLAYBACK_PATH)
 	if emote_state:
-		player.animation_tree.set("parameters/EmoteSpineBlend2/blend_amount", 1.0)
+		player.emote_spine_blend = 1.0
 		emote_state.travel("Throw")
 		player.is_emoting = true
 		player.has_started_emoting = false
@@ -356,7 +356,7 @@ func cancel_throwable_throw() -> void:
 	var emote_state: AnimationNodeStateMachinePlayback = player.animation_tree.get(Player.EMOTE_STATE_PLAYBACK_PATH)
 	if emote_state and player.is_emoting:
 		emote_state.start("Idle")
-		player.animation_tree.set("parameters/EmoteSpineBlend2/blend_amount", 0.0)
+		player.emote_spine_blend = 0.0
 		player.is_emoting = false
 		player.has_started_emoting = false
 	_end_hold()
@@ -538,7 +538,7 @@ func _pickup_rigidbody(body: RigidBody3D) -> void:
 
 	var emote_state: AnimationNodeStateMachinePlayback = player.animation_tree.get(Player.EMOTE_STATE_PLAYBACK_PATH)
 	if emote_state:
-		player.animation_tree.set("parameters/EmoteSpineBlend2/blend_amount", 1.0)
+		player.emote_spine_blend = 1.0
 		emote_state.start(HOLD_EMOTE)
 		player.is_emoting = true
 		player.has_started_emoting = false
@@ -579,7 +579,7 @@ func _end_hold() -> void:
 	var emote_state: AnimationNodeStateMachinePlayback = player.animation_tree.get(Player.EMOTE_STATE_PLAYBACK_PATH)
 	if emote_state and emote_state.get_current_node() == HOLD_EMOTE:
 		emote_state.start("Idle")
-		player.animation_tree.set("parameters/EmoteSpineBlend2/blend_amount", 0.0)
+		player.emote_spine_blend = 0.0
 		player.is_emoting = false
 		player.has_started_emoting = false
 	player.set_look_at_target(null)

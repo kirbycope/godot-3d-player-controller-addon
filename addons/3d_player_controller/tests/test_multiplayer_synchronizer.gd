@@ -129,3 +129,23 @@ func test_a_puppet_spawning_later_does_not_take_the_view() -> void:
 	assert_false(puppet.is_multiplayer_authority())
 	assert_false(puppet.camera.current, "A remote player's camera is not this peer's view")
 	assert_true(own.camera.current, "and the view stayed where it was")
+
+
+## The emote layer's weight over the spine crosses with the Player, so a puppet's copy of a throw or a draw
+## shows on its upper body; before this only the authority's tree was ever raised.
+func test_the_emote_spine_blend_reaches_a_puppets_tree() -> void:
+	var host: Node = Node.new()
+	host.name = "42"
+	host.set_multiplayer_authority(42)
+	add_child_autofree(host)
+	var puppet: Player = PLAYER_SCENE.instantiate()
+	puppet.name = "42"
+	host.add_child(puppet)
+	await wait_process_frames(2)
+	assert_false(puppet.is_multiplayer_authority())
+	puppet.emote_spine_blend = 1.0 # what the synchronizer writes when the authority raises it
+	assert_eq(float(puppet.animation_tree.get("parameters/EmoteSpineBlend2/blend_amount")), 1.0, "The puppet's spine blend follows")
+	puppet.emote_spine_blend = 0.0
+	assert_eq(float(puppet.animation_tree.get("parameters/EmoteSpineBlend2/blend_amount")), 0.0, "and lowers again")
+	var config: SceneReplicationConfig = puppet.get_node("PlayerSynchronizer").replication_config
+	assert_true(config.has_property(NodePath(".:emote_spine_blend")), "and it is in the replication config")

@@ -395,6 +395,15 @@ var _ragdoll_was_enabled: bool = true ## enable_ragdoll before death forced it o
 			_apply_synced_locomotion_node(value)
 		locomotion_node_changed.emit(value)
 
+## How far the emote layer is blended over the spine, 0 to 1; replicated, so a puppet's copy of a throw, a
+## draw or a wave shows on its upper body the way the authority's does. Every writer goes through this rather
+## than the tree parameter, so the one write reaches the tree here and every copy elsewhere.
+@export var emote_spine_blend: float = 0.0:
+	set(value):
+		emote_spine_blend = value
+		if animation_tree:
+			animation_tree.set("parameters/EmoteSpineBlend2/blend_amount", value)
+
 @export var sync_blend_position: Vector2 = Vector2.ZERO:
 	set(value):
 		sync_blend_position = value
@@ -589,7 +598,7 @@ func _physics_process(delta: float) -> void:
 		if animation_tree.get(EMOTE_STATE_PLAYBACK_PATH).get_current_node() != "Idle":
 			has_started_emoting = true
 		elif has_started_emoting:
-			animation_tree.set("parameters/EmoteSpineBlend2/blend_amount", 0.0)
+			emote_spine_blend = 0.0
 			is_emoting = false
 			has_started_emoting = false
 			is_throwing = false
@@ -977,7 +986,7 @@ func _start_channel_emote() -> void:
 	var emote_state: AnimationNodeStateMachinePlayback = animation_tree.get(EMOTE_STATE_PLAYBACK_PATH)
 	if emote_state == null or (held_object and held_object.is_holding_object()):
 		return
-	animation_tree.set("parameters/EmoteSpineBlend2/blend_amount", 1.0)
+	emote_spine_blend = 1.0
 	emote_state.start(CAST_CHANNEL_EMOTE)
 	is_emoting = true
 	has_started_emoting = false
@@ -988,7 +997,7 @@ func _end_channel_emote() -> void:
 	var emote_state: AnimationNodeStateMachinePlayback = animation_tree.get(EMOTE_STATE_PLAYBACK_PATH)
 	if emote_state and emote_state.get_current_node() == CAST_CHANNEL_EMOTE and not (held_object and held_object.is_holding_object()):
 		emote_state.start("Idle")
-		animation_tree.set("parameters/EmoteSpineBlend2/blend_amount", 0.0)
+		emote_spine_blend = 0.0
 		is_emoting = false
 		has_started_emoting = false
 
