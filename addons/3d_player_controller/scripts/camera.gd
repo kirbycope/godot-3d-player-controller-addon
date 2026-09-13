@@ -66,6 +66,9 @@ func _ready() -> void:
 	set_process(is_multiplayer_authority())
 	set_physics_process(is_multiplayer_authority())
 	set_process_unhandled_input(is_multiplayer_authority())
+	# The scene marks the camera current so a lone player sees through it; a remote player's copy must not,
+	# or the last peer to spawn takes over everyone's view.
+	current = is_multiplayer_authority()
 
 	looking_at_changed.connect(_on_looking_at_changed)
 

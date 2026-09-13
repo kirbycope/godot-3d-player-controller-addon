@@ -108,3 +108,22 @@ func test_display_name_writes_the_label_and_replicates() -> void:
 	assert_false(player.steam_persona_name.visible, "Empty hides the label")
 	var tracked: Array[NodePath] = player.player_synchronizer.replication_config.get_properties()
 	assert_true(tracked.has(NodePath(".:display_name")), "so every peer reads it")
+
+
+## The scene marks the player's camera current, which is right for the one player a peer controls and wrong for
+## every other player's copy: the last one spawned would take the view. A puppet's camera stays inactive.
+func test_a_puppets_camera_never_becomes_the_view() -> void:
+	var host: Node = Node.new()
+	host.name = "42"
+	host.set_multiplayer_authority(42)
+	add_child_autofree(host)
+	var puppet: Player = PLAYER_SCENE.instantiate()
+	puppet.name = "42"
+	host.add_child(puppet)
+	await wait_process_frames(2)
+	assert_false(puppet.is_multiplayer_authority())
+	assert_false(puppet.camera.current, "A remote player's camera is not this peer's view")
+	var own: Player = PLAYER_SCENE.instantiate()
+	add_child_autofree(own)
+	await wait_process_frames(2)
+	assert_true(own.camera.current, "The player this peer controls looks through its own")
