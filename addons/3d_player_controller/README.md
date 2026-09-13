@@ -147,17 +147,17 @@ cluster anchored bottom-centre and the boss bar in the HUD's own `TopCenter`, so
 
 ---
 
-The lobby owner hosts and everyone else connects to them through `SteamPeer`, which decides that by asking
-whether a session already exists rather than whether the tree has a multiplayer peer: Godot gives every tree an
-`OfflineMultiplayerPeer` from the start, so the latter is always true. Asking it used to make both paths
-return early, with the lobby joined on both machines and no session ever formed.
-
 ### 10. Multiplayer (`SteamPeer`, `PlayerSpawner`, `ProjectileSpawner`, `SyncedBody`)
 - **Session**: drop a `SteamPeer` node into the world. When the world loads inside a Steam lobby it hosts if the local user owns the lobby and connects to the owner otherwise (`SteamMultiplayerPeer`, reached only through the Steam singleton, so web exports stay inert). Call `host()` yourself after creating a lobby locally.
 - **Players**: a `PlayerSpawner` (`MultiplayerSpawner`) with `player_scene` set to `player.tscn` or a scene inheriting it spawns one player per peer under `spawn_path`, named by peer id, and frees it on disconnect. `Player._enter_tree` takes its multiplayer authority from that name, so input, aiming and firing run only on the owning peer while `PlayerSynchronizer` replicates transform, locomotion path and blend position to everyone else, along with the stance flags (`is_shooting`, `is_aiming_bow`, `is_drawing_arrow`, `is_firing_arrow`, `is_mining`, `is_logging` read the synced value on a puppet), `is_stealthed` (applied on ready for a late joiner) and `display_name`, the Steam persona over the head, so every peer reads it. Every peer's copy of a Player carries the same equipment: the authority's `Inventory` sends its scene paths after every change and to each peer that connects (`_sync_equipment`, an authority RPC), and the puppet rebuilds the pieces on its skeleton, visual only, so weapon stances, aiming, bow draws and footsteps (the ground raycast, not `is_on_floor()`, which only `move_and_slide()` computes) show there. Voice packets, the speaking indicator and chat lines are authority RPCs too. `local_player_spawned` hands the world the player it controls. In the editor the spawner (a `@tool`) shows the Player's model at `spawn_point` (or the `spawn_path` container's origin) so you can build the map around them; it is an internal child that is never saved and never exists in the game, and it refreshes when `player_scene` or `spawn_point` changes.
 - **Projectiles**: a `ProjectileSpawner` in the `ProjectileSpawner` group makes `Firearm.fire()` and `Bow.fire_arrow()` (with `arrow_scene`) go through `spawner.fire(scene, origin, direction, speed, shooter, weapon)`. Clients ask the host over RPC; the host spawns with a custom `spawn_function`, so every peer instantiates and launches an identical round from the same data and resolves its own hits. Rounds sit on no collision layer and ignore each other. `ProjectileSpawner.place(scene, position)` spawns any scene at a world point on every peer through the same `spawn_function` (positions are relative to `spawn_path`), and `ProjectileSpawner.ignite(position, radius, duration)` lights the grass on every peer over an authority RPC; only the server's call does anything, since spawned rounds are the server's. `ProjectileSpawner.find_for(node)` returns the spawner of that node's multiplayer session.
 - **World objects**: `SyncedBody` is a `MultiplayerSynchronizer` for physics props; peers that do not own the body freeze it kinematically and take the replicated transform. `resources/rigid_body_replication.tres` and `resources/character_body_replication.tres` are ready-made replication configs. Hit-driven state such as balloons and harvestables should resolve on the server and replicate back (`register_projectile_hit` → RPC to the server → `call_local` broadcast).
 - **Signals and spawn state**: `Player.state_changed` only fires once the node is ready, because the spawner applies replicated spawn state while a puppet's children are still entering the tree.
+
+The lobby owner hosts and everyone else connects to them through `SteamPeer`, which decides that by asking
+whether a session already exists rather than whether the tree has a multiplayer peer: Godot gives every tree an
+`OfflineMultiplayerPeer` from the start, so the latter is always true. Asking it used to make both paths
+return early, with the lobby joined on both machines and no session ever formed.
 
 ## Installation
 
