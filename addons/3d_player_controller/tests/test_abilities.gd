@@ -573,3 +573,46 @@ func test_a_late_joiner_sees_a_player_who_was_already_stealthed() -> void:
 	puppet.is_stealthed = true
 	add_child_autofree(puppet)
 	_assert_ghosted(puppet, 1.0, "The ghost is on from ready; its alpha starts its fade from 1")
+
+
+## Equipment fades with the body: a sword attached at runtime has no owner, which the ghost pass used to skip,
+## and a sword picked up while already stealthed is ghosted the moment it arrives.
+func test_stealth_fades_the_equipment_too() -> void:
+	var worn_first: Equipment = _equip_bare_piece("WornFirst", Equipment.EquipmentType.SWORD_1H, "RightHand")
+	abilities.cast(stealth)
+	await wait_seconds(player.stealth_fade_time + 0.2)
+	_assert_piece_ghosted(worn_first, 1.0 - player.stealth_transparency, "what was in hand fades with the body")
+	var worn_later: Equipment = _equip_bare_piece("WornLater", Equipment.EquipmentType.DAGGER, "LeftHand")
+	await wait_seconds(player.stealth_fade_time + 0.2)
+	_assert_piece_ghosted(worn_later, 1.0 - player.stealth_transparency, "and so does what is picked up meanwhile")
+	abilities.cast(stealth)
+	await wait_seconds(player.stealth_fade_time + 0.2)
+	for piece: Equipment in [worn_first, worn_later]:
+		for mesh: MeshInstance3D in piece.find_children("*", "MeshInstance3D", true, false):
+			assert_null(mesh.get_surface_override_material(0), "%s is solid again" % piece.name)
+
+
+## A bare piece of equipment with one visible mesh, equipped on the player as a walk-over pickup would be.
+func _equip_bare_piece(piece_name: String, type: Equipment.EquipmentType, bone: String) -> Equipment:
+	var pickup: Equipment = Equipment.new()
+	pickup.name = piece_name
+	pickup.equipment_type = type
+	pickup.bone_attachment_bone_name = bone
+	var mesh: MeshInstance3D = MeshInstance3D.new()
+	mesh.mesh = BoxMesh.new()
+	mesh.material_override = null
+	pickup.add_child(mesh)
+	add_child_autofree(pickup)
+	var worn: Equipment = player.inventory.equip_pickup(pickup)
+	assert_not_null(worn, piece_name + " is equipped")
+	return worn
+
+
+func _assert_piece_ghosted(piece: Equipment, alpha: float, text: String) -> void:
+	var meshes: Array[Node] = piece.find_children("*", "MeshInstance3D", true, false)
+	assert_gt(meshes.size(), 0, piece.name + " has a mesh to fade")
+	for mesh: MeshInstance3D in meshes:
+		var ghost: ShaderMaterial = mesh.get_surface_override_material(0) as ShaderMaterial
+		assert_not_null(ghost, piece.name + " wears the ghost")
+		if ghost:
+			assert_almost_eq(float(ghost.get_shader_parameter(&"alpha")), alpha, 0.02, text)

@@ -429,6 +429,8 @@ func _ready() -> void:
 	# Spawn state lands before the skeleton and the label exist, so a late joiner applies it here
 	if is_stealthed:
 		_apply_stealth_look(true)
+	if inventory:
+		inventory.equipment_changed.connect(_on_equipment_changed_while_stealthed)
 	display_name = display_name
 
 	# Do nothing if not the authority
@@ -1449,7 +1451,8 @@ func _apply_stealth_look(stealthed: bool) -> void:
 		_stealth_tween.kill()
 	_stealth_tween = create_tween().set_parallel(true)
 	if stealthed:
-		for mesh: MeshInstance3D in skeleton.find_children("*", "MeshInstance3D"):
+		# owned = false: equipment is attached at runtime and has no owner, and it has to fade with the body
+		for mesh: MeshInstance3D in skeleton.find_children("*", "MeshInstance3D", true, false):
 			if mesh.mesh == null or _stealth_originals.has(mesh):
 				continue
 			var originals: Array[Material] = []
@@ -1463,6 +1466,13 @@ func _apply_stealth_look(stealthed: bool) -> void:
 		_stealth_tween.tween_method(_set_ghost_alpha.bind(ghost), float(ghost.get_shader_parameter(&"alpha")), target_alpha, stealth_fade_time)
 	if not stealthed:
 		_stealth_tween.chain().tween_callback(_restore_stealth_materials)
+
+
+## A piece equipped while stealthed fades too: the ghost pass only touches meshes it has not seen, so this is
+## cheap when nothing new is there.
+func _on_equipment_changed_while_stealthed() -> void:
+	if is_stealthed and skeleton:
+		_apply_stealth_look(true)
 
 
 ## The stealth shader wearing [param original]'s colours; anything but a StandardMaterial3D ghosts as plain white.
