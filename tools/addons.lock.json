@@ -1,9 +1,9 @@
 {
   "controls": {
-    "commit": "9e39d25f442346d7309b949316b1e0852868b32e",
-    "pulled": "2026-09-13T06:27:24Z",
+    "commit": "ca5297f3305706b41a4e8f8fb46c64cf0d128ae3",
+    "pulled": "2026-09-13T07:01:54Z",
     "ref": "main",
     "repo": "https://github.com/kirbycope/godot-controls.git",
-    "subject": "Size the HUD for thumbs, on its own and apart from the project's stretch"
+    "subject": "Fit the HUD to the window on every device, and again on every resize"
   }
 }
