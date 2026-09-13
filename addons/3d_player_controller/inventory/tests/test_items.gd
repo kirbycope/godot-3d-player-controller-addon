@@ -387,3 +387,21 @@ func test_drops_are_named_per_peer_and_travel_by_rpc() -> void:
 	assert_true(config["_spawn_dropped"]["call_local"])
 	assert_eq(config["_sync_equipment"]["rpc_mode"], MultiplayerAPI.RPC_MODE_AUTHORITY, "Equipment is the authority's word")
 	assert_true(config["_sync_equipment"]["call_local"])
+
+
+## A peer re-creates equipment from any scene the loader knows, not only a .tscn: the sword in a game is often
+## the imported model itself, and skipping it left the puppet unarmed while the stance said otherwise.
+func test_any_loadable_scene_can_travel_to_a_peer() -> void:
+	assert_true(Inventory._is_scene_path("res://addons/3d_player_controller/scenes/player.tscn"), "a scene file")
+	assert_false(Inventory._is_scene_path(""), "a node placed inline in a level has no path")
+	assert_false(Inventory._is_scene_path("res://addons/3d_player_controller/scripts/player.gd"), "a script is not a scene")
+	assert_false(Inventory._is_scene_path("res://nowhere/missing.tscn"), "nor is a file that is not there")
+	var models: Array[String] = []
+	for dir_path: String in ["res://addons/3d_player_controller/assets", "res://addons/3d_player_controller/scenes"]:
+		for file_name: String in ResourceLoader.list_directory(dir_path):
+			if file_name.get_extension() in ["fbx", "glb", "gltf"]:
+				models.append(dir_path.path_join(file_name))
+	if models.is_empty():
+		pass_test("no imported model in the addon to try; the loader check covers it")
+		return
+	assert_true(Inventory._is_scene_path(models[0]), "an imported model is a scene too: %s" % models[0])

@@ -733,5 +733,8 @@ func _on_dropped_equipment_body_exited(body: Node3D, pickup: Node3D) -> void:
 		pickup.remove_meta("dropped_by")
 
 
+## Whether a peer can re-create a piece from [param path]: any scene the loader knows, which is a .tscn as much
+## as an imported .fbx or .glb, since a project's weapons are often the model file itself. A node placed inline
+## in a level has no path and stays where it is.
 static func _is_scene_path(path: String) -> bool:
-	return path.ends_with(".tscn") or path.ends_with(".scn")
+	return ResourceLoader.exists(path) and ResourceLoader.get_resource_type(path) == "PackedScene"
