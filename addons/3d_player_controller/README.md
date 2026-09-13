@@ -159,8 +159,8 @@ whether a session already exists rather than whether the tree has a multiplayer 
 `OfflineMultiplayerPeer` from the start, so the latter is always true. Asking it used to make both paths
 return early, with the lobby joined on both machines and no session ever formed.
 
-A remote player's copy keeps its camera inactive: the scene marks the camera current for the one player a
-peer controls, and without that guard the last player to spawn would take over everyone's view.
+The camera a peer controls claims the view when it is ready; the scene marks no camera current, so a remote
+player's copy spawning later never takes over the view for even a frame.
 
 ## Installation
 

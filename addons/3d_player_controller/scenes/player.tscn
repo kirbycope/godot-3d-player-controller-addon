@@ -4108,7 +4108,6 @@ spring_length = 2.0
 
 [node name="Camera3D" type="Camera3D" parent="CameraMount/CameraSpringArm" unique_id=63604691 node_paths=PackedStringArray("camera_mount", "camera_spring_arm", "player")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1)
-current = true
 script = ExtResource("12_mv4yd")
 camera_mount = NodePath("../..")
 camera_spring_arm = NodePath("..")

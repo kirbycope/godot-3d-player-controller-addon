@@ -66,9 +66,11 @@ func _ready() -> void:
 	set_process(is_multiplayer_authority())
 	set_physics_process(is_multiplayer_authority())
 	set_process_unhandled_input(is_multiplayer_authority())
-	# The scene marks the camera current so a lone player sees through it; a remote player's copy must not,
-	# or the last peer to spawn takes over everyone's view.
-	current = is_multiplayer_authority()
+	# The scene marks no camera current. A remote player's copy would otherwise take the view for the moment it
+	# enters the tree, and clearing it afterwards hands the view to whichever camera entered before it. The
+	# camera this peer controls claims the view itself, once, here.
+	if is_multiplayer_authority():
+		make_current()
 
 	looking_at_changed.connect(_on_looking_at_changed)
 

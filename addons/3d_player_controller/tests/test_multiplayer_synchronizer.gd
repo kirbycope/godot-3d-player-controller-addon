@@ -110,9 +110,14 @@ func test_display_name_writes_the_label_and_replicates() -> void:
 	assert_true(tracked.has(NodePath(".:display_name")), "so every peer reads it")
 
 
-## The scene marks the player's camera current, which is right for the one player a peer controls and wrong for
-## every other player's copy: the last one spawned would take the view. A puppet's camera stays inactive.
-func test_a_puppets_camera_never_becomes_the_view() -> void:
+## The camera a peer controls claims the view when it is ready, and a remote player's copy spawning after it
+## leaves the view alone: the scene marks no camera current, so nothing is taken over on entering the tree.
+## (A camera entering an empty viewport is made current by the engine, so the order here is the real one.)
+func test_a_puppet_spawning_later_does_not_take_the_view() -> void:
+	var own: Player = PLAYER_SCENE.instantiate()
+	add_child_autofree(own)
+	await wait_process_frames(2)
+	assert_true(own.camera.current, "The player this peer controls looks through its own camera")
 	var host: Node = Node.new()
 	host.name = "42"
 	host.set_multiplayer_authority(42)
@@ -123,7 +128,4 @@ func test_a_puppets_camera_never_becomes_the_view() -> void:
 	await wait_process_frames(2)
 	assert_false(puppet.is_multiplayer_authority())
 	assert_false(puppet.camera.current, "A remote player's camera is not this peer's view")
-	var own: Player = PLAYER_SCENE.instantiate()
-	add_child_autofree(own)
-	await wait_process_frames(2)
-	assert_true(own.camera.current, "The player this peer controls looks through its own")
+	assert_true(own.camera.current, "and the view stayed where it was")
