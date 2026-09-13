@@ -586,6 +586,10 @@ func equip_pickup(pickup: Equipment) -> Equipment:
 
 	var copy: Equipment = pickup.duplicate() as Equipment
 	copy.player = player
+	# A node added at runtime keeps the engine's default authority, the server's, whatever it hangs under; a piece
+	# on a client's own skeleton has to answer to that client, or its own _ready takes it for a puppet's.
+	attachment.set_multiplayer_authority(player.get_multiplayer_authority())
+	copy.set_multiplayer_authority(player.get_multiplayer_authority())
 	copy.scene_file_path = pickup.scene_file_path # so the inventory can save and drop it as its scene
 	# Where a peer finds the same piece: the pickup itself when it stands in the world on every peer, else the
 	# scene it came from. A model file alone carries no script, so a world pickup is named by its path.

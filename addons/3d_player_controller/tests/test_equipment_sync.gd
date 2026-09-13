@@ -124,3 +124,18 @@ func test_a_world_pickup_reaches_the_client_by_its_path() -> void:
 	assert_not_null(drop_on_client, "and it lies in the client's world as a whole pickup, script and all")
 	if drop_on_client:
 		assert_null(drop_on_client.equipment_instance, "ready to be picked up again")
+
+
+## A piece equipped on a client's own Player answers to that client, not to the server the engine defaults every
+## new node to: the fishing rod's _ready took itself for a puppet's copy and never set up on a client.
+func test_a_piece_equipped_on_the_client_is_the_clients() -> void:
+	await wait_process_frames(30)
+	var client_id: String = str(client_api.get_unique_id())
+	var client: Player = client_root.get_node("Players/" + client_id)
+	assert_true(client.is_multiplayer_authority(), "The client's own Player is its own")
+	client.inventory.add_item(SWORD)
+	var worn: Equipment = client.inventory.get_equipment_by_type(Equipment.EquipmentType.SWORD_1H)
+	assert_not_null(worn)
+	assert_eq(worn.get_multiplayer_authority(), client_api.get_unique_id(), "and so is the sword it equips")
+	assert_eq(worn.get_parent().get_multiplayer_authority(), client_api.get_unique_id(), "attachment included")
+	assert_true(worn.is_multiplayer_authority(), "so the piece's own _ready runs as the owner's")
