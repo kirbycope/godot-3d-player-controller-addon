@@ -9,6 +9,7 @@ const APPLE: Item = preload("res://addons/3d_player_controller/inventory/resourc
 const ORE: Item = preload("res://addons/3d_player_controller/inventory/resources/items/iron_ore.tres")
 const KEY: Item = preload("res://addons/3d_player_controller/inventory/resources/items/old_key.tres")
 const SWORD: Item = preload("res://addons/3d_player_controller/inventory/resources/items/wooden_sword.tres")
+const HEAL: Ability = preload("res://addons/3d_player_controller/resources/abilities/heal.tres")
 const TEST_SAVE: String = "user://test_inventory.tres"
 const ContractActions: GDScript = preload("res://addons/3d_player_controller/inventory/tests/contract_actions.gd")
 
@@ -216,6 +217,7 @@ func test_a_save_written_before_inventory_moved_still_loads(legacy: String = use
 func test_persist_writes_the_file_on_every_change_and_reads_it_on_ready() -> void:
 	inventory.persist = true
 	inventory.add_item(APPLE, 2)
+	await wait_process_frames(1) # the write is deferred to the end of the frame
 	assert_true(FileAccess.file_exists(TEST_SAVE), "Adding saved")
 	var reloaded: Player = PLAYER_SCENE.instantiate()
 	reloaded.get_node("Inventory").save_path = TEST_SAVE
@@ -238,6 +240,7 @@ func test_persistence_can_be_switched_off_for_every_inventory() -> void:
 	assert_false(FileAccess.file_exists(TEST_SAVE), "The test suite's hook keeps every inventory off the disk")
 	Inventory.persistence_enabled = true
 	inventory.add_item(APPLE)
+	await wait_process_frames(1)
 	assert_true(FileAccess.file_exists(TEST_SAVE))
 
 
@@ -304,3 +307,83 @@ func test_the_ninth_weapon_is_refused() -> void:
 	await wait_physics_frames(1)
 	assert_true(inventory.can_carry_equipment())
 	assert_not_null(inventory.equip_pickup(axe), "Dropping one makes room")
+
+
+## The Inventory is ready before the Player's skeleton and abilities are, so a persisted save has to wait for the
+## Player's own ready: the sword goes back on the skeleton and the wheel loadout onto the abilities node.
+func test_a_persisted_save_is_applied_once_the_player_is_ready() -> void:
+	inventory.persist = true
+	inventory.add_item(SWORD)
+	inventory.spellbook.clear_active(0)
+	inventory.spellbook.set_active(3, HEAL)
+	await wait_process_frames(1)
+	var reloaded: Player = PLAYER_SCENE.instantiate()
+	reloaded.get_node("Inventory").save_path = TEST_SAVE
+	reloaded.get_node("Inventory").persist = true
+	root.add_child(reloaded)
+	await wait_physics_frames(2)
+	assert_true(reloaded.inventory.has_equipment(Equipment.EquipmentType.SWORD_1H), "The sword is back on a skeleton that did not exist when the Inventory was ready")
+	assert_eq(reloaded.inventory.spellbook.active[3], HEAL, "The wheel slot came back")
+	assert_eq(reloaded.abilities.abilities, [HEAL] as Array[Ability], "and onto the abilities node, over the scene's own spells")
+
+
+## Equipment comes back as [instance, equipped] pairs, so an entry that is skipped does not hand its flag to the
+## next one.
+func test_a_saved_piece_that_cannot_be_recreated_does_not_shift_the_equipped_flags() -> void:
+	var data: InventorySave = InventorySave.new()
+	var gone: EquipmentEntry = EquipmentEntry.new()
+	gone.scene_path = "res://gone.tres" # not a scene, so it is skipped
+	gone.equipped = false
+	var sword: EquipmentEntry = EquipmentEntry.new()
+	sword.scene_path = SWORD.equipment_scene.resource_path
+	sword.equipped = true
+	data.equipment = [gone, sword]
+	inventory.apply_save(data)
+	assert_eq(inventory.get_all_weapons().size(), 1, "The unloadable piece is skipped")
+	assert_true(inventory.has_equipment(Equipment.EquipmentType.SWORD_1H), "and the sword keeps its own flag, not the skipped entry's")
+
+
+## A piece that was added without a bone attachment (a bare fixture) leaves the set when forgotten, through the
+## same stow as everything else.
+func test_forgetting_a_bare_equipped_fixture_leaves_the_set() -> void:
+	var bare: Equipment = Equipment.new()
+	bare.equipment_type = Equipment.EquipmentType.DAGGER
+	bare.scene_file_path = SWORD.equipment_scene.resource_path
+	root.add_child(bare)
+	inventory.add_equipment(bare)
+	assert_true(inventory.has_equipment(Equipment.EquipmentType.DAGGER))
+	assert_eq(inventory.forget_equipment(bare), bare.scene_file_path, "Forgotten by scene path")
+	assert_false(inventory.has_equipment(Equipment.EquipmentType.DAGGER), "It left the set with no attachment to stow")
+
+
+func test_autosave_writes_once_per_frame_however_many_changes() -> void:
+	inventory.persist = true
+	inventory.add_item(APPLE)
+	inventory.add_item(ORE)
+	inventory.add_item(KEY)
+	assert_false(FileAccess.file_exists(TEST_SAVE), "Nothing is written in the middle of the changes")
+	assert_true(inventory._save_queued, "one write is queued")
+	await wait_process_frames(1)
+	assert_true(FileAccess.file_exists(TEST_SAVE), "and it lands at the end of the frame")
+	assert_false(inventory._save_queued)
+	var loaded: Player = _spawn_player()
+	await wait_physics_frames(2)
+	loaded.inventory.load_save()
+	assert_true(loaded.inventory.has_item(KEY), "with the last change in it")
+
+
+## A drop lands in every peer's world under one name, "Dropped_<peer>_<n>", so a later take vanishes it everywhere.
+func test_drops_are_named_per_peer_and_travel_by_rpc() -> void:
+	inventory.add_item(APPLE, 2)
+	var first: Node3D = inventory.drop_slot(Item.Category.FOOD, 0, 1)
+	var second: Node3D = inventory.drop_slot(Item.Category.FOOD, 0, 1)
+	assert_eq(first.name, "Dropped_1_1", "Offline this peer is 1; its first drop")
+	assert_eq(second.name, "Dropped_1_2")
+	assert_eq(first.get_parent(), root, "In the world beside the Player")
+	assert_eq(first.get("item"), APPLE)
+	assert_eq(first.get("count"), 1)
+	var config: Dictionary = (inventory.get_script() as Script).get_rpc_config()
+	assert_eq(config["_spawn_dropped"]["rpc_mode"], MultiplayerAPI.RPC_MODE_ANY_PEER, "Any peer's drop lands in every world")
+	assert_true(config["_spawn_dropped"]["call_local"])
+	assert_eq(config["_sync_equipment"]["rpc_mode"], MultiplayerAPI.RPC_MODE_AUTHORITY, "Equipment is the authority's word")
+	assert_true(config["_sync_equipment"]["call_local"])

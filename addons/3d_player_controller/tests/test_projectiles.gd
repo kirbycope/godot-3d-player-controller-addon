@@ -226,3 +226,59 @@ func test_a_peers_copy_of_a_round_waits_for_the_spawners_despawn_instead_of_free
 	var mine := _shoot(Vector3.ZERO, Vector3.FORWARD, 300.0)
 	await wait_physics_frames(4)
 	assert_false(is_instance_valid(mine) and mine.is_inside_tree(), "A round this peer owns frees itself as before")
+
+
+## A two-round pistol on the Player's skeleton, its trigger polled by the copy in hand. A gun built in code (not
+## from a scene) loses its node references when equip_pickup duplicates it, so the copy is pointed at its own.
+func _equip_pistol(player: Player) -> Firearm:
+	var gun: Firearm = _gun(player)
+	gun.muzzle.name = "Muzzle"
+	gun.fire_timer.name = "FireTimer"
+	gun.equipment_type = Equipment.EquipmentType.PISTOL
+	gun.bone_attachment_bone_name = "RightHand"
+	gun.can_shoot = true
+	gun.magazine_size = 2
+	gun.reload_time = 1.0
+	var held: Firearm = player.inventory.equip_pickup(gun) as Firearm
+	held.muzzle = held.get_node("Muzzle") as Marker3D
+	held.fire_timer = held.get_node("FireTimer") as Timer
+	return held
+
+
+func test_an_empty_trigger_pull_keeps_the_reload_time_not_the_fire_interval() -> void:
+	var player: Player = PLAYER_SCENE.instantiate()
+	root.add_child(player)
+	var gun: Firearm = _equip_pistol(player)
+	var magazine := AmmoItem.new()
+	magazine.id = &"test_pistol_magazine"
+	magazine.weapon_type = Equipment.EquipmentType.PISTOL
+	player.inventory.add_item(magazine, 1)
+	await wait_physics_frames(1)
+	gun.rounds = 0
+	Input.action_press("shoot")
+	await wait_physics_frames(2)
+	Input.action_release("shoot")
+	assert_true(gun.is_reloading, "An empty trigger pull reloads")
+	assert_gt(gun.fire_timer.time_left, 0.5, "and the reload keeps its own time; the fire interval no longer cuts it short")
+
+
+func test_a_left_click_with_the_cursor_showing_is_click_to_move_not_a_shot() -> void:
+	var player: Player = PLAYER_SCENE.instantiate()
+	root.add_child(player)
+	_equip_pistol(player)
+	await wait_physics_frames(1)
+	Input.action_press("shoot")
+	assert_true(player.is_shooting, "The shoot action fires")
+	Input.action_release("shoot")
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	Input.parse_input_event(click)
+	Input.flush_buffered_events()
+	assert_true(Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT))
+	assert_eq(Input.mouse_mode, Input.MOUSE_MODE_VISIBLE, "Headless, the cursor always shows")
+	assert_false(player.is_shooting, "A left click while the cursor shows is click-to-move")
+	var release: InputEventMouseButton = click.duplicate()
+	release.pressed = false
+	Input.parse_input_event(release)
+	Input.flush_buffered_events()

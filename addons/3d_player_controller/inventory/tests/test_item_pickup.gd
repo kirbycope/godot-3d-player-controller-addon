@@ -128,3 +128,25 @@ func test_an_item_with_a_model_lies_there_as_the_model_turning_instead_of_the_ic
 	await wait_physics_frames(1)
 	assert_true(pickup.icon.visible, "An item without a model floats its icon")
 	assert_eq(pickup.model_pivot.get_child_count(), 0)
+
+
+func test_typing_in_the_chat_does_not_take_the_stack() -> void:
+	var pickup: ItemPickup = _drop_pickup_at(Vector3(0.5, 0.0, 0.0))
+	await wait_physics_frames(3)
+	player.is_typing = true
+	sender.action_down("action")
+	await wait_physics_frames(2)
+	sender.action_up("action")
+	await wait_physics_frames(1)
+	assert_eq(player.inventory.count_of(APPLE), 0, "Action while typing is text, not a pickup")
+	assert_true(is_instance_valid(pickup))
+	player.is_typing = false
+
+
+## The stack goes into the taker's inventory alone, so the taker tells every peer's copy of the pickup to go.
+func test_a_taken_pickup_vanishes_on_every_peer_and_the_take_action_is_exported() -> void:
+	var pickup: ItemPickup = _drop_pickup_at(Vector3(0.5, 0.0, 0.0))
+	assert_eq(pickup.take_action, &"action")
+	var config: Dictionary = (pickup.get_script() as Script).get_rpc_config()
+	assert_eq(config["_vanish"]["rpc_mode"], MultiplayerAPI.RPC_MODE_ANY_PEER, "The taker, whoever it is, frees every copy")
+	assert_true(config["_vanish"]["call_local"])

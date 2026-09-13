@@ -27,15 +27,15 @@ func _ready() -> void:
 	PlayerMenuLayer.fit_touch_buttons(self)
 
 
-## Shows a stack, or empties the cell with null; [param owner] is the Player, handed to [method Item.get_badge].
-func set_stack(slot: ItemSlot, owner: Node = null) -> void:
+## Shows a stack, or empties the cell with null; [param holder] is the Player, handed to [method Item.get_badge].
+func set_stack(slot: ItemSlot, holder: Node = null) -> void:
 	equipment = null
 	ability = null
 	item = slot.item if slot else null
 	icon = item.icon if item else null
 	_tint(item.get_icon_color() if item else Color.WHITE)
 	count_label.text = str(slot.count) if slot and slot.count > 1 else ""
-	_set_badge(item.get_badge(owner) if item else "")
+	_set_badge(item.get_badge(holder) if item else "")
 	equipped_mark.hide()
 	tooltip_text = item.get_display_name() if item else ""
 

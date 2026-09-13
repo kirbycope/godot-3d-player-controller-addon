@@ -18,6 +18,7 @@ const TURN_SECONDS: float = 6.0 ## One full turn of the model.
 		_refresh()
 @export_range(1, 999) var count: int = 1
 @export var show_icon: bool = true ## Float the item's icon as a billboard; turn off when the pickup has its own mesh.
+@export var take_action: StringName = &"action" ## The action that takes the stack while the prompt is up.
 
 var player: Player ## The Player in range, shown the prompt.
 var _turn: Tween
@@ -40,7 +41,7 @@ func _exit_tree() -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if player == null or item == null or player.is_paused or not event.is_action_pressed("action"):
+	if player == null or item == null or player.is_paused or player.is_typing or not event.is_action_pressed(take_action):
 		return
 	take()
 	get_viewport().set_input_as_handled()
@@ -59,7 +60,13 @@ func take() -> void:
 	if count == 0:
 		action_prompt.hide_for(player.controls)
 		player = null
-		queue_free()
+		_vanish.rpc()
+
+
+## The stack went into the taker's inventory alone, so the taker tells every peer's copy of the pickup to go.
+@rpc("any_peer", "call_local", "reliable")
+func _vanish() -> void:
+	queue_free()
 
 
 ## Wired to PlayerDetection.body_entered: the Player who walked up gets the prompt, with the Action button read as

@@ -69,3 +69,42 @@ func test_puppet_blend_position_targets_synced_node() -> void:
 	puppet.sync_locomotion_node = "CrouchingLocomotion"
 	puppet.sync_blend_position = Vector2(0.0, 0.7)
 	assert_eq(puppet.animation_tree.get(Player.CROUCHING_LOCOMOTION_BLEND_POSITION_PATH), Vector2(0.0, 0.7))
+
+
+## The stance flags are replicated getters. On the authority they read the input and the AnimationTree; on a
+## puppet they must hand back what the synchronizer wrote, or the puppet never aims, draws or swings.
+func test_a_puppet_reads_the_stance_flags_the_authority_sent() -> void:
+	var branch: Node = Node.new()
+	branch.set_multiplayer_authority(42)
+	add_child_autofree(branch)
+	var puppet: Player = PLAYER_SCENE.instantiate() as Player
+	puppet.set_multiplayer_authority(42)
+	branch.add_child(puppet)
+	assert_false(puppet.is_multiplayer_authority(), "The Player belongs to peer 42")
+	# The synchronizer writes the backing field, as it does on a real puppet
+	puppet.is_shooting = true
+	puppet.is_aiming_bow = true
+	puppet.is_drawing_arrow = true
+	puppet.is_firing_arrow = true
+	puppet.is_mining = true
+	puppet.is_logging = true
+	assert_true(puppet.is_shooting, "A puppet reports the synced value, not its own absent input")
+	assert_true(puppet.is_aiming_bow)
+	assert_true(puppet.is_drawing_arrow)
+	assert_true(puppet.is_firing_arrow)
+	assert_true(puppet.is_mining)
+	assert_true(puppet.is_logging)
+
+
+## The name over the head is a replicated property: the setter writes the label, and spawn state that lands
+## before the label exists is applied on ready.
+func test_display_name_writes_the_label_and_replicates() -> void:
+	var player: Player = PLAYER_SCENE.instantiate() as Player
+	player.display_name = "Kirby"
+	add_child_autofree(player)
+	assert_eq(player.steam_persona_name.text, "Kirby", "Applied once the label exists")
+	assert_true(player.steam_persona_name.visible)
+	player.display_name = ""
+	assert_false(player.steam_persona_name.visible, "Empty hides the label")
+	var tracked: Array[NodePath] = player.player_synchronizer.replication_config.get_properties()
+	assert_true(tracked.has(NodePath(".:display_name")), "so every peer reads it")

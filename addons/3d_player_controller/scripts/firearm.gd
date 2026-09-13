@@ -99,8 +99,9 @@ func _physics_process(_delta: float) -> void:
 		if laser_sight.visible:
 			laser_sight.aim(muzzle.global_position, get_aim_point())
 	if shooting and fire_timer.is_stopped() and (automatic or not _trigger_was_held):
-		fire()
-		fire_timer.start(fire_interval)
+		# An empty trigger pull started a reload on the same timer; only a round that left spaces the next one
+		if fire() != null:
+			fire_timer.start(fire_interval)
 	_trigger_was_held = shooting
 
 

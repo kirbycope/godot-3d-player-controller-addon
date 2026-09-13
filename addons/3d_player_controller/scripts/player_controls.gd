@@ -1,3 +1,4 @@
+@tool
 class_name PlayerControls
 extends Controls
 
@@ -60,10 +61,13 @@ var _seeker_shown: String = "" ## What [method seeker_label_text] said when the 
 
 
 func _ready() -> void:
+	_clusters.append($BottomCenter) # the readouts under the crosshair scale with the corners
 	if player == null and get_parent() is Player:
 		player = get_parent() as Player
 	extra_actions = PLAYER_ACTIONS
 	super()
+	if Engine.is_editor_hint():
+		return
 	contextual_labels_requested.connect(_on_contextual_labels_requested)
 
 

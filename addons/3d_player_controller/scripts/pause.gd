@@ -45,6 +45,14 @@ func _instance_screen(scene_path: String, button: Button) -> PlayerMenuLayer:
 	return screen
 
 
+## The Spells button only makes sense with a [Spellbook] under the Inventory; decided here, once the Player's
+## own ready has filled its inventory node.
+func show_menu() -> void:
+	super()
+	if spells_screen and player and player.inventory and player.inventory.spellbook == null:
+		spells_button.hide()
+
+
 ## Called when there is an input event; "start" toggles the pause menu.
 func _input(event: InputEvent) -> void:
 	if not event.is_action_pressed("start"):
@@ -133,12 +141,7 @@ func _on_settings_touch_screen_button_pressed() -> void:
 func _on_unstuck_pressed() -> void:
 	if player == null:
 		return
-	player.global_transform = player.initial_transform
-	player.velocity = Vector3.ZERO
-	player.up_direction = player.initial_transform.basis.y.normalized()
-	player.orientation = Transform3D(player.initial_transform.basis, Vector3.ZERO)
-	player.player_model.transform = player.initial_player_model_transform
-	player.collision_shape.transform = player.initial_collision_shape_transform
+	player.warp_to(player.initial_transform)
 
 
 func _on_unstuck_touch_screen_button_pressed() -> void:

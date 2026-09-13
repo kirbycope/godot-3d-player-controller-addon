@@ -125,3 +125,73 @@ class TestWheelCap:
 		assert_eq(player_instance.inventory.get_all_weapons().size(), 8, "The inventory itself stops at eight weapons")
 		wheel.update_items()
 		assert_eq(wheel.weapons.size(), 9, "Eight weapons plus the Unarmed wedge")
+
+
+
+class TestPuppetEquipment:
+	extends InventoryTestBase
+
+	const SWORD_SCENE: String = "res://addons/3d_player_controller/inventory/scenes/demo/wooden_sword.tscn"
+
+	## A peer's copy of the Player has no save and walks over nothing; the authority's list, rebuilt from scene
+	## paths, puts the same pieces on its skeleton so its stances read there.
+	func test_a_puppet_rebuilds_the_authoritys_equipment_from_scene_paths() -> void:
+		var puppet: Player = PlayerScene.instantiate() as Player
+		puppet.set_multiplayer_authority(2)
+		root.add_child(puppet)
+		await wait_physics_frames(1)
+		puppet.inventory._sync_equipment(PackedStringArray([SWORD_SCENE]), PackedByteArray([1]))
+		assert_true(puppet.inventory.has_equipment(Equipment.EquipmentType.SWORD_1H), "The sword is on the puppet's skeleton")
+		assert_true(puppet.equipped_sword_1h, "so the AnimationTree's equipped_* edges hold the stance")
+		var sword: Equipment = puppet.inventory.get_equipment_by_type(Equipment.EquipmentType.SWORD_1H)
+		assert_eq(sword.get_parent().get_parent(), puppet.skeleton)
+		puppet.inventory._sync_equipment(PackedStringArray([SWORD_SCENE]), PackedByteArray([0]))
+		assert_false(puppet.inventory.has_equipment(Equipment.EquipmentType.SWORD_1H), "Stowed on the authority, stowed here")
+		assert_eq(puppet.inventory.get_all_weapons().size(), 1, "but still carried")
+		puppet.inventory._sync_equipment(PackedStringArray(), PackedByteArray())
+		assert_eq(puppet.inventory.get_all_weapons().size(), 0, "Dropped there, gone here")
+
+	func test_the_authority_keeps_its_own_equipment() -> void:
+		player_instance.inventory._sync_equipment(PackedStringArray([SWORD_SCENE]), PackedByteArray([1]))
+		assert_false(player_instance.inventory.has_equipment(Equipment.EquipmentType.SWORD_1H), "A sync is for puppets; the authority's list is its own")
+
+
+class TestCyclingGuards:
+	extends InventoryTestBase
+
+	func test_no_cycling_while_paused_or_typing() -> void:
+		var inventory: Inventory = player_instance.inventory
+		var press := InputEventAction.new()
+		press.action = "next_weapon"
+		press.pressed = true
+		player_instance.is_paused = true
+		inventory._unhandled_input(press)
+		assert_true(inventory.hold_timer.is_stopped(), "Paused, the hold timer never starts")
+		player_instance.is_paused = false
+		player_instance.is_typing = true
+		inventory._unhandled_input(press)
+		assert_true(inventory.hold_timer.is_stopped(), "Typing in the chat, neither")
+		player_instance.is_typing = false
+		inventory._unhandled_input(press)
+		assert_false(inventory.hold_timer.is_stopped(), "Back in the game the press counts")
+		inventory.hold_timer.stop()
+
+	func test_an_empty_wheel_neither_opens_nor_divides_by_zero() -> void:
+		var wheel: RadialMenu = player_instance.radial_menu
+		wheel.custom_item_provider = func() -> Array: return []
+		Input.action_press("next_weapon")
+		wheel._on_hold_timer_timeout()
+		assert_false(wheel.visible, "Nothing to offer, nothing to show")
+		wheel.visible = true # forced open, as a provider emptied under it would leave it
+		wheel._process(0.016)
+		assert_eq(wheel.hovered_index, -1, "and the direction code copes with no wedges")
+		Input.action_release("next_weapon")
+		wheel.hide()
+		wheel.custom_item_provider = Callable()
+
+	## The action names are exported, defaulting to this addon's, so a game maps them in the inspector.
+	func test_the_cycling_and_stick_actions_are_exported_with_the_defaults() -> void:
+		assert_eq(player_instance.inventory.next_weapon_action, &"next_weapon")
+		assert_eq(player_instance.inventory.last_weapon_action, &"last_weapon")
+		var wheel: RadialMenu = player_instance.radial_menu
+		assert_eq([wheel.look_left_action, wheel.look_right_action, wheel.look_up_action, wheel.look_down_action], [&"look_left", &"look_right", &"look_up", &"look_down"])

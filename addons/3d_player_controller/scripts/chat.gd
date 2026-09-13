@@ -111,8 +111,9 @@ func get_display_name() -> String:
 	return "Player %d" % multiplayer.get_unique_id()
 
 
-## Lands on every peer's copy of the sender's Player; relays to the chat that peer owns.
-@rpc("any_peer", "call_local", "reliable")
+## Lands on every peer's copy of the sender's Player; relays to the chat that peer owns. Only that Player's
+## authority ever sends it.
+@rpc("authority", "call_local", "reliable")
 func _receive_message(sender: String, text: String) -> void:
 	for node: Node in get_tree().get_nodes_in_group(&"ChatWindow"):
 		var chat: ChatWindow = node as ChatWindow

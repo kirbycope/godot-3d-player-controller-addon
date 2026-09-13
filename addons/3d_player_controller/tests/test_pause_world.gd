@@ -111,3 +111,14 @@ func test_only_a_connected_host_alone_pauses_and_a_joining_peer_resumes() -> voi
 	client_api.multiplayer_peer.close()
 	get_tree().set_multiplayer(null, server_path)
 	get_tree().set_multiplayer(null, client_path)
+
+
+## Unstuck is the Player's own warp home, the one respawn uses.
+func test_unstuck_warps_the_player_back_to_where_it_started() -> void:
+	var home: Transform3D = player.initial_transform
+	player.global_position += Vector3(5.0, 3.0, -2.0)
+	player.velocity = Vector3(1.0, 2.0, 3.0)
+	var pause: Node = player.pause
+	pause._on_unstuck_pressed()
+	assert_true(player.global_transform.is_equal_approx(home), "Back at the start")
+	assert_eq(player.velocity, Vector3.ZERO, "and still")

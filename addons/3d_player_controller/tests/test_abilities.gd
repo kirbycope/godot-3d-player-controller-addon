@@ -563,3 +563,13 @@ func test_without_anything_ahead_a_damage_spell_still_flies_to_the_aim_point() -
 	var projectile: SpellProjectile = abilities.fx_root.get_child(3)
 	assert_null(projectile.target)
 	assert_gt(projectile.destination.distance_to(player.global_position), 5.0, "It flies off along the crosshair")
+
+
+## Spawn state lands on a late joiner's puppet before its skeleton exists, so the setter cannot apply the look;
+## ready does it instead.
+func test_a_late_joiner_sees_a_player_who_was_already_stealthed() -> void:
+	var puppet: Player = PLAYER_SCENE.instantiate()
+	puppet.set_multiplayer_authority(2)
+	puppet.is_stealthed = true
+	add_child_autofree(puppet)
+	_assert_ghosted(puppet, 1.0, "The ghost is on from ready; its alpha starts its fade from 1")

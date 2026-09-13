@@ -12,7 +12,12 @@ extends CanvasLayer
 ## and is saved with the items. Equipment is capped at [member max_equipment] pieces, BOTW style.
 ##
 ## The inventory only signals when an item is used; the game applies the effect. With [member persist] on, the whole
-## inventory is written to [member save_path] after every change and read back on ready.
+## inventory is written to [member save_path] after every change and read back once the Player is ready.
+##
+## Over the network the equipment is the authority's alone; every other peer's copy of the Player rebuilds the same
+## pieces from their scene paths ([method _sync_equipment]) so its stances read there, and a drop lands in every
+## world under one name ([method _spawn_dropped]) so a later pickup vanishes everywhere. Items themselves never
+## leave the owning peer.
 
 signal equipment_changed ## Emitted after the set of equipped items changes.
 signal items_changed ## Emitted after a stack is added, removed, moved, used or dropped.
@@ -27,6 +32,8 @@ const ITEM_TABS: Array[Item.Category] = [Item.Category.MATERIALS, Item.Category.
 @export_range(1, 100) var max_equipment: int = 8 ## Weapons and tools carried at once, equipped and stowed together; more are refused.
 @export var persist: bool = false ## Load [member save_path] on ready and write it after every change.
 @export var save_path: String = "user://inventory.tres"
+@export var next_weapon_action: StringName = &"next_weapon" ## Tap cycles forward; holding either opens the [RadialMenu].
+@export var last_weapon_action: StringName = &"last_weapon" ## Tap cycles back.
 
 static var persistence_enabled: bool = true ## Off, no inventory loads or saves whatever [member persist] says; the test suite's pre-run hook turns it off so tests never touch a real save.
 
@@ -37,6 +44,8 @@ var can_player_shoot: bool = false ## Does the currently equipped item allow the
 var custom_cycle_handler: Callable = Callable() ## Replaces weapon cycling (e.g. radio stations while driving).
 var _tabs: Dictionary[int, Array] = {} ## Category to its slots: [ItemSlot] or null per index.
 var _loading: bool = false ## True while a save is applied, so the changes it makes are not written back.
+var _save_queued: bool = false ## A write is waiting for the end of the frame, so a burst of changes costs one.
+var _drop_counter: int = 0 ## Numbers this peer's drops, so every peer names the pickup the same.
 
 @onready var radial_menu: RadialMenu = $RadialMenu
 @onready var hold_timer: Timer = $HoldTimer ## Runs while next/last weapon is held; its timeout opens the radial menu.
@@ -47,23 +56,30 @@ func _ready() -> void:
 	set_process_unhandled_input(is_multiplayer_authority())
 	for category: Item.Category in ITEM_TABS:
 		_tabs[category] = _empty_tab()
-	if persist and persistence_enabled and is_multiplayer_authority():
-		load_save()
+	if not is_multiplayer_authority():
+		return
+	multiplayer.peer_connected.connect(_send_equipment)
+	if persist and persistence_enabled:
+		# The Player's skeleton and abilities are @onready, so a save applied before its ready has nowhere to go
+		if player and not player.is_node_ready():
+			player.ready.connect(load_save, CONNECT_ONE_SHOT)
+		else:
+			load_save()
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if player == null or player.held_object.is_holding_object():
+	if player == null or player.is_paused or player.is_typing or player.held_object.is_holding_object():
 		hold_timer.stop()
 		return
 
-	if event.is_action_pressed("next_weapon") or event.is_action_pressed("last_weapon"):
+	if event.is_action_pressed(next_weapon_action) or event.is_action_pressed(last_weapon_action):
 		hold_timer.start()
-	elif event.is_action_released("next_weapon") or event.is_action_released("last_weapon"):
+	elif event.is_action_released(next_weapon_action) or event.is_action_released(last_weapon_action):
 		# A release while the timer still runs is a tap; a timeout already opened the radial menu.
 		if hold_timer.is_stopped():
 			return
 		hold_timer.stop()
-		cycle_weapon(1 if event.is_action_released("next_weapon") else -1)
+		cycle_weapon(1 if event.is_action_released(next_weapon_action) else -1)
 
 
 # --- Items -----------------------------------------------------------------------------------------------------
@@ -215,7 +231,7 @@ func drop_slot(category: Item.Category, index: int, count: int = 1) -> Node3D:
 	slot.count -= dropped
 	if slot.count == 0:
 		get_slots(category)[index] = null
-	var pickup: Node3D = _spawn_pickup(item, dropped)
+	var pickup: Node3D = _drop(ITEM_PICKUP_SCENE.resource_path, item.resource_path, dropped)
 	_items_changed()
 	item_dropped.emit(item, dropped, pickup)
 	return pickup
@@ -229,14 +245,7 @@ func drop_equipment(item: Equipment) -> Node3D:
 	var scene_path: String = forget_equipment(item)
 	if scene_path.is_empty():
 		return null
-	var pickup: Node3D = (load(scene_path) as PackedScene).instantiate() as Node3D
-	_place_in_front(pickup)
-	# A walk-over pickup lands inside its own reach; it ignores the Player who dropped it until they step away
-	pickup.set_meta("dropped_by", player)
-	var detection: Area3D = pickup.get_node_or_null("PlayerDetection") as Area3D
-	if detection:
-		detection.body_exited.connect(_on_dropped_equipment_body_exited.bind(pickup))
-	return pickup
+	return _drop(scene_path, "", 0)
 
 
 ## Forgets an equipped or stowed [Equipment] without putting anything in the world (it was thrown, it broke) and
@@ -248,12 +257,13 @@ func forget_equipment(item: Equipment) -> String:
 	var scene_path: String = item.scene_file_path
 	var attachment: BoneAttachment3D = item.get_parent() as BoneAttachment3D
 	if equipment.has(item):
-		_stow_attachment(attachment)
+		_stow(item)
 	var gone: Node = attachment if attachment else item
 	if gone.get_parent():
 		gone.get_parent().remove_child(gone) # out of the backpack now, freed at the end of the frame
 	gone.queue_free()
 	_items_changed()
+	_send_equipment()
 	return scene_path
 
 
@@ -272,13 +282,14 @@ func add_equipment_scene(scene: PackedScene) -> Equipment:
 func stow_equipment(item: Equipment) -> void:
 	if item == null or not equipment.has(item):
 		return
-	_stow_attachment(item.get_parent() as BoneAttachment3D)
+	_stow(item)
 
 
 # --- Saving ----------------------------------------------------------------------------------------------------
 
 ## Writes every stack and every piece of equipment to [member save_path].
 func save() -> Error:
+	_save_queued = false
 	var data: InventorySave = InventorySave.new()
 	for category: Item.Category in ITEM_TABS:
 		var slots: Array = get_slots(category)
@@ -354,32 +365,43 @@ func apply_save(data: InventorySave) -> void:
 		if saved.item == null or saved.index < 0 or saved.index >= slots_per_tab:
 			continue
 		get_slots(saved.category)[saved.index] = ItemSlot.make(saved.item, saved.count)
-	if player and player.skeleton:
-		for item: Equipment in get_all_weapons():
-			var attachment: BoneAttachment3D = item.get_parent() as BoneAttachment3D
-			if equipment.has(item):
-				_stow_attachment(attachment)
-			if attachment:
-				attachment.free()
-		var instances: Array[Equipment] = []
-		for entry: EquipmentEntry in data.equipment:
-			var scene: PackedScene = load(entry.scene_path) as PackedScene if _is_scene_path(entry.scene_path) else null
-			if scene == null:
-				continue
-			var pickup: Equipment = scene.instantiate() as Equipment
-			if pickup == null:
-				continue
-			var instance: Equipment = _equip_instance(pickup)
-			if instance:
-				instances.append(instance)
-		unequip_all()
-		for i: int in instances.size():
-			if i < data.equipment.size() and data.equipment[i].equipped:
-				equip_weapon(instances[i])
+	var scene_paths: PackedStringArray = []
+	var equipped: PackedByteArray = []
+	for entry: EquipmentEntry in data.equipment:
+		scene_paths.append(entry.scene_path)
+		equipped.append(1 if entry.equipped else 0)
+	_rebuild_equipment(scene_paths, equipped)
 	if spellbook:
 		spellbook.read_save(data)
 	_loading = false
 	_items_changed()
+	_send_equipment()
+
+
+## Replaces every piece of equipment with fresh instances of [param scene_paths], equipping those flagged in
+## [param equipped]. An entry whose scene is gone is skipped, and its flag with it.
+func _rebuild_equipment(scene_paths: PackedStringArray, equipped: PackedByteArray) -> void:
+	if player == null or player.skeleton == null:
+		return
+	for item: Equipment in get_all_weapons():
+		var attachment: BoneAttachment3D = item.get_parent() as BoneAttachment3D
+		if equipment.has(item):
+			_stow(item)
+		if attachment:
+			attachment.free()
+	var instances: Array[Array] = [] # [Equipment, equipped] pairs; only the entries that came back
+	for i: int in scene_paths.size():
+		var scene: PackedScene = load(scene_paths[i]) as PackedScene if _is_scene_path(scene_paths[i]) else null
+		var pickup: Equipment = scene.instantiate() as Equipment if scene else null
+		if pickup == null:
+			continue
+		var instance: Equipment = _equip_instance(pickup)
+		if instance:
+			instances.append([instance, i < equipped.size() and equipped[i] == 1])
+	unequip_all()
+	for pair: Array in instances:
+		if pair[1]:
+			equip_weapon(pair[0])
 
 
 ## Writes the save if [member persist] is on; the [Spellbook] calls it after its own changes.
@@ -388,8 +410,9 @@ func request_save() -> void:
 
 
 func _autosave() -> void:
-	if persist and persistence_enabled and not _loading and is_inside_tree() and is_multiplayer_authority():
-		save()
+	if persist and persistence_enabled and not _loading and not _save_queued and is_inside_tree() and is_multiplayer_authority():
+		_save_queued = true
+		save.call_deferred()
 
 
 func _items_changed() -> void:
@@ -446,6 +469,7 @@ func rebuild_equipment_cache() -> void:
 		player.controls.reset_labels()
 	equipment_changed.emit()
 	_autosave()
+	_send_equipment()
 
 
 func set_equipment_visibility(is_visible: bool) -> void:
@@ -593,11 +617,17 @@ func equip_from_backpack(attachment: BoneAttachment3D) -> void:
 func stow_conflicting(bone_name: String, is_exclusive: bool) -> void:
 	for item: Equipment in equipment.duplicate():
 		if item.bone_attachment_bone_name == bone_name or is_exclusive or item.is_exclusive:
-			var attachment: BoneAttachment3D = item.get_parent() as BoneAttachment3D
-			if attachment:
-				_stow_attachment(attachment)
-			else:
-				remove_equipment(item) # Equipment added without a bone attachment (a bare test fixture) just leaves the set
+			_stow(item)
+
+
+## Takes [param item] off the skeleton into the backpack; one added without a bone attachment (a bare test fixture)
+## just leaves the set.
+func _stow(item: Equipment) -> void:
+	var attachment: BoneAttachment3D = item.get_parent() as BoneAttachment3D
+	if attachment:
+		_stow_attachment(attachment)
+	else:
+		remove_equipment(item)
 
 
 func unequip_all() -> void:
@@ -637,21 +667,64 @@ func _equip_instance(pickup: Equipment) -> Equipment:
 	return instance
 
 
-func _spawn_pickup(item: Item, count: int) -> Node3D:
-	var pickup: Node3D = ITEM_PICKUP_SCENE.instantiate()
-	pickup.set("item", item)
-	pickup.set("count", count)
-	_place_in_front(pickup)
-	return pickup
-
-
-## Adds [param node] to the Player's parent a metre in front of them.
-func _place_in_front(node: Node3D) -> void:
+## Puts [param scene_path] on the ground a metre in front of the Player, on every peer under one name so a later
+## take vanishes it everywhere; an [ItemPickup] carries [param item_path] and [param count]. An item with no
+## resource path cannot travel, so that drop is this peer's alone. Returns the copy in this world.
+func _drop(scene_path: String, item_path: String, count: int) -> Node3D:
 	var facing: Vector3 = player.get_facing_direction()
 	if facing == Vector3.ZERO:
 		facing = Vector3.FORWARD
-	player.get_parent().add_child(node)
-	node.global_position = player.global_position + facing.normalized() * 1.0 + player.up_direction * 0.2
+	var at: Transform3D = Transform3D(Basis(), player.global_position + facing.normalized() * 1.0 + player.up_direction * 0.2)
+	_drop_counter += 1
+	var node_name: String = "Dropped_%d_%d" % [multiplayer.get_unique_id(), _drop_counter]
+	if scene_path == ITEM_PICKUP_SCENE.resource_path and item_path.is_empty():
+		_spawn_dropped(scene_path, at, node_name, item_path, count)
+	else:
+		_spawn_dropped.rpc(scene_path, at, node_name, item_path, count)
+	return player.get_parent().get_node_or_null(node_name)
+
+
+## Every peer puts the dropped [param scene_path] in its world as [param node_name] at [param at]; see [method _drop].
+@rpc("any_peer", "call_local", "reliable")
+func _spawn_dropped(scene_path: String, at: Transform3D, node_name: String, item_path: String, count: int) -> void:
+	var pickup: Node3D = (load(scene_path) as PackedScene).instantiate() as Node3D
+	pickup.name = node_name
+	if not item_path.is_empty():
+		pickup.set("item", load(item_path))
+		pickup.set("count", count)
+	player.get_parent().add_child(pickup)
+	pickup.global_transform = at
+	# A walk-over pickup lands inside its own reach; it ignores the Player who dropped it until they step away
+	pickup.set_meta("dropped_by", player)
+	var detection: Area3D = pickup.get_node_or_null("PlayerDetection") as Area3D
+	if detection:
+		detection.body_exited.connect(_on_dropped_equipment_body_exited.bind(pickup))
+
+
+## The authority tells [param peer] (0 is everyone) what it carries; wired to peer_connected for late joiners and
+## called after every change. A puppet has no save to draw on, so this is how its skeleton gets the same pieces.
+func _send_equipment(peer: int = 0) -> void:
+	if _loading or not is_inside_tree() or not is_multiplayer_authority() or multiplayer.get_peers().is_empty():
+		return
+	var scene_paths: PackedStringArray = []
+	var equipped: PackedByteArray = []
+	for item: Equipment in get_all_weapons():
+		if not _is_scene_path(item.scene_file_path):
+			continue # placed inline in a level; a peer cannot re-create it
+		scene_paths.append(item.scene_file_path)
+		equipped.append(1 if equipment.has(item) else 0)
+	_sync_equipment.rpc_id(peer, scene_paths, equipped)
+
+
+## A peer's copy of the Player rebuilds the authority's equipment from its scene paths: visual only, it registers
+## no actions and writes no save ([method _autosave] is the authority's alone).
+@rpc("authority", "call_local", "reliable")
+func _sync_equipment(scene_paths: PackedStringArray, equipped: PackedByteArray) -> void:
+	if is_multiplayer_authority():
+		return
+	_loading = true
+	_rebuild_equipment(scene_paths, equipped)
+	_loading = false
 
 
 ## The Player who dropped a piece of equipment has walked off it; it can be picked up again.

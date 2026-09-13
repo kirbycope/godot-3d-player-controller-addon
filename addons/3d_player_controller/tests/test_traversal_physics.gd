@@ -72,6 +72,7 @@ func test_paragliding_thermal_updraft_and_steep_dive() -> void:
 	updraft.add_child(col)
 	add_child_autofree(updraft)
 	updraft.global_position = player.global_position
+	await wait_physics_frames(2) # the area reports the overlap once physics has run
 
 	player.stamina.stamina = 50.0
 	paragliding_node._physics_process(0.5)
@@ -138,6 +139,7 @@ func test_jump_over_updraft_allows_paragliding() -> void:
 	updraft.add_child(col)
 	add_child_autofree(updraft)
 	updraft.global_position = player.global_position
+	await wait_physics_frames(2) # the area reports the overlap once physics has run
 
 	assert_true(player.is_in_updraft(), "Player should detect being in updraft")
 
@@ -171,6 +173,7 @@ func test_paragliding_updraft_catch_boost_is_immediate() -> void:
 	updraft.add_child(col)
 	add_child_autofree(updraft)
 	updraft.global_position = player.global_position
+	await wait_physics_frames(2) # the area reports the overlap once physics has run
 
 	# Entering the updraft must grant the catch boost on the very first frame (BotW standard)
 	player.velocity = Vector3.ZERO
@@ -222,9 +225,22 @@ func test_ghost_updraft_grants_no_lift() -> void:
 	updraft.add_child(col)
 	add_child_autofree(updraft)
 	updraft.global_position = player.global_position
+	await wait_physics_frames(2) # the area reports the overlap once physics has run
 
 	assert_true(player.is_in_updraft(), "Active updraft should be detected")
 
 	# A burned-out (disabled) thermal must not grant lift even while still grouped
 	updraft.monitoring = false
 	assert_false(player.is_in_updraft(), "Disabled updraft areas must not register as active thermals")
+
+
+## Only an overlap with the area's shape counts: the old within-eight-metres guess for a shapeless area is gone.
+func test_a_shapeless_area_nearby_is_no_updraft() -> void:
+	var player: Player = PLAYER_SCENE.instantiate() as Player
+	add_child_autofree(player)
+	var updraft := Area3D.new()
+	updraft.add_to_group("Updraft")
+	add_child_autofree(updraft)
+	updraft.global_position = player.global_position + Vector3(3.0, 0.0, 0.0)
+	await wait_physics_frames(2)
+	assert_false(player.is_in_updraft(), "An empty area three metres off grants no lift")

@@ -164,8 +164,16 @@ func test_spells_save_and_load_with_the_inventory() -> void:
 func test_persist_writes_after_an_unlock() -> void:
 	player.inventory.persist = true
 	spellbook.unlock(STEALTH)
+	await wait_process_frames(1) # the write is deferred to the end of the frame
 	assert_true(FileAccess.file_exists(TEST_SAVE), "Unlocking saved")
 	var data: InventorySave = ResourceLoader.load(TEST_SAVE, "", ResourceLoader.CACHE_MODE_IGNORE)
 	assert_true(data.spells_saved)
 	assert_eq(data.unlocked_spells, [STEALTH] as Array[Ability])
 	assert_eq(data.skill_points, 2)
+
+
+func test_seeding_waits_for_an_abilities_node() -> void:
+	var book: Spellbook = Spellbook.new()
+	add_child_autofree(book) # no Inventory and no Player: nothing to seed into yet
+	book._seed()
+	assert_false(book._seeded, "Not seeded until there is an abilities node to apply to")

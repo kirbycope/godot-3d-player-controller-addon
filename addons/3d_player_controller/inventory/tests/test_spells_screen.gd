@@ -257,3 +257,29 @@ func test_nodes_scrolled_out_of_the_tree_area_lose_their_touch_target() -> void:
 	assert_false(top.touch_button.visible, "Scrolled to the bottom, the top node is out of view and cannot be tapped")
 	assert_true(bottom.touch_button.visible, "and the bottom node can")
 	screen.hide_menu()
+
+
+## The unlocked list is rebuilt from scratch on every refresh; a pad player's focus is put back on the same spell.
+func test_a_refresh_keeps_the_focus_on_the_unlocked_list_for_pad_players() -> void:
+	spellbook.unlock(STEALTH)
+	spellbook.unlock(HEAL)
+	await _open()
+	screen._select_page(SpellsScreen.Page.LOADOUT)
+	screen._unlocked_buttons[1].grab_focus()
+	assert_eq(get_viewport().gui_get_focus_owner(), screen._unlocked_buttons[1])
+	screen.refresh()
+	var focus: Control = get_viewport().gui_get_focus_owner()
+	assert_not_null(focus, "Something on the screen still has focus")
+	assert_true(screen.is_ancestor_of(focus))
+	assert_eq(focus, screen._unlocked_buttons[1], "the same spell's new button")
+
+
+func test_binding_a_player_without_a_spellbook_is_harmless() -> void:
+	var bare: Player = PLAYER_SCENE.instantiate()
+	bare.get_node("Inventory/Spellbook").free()
+	root.add_child(bare)
+	var other: SpellsScreen = SCREEN_SCENE.instantiate()
+	other.player = bare
+	bare.add_child(other)
+	assert_null(other._spellbook, "No spellbook, nothing bound and no crash")
+	other.refresh()

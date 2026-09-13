@@ -251,3 +251,10 @@ func test_chat_hides_while_paused_so_menus_stay_clickable_and_ignores_the_action
 	assert_false(player.is_typing, "and nobody is typing")
 	player.is_paused = false
 	assert_true(chat.visible, "Unpausing shows it again")
+
+
+## A message travels on the sender's own ChatWindow, so only that Player's authority may send it.
+func test_chat_messages_are_sent_by_the_players_authority_alone() -> void:
+	var config: Dictionary = (chat.get_script() as Script).get_rpc_config()
+	assert_eq(config["_receive_message"]["rpc_mode"], MultiplayerAPI.RPC_MODE_AUTHORITY)
+	assert_true(config["_receive_message"]["call_local"], "and it still echoes on the sender")

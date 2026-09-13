@@ -2475,7 +2475,7 @@ xfade_time = 0.2
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_li8ca"]
 xfade_time = 0.2
 advance_mode = 2
-advance_expression = "!is_exhausted or jump_queued"
+advance_expression = "!is_exhausted or is_jump_queued"
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_pbw71"]
 xfade_time = 0.2
@@ -2824,6 +2824,9 @@ properties/37/replication_mode = 2
 properties/38/path = NodePath("Health:energy")
 properties/38/spawn = true
 properties/38/replication_mode = 2
+properties/39/path = NodePath(".:display_name")
+properties/39/spawn = true
+properties/39/replication_mode = 2
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_underwater"]
 shader = ExtResource("218_uwshd")
@@ -4318,7 +4321,7 @@ one_shot = true
 [node name="HeldObject" type="Node" parent="." unique_id=194795531 node_paths=PackedStringArray("player", "throw_charge_bar", "throw_hand")]
 script = ExtResource("209_heldobj")
 player = NodePath("..")
-throw_charge_bar = NodePath("../Controls/ThrowChargeBar")
+throw_charge_bar = NodePath("../Controls/BottomCenter/ThrowChargeBar")
 throw_hand = NodePath("../PlayerModel/Armature/GeneralSkeleton/HeldItemConnector")
 
 [node name="HitDetection" type="Node" parent="." unique_id=486677887 node_paths=PackedStringArray("player", "left_hand_hitbox", "right_hand_hitbox")]

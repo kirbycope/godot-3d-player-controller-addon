@@ -67,3 +67,12 @@ func test_voice_settings_show_with_steam_and_hide_without() -> void:
 	stub(without_steam, "is_steam_loaded").to_return(false)
 	add_child_autofree(without_steam)
 	assert_false(without_steam.voice_settings.visible, "Without Steam there is no voice chat, so the rows hide")
+
+
+## Only the owning peer ever sends its voice and its speaking indicator, so the RPCs are the authority's.
+func test_voice_rpcs_are_sent_by_the_authority_alone() -> void:
+	var config: Dictionary = (load("res://addons/3d_player_controller/scripts/player.gd") as Script).get_rpc_config()
+	assert_eq(config["_receive_voice_packet"]["rpc_mode"], MultiplayerAPI.RPC_MODE_AUTHORITY)
+	assert_eq(config["_receive_voice_packet"]["transfer_mode"], MultiplayerPeer.TRANSFER_MODE_UNRELIABLE_ORDERED, "The other flags are as they were")
+	assert_eq(config["_set_voice_indicator"]["rpc_mode"], MultiplayerAPI.RPC_MODE_AUTHORITY)
+	assert_false(config["_set_voice_indicator"]["call_local"])

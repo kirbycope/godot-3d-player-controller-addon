@@ -196,44 +196,47 @@ text = "Camera"
 [node name="Label" parent="BottomRight/KeyRight" index="0"]
 text = "Camera"
 
-[node name="ThrowChargeBar" type="ProgressBar" parent="."]
+[node name="BottomCenter" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -240.0
+offset_top = -320.0
+offset_right = 240.0
+grow_horizontal = 2
+grow_vertical = 0
+pivot_offset = Vector2(240, 320)
+mouse_filter = 2
+
+[node name="ThrowChargeBar" type="ProgressBar" parent="BottomCenter"]
 unique_name_in_owner = true
 visible = false
 custom_minimum_size = Vector2(200, 24)
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 0.8
-anchor_right = 0.5
-anchor_bottom = 0.8
-offset_left = -100.0
-offset_top = -60.0
-offset_right = 100.0
-offset_bottom = -36.0
-grow_horizontal = 2
-grow_vertical = 0
+layout_mode = 0
+offset_left = 140.0
+offset_top = 100.0
+offset_right = 340.0
+offset_bottom = 124.0
 theme_override_styles/background = SubResource("StyleBoxFlat_throw_bg")
 theme_override_styles/fill = SubResource("StyleBoxFlat_throw_fill")
 
-[node name="CastBar" type="ProgressBar" parent="."]
+[node name="CastBar" type="ProgressBar" parent="BottomCenter"]
 unique_name_in_owner = true
 visible = false
 custom_minimum_size = Vector2(240, 18)
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 0.8
-anchor_right = 0.5
-anchor_bottom = 0.8
-offset_left = -120.0
-offset_top = -32.0
-offset_right = 120.0
-offset_bottom = -14.0
-grow_horizontal = 2
-grow_vertical = 0
+layout_mode = 0
+offset_left = 120.0
+offset_top = 128.0
+offset_right = 360.0
+offset_bottom = 146.0
 theme_override_styles/background = SubResource("StyleBoxFlat_cast_bg")
 theme_override_styles/fill = SubResource("StyleBoxFlat_cast_fill")
 show_percentage = false
 
-[node name="CastLabel" type="Label" parent="CastBar"]
+[node name="CastLabel" type="Label" parent="BottomCenter/CastBar"]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
@@ -245,28 +248,25 @@ label_settings = SubResource("LabelSettings_cast")
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="BossBar" type="VBoxContainer" parent="."]
+[node name="BossBar" type="VBoxContainer" parent="TopCenter"]
 unique_name_in_owner = true
 visible = false
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -220.0
+layout_mode = 0
+offset_left = -124.0
 offset_top = 76.0
-offset_right = 220.0
+offset_right = 316.0
 offset_bottom = 120.0
-grow_horizontal = 2
 mouse_filter = 2
 theme_override_constants/separation = 2
 
-[node name="BossName" type="Label" parent="BossBar"]
+[node name="BossName" type="Label" parent="TopCenter/BossBar"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Boss"
 label_settings = SubResource("LabelSettings_boss")
 horizontal_alignment = 1
 
-[node name="BossHealth" type="ProgressBar" parent="BossBar"]
+[node name="BossHealth" type="ProgressBar" parent="TopCenter/BossBar"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(440, 14)
 layout_mode = 2
@@ -277,20 +277,14 @@ step = 0.001
 value = 1.0
 show_percentage = false
 
-[node name="AmmoLabel" type="Label" parent="."]
+[node name="AmmoLabel" type="Label" parent="BottomCenter"]
 unique_name_in_owner = true
 visible = false
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -80.0
-offset_top = -140.0
-offset_right = 80.0
-offset_bottom = -108.0
-grow_horizontal = 2
-grow_vertical = 0
+layout_mode = 0
+offset_left = 160.0
+offset_top = 180.0
+offset_right = 320.0
+offset_bottom = 212.0
 mouse_filter = 2
 text = "12 / 48"
 label_settings = SubResource("LabelSettings_ammo")

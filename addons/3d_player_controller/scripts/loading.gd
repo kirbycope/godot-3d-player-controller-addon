@@ -26,7 +26,7 @@ var _scene_path: String = ""
 var _last_status: int = -1
 var _load_started_at_msec: int = 0
 var _dependency_paths: PackedStringArray = []
-var _reported_dependency_paths: Dictionary = {}
+var _reported_dependency_paths: Dictionary[String, bool] = {}
 var _cached_dependency_count: int = 0
 
 @onready var progress_bar: ProgressBar = $ProgressBar

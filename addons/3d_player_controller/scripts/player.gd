@@ -54,10 +54,10 @@ var current_state: int = -1: ## The current state of the Player (from the Node/C
 		# Spawn-state replication assigns this while the puppet's children are still entering the tree (not ready yet)
 		if is_node_ready():
 			state_changed.emit(previous_state, value)
-var locomotion_state: ## Gets the [NodeStateMachine] "LocomotionStateMachine"
+var locomotion_state: AnimationNodeStateMachinePlayback: ## Gets the [NodeStateMachine] "LocomotionStateMachine"
 	get:
 		return animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH)
-var active_locomotion_playback: ## Playback of the active grouped locomotion machine, or the root LocomotionStateMachine playback.
+var active_locomotion_playback: AnimationNodeStateMachinePlayback: ## Playback of the active grouped locomotion machine, or the root LocomotionStateMachine playback.
 	get:
 		var root_playback: AnimationNodeStateMachinePlayback = animation_tree.get(LOCOMOTION_STATE_PLAYBACK_PATH)
 		if root_playback == null:
@@ -148,16 +148,22 @@ var is_attacking_3: bool: # Attack Sequence: 3 of n
 # Bow and Arrow
 var is_aiming_bow: bool:
 	get:
+		if not is_multiplayer_authority():
+			return is_aiming_bow
 		if held_object and (held_object.is_holding_object() or held_object.is_charging_throw or held_object.is_throwing):
 			return false
 		return current_locomotion_node == "ArcheryLocomotion" if is_multiplayer_authority() and equipped_bow else false
 var is_drawing_arrow: bool:
 	get:
+		if not is_multiplayer_authority():
+			return is_drawing_arrow
 		if held_object and (held_object.is_holding_object() or held_object.is_charging_throw or held_object.is_throwing):
 			return false
 		return current_locomotion_node == "BowDrawArrow" if is_multiplayer_authority() and equipped_bow else false
 var is_firing_arrow: bool:
 	get:
+		if not is_multiplayer_authority():
+			return is_firing_arrow
 		if held_object and (held_object.is_holding_object() or held_object.is_charging_throw or held_object.is_throwing):
 			return false
 		return current_locomotion_node == "BowFireArrow" if is_multiplayer_authority() and equipped_bow else false
@@ -250,14 +256,18 @@ var is_aiming_firearm: bool: ## Is the Player currently aiming with a firearm (P
 			return false
 		return is_focusing and has_firearm_equipped
 
-var is_mining: bool: ## Is the Player currently mining?
+var is_mining: bool: ## Is the Player currently mining? Replicated: a puppet reads what the authority sent.
 	get:
-		if not is_multiplayer_authority() or animation_tree == null:
+		if not is_multiplayer_authority():
+			return is_mining
+		if animation_tree == null:
 			return false
 		return is_locomotion_state_active_or_queued("Mining")
-var is_logging: bool: ## Is the Player currently logging?
+var is_logging: bool: ## Is the Player currently logging? Replicated: a puppet reads what the authority sent.
 	get:
-		if not is_multiplayer_authority() or animation_tree == null:
+		if not is_multiplayer_authority():
+			return is_logging
+		if animation_tree == null:
 			return false
 		return is_locomotion_state_active_or_queued("Logging")
 var is_navigating: bool = false: ## Is the Player currently navigating (click to move)?
@@ -276,9 +286,11 @@ var is_pushing: bool = false ## Is the Player currently pushing?
 var is_ragdolling: bool = false ## Is the Player currently ragdolling?
 var requires_shoot_release_after_throw: bool = false ## Set during a throw to require releasing the shoot button before shooting weapons.
 var selected_throwable: Item = null ## The throwable [Item] the seeker wheel picked; "throw" throws it when the equipped equipment is not throwable (see [HeldObject]).
-var is_shooting: bool: ## Is the Player currently shooting?
+var is_shooting: bool: ## Is the Player currently shooting? Replicated: a puppet reads what the authority sent.
 	get:
-		if not is_multiplayer_authority() or is_typing or riding_blocks_hands() or inventory == null:
+		if not is_multiplayer_authority():
+			return is_shooting
+		if is_typing or riding_blocks_hands() or inventory == null:
 			return false
 		if is_throwing:
 			return false
@@ -290,6 +302,9 @@ var is_shooting: bool: ## Is the Player currently shooting?
 				return false
 			else:
 				requires_shoot_release_after_throw = false
+		# With the cursor showing, a left click is click-to-move, not the trigger; the pad and touch still shoot
+		if Input.mouse_mode == Input.MOUSE_MODE_VISIBLE and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+			return false
 		return Input.is_action_pressed("shoot") and inventory.can_player_shoot
 var is_sitting: bool = false ## Is the Player currently sitting?
 var is_sliding: bool = false ## Is the Player currently sliding?
@@ -357,8 +372,8 @@ var _ragdoll_was_enabled: bool = true ## enable_ragdoll before death forced it o
 @onready var paraglider_raycast: RayCast3D = $ParagliderRaycast
 @onready var projectile_raycast: RayCast3D = $CameraMount/ProjectileRaycast
 @onready var skeleton: Skeleton3D = $PlayerModel/Armature/GeneralSkeleton
-@onready var look_at_modifier = $PlayerModel/Armature/GeneralSkeleton/LookAtModifier3D
-@onready var head_look_at_modifier = $PlayerModel/Armature/GeneralSkeleton/HeadLookAtModifier3D ## Turns the head alone; the spine one above is for aiming.
+@onready var look_at_modifier: LookAtModifier3D = $PlayerModel/Armature/GeneralSkeleton/LookAtModifier3D
+@onready var head_look_at_modifier: LookAtModifier3D = $PlayerModel/Armature/GeneralSkeleton/HeadLookAtModifier3D ## Turns the head alone; the spine one above is for aiming.
 @onready var right_hand_ik: TwoBoneIK3D = $PlayerModel/Armature/GeneralSkeleton/RightHandIK
 @onready var physical_bone_simulator: PhysicalBoneSimulator3D = $PlayerModel/Armature/GeneralSkeleton/PhysicalBoneSimulator3D
 @onready var spring_arm: SpringArm3D = $CameraMount/CameraSpringArm
@@ -386,6 +401,13 @@ var _ragdoll_was_enabled: bool = true ## enable_ragdoll before death forced it o
 		if not is_multiplayer_authority() and animation_tree and is_node_ready():
 			_apply_synced_blend_position(value)
 
+var display_name: String = "": ## The name over the head (the Steam persona); replicated, so every peer reads it. Empty hides the label.
+	set(value):
+		display_name = value
+		if steam_persona_name:
+			steam_persona_name.text = value
+			steam_persona_name.visible = not value.is_empty()
+
 var voice_playback: AudioStreamGeneratorPlayback = null
 var is_broadcasting: bool = false
 var current_water_area: Area3D = null
@@ -403,6 +425,11 @@ func _ready() -> void:
 	if animation_tree:
 		animation_tree.active = true
 		animation_tree.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_PHYSICS
+
+	# Spawn state lands before the skeleton and the label exist, so a late joiner applies it here
+	if is_stealthed:
+		_apply_stealth_look(true)
+	display_name = display_name
 
 	# Do nothing if not the authority
 	if not is_multiplayer_authority():
@@ -435,7 +462,7 @@ func _ready() -> void:
 
 	# Ensure PhysicalBone3D nodes never collide with the player CharacterBody3D
 	if physical_bone_simulator:
-		for child in physical_bone_simulator.get_children():
+		for child: Node in physical_bone_simulator.get_children():
 			if child is PhysicalBone3D:
 				child.add_collision_exception_with(self)
 				add_collision_exception_with(child)
@@ -450,8 +477,8 @@ func _ready() -> void:
 	if not paraglider:
 		paraglider = get_node_or_null("PlayerModel/Armature/GeneralSkeleton/ParagliderBoneAttachment/Paraglider")
 	if paraglider_scene and not paraglider:
-		var bone_attachment = get_node_or_null("PlayerModel/Armature/GeneralSkeleton/ParagliderBoneAttachment")
-		var paraglider_instance = paraglider_scene.instantiate() as Node3D
+		var bone_attachment: Node = get_node_or_null("PlayerModel/Armature/GeneralSkeleton/ParagliderBoneAttachment")
+		var paraglider_instance: Node3D = paraglider_scene.instantiate() as Node3D
 		if paraglider_instance:
 			if bone_attachment:
 				bone_attachment.add_child(paraglider_instance)
@@ -496,18 +523,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		chat.open_input()
 		get_viewport().set_input_as_handled()
 		return
-
-
-	# Toggle mouse capture
-	if event.is_action_pressed("ui_cancel"):
-		# Check if the mouse is currently captured
-		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-			# Set the mouse mode to visible to show the mouse cursor
-			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-		# The mouse must not be currently captured
-		else:
-			# Set the mouse mode to captured to hide the mouse cursor
-			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 	# [Left Mouse Button] pressed while the cursor is visible -> Start "navigating"
 	if event is InputEventMouse \
@@ -655,26 +670,7 @@ func apply_input(delta: float) -> void:
 					var rotate_weight: float = clampf(delta * rotate_speed, 0.0, 1.0)
 					orientation.basis = Basis(q_from.slerp(q_to, rotate_weight))
 
-		if is_crouching:
-			animation_tree.set(CROUCHING_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
-		else:
-			if inventory.has_equipment(Equipment.EquipmentType.BOW):
-				if is_shooting:
-					animation_tree.set(ARCHERY_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
-				else:
-					animation_tree.set(BOW_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
-			elif inventory.has_one_handed_or_shield_equipped():
-				animation_tree.set(SHIELD_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
-			elif inventory.has_heavy_weapon_equipped():
-				animation_tree.set(GREATSWORD_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
-			elif inventory.has_equipment(Equipment.EquipmentType.PISTOL):
-				animation_tree.set(PISTOL_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
-			elif inventory.has_equipment(Equipment.EquipmentType.RIFLE):
-				animation_tree.set(RIFLE_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
-			elif inventory.is_unarmed() and is_boxing:
-				animation_tree.set(BOXING_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
-			else:
-				animation_tree.set(STANDING_LOCOMOTION_BLEND_POSITION_PATH, target_motion)
+		_set_locomotion_blend(target_motion)
 
 	# Handle movement when not strafing
 	elif not is_riding:
@@ -688,26 +684,7 @@ func apply_input(delta: float) -> void:
 			var q_to: Quaternion = Basis.looking_at(-target_dir, up_direction).get_rotation_quaternion()
 			orientation.basis = Basis(q_from.slerp(q_to, delta * rotation_interpolate_speed))
 
-		var anim_blend := Vector2(0.0, target_motion.length())
-		if is_crouching:
-			animation_tree.set(CROUCHING_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
-		if inventory.has_equipment(Equipment.EquipmentType.BOW):
-			if is_shooting:
-				animation_tree.set(ARCHERY_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
-			else:
-				animation_tree.set(BOW_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
-		elif inventory.has_one_handed_or_shield_equipped():
-			animation_tree.set(SHIELD_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
-		elif inventory.has_heavy_weapon_equipped():
-			animation_tree.set(GREATSWORD_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
-		elif inventory.has_equipment(Equipment.EquipmentType.PISTOL):
-			animation_tree.set(PISTOL_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
-		elif inventory.has_equipment(Equipment.EquipmentType.RIFLE):
-			animation_tree.set(RIFLE_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
-		elif inventory.is_unarmed() and is_boxing:
-			animation_tree.set(BOXING_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
-		else:
-			animation_tree.set(STANDING_LOCOMOTION_BLEND_POSITION_PATH, anim_blend)
+		_set_locomotion_blend(Vector2(0.0, target_motion.length()))
 
 	var root_motion_position := animation_tree.get_root_motion_position()
 	if is_swimming and not is_climbing_on:
@@ -741,7 +718,7 @@ func apply_input(delta: float) -> void:
 		var current_h_vel := velocity.slide(up_direction)
 		var current_speed := current_h_vel.length()
 		var air_speed_cap := max(current_speed, 5.0)
-		var target_h_vel = target_dir * air_speed_cap
+		var target_h_vel: Vector3 = target_dir * air_speed_cap
 		
 		# Slowly lerp to target air speed to preserve momentum
 		h_velocity = current_h_vel.lerp(target_h_vel, 3.0 * delta)
@@ -762,6 +739,27 @@ func apply_input(delta: float) -> void:
 	velocity = h_velocity.slide(up_direction) + (up_direction * vertical_speed)
 	last_fall_speed = - vertical_speed
 	update_movement_and_rotation(delta)
+
+
+## Feeds [param motion] to the blend space of the stance being played: crouching is its own locomotion state, so
+## while crouched only that space moves; otherwise the equipped weapon's space, boxing, or plain standing.
+func _set_locomotion_blend(motion: Vector2) -> void:
+	if is_crouching:
+		animation_tree.set(CROUCHING_LOCOMOTION_BLEND_POSITION_PATH, motion)
+	elif inventory.has_equipment(Equipment.EquipmentType.BOW):
+		animation_tree.set(ARCHERY_LOCOMOTION_BLEND_POSITION_PATH if is_shooting else BOW_LOCOMOTION_BLEND_POSITION_PATH, motion)
+	elif inventory.has_one_handed_or_shield_equipped():
+		animation_tree.set(SHIELD_LOCOMOTION_BLEND_POSITION_PATH, motion)
+	elif inventory.has_heavy_weapon_equipped():
+		animation_tree.set(GREATSWORD_LOCOMOTION_BLEND_POSITION_PATH, motion)
+	elif inventory.has_equipment(Equipment.EquipmentType.PISTOL):
+		animation_tree.set(PISTOL_LOCOMOTION_BLEND_POSITION_PATH, motion)
+	elif inventory.has_equipment(Equipment.EquipmentType.RIFLE):
+		animation_tree.set(RIFLE_LOCOMOTION_BLEND_POSITION_PATH, motion)
+	elif inventory.is_unarmed() and is_boxing:
+		animation_tree.set(BOXING_LOCOMOTION_BLEND_POSITION_PATH, motion)
+	else:
+		animation_tree.set(STANDING_LOCOMOTION_BLEND_POSITION_PATH, motion)
 
 
 ## Detect if the player is in front of a ledge and can hang from it and/or climb on to it.
@@ -838,7 +836,7 @@ func release_charging_throw() -> void:
 
 ## Updates the Steam persona label for the current lobby size.
 func _update_steam_persona_name() -> void:
-	steam_persona_name.hide()
+	display_name = ""
 	if OS.has_feature("web") or not Engine.has_singleton("Steam"):
 		return
 	var steamworks: Node = get_node_or_null("/root/Steamworks")
@@ -848,10 +846,7 @@ func _update_steam_persona_name() -> void:
 	var lobby_id: int = steamworks.get("lobby_id")
 	if lobby_id == 0 or steam_singleton.getNumLobbyMembers(lobby_id) <= 1:
 		return
-	var persona_name: String = steam_singleton.getPersonaName()
-	if not persona_name.is_empty():
-		steam_persona_name.text = persona_name
-		steam_persona_name.show()
+	display_name = steam_singleton.getPersonaName()
 
 
 ## Refreshes the Steam persona label when a lobby member joins or leaves.
@@ -1041,36 +1036,10 @@ func is_in_updraft() -> bool:
 	pool.append_array(tree.get_nodes_in_group("Updraft"))
 	pool.append_array(tree.get_nodes_in_group("Thermal"))
 
-	for node in pool:
-		if node is Area3D:
-			var area := node as Area3D
-			# Skip burned-out/disabled thermals so ghost updrafts never grant lift
-			if not area.monitoring:
-				continue
-			if area.overlaps_body(self):
-				return true
-			var col_shape: CollisionShape3D = area.find_child("CollisionShape3D", true, false) as CollisionShape3D
-			if col_shape and col_shape.shape:
-				var local_p := area.to_local(global_position)
-				if col_shape.shape is BoxShape3D:
-					var box := col_shape.shape as BoxShape3D
-					var half := box.size * 0.5
-					if abs(local_p.x) <= half.x and abs(local_p.y) <= half.y and abs(local_p.z) <= half.z:
-						return true
-				elif col_shape.shape is CylinderShape3D:
-					var cyl := col_shape.shape as CylinderShape3D
-					var half_h := cyl.height * 0.5
-					var horiz_d := Vector2(local_p.x, local_p.z).length()
-					if abs(local_p.y) <= half_h and horiz_d <= cyl.radius:
-						return true
-				elif col_shape.shape is CapsuleShape3D:
-					var cap := col_shape.shape as CapsuleShape3D
-					var half_h := cap.height * 0.5
-					var horiz_d := Vector2(local_p.x, local_p.z).length()
-					if abs(local_p.y) <= half_h and horiz_d <= cap.radius:
-						return true
-			elif area.global_position.distance_to(global_position) < 8.0:
-				return true
+	for node: Node in pool:
+		# A burned-out thermal has monitoring off, so a ghost updraft never grants lift
+		if node is Area3D and (node as Area3D).monitoring and (node as Area3D).overlaps_body(self):
+			return true
 	return false
 
 
@@ -1087,7 +1056,7 @@ func get_nearest_updraft_distance() -> float:
 	pool.append_array(tree.get_nodes_in_group("Updraft"))
 	pool.append_array(tree.get_nodes_in_group("Thermal"))
 
-	for node in pool:
+	for node: Node in pool:
 		if node is Area3D:
 			var area := node as Area3D
 			if area.monitoring or area.monitorable:
@@ -1109,7 +1078,7 @@ func _setup_updraft_vfx() -> void:
 			updraft_aura_vfx.visible = false
 			updraft_aura_vfx.scale = Vector3(1.2, 1.6, 1.2)
 			add_child(updraft_aura_vfx)
-			for p in updraft_aura_vfx.find_children("*", "GPUParticles3D", true, false):
+			for p: Node in updraft_aura_vfx.find_children("*", "GPUParticles3D", true, false):
 				if p is GPUParticles3D:
 					p.emitting = false
 
@@ -1121,7 +1090,7 @@ func _update_updraft_vfx() -> void:
 	var should_show: bool = is_in_updraft() or get_nearest_updraft_distance() <= 5.0
 	if updraft_aura_vfx.visible != should_show:
 		updraft_aura_vfx.visible = should_show
-		for p in updraft_aura_vfx.find_children("*", "GPUParticles3D", true, false):
+		for p: Node in updraft_aura_vfx.find_children("*", "GPUParticles3D", true, false):
 			if p is GPUParticles3D:
 				p.emitting = should_show
 
@@ -1135,17 +1104,18 @@ func get_facing_direction() -> Vector3:
 	return facing_direction.normalized()
 
 
-## Called by the animation(s) using "Call Method Track" to play footstep sound effects at the right time.
-func sfx_footsteps_play():
-	if is_on_floor() and paraglider_raycast.is_colliding() and not is_ragdolling:
+## Called by the animation(s) using "Call Method Track" to play footstep sound effects at the right time. The
+## ground raycast, not is_on_floor(): only move_and_slide() computes that, and a puppet never moves itself.
+func sfx_footsteps_play() -> void:
+	if paraglider_raycast.is_colliding() and not is_ragdolling:
 		var collider := paraglider_raycast.get_collider() as Node3D
 		if audio:
 			audio.play_footstep(collider)
 
 
 ## Called by the animation(s) using "Call Method Track" to play sliding footstep sound effects at the right time.
-func sfx_footsteps_slide_play():
-	if is_on_floor() and paraglider_raycast.is_colliding():
+func sfx_footsteps_slide_play() -> void:
+	if paraglider_raycast.is_colliding():
 		var collider := paraglider_raycast.get_collider() as Node3D
 		if audio:
 			audio.play_slide(collider)
@@ -1166,7 +1136,7 @@ func update_movement_and_rotation(delta: float) -> void:
 	var pre_velocity := velocity
 	move_and_slide()
 
-	for i in get_slide_collision_count():
+	for i: int in get_slide_collision_count():
 		var c := get_slide_collision(i)
 		if c.get_collider() is RigidBody3D:
 			var rb := c.get_collider() as RigidBody3D
@@ -1283,7 +1253,8 @@ func stop_broadcasting() -> void:
 		_set_voice_indicator.rpc(false)
 
 
-@rpc("any_peer", "call_remote", "unreliable_ordered")
+## Voice from the owning peer, decoded into this copy's 3D player; only the authority ever sends it.
+@rpc("authority", "call_remote", "unreliable_ordered")
 func _receive_voice_packet(compressed_buffer: PackedByteArray) -> void:
 	var steam: Object = _get_steam_running()
 	if steam == null or compressed_buffer.is_empty():
@@ -1302,9 +1273,9 @@ func _receive_voice_packet(compressed_buffer: PackedByteArray) -> void:
 			voice_playback = voice_audio_player.get_stream_playback() as AudioStreamGeneratorPlayback
 		if voice_playback:
 			var sample_count: int = uncompressed.size() / 2
-			var frames = PackedVector2Array()
+			var frames: PackedVector2Array = PackedVector2Array()
 			frames.resize(sample_count)
-			for i in range(sample_count):
+			for i: int in range(sample_count):
 				var sample_val: float = float(uncompressed.decode_s16(i * 2)) / 32768.0
 				frames[i] = Vector2(sample_val, sample_val)
 			var frames_available: int = voice_playback.get_frames_available()
@@ -1314,7 +1285,8 @@ func _receive_voice_packet(compressed_buffer: PackedByteArray) -> void:
 				voice_playback.push_buffer(frames)
 
 
-@rpc("any_peer", "call_remote", "reliable")
+## The speaking indicator over this copy's head; only the authority ever sends it.
+@rpc("authority", "call_remote", "reliable")
 func _set_voice_indicator(is_speaking: bool) -> void:
 	if voice_chat_indicator:
 		voice_chat_indicator.visible = is_speaking

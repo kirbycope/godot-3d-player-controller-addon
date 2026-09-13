@@ -116,3 +116,15 @@ func test_the_start_action_closes_the_inventory_and_unpauses() -> void:
 	assert_false(inventory_screen.visible)
 	assert_false(pause.visible)
 	assert_false(player.is_paused, "Start closes everything, like the other menus")
+
+
+func test_the_spells_button_hides_without_a_spellbook() -> void:
+	var bare: Player = PLAYER_SCENE.instantiate()
+	bare.get_node("Inventory/Spellbook").free()
+	root.add_child(bare)
+	await wait_physics_frames(3)
+	var bare_pause: Node = bare.pause
+	bare_pause.show_menu()
+	assert_false(bare_pause.spells_button.visible, "No spellbook, no Spells button")
+	assert_true(bare_pause.inventory_button.visible, "The Inventory one stays")
+	bare_pause.hide_menu()

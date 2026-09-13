@@ -22,7 +22,7 @@ not the inventory's to use; widen the table before widening the code.
 | `is_paused` | `bool` | `ItemPickup._input` ignores Action while paused; `PlayerMenuLayer.show_menu` / `hide_menu` set it |
 | `is_riding` | `bool` | `ItemPickup` ignores a riding Player |
 | `ready` | signal (Node) | `Spellbook._ready` waits for the Player before seeding the wheel |
-| `get_facing_direction()` | `-> Vector3` | `Inventory._place_in_front` drops pickups a metre ahead (`Vector3.ZERO` falls back to forward) |
+| `get_facing_direction()` | `-> Vector3` | `Inventory._drop` drops pickups a metre ahead (`Vector3.ZERO` falls back to forward) |
 | `warp_to(target)` | `(Transform3D) -> void` | Tests move the Player onto and off dropped equipment |
 | native | `is_multiplayer_authority()`, `up_direction`, `global_position`, `get_parent()`, `is_node_ready()` | `Inventory`, `ItemPickup`, `Spellbook` |
 

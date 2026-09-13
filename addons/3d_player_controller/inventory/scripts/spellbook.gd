@@ -42,10 +42,10 @@ func _ready() -> void:
 func _seed() -> void:
 	if _seeded:
 		return
-	_seeded = true
 	var abilities: Abilities = _abilities()
 	if abilities == null:
 		return
+	_seeded = true
 	if unlocked.is_empty() and active.all(func(slot: Ability) -> bool: return slot == null):
 		for ability: Ability in abilities.abilities:
 			if ability and not unlocked.has(ability):

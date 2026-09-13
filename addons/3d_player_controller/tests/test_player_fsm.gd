@@ -664,3 +664,55 @@ class TestStandingLocomotion:
 			player.current_locomotion_path.begins_with("GreatSword"),
 			"Equipping a greatsword while standing should travel to the GreatSword locomotion, got %s." % player.current_locomotion_path,
 		)
+
+
+class TestAnimationTreeExpressions:
+	extends GutTest
+
+	var PlayerScene = load("res://addons/3d_player_controller/scenes/player.tscn")
+
+	const KNOWN_GAPS: Array[String] = ["is_stomping"] ## Boxing's Stomping edge reads a flag nothing sets; it is dead until the Player grows one.
+
+	## Every name an advance_expression reads is something the Player has, so a typo cannot leave an edge that
+	## never fires (HeavyBreathing -> StandingLocomotion once read jump_queued).
+	func test_every_advance_expression_names_player_members() -> void:
+		var player: Player = PlayerScene.instantiate()
+		add_child_autofree(player)
+		var blend_tree: AnimationNodeBlendTree = player.animation_tree.tree_root as AnimationNodeBlendTree
+		var machines: Array[AnimationNodeStateMachine] = [blend_tree.get_node("LocomotionStateMachine")]
+		for group: String in Player.LOCOMOTION_GROUPS:
+			machines.append(machines[0].get_node(group))
+		var quoted: RegEx = RegEx.create_from_string("\"[^\"]*\"")
+		var identifier: RegEx = RegEx.create_from_string("[A-Za-z_][A-Za-z0-9_]*")
+		var checked: int = 0
+		for machine: AnimationNodeStateMachine in machines:
+			for i: int in machine.get_transition_count():
+				var expression: String = quoted.sub(machine.get_transition(i).advance_expression, "", true)
+				for found: RegExMatch in identifier.search_all(expression):
+					var name: String = found.get_string()
+					if name in ["and", "or", "not", "true", "false", "in"] or name in KNOWN_GAPS:
+						continue
+					checked += 1
+					assert_true(name in player or player.has_method(name), "%s -> %s reads '%s', which the Player does not have" % [machine.get_transition_from(i), machine.get_transition_to(i), name])
+		assert_gt(checked, 0, "The tree has expressions to check")
+
+
+class TestLocomotionBlend:
+	extends FsmTestBase
+
+	## Crouching is its own locomotion state, so while crouched only its blend space follows the input; standing
+	## up with a one-handed weapon feeds the Shield space instead.
+	func test_the_blend_follows_the_stance_crouch_first() -> void:
+		var sword := Equipment.new()
+		sword.equipment_type = Equipment.EquipmentType.SWORD_1H
+		sword.bone_attachment_bone_name = "RightHand"
+		root.add_child(sword)
+		player.inventory.equip_pickup(sword)
+		player.animation_tree.set(Player.SHIELD_LOCOMOTION_BLEND_POSITION_PATH, Vector2.ZERO)
+		player.is_crouching = true
+		player._set_locomotion_blend(Vector2(0.0, 0.7))
+		assert_eq(player.animation_tree.get(Player.CROUCHING_LOCOMOTION_BLEND_POSITION_PATH), Vector2(0.0, 0.7), "Crouched, the crouch space moves")
+		assert_eq(player.animation_tree.get(Player.SHIELD_LOCOMOTION_BLEND_POSITION_PATH), Vector2.ZERO, "and the weapon's does not")
+		player.is_crouching = false
+		player._set_locomotion_blend(Vector2(0.0, 0.7))
+		assert_eq(player.animation_tree.get(Player.SHIELD_LOCOMOTION_BLEND_POSITION_PATH), Vector2(0.0, 0.7), "Standing with a sword, the Shield space moves")

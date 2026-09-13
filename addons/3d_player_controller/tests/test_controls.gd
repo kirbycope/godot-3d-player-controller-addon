@@ -347,3 +347,29 @@ class TestActionTable:
 	func test_emote_action_is_not_registered():
 		assert_false(PlayerControls.PLAYER_ACTIONS.has("emote"), "The unused emote action should be gone from the table.")
 		assert_false(InputMap.has_action("emote"), "and nothing else should have added it.")
+
+
+
+## Tests related to the HUD layout: the readouts scale with the corners, the editor preview runs, and the cursor
+## toggle is gone.
+class TestHudLayout:
+	extends ControlsTestBase
+
+	func test_the_readouts_scale_with_the_corners() -> void:
+		var controls: PlayerControls = player_instance.controls
+		var bottom_center: Control = controls.get_node("BottomCenter")
+		assert_eq(controls.ammo_label.get_parent(), bottom_center, "The ammo count sits in the bottom-centre cluster")
+		assert_eq(controls.cast_bar.get_parent(), bottom_center)
+		assert_eq(controls.get_node("%ThrowChargeBar").get_parent(), bottom_center)
+		assert_eq(controls.boss_bar.get_parent(), controls.get_node("TopCenter"), "The boss bar sits in the top-centre cluster, where it was drawn")
+		controls.hud_scale = 2.0
+		assert_eq(bottom_center.scale, controls.get_node("BottomLeft").scale, "and the new cluster follows hud_scale like the corners")
+		assert_ne(bottom_center.scale, Vector2.ONE)
+		controls.hud_scale = 1.0
+
+	func test_player_controls_previews_in_the_editor_like_the_hud_it_extends() -> void:
+		assert_true((player_instance.controls.get_script() as Script).is_tool(), "@tool, so the editor runs the base preview and hud_scale")
+
+	func test_ui_cancel_no_longer_toggles_the_mouse_mode() -> void:
+		var source: String = (player_instance.get_script() as GDScript).source_code
+		assert_false(source.contains("ui_cancel"), "Pause takes Escape and a pad's B is ui_cancel, so the Player leaves the cursor alone")

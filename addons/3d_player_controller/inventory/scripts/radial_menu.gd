@@ -16,6 +16,10 @@ const ICON_SIZE: Vector2 = Vector2(64, 64)
 @export var highlight_color: Color = Color(1, 1, 1, 0.3)
 @export var equipped_color: Color = Color(1, 1, 1, 0.6)
 @export var hold_actions: Array[StringName] = [&"last_weapon", &"next_weapon"] ## Actions that keep the wheel open.
+@export var look_left_action: StringName = &"look_left" ## The right stick picks a wedge on a pad; these four read it.
+@export var look_right_action: StringName = &"look_right"
+@export var look_up_action: StringName = &"look_up"
+@export var look_down_action: StringName = &"look_down"
 @export_range(1, 16) var max_items: int = 8 ## Wedges at most (the weapon wheel's Unarmed wedge is on top of them).
 
 var weapons: Array[Dictionary] = []
@@ -40,6 +44,8 @@ func _process(_delta: float) -> void:
 	if not is_menu_held():
 		_close()
 		return
+	if weapons.is_empty():
+		return
 	var segment_angle: float = 360.0 / weapons.size()
 	if _is_keyboard_mouse():
 		var offset: Vector2 = get_local_mouse_position() - size / 2.0
@@ -49,7 +55,7 @@ func _process(_delta: float) -> void:
 		else:
 			_set_hovered(int(fposmod(rad_to_deg(offset.angle()) + 90.0, 360.0) / segment_angle) % weapons.size())
 	else:
-		var stick: Vector2 = Input.get_vector("look_left", "look_right", "look_up", "look_down")
+		var stick: Vector2 = Input.get_vector(look_left_action, look_right_action, look_up_action, look_down_action)
 		if stick.length() > 0.3:
 			_set_hovered(int(fposmod(rad_to_deg(stick.angle()) + 90.0, 360.0) / segment_angle) % weapons.size())
 
@@ -67,6 +73,8 @@ func _on_hold_timer_timeout() -> void:
 	if not is_menu_held():
 		return
 	update_items()
+	if weapons.is_empty(): # a custom provider with nothing to offer
+		return
 	show()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if _is_keyboard_mouse() else Input.MOUSE_MODE_HIDDEN
 	player.crosshair.hide()

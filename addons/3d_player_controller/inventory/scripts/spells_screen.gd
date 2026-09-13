@@ -61,7 +61,9 @@ func bind(target: Player) -> void:
 	if _spellbook:
 		_spellbook.loadout_changed.disconnect(refresh)
 		_spellbook.skill_points_changed.disconnect(_on_points_changed)
-	_spellbook = target.inventory.spellbook
+	_spellbook = target.inventory.spellbook if target.inventory else null
+	if _spellbook == null:
+		return
 	_spellbook.loadout_changed.connect(refresh)
 	_spellbook.skill_points_changed.connect(_on_points_changed)
 	_build_tree()
@@ -183,8 +185,14 @@ func refresh() -> void:
 	_update_details()
 
 
+## The buttons are rebuilt from scratch, so the focus a pad player had on one is put back on the same spell,
+## or the first button when that spell is gone.
 func _rebuild_unlocked() -> void:
+	var focused: Control = get_viewport().gui_get_focus_owner() if is_inside_tree() else null
+	var refocus: Ability = null # the spell whose button had the focus, if one did
 	for button: SpellNodeButton in _unlocked_buttons:
+		if button == focused:
+			refocus = button.ability
 		button.queue_free()
 	_unlocked_buttons.clear()
 	for ability: Ability in _spellbook.unlocked:
@@ -198,6 +206,16 @@ func _rebuild_unlocked() -> void:
 		button.node_pressed.connect(_on_unlocked_pressed)
 		button.node_focused.connect(_on_node_focused)
 		_unlocked_buttons.append(button)
+	if refocus == null:
+		return
+	for button: SpellNodeButton in _unlocked_buttons:
+		if button.ability == refocus:
+			button.grab_focus()
+			return
+	if not _unlocked_buttons.is_empty():
+		_unlocked_buttons[0].grab_focus()
+	elif not _slot_buttons.is_empty():
+		_slot_buttons[0].grab_focus()
 
 
 ## A node for a starting spell the tree does not list.
