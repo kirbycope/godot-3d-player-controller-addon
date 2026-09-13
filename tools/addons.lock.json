@@ -1,9 +1,9 @@
 {
   "controls": {
-    "commit": "ca5297f3305706b41a4e8f8fb46c64cf0d128ae3",
-    "pulled": "2026-09-13T07:01:54Z",
+    "commit": "5a073169a44078371e14fec28e21e591577eca3d",
+    "pulled": "2026-09-13T07:14:08Z",
     "ref": "main",
     "repo": "https://github.com/kirbycope/godot-controls.git",
-    "subject": "Fit the HUD to the window on every device, and again on every resize"
+    "subject": "Drop the stretch mode: the HUD sizes itself to the window now"
   }
 }
