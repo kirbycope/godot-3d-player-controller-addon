@@ -1,6 +1,8 @@
 extends PlayerMenuLayer
 
 @onready var vsync_button: CheckButton = $Panel/VBoxContainer/VSYNC
+@onready var ui_scale_button: OptionButton = $Panel/VBoxContainer/UIScale ## Items are [constant PlayerSettingsResource.UI_SCALES] in order.
+@onready var hud_button: OptionButton = $Panel/VBoxContainer/OnScreenControls ## Items are [enum PlayerSettingsResource.HudMode] in order.
 @onready var toon_button: OptionButton = $Panel/VBoxContainer/ToonShading ## Items are [enum ToonFilter.Mode] in order.
 @onready var msaa_button: OptionButton = $Panel/VBoxContainer/MSAA
 @onready var ssaa_button: OptionButton = $Panel/VBoxContainer/SSAA
@@ -22,6 +24,8 @@ func _ready() -> void:
 
 	# Available in all renderers
 	vsync_button.set_pressed_no_signal(settings_res.vsync_enabled)
+	ui_scale_button.selected = clampi(settings_res.ui_scale_index, 0, ui_scale_button.item_count - 1)
+	hud_button.selected = clampi(settings_res.hud_mode, 0, hud_button.item_count - 1)
 	toon_button.selected = clampi(settings_res.toon_mode, 0, toon_button.item_count - 1)
 	update_cel_availability(player.toon_filter.is_cel_available() if player and is_instance_valid(player.toon_filter) else RenderingServer.get_current_rendering_method() == ToonFilter.FORWARD_PLUS)
 	msaa_button.selected = settings_res.msaa_index
@@ -51,6 +55,28 @@ func _on_vsync_toggled(toggled_on: bool) -> void:
 
 func _on_vsync_touch_screen_button_pressed() -> void:
 	_on_vsync_toggled(not vsync_button.button_pressed)
+
+
+func _on_ui_scale_item_selected(index: int) -> void:
+	settings_res.ui_scale_index = index
+	_apply_and_save()
+
+
+func _on_ui_scale_touch_screen_button_pressed() -> void:
+	ui_scale_button.selected = (ui_scale_button.selected + 1) % ui_scale_button.item_count
+	_on_ui_scale_item_selected(ui_scale_button.selected)
+
+
+func _on_on_screen_controls_item_selected(index: int) -> void:
+	settings_res.hud_mode = index
+	if player:
+		player.apply_hud_visibility()
+	settings_res.save()
+
+
+func _on_on_screen_controls_touch_screen_button_pressed() -> void:
+	hud_button.selected = (hud_button.selected + 1) % hud_button.item_count
+	_on_on_screen_controls_item_selected(hud_button.selected)
 
 
 ## Cel needs Forward+; elsewhere the option stays listed, greyed, with the reason as its tooltip.

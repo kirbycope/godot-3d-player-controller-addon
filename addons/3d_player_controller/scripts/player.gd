@@ -455,7 +455,8 @@ func _ready() -> void:
 	orientation = player_model.global_transform
 	orientation.origin = Vector3()
 
-	# Apply persistent user settings
+	# Apply persistent user settings; the on-screen controls follow the device in hand from here on
+	controls.input_type_changed.connect(_on_controls_input_type_changed)
 	PlayerSettingsResource.load_or_create().apply_all(get_viewport(), self)
 
 	# Record the initial collision shape height and position for crouching and sliding.
@@ -1403,6 +1404,19 @@ func dismount(immediate: bool = false) -> void:
 
 
 ## Re-applies the current state's contextual control labels (after something else borrowed them).
+## Shows or hides the on-screen controls the way the saved [member PlayerSettingsResource.hud_mode] asks: on
+## touch only by default. Anything that hid the HUD for a while (a game taking the screen) calls this to give it
+## back rather than showing it outright.
+func apply_hud_visibility() -> void:
+	if controls == null or not is_multiplayer_authority():
+		return
+	controls.visible = PlayerSettingsResource.load_or_create().hud_shown(controls.current_input_type, DisplayServer.is_touchscreen_available())
+
+
+func _on_controls_input_type_changed(_input_type: int) -> void:
+	apply_hud_visibility()
+
+
 func refresh_contextual_controls() -> void:
 	if controls == null or state_machine == null:
 		return
