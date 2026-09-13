@@ -335,3 +335,17 @@ func test_focus_camera_unchanged_with_zero_body_yaw() -> void:
 	var expected_pitch: float = atan2(to_target.y, Vector2(to_target.x, to_target.z).length())
 	assert_almost_eq(camera.camera_mount.rotation.y, expected_yaw, 0.01, "Yaw matches the previous world-space result")
 	assert_almost_eq(camera.camera_mount.rotation.x, expected_pitch, 0.01, "Pitch matches the previous world-space result")
+
+
+## The perspective button's swap is a method too, so a seat that has taken the Player's input can still answer it.
+func test_toggle_perspective_swaps_first_and_third_person() -> void:
+	var player: Player = PLAYER_SCENE.instantiate() as Player
+	add_child_autofree(player)
+	await wait_process_frames(2)
+	var camera: Camera = player.camera as Camera
+	assert_eq(camera.perspective, Camera.Perspective.THIRD_PERSON, "Third person to begin with")
+	camera.toggle_perspective()
+	assert_eq(camera.perspective, Camera.Perspective.FIRST_PERSON, "One press goes to first person")
+	camera.toggle_perspective()
+	assert_eq(camera.perspective, Camera.Perspective.THIRD_PERSON, "and the next comes back")
+	assert_eq(camera.transform, camera.camera_initial_transform, "to where the camera started")

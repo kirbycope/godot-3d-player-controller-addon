@@ -98,6 +98,17 @@ func _on_looking_at_changed(previous: Node3D, current: Node3D) -> void:
 		current.display_menu(player)
 
 
+## Swaps first and third person, the way the perspective button does; public so a seat that has taken the
+## Player's input (the retro computer while DOOM plays) can still answer that button.
+func toggle_perspective() -> void:
+	if perspective == Perspective.FIRST_PERSON:
+		perspective = Perspective.THIRD_PERSON
+		transform = camera_initial_transform
+	else:
+		perspective = Perspective.FIRST_PERSON
+	_update_raycast()
+
+
 ## Called when an input event has not been consumed by the UI.
 func _unhandled_input(event: InputEvent) -> void:
 	# Do nothing if the player is not set or is paused/ragdolling
@@ -110,12 +121,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	# Perspective { Microsoft: ⧉, Nintendo: ⊝, Sony: ⦀, Keyboard: [F5] }
 	if event.is_action_pressed("perspective"):
-		if perspective == Perspective.FIRST_PERSON:
-			perspective = Perspective.THIRD_PERSON
-			transform = camera_initial_transform
-		else:
-			perspective = Perspective.FIRST_PERSON
-		_update_raycast()
+		toggle_perspective()
 
 	# With a visible cursor, holding right-click temporarily captures the mouse so rotation feels normal.
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT:
