@@ -14,7 +14,7 @@ signal network_ready(is_host: bool) ## Emitted once [member MultiplayerAPI.multi
 
 func _ready() -> void:
 	var lobby_id: int = _lobby_id()
-	if lobby_id != 0 and not multiplayer.has_multiplayer_peer():
+	if lobby_id != 0 and not has_session():
 		connect_to_lobby(lobby_id)
 
 
@@ -24,9 +24,16 @@ func is_available() -> bool:
 			and get_node_or_null("/root/Steamworks") != null
 
 
+## Whether a session is already up. Godot gives every tree an [OfflineMultiplayerPeer] from the start, so
+## [method MultiplayerAPI.has_multiplayer_peer] is always true and says nothing; only a peer that is not that
+## one means we are hosting or connected. Asking the wrong question here meant neither ever happened.
+func has_session() -> bool:
+	return multiplayer.has_multiplayer_peer() and not multiplayer.multiplayer_peer is OfflineMultiplayerPeer
+
+
 ## Hosts the session; the caller has already created the lobby.
 func host() -> void:
-	if not is_available() or multiplayer.has_multiplayer_peer():
+	if not is_available() or has_session():
 		return
 	var peer: MultiplayerPeer = ClassDB.instantiate(&"SteamMultiplayerPeer")
 	peer.call("create_host", virtual_port)
@@ -36,7 +43,7 @@ func host() -> void:
 
 ## Hosts when we own [param lobby_id], otherwise connects to its owner.
 func connect_to_lobby(lobby_id: int) -> void:
-	if not is_available() or multiplayer.has_multiplayer_peer():
+	if not is_available() or has_session():
 		return
 	var steam: Object = Engine.get_singleton("Steam")
 	var owner_id: int = steam.call("getLobbyOwner", lobby_id)
