@@ -96,3 +96,31 @@ func test_the_hosts_equipment_and_drops_reach_the_client() -> void:
 	await wait_process_frames(10)
 	assert_eq(client.inventory.count_of(APPLE), 1, "The client took the apple")
 	assert_false(is_instance_valid(dropped), "and the host's copy went with it")
+
+
+## A weapon placed in a level is usually the model file with the Equipment script and its settings put on in
+## the scene, so the model's path alone re-creates nothing. The copy names the pickup it came from instead, and
+## a peer duplicates that pickup: for wearing, and again when it is dropped.
+func test_a_world_pickup_reaches_the_client_by_its_path() -> void:
+	await wait_process_frames(30)
+	var host: Player = server_root.get_node("Players/1")
+	var host_on_client: Player = client_root.get_node("Players/1")
+	var pickup: Equipment = Equipment.new()
+	pickup.name = "WorldSword"
+	pickup.equipment_type = Equipment.EquipmentType.SWORD_1H
+	pickup.bone_attachment_bone_name = "RightHand"
+	server_root.add_child(pickup)
+	assert_true(pickup.equip(host), "The host picks the sword up off the ground")
+	var worn: Equipment = pickup.equipment_instance
+	assert_eq(worn.get_meta("origin"), String(pickup.get_path()), "and the copy remembers the pickup it came from")
+	await wait_process_frames(10)
+	assert_true(host_on_client.inventory.has_equipment(Equipment.EquipmentType.SWORD_1H), "The client's copy of the host wears it")
+	var on_client: Equipment = host_on_client.inventory.get_all_weapons()[0] as Equipment
+	assert_eq(on_client.bone_attachment_bone_name, "RightHand", "with the settings the level gave the pickup")
+	var dropped: Node3D = host.inventory.drop_equipment(worn)
+	assert_not_null(dropped, "The host drops it")
+	await wait_process_frames(10)
+	var drop_on_client: Equipment = client_root.get_node_or_null("Players/Dropped_1_1") as Equipment
+	assert_not_null(drop_on_client, "and it lies in the client's world as a whole pickup, script and all")
+	if drop_on_client:
+		assert_null(drop_on_client.equipment_instance, "ready to be picked up again")

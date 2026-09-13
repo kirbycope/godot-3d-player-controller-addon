@@ -298,6 +298,9 @@ func start_throwable_throw() -> bool:
 		return false
 	var equipment: Equipment = get_throwable_equipment()
 	if equipment:
+		# What lands is an instance of the piece's scene, so only a piece with a scene of its own can fly.
+		if not Inventory.has_own_scene(equipment):
+			return false
 		var damage: float = equipment.throw_damage
 		var scene_path: String = player.inventory.forget_equipment(equipment)
 		if scene_path.is_empty():

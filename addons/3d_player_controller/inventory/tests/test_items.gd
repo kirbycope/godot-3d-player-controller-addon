@@ -270,8 +270,8 @@ func test_forget_equipment_drops_nothing_and_add_equipment_scene_brings_it_back(
 	bare.bone_attachment_bone_name = "LeftHand"
 	root.add_child(bare)
 	var dagger: Equipment = inventory.equip_pickup(bare)
-	assert_eq(inventory.forget_equipment(dagger), "", "Equipment from no scene cannot be forgotten: there is nothing to bring it back from")
-	assert_true(inventory.equipment.has(dagger), "so it stays")
+	assert_eq(inventory.forget_equipment(dagger), String(bare.get_path()), "Equipment from a pickup standing in the world comes back from that pickup, by its path")
+	assert_false(inventory.equipment.has(dagger), "so it goes")
 	watch_signals(inventory)
 	var children_before: int = root.get_child_count()
 	assert_eq(inventory.forget_equipment(sword), "res://addons/3d_player_controller/inventory/scenes/demo/wooden_sword.tscn", "The scene path the sword can come back from")

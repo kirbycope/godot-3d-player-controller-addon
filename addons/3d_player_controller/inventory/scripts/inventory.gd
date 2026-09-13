@@ -252,9 +252,9 @@ func drop_equipment(item: Equipment) -> Node3D:
 ## returns the scene path it can be re-created from. Empty, and nothing happens, for equipment that was not
 ## instanced from a scene.
 func forget_equipment(item: Equipment) -> String:
-	if item == null or not _is_scene_path(item.scene_file_path):
+	var scene_path: String = origin_of(item)
+	if scene_path.is_empty():
 		return ""
-	var scene_path: String = item.scene_file_path
 	var attachment: BoneAttachment3D = item.get_parent() as BoneAttachment3D
 	if equipment.has(item):
 		_stow(item)
@@ -391,8 +391,7 @@ func _rebuild_equipment(scene_paths: PackedStringArray, equipped: PackedByteArra
 			attachment.free()
 	var instances: Array[Array] = [] # [Equipment, equipped] pairs; only the entries that came back
 	for i: int in scene_paths.size():
-		var scene: PackedScene = load(scene_paths[i]) as PackedScene if _is_scene_path(scene_paths[i]) else null
-		var pickup: Equipment = scene.instantiate() as Equipment if scene else null
+		var pickup: Equipment = _pickup_from(scene_paths[i])
 		if pickup == null:
 			continue
 		var instance: Equipment = _equip_instance(pickup)
@@ -588,6 +587,12 @@ func equip_pickup(pickup: Equipment) -> Equipment:
 	var copy: Equipment = pickup.duplicate() as Equipment
 	copy.player = player
 	copy.scene_file_path = pickup.scene_file_path # so the inventory can save and drop it as its scene
+	# Where a peer finds the same piece: the pickup itself when it stands in the world on every peer, else the
+	# scene it came from. A model file alone carries no script, so a world pickup is named by its path.
+	if pickup.is_inside_tree() and not player.is_ancestor_of(pickup):
+		copy.set_meta("origin", String(pickup.get_path()))
+	elif pickup.has_meta("origin"):
+		copy.set_meta("origin", pickup.get_meta("origin"))
 	attachment.add_child(copy)
 	# Disable world collision but keep the "Hitbox" and "WeaponBody" shapes so HitDetection can use them.
 	for shape: Node in copy.find_children("*", "CollisionShape3D", true, false):
@@ -687,7 +692,9 @@ func _drop(scene_path: String, item_path: String, count: int) -> Node3D:
 ## Every peer puts the dropped [param scene_path] in its world as [param node_name] at [param at]; see [method _drop].
 @rpc("any_peer", "call_local", "reliable")
 func _spawn_dropped(scene_path: String, at: Transform3D, node_name: String, item_path: String, count: int) -> void:
-	var pickup: Node3D = (load(scene_path) as PackedScene).instantiate() as Node3D
+	var pickup: Node3D = _pickup_from(scene_path) if scene_path.begins_with("/") else (load(scene_path) as PackedScene).instantiate() as Node3D
+	if pickup == null:
+		return
 	pickup.name = node_name
 	if not item_path.is_empty():
 		pickup.set("item", load(item_path))
@@ -709,9 +716,10 @@ func _send_equipment(peer: int = 0) -> void:
 	var scene_paths: PackedStringArray = []
 	var equipped: PackedByteArray = []
 	for item: Equipment in get_all_weapons():
-		if not _is_scene_path(item.scene_file_path):
-			continue # placed inline in a level; a peer cannot re-create it
-		scene_paths.append(item.scene_file_path)
+		var origin: String = origin_of(item)
+		if origin.is_empty():
+			continue # placed inline in a level and never a pickup; a peer cannot re-create it
+		scene_paths.append(origin)
 		equipped.append(1 if equipment.has(item) else 0)
 	_sync_equipment.rpc_id(peer, scene_paths, equipped)
 
@@ -736,5 +744,42 @@ func _on_dropped_equipment_body_exited(body: Node3D, pickup: Node3D) -> void:
 ## Whether a peer can re-create a piece from [param path]: any scene the loader knows, which is a .tscn as much
 ## as an imported .fbx or .glb, since a project's weapons are often the model file itself. A node placed inline
 ## in a level has no path and stays where it is.
+## What names [param item] to a peer: the scene it was instanced from when that scene is its own (a .tscn
+## carries the script and the settings), else the world pickup it came from, by path, which is what a model
+## file with the script put on in the level needs. Empty for a piece placed inline that was never a pickup.
+func origin_of(item: Equipment) -> String:
+	if item == null:
+		return ""
+	if has_own_scene(item):
+		return item.scene_file_path
+	return item.get_meta("origin") if item.has_meta("origin") else ""
+
+
+## Whether [param item] can be re-created from its scene alone: a .tscn or .scn, which carries its script and
+## settings, unlike an imported model that only gets them in the level. A throw needs this, since what lands
+## is an instance of that scene.
+static func has_own_scene(item: Equipment) -> bool:
+	return item != null and (item.scene_file_path.ends_with(".tscn") or item.scene_file_path.ends_with(".scn"))
+
+
+## A fresh pickup for [param origin]: a copy of the world pickup at that path, or an instance of that scene.
+## Null when neither is there. A copy of a spent pickup is made whole again, so it can be worn or walked over.
+func _pickup_from(origin: String) -> Equipment:
+	if origin.begins_with("/"):
+		var source: Equipment = get_node_or_null(origin) as Equipment
+		if source == null:
+			return null
+		var pickup: Equipment = source.duplicate() as Equipment
+		pickup.equipment_instance = null
+		pickup.visible = true
+		var detection: Area3D = pickup.get_node_or_null("PlayerDetection") as Area3D
+		if detection:
+			detection.monitoring = true
+		pickup.set_meta("origin", origin)
+		return pickup
+	var scene: PackedScene = load(origin) as PackedScene if _is_scene_path(origin) else null
+	return scene.instantiate() as Equipment if scene else null
+
+
 static func _is_scene_path(path: String) -> bool:
 	return ResourceLoader.exists(path) and ResourceLoader.get_resource_type(path) == "PackedScene"
