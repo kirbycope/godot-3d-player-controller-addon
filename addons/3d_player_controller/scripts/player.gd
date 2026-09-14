@@ -9,6 +9,8 @@ signal exhausted_changed(is_exhausted: bool) ## Emitted when [member is_exhauste
 signal navigating_changed(is_navigating: bool) ## Emitted when click-to-move navigation starts or stops.
 signal paused_changed(is_paused: bool) ## Emitted when [member is_paused] changes (a menu opened or closed).
 signal whistled(player: Player) ## Emitted on the authority when the `whistle` action is pressed on foot (not while riding); the world decides who answers.
+signal respawned ## Emitted on the authority when [method respawn] has put the Player back on their feet.
+signal checkpoint_changed(transform: Transform3D) ## Emitted on the authority when [member respawn_transform] changes.
 
 const EMOTE_STATE_PLAYBACK_PATH: String = "parameters/EmoteStateMachine/playback"
 const CAST_CHANNEL_EMOTE: StringName = &"ReadyToCastSpell" ## Upper-body pose held while an unarmed cast channels.
@@ -34,6 +36,23 @@ const LOCOMOTION_GROUPS: Array[String] = ["Bow", "Boxing", "GreatSword", "Pistol
 @export var rotation_interpolate_speed: float = 10.0
 @export var swimming_root_motion_multiplier: float = 2.0
 
+@export_category("Controls")
+## The joypad this Player reads: -1, the default, is the whole input (every pad, the keyboard and the mouse, as
+## a single player has); 0 and up is that pad alone, for a [SplitScreen] player. The action names never change;
+## [method is_action_pressed], [method get_action_strength] and [method get_vector] resolve an action's pad
+## bindings against that pad, and the view the Player sits in forwards only that pad's events.
+@export var input_device: int = -1
+var uses_mouse: bool: ## Whether the mouse is this Player's: only a Player on the whole input has it.
+	get:
+		return input_device < 0
+## Which game's controls the Player answers to: the pad's face-button layout and what Focus does. Zelda locks on
+## to a target; GTA aims freely over the shoulder. See [enum PlayerControls.ControlScheme]. The settings menu can
+## override it for the player ([member PlayerSettingsResource.control_scheme_index]).
+@export var control_scheme: PlayerControls.ControlScheme = PlayerControls.ControlScheme.ZELDA:
+	set(value):
+		control_scheme = value
+		if is_node_ready() and controls and is_multiplayer_authority():
+			controls.apply_control_scheme(value)
 @export_category("Enable Settings")
 @export var enable_flying: bool = false
 @export var enable_paraglider: bool = false
@@ -209,7 +228,7 @@ var is_focusing: bool: ## Is the Player currently focusing (forward or on a targ
 		# Also suppressed during the temporary right-click capture used for camera rotation.
 		if camera is Camera and (camera as Camera).is_temporarily_captured:
 			return false
-		return Input.is_action_pressed("focus")
+		return is_action_pressed(&"focus")
 var is_jumping: bool = false ## Is the Player currently jumping?
 var is_jump_queued: bool = false ## Is the Player currently queued to jump?
 var is_front_flipping: bool = false ## Is the Player currently front flipping?
@@ -232,6 +251,47 @@ var held_rigidbody: RigidBody3D: ## The [RigidBody3D] currently carried, if any.
 var current_focus_target: Node3D: ## The body currently locked on to, if any. (Delegates to [Focus].)
 	get:
 		return focus.current_focus_target if focus else null
+
+
+## [method Input.is_action_pressed] for this Player: the whole input on a single player, this Player's pad alone
+## on [member input_device]. Every polled action read in the controller goes through here and the two below.
+func is_action_pressed(action_name: StringName) -> bool:
+	if input_device < 0:
+		return Input.is_action_pressed(action_name)
+	return get_action_strength(action_name) > 0.0
+
+
+## [method Input.get_action_strength] for this Player: on a pad of their own, the action's joypad bindings are
+## read off that pad ([method Input.is_joy_button_pressed], [method Input.get_joy_axis]), past the action's deadzone.
+func get_action_strength(action_name: StringName) -> float:
+	if input_device < 0:
+		return Input.get_action_strength(action_name)
+	if not InputMap.has_action(action_name):
+		return 0.0
+	var strength: float = 0.0
+	var deadzone: float = InputMap.action_get_deadzone(action_name)
+	for event: InputEvent in InputMap.action_get_events(action_name):
+		if event is InputEventJoypadButton:
+			if Input.is_joy_button_pressed(input_device, (event as InputEventJoypadButton).button_index):
+				strength = 1.0
+		elif event is InputEventJoypadMotion:
+			var motion: InputEventJoypadMotion = event as InputEventJoypadMotion
+			var value: float = Input.get_joy_axis(input_device, motion.axis)
+			if signf(value) == signf(motion.axis_value) and absf(value) > deadzone:
+				strength = maxf(strength, absf(value))
+	return strength
+
+
+## [method Input.get_vector] for this Player.
+func get_vector(negative_x: StringName, positive_x: StringName, negative_y: StringName, positive_y: StringName) -> Vector2:
+	if input_device < 0:
+		return Input.get_vector(negative_x, positive_x, negative_y, positive_y)
+	return Vector2(get_action_strength(positive_x) - get_action_strength(negative_x), get_action_strength(positive_y) - get_action_strength(negative_y)).limit_length(1.0)
+
+
+## Whether Focus locks on to a target (the Zelda scheme) rather than aiming freely over the shoulder (GTA).
+func lock_on_enabled() -> bool:
+	return control_scheme == PlayerControls.ControlScheme.ZELDA
 
 
 ## Returns the 3D focus target position (resolving Marker3D_FocusTarget on the target body if present).
@@ -298,14 +358,14 @@ var is_shooting: bool: ## Is the Player currently shooting? Replicated: a puppet
 			if held_object.is_holding_object() or held_object.is_charging_throw or held_object.is_throw_queued or held_object.is_throwing:
 				return false
 		if requires_shoot_release_after_throw:
-			if Input.is_action_pressed("shoot"):
+			if is_action_pressed(&"shoot"):
 				return false
 			else:
 				requires_shoot_release_after_throw = false
 		# With the cursor showing, a left click is click-to-move, not the trigger; the pad and touch still shoot
 		if Input.mouse_mode == Input.MOUSE_MODE_VISIBLE and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 			return false
-		return Input.is_action_pressed("shoot") and inventory.can_player_shoot
+		return is_action_pressed(&"shoot") and inventory.can_player_shoot
 var is_sitting: bool = false ## Is the Player currently sitting?
 var is_sliding: bool = false ## Is the Player currently sliding?
 var is_sprinting: bool = false ## Is the Player currently sprinting?
@@ -353,8 +413,12 @@ var paraglider: Node3D
 @onready var stamina: TextureProgressBar = $Stamina
 @onready var health: Health = $Health
 @onready var respawn_timer: Timer = $RespawnTimer ## Runs after death; its timeout is wired to [method respawn].
+@onready var quest_log: QuestLog = get_node_or_null("QuestLog") as QuestLog ## The Player's quests; saved with them.
+@onready var dialogue_screen: DialogueScreen = get_node_or_null("DialogueScreen") as DialogueScreen ## The conversation box a [TalkingNpc] opens.
+@onready var quest_tracker: QuestTracker = get_node_or_null("QuestTracker") as QuestTracker ## The tracked quest's objectives, top right.
 var _ragdoll_was_enabled: bool = true ## enable_ragdoll before death forced it on.
 @onready var initial_transform: Transform3D = global_transform
+@onready var respawn_transform: Transform3D = global_transform ## Where [method respawn] and Unstuck put the Player: the spawn point until a [Checkpoint] is taken.
 @onready var falling_raycast: RayCast3D = $FallingRaycast
 @onready var player_model: Node3D = $PlayerModel
 @onready var ledge_detection_horizontal: RayCast3D = $PlayerModel/LedgeDetectionHorizontal
@@ -407,15 +471,7 @@ var _ragdoll_was_enabled: bool = true ## enable_ragdoll before death forced it o
 @export var sync_blend_position: Vector2 = Vector2.ZERO:
 	set(value):
 		sync_blend_position = value
-		# `is_multiplayer_authority()` asserts the node is in the tree, and an exported
-		# property is assigned while the scene is still being built, before it is. The
-		# tree check has to come first or every load logs the failed assertion.
-		if (
-			is_inside_tree()
-			and not is_multiplayer_authority()
-			and animation_tree
-			and is_node_ready()
-		):
+		if not is_multiplayer_authority() and animation_tree and is_node_ready():
 			_apply_synced_blend_position(value)
 
 var display_name: String = "": ## The name over the head (the Steam persona); replicated, so every peer reads it. Empty hides the label.
@@ -539,13 +595,14 @@ func _unhandled_input(event: InputEvent) -> void:
 	if is_paused or is_typing or is_ragdolling: return
 
 	# Chat; handled here rather than in _input so a menu that consumes Enter through the GUI wins
-	if event.is_action_pressed("chat") and chat:
+	if event.is_action_pressed(&"chat") and chat:
 		chat.open_input()
 		get_viewport().set_input_as_handled()
 		return
 
 	# [Left Mouse Button] pressed while the cursor is visible -> Start "navigating"
 	if event is InputEventMouse \
+			and uses_mouse \
 			and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) \
 			and Input.mouse_mode == Input.MOUSE_MODE_VISIBLE:
 		# Find out where the click lands on the player's movement plane
@@ -561,13 +618,13 @@ func _unhandled_input(event: InputEvent) -> void:
 				debug.draw_navigation_marker(cursor_position)
 
 	# Whistle (action="whistle", key="K", D-Pad Down): the horse and whoever else listens answer; a rideable takes it first
-	if event.is_action_pressed("whistle") and not event.is_echo() and not is_riding:
+	if event.is_action_pressed(&"whistle") and not event.is_echo() and not is_riding:
 		whistled.emit(self)
 
 	# Push-to-talk voice broadcasting (action="broadcast", key="V")
-	if event.is_action_pressed("broadcast"):
+	if event.is_action_pressed(&"broadcast"):
 		start_broadcasting()
-	elif event.is_action_released("broadcast"):
+	elif event.is_action_released(&"broadcast"):
 		stop_broadcasting()
 
 
@@ -1616,11 +1673,56 @@ func _on_health_died() -> void:
 	respawn_timer.start()
 
 
-## Back on your feet at the spawn point with full health.
+## Back on your feet at the last checkpoint (the spawn point until one is taken) with full health.
 func respawn() -> void:
 	hunters.clear()
 	health.regen_paused = false
 	health.health = health.max_health
 	state_machine.travel(current_state, NodeStateMachine.States.STANDING)
 	enable_ragdoll = _ragdoll_was_enabled
-	warp_to(initial_transform)
+	warp_to(respawn_transform)
+	respawned.emit()
+
+
+## Makes [param transform] where the Player comes back after dying; a [Checkpoint] calls it as it is taken.
+func set_checkpoint(transform: Transform3D) -> void:
+	if transform.is_equal_approx(respawn_transform):
+		return
+	respawn_transform = transform
+	checkpoint_changed.emit(transform)
+
+
+## What a [SaveGame] keeps of the Player: where they are and respawn, their pools, the whole inventory and the quests.
+func save_state() -> Dictionary:
+	var state: Dictionary = {
+		"transform": global_transform,
+		"respawn_transform": respawn_transform,
+		"health": health.health,
+		"energy": health.energy,
+		"stamina": stamina.stamina,
+	}
+	if inventory:
+		state["inventory"] = inventory.make_save()
+	if quest_log:
+		state["quests"] = quest_log.save_state()
+	return state
+
+
+## Puts a [method save_state] back. A Player mid-ride gets off first; one saved dead (a write that landed during
+## the respawn wait) comes back with full health rather than dead on the spot.
+func load_state(state: Dictionary) -> void:
+	if state.has("respawn_transform"):
+		respawn_transform = state["respawn_transform"]
+		checkpoint_changed.emit(respawn_transform)
+	if is_riding:
+		dismount(true)
+	if state.has("transform"):
+		warp_to(state["transform"])
+	var saved_health: float = float(state.get("health", health.max_health))
+	health.health = saved_health if saved_health > 0.0 else health.max_health
+	health.energy = float(state.get("energy", health.max_energy))
+	stamina.stamina = float(state.get("stamina", stamina.max_value))
+	if inventory and state.get("inventory") is InventorySave:
+		inventory.apply_save(state["inventory"] as InventorySave)
+	if quest_log and state.get("quests") is Dictionary:
+		quest_log.load_state(state["quests"])

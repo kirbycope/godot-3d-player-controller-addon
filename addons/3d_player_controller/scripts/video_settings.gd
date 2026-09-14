@@ -3,6 +3,7 @@ extends PlayerMenuLayer
 @onready var vsync_button: CheckButton = $Panel/VBoxContainer/VSYNC
 @onready var ui_scale_button: OptionButton = $Panel/VBoxContainer/UIScale ## Items are [constant PlayerSettingsResource.UI_SCALES] in order.
 @onready var hud_button: OptionButton = $Panel/VBoxContainer/OnScreenControls ## Items are [enum PlayerSettingsResource.HudMode] in order.
+@onready var scheme_button: OptionButton = $Panel/VBoxContainer/ControlScheme ## Items are [enum PlayerSettingsResource.SchemeSetting] in order.
 @onready var toon_button: OptionButton = $Panel/VBoxContainer/ToonShading ## Items are [enum ToonFilter.Mode] in order.
 @onready var msaa_button: OptionButton = $Panel/VBoxContainer/MSAA
 @onready var ssaa_button: OptionButton = $Panel/VBoxContainer/SSAA
@@ -26,6 +27,7 @@ func _ready() -> void:
 	vsync_button.set_pressed_no_signal(settings_res.vsync_enabled)
 	ui_scale_button.selected = clampi(settings_res.ui_scale_index, 0, ui_scale_button.item_count - 1)
 	hud_button.selected = clampi(settings_res.hud_mode, 0, hud_button.item_count - 1)
+	scheme_button.selected = clampi(settings_res.control_scheme_index, 0, scheme_button.item_count - 1)
 	toon_button.selected = clampi(settings_res.toon_mode, 0, toon_button.item_count - 1)
 	update_cel_availability(player.toon_filter.is_cel_available() if player and is_instance_valid(player.toon_filter) else RenderingServer.get_current_rendering_method() == ToonFilter.FORWARD_PLUS)
 	msaa_button.selected = settings_res.msaa_index
@@ -77,6 +79,18 @@ func _on_on_screen_controls_item_selected(index: int) -> void:
 func _on_on_screen_controls_touch_screen_button_pressed() -> void:
 	hud_button.selected = (hud_button.selected + 1) % hud_button.item_count
 	_on_on_screen_controls_item_selected(hud_button.selected)
+
+
+## The scheme goes straight on the Player, so the pad is laid out the new way as soon as the menu closes.
+func _on_control_scheme_item_selected(index: int) -> void:
+	settings_res.control_scheme_index = index
+	settings_res.apply_control_scheme(player)
+	settings_res.save()
+
+
+func _on_control_scheme_touch_screen_button_pressed() -> void:
+	scheme_button.selected = (scheme_button.selected + 1) % scheme_button.item_count
+	_on_control_scheme_item_selected(scheme_button.selected)
 
 
 ## Cel needs Forward+; elsewhere the option stays listed, greyed, with the reason as its tooltip.

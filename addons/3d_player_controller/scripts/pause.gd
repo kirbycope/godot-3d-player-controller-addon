@@ -2,17 +2,22 @@ extends PlayerMenuLayer
 
 @export_file("*.tscn") var inventory_screen_scene: String = "" ## An InventoryScreen scene; when set, the Inventory button shows and opens it.
 @export_file("*.tscn") var spells_screen_scene: String = "" ## A SpellsScreen scene; when set, the Spells button shows and opens it.
+@export_file("*.tscn") var quests_screen_scene: String = "res://addons/3d_player_controller/scenes/quest_screen.tscn" ## A QuestScreen scene; when set, the Quests button shows and opens it.
 @export_file("*.tscn") var extra_screen_scene: String = "" ## Any PlayerMenuLayer scene of the game's (a journal, a fish index); when set, the Extra button shows and opens it.
 @export var extra_screen_label: String = "Journal" ## What the Extra button says.
 
 var inventory_screen: PlayerMenuLayer ## The instanced inventory screen, a sibling of this menu on the Player.
 var spells_screen: PlayerMenuLayer ## The instanced spells screen, a sibling of this menu on the Player.
+var quests_screen: PlayerMenuLayer ## The instanced quests screen, a sibling of this menu on the Player.
 var extra_screen: PlayerMenuLayer ## The instanced extra screen, a sibling of this menu on the Player.
 
 @onready var lobby: Button = $Panel/VBoxContainer/Lobby
 @onready var inventory_button: Button = $Panel/VBoxContainer/Inventory
 @onready var spells_button: Button = $Panel/VBoxContainer/Spells
+@onready var quests_button: Button = $Panel/VBoxContainer/Quests
 @onready var extra_button: Button = $Panel/VBoxContainer/Extra
+@onready var save_button: Button = $Panel/VBoxContainer/Save ## Shown while a [SaveGame] is in the scene.
+@onready var load_button: Button = $Panel/VBoxContainer/Load ## Shown with Save, enabled while its file exists.
 
 
 ## Called when the node enters the scene tree for the first time.
@@ -26,6 +31,7 @@ func _ready() -> void:
 	lobby.disabled = lobby_unavailable
 	inventory_screen = _instance_screen(inventory_screen_scene, inventory_button)
 	spells_screen = _instance_screen(spells_screen_scene, spells_button)
+	quests_screen = _instance_screen(quests_screen_scene, quests_button)
 	extra_button.text = extra_screen_label
 	extra_screen = _instance_screen(extra_screen_scene, extra_button)
 
@@ -51,6 +57,12 @@ func show_menu() -> void:
 	super()
 	if spells_screen and player and player.inventory and player.inventory.spellbook == null:
 		spells_button.hide()
+	if quests_screen and player and player.quest_log == null:
+		quests_button.hide()
+	var saver: SaveGame = SaveGame.find_in(get_tree())
+	save_button.visible = saver != null
+	load_button.visible = saver != null
+	load_button.disabled = saver == null or not saver.has_save()
 
 
 ## Called when there is an input event; "start" toggles the pause menu.
@@ -103,6 +115,17 @@ func _on_spells_pressed() -> void:
 	spells_screen.show_menu()
 
 
+func _on_quests_pressed() -> void:
+	if quests_screen == null:
+		return
+	hide()
+	quests_screen.show_menu()
+
+
+func _on_quests_touch_screen_button_pressed() -> void:
+	_on_quests_pressed()
+
+
 func _on_extra_pressed() -> void:
 	if extra_screen == null:
 		return
@@ -138,10 +161,35 @@ func _on_settings_touch_screen_button_pressed() -> void:
 	_on_settings_pressed()
 
 
+func _on_save_pressed() -> void:
+	var saver: SaveGame = SaveGame.find_in(get_tree())
+	if saver == null:
+		return
+	saver.save_game()
+	hide_menu()
+
+
+func _on_save_touch_screen_button_pressed() -> void:
+	_on_save_pressed()
+
+
+func _on_load_pressed() -> void:
+	var saver: SaveGame = SaveGame.find_in(get_tree())
+	if saver == null or not saver.has_save():
+		return
+	hide_menu()
+	saver.load_game()
+
+
+func _on_load_touch_screen_button_pressed() -> void:
+	_on_load_pressed()
+
+
+## Back to the last checkpoint, or the spawn point before one is taken.
 func _on_unstuck_pressed() -> void:
 	if player == null:
 		return
-	player.warp_to(player.initial_transform)
+	player.warp_to(player.respawn_transform)
 
 
 func _on_unstuck_touch_screen_button_pressed() -> void:

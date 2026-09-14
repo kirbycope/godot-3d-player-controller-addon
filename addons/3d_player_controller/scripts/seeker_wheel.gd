@@ -29,9 +29,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if player == null or player.is_paused or player.is_typing or player.held_object.is_holding_object():
 		hold_timer.stop()
 		return
-	if event.is_action_pressed("seeker") and not event.is_echo():
+	if event.is_action_pressed(&"seeker") and not event.is_echo():
 		hold_timer.start()
-	elif event.is_action_released("seeker"):
+	elif event.is_action_released(&"seeker"):
 		hold_timer.stop()
 
 

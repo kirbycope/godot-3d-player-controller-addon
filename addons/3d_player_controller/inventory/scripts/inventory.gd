@@ -290,6 +290,12 @@ func stow_equipment(item: Equipment) -> void:
 ## Writes every stack and every piece of equipment to [member save_path].
 func save() -> Error:
 	_save_queued = false
+	return ResourceSaver.save(make_save(), save_path)
+
+
+## Every stack and every piece of equipment as an [InventorySave], for [method save] and for a [SaveGame] that
+## keeps the inventory inside the game's own file.
+func make_save() -> InventorySave:
 	var data: InventorySave = InventorySave.new()
 	for category: Item.Category in ITEM_TABS:
 		var slots: Array = get_slots(category)
@@ -310,7 +316,7 @@ func save() -> Error:
 		data.equipment.append(entry)
 	if spellbook:
 		spellbook.write_save(data)
-	return ResourceSaver.save(data, save_path)
+	return data
 
 
 ## Where this folder has lived, oldest first. A save names its scripts by path, so one written before a move

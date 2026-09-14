@@ -74,7 +74,7 @@ func _ready() -> void:
 
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:
-	if event.is_action_pressed("debug"):
+	if event.is_action_pressed(&"debug"):
 		visible = not visible
 
 

@@ -19,10 +19,7 @@ func _process(_delta: float) -> void:
 		motion = Vector2.ZERO
 		return
 
-	motion = Vector2(
-			Input.get_action_strength(&"move_right") - Input.get_action_strength(&"move_left"),
-			Input.get_action_strength(&"move_up") - Input.get_action_strength(&"move_down")
-	).limit_length(1.0)
+	motion = _get_vector(player, &"move_left", &"move_right", &"move_down", &"move_up")
 
 	if player == null:
 		return
@@ -32,6 +29,14 @@ func _process(_delta: float) -> void:
 		player.is_navigating = false
 	elif player.is_navigating:
 		motion = _get_navigation_motion(player)
+
+
+## The Player's own reading of the sticks ([method Player.get_vector], their pad alone in a split screen), or the
+## whole input with no Player above.
+static func _get_vector(player: Player, negative_x: StringName, positive_x: StringName, negative_y: StringName, positive_y: StringName) -> Vector2:
+	if player:
+		return player.get_vector(negative_x, positive_x, negative_y, positive_y)
+	return Input.get_vector(negative_x, positive_x, negative_y, positive_y)
 
 
 ## Gets the camera-relative motion that steers the player toward the navigation path.

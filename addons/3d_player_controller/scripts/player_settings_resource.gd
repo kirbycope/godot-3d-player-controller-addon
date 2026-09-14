@@ -36,6 +36,10 @@ enum HudMode { AUTO, SHOWN, HIDDEN } ## Auto shows the on-screen controls on tou
 @export var ui_scale_index: int = 0 ## Index into [constant UI_SCALES]; scales the game's whole UI through the window's content_scale_factor.
 @export var hud_mode: int = HudMode.AUTO ## Whether the Player's on-screen controls ([member Player.controls]) are drawn; a [enum HudMode].
 
+# Controls Settings
+enum SchemeSetting { GAME_DEFAULT, ZELDA, GTA } ## Game Default keeps [member Player.control_scheme] as the scene set it; the rest are [enum PlayerControls.ControlScheme] plus one.
+@export var control_scheme_index: int = SchemeSetting.GAME_DEFAULT ## Which pad layout and aiming the player picked; a [enum SchemeSetting].
+
 var _scaled_window: Window ## The window Auto follows on resize, connected once.
 
 
@@ -139,9 +143,16 @@ func hud_shown(input_type: int, touchscreen: bool) -> bool:
 	return input_type == Controls.InputType.TOUCH and touchscreen
 
 
+## Puts the picked control scheme on [param player]; Game Default leaves the scene's choice alone.
+func apply_control_scheme(player: Player) -> void:
+	if player and control_scheme_index > SchemeSetting.GAME_DEFAULT:
+		player.control_scheme = (control_scheme_index - 1) as PlayerControls.ControlScheme
+
+
 func apply_all(viewport: Viewport, player: Player = null) -> void:
 	apply_audio_settings(player)
 	if viewport:
 		apply_video_settings(viewport)
 	if player:
+		apply_control_scheme(player)
 		player.apply_hud_visibility()

@@ -16,6 +16,13 @@ func _ready() -> void:
 	if is_instance_valid(player):
 		player.enable_paraglider = true
 		player.enable_stamina = true
+		player.state_changed.connect(_on_player_state_changed)
+
+
+## The Guide's errand asks for a swim: entering the water reports it to the quest log.
+func _on_player_state_changed(_from_state: int, to_state: int) -> void:
+	if to_state == NodeStateMachine.States.SWIMMING and player.quest_log:
+		player.quest_log.progress(&"swim")
 
 
 func _on_water_pool_body_entered(body: Node3D) -> void:

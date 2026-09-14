@@ -1,0 +1,62 @@
+[gd_scene load_steps=12 format=3 uid="uid://c7talkingnpc01"]
+
+[ext_resource type="Script" path="res://addons/3d_player_controller/scripts/talking_npc.gd" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://fbu1qtdmvo0k" path="res://addons/3d_player_controller/assets/quaternius/characters/Mannequin_M.glb" id="2_model"]
+[ext_resource type="AnimationLibrary" uid="uid://cqhv3e722j6b6" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Idle.glb" id="3_idle"]
+[ext_resource type="AnimationLibrary" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Standard Walk.glb" id="4_walk"]
+[ext_resource type="AnimationLibrary" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Running.glb" id="5_run"]
+[ext_resource type="PackedScene" uid="uid://dokp6v1sufknx" path="res://addons/controls/action_prompt.tscn" id="6_prompt"]
+[ext_resource type="SceneReplicationConfig" path="res://addons/3d_player_controller/resources/character_body_replication.tres" id="7_body_sync"]
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_idle"]
+animation = &"Idle/mixamo_com"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_walk"]
+animation = &"Standard Walk/mixamo_com"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_run"]
+animation = &"Running/mixamo_com"
+
+[sub_resource type="AnimationNodeBlendSpace1D" id="AnimationNodeBlendSpace1D_locomotion"]
+blend_point_0/node = SubResource("AnimationNodeAnimation_idle")
+blend_point_0/pos = 0.0
+blend_point_1/node = SubResource("AnimationNodeAnimation_walk")
+blend_point_1/pos = 0.5
+blend_point_2/node = SubResource("AnimationNodeAnimation_run")
+blend_point_2/pos = 1.0
+min_space = 0.0
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
+radius = 0.3
+height = 1.8
+
+[node name="TalkingNpc" type="CharacterBody3D"]
+script = ExtResource("1_script")
+
+[node name="Mannequin_M" parent="." instance=ExtResource("2_model")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Mannequin_M"]
+libraries/Idle = ExtResource("3_idle")
+"libraries/Standard Walk" = ExtResource("4_walk")
+libraries/Running = ExtResource("5_run")
+
+[node name="AnimationTree" type="AnimationTree" parent="."]
+root_node = NodePath("../Mannequin_M")
+root_motion_track = NodePath("%GeneralSkeleton:Root")
+callback_mode_process = 0
+tree_root = SubResource("AnimationNodeBlendSpace1D_locomotion")
+anim_player = NodePath("../Mannequin_M/AnimationPlayer")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_body")
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+
+[node name="ActionPrompt" parent="." instance=ExtResource("6_prompt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.1, 0)
+message_end = "to talk"
+
+[node name="BodySynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_config = ExtResource("7_body_sync")

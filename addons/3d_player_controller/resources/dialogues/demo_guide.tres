@@ -1,0 +1,49 @@
+[gd_resource type="Resource" script_class="Dialogue" load_steps=10 format=3 uid="uid://c7dialoguedemo1"]
+
+[ext_resource type="Script" path="res://addons/3d_player_controller/scripts/dialogue.gd" id="1_dialogue"]
+[ext_resource type="Script" path="res://addons/3d_player_controller/scripts/dialogue_line.gd" id="2_line"]
+[ext_resource type="Script" path="res://addons/3d_player_controller/scripts/dialogue_choice.gd" id="3_choice"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/quests/demo_errand.tres" id="4_quest"]
+
+[sub_resource type="Resource" id="Resource_choice_yes"]
+script = ExtResource("3_choice")
+text = "Sure, what do you need?"
+next = 1
+starts_quest = ExtResource("4_quest")
+progresses_objective = &"talk_guide"
+
+[sub_resource type="Resource" id="Resource_choice_no"]
+script = ExtResource("3_choice")
+text = "Not right now."
+next = -1
+
+[sub_resource type="Resource" id="Resource_line_greeting"]
+script = ExtResource("2_line")
+text = "Welcome to the courtyard. I have a small errand, if you have a moment."
+choices = Array[ExtResource("3_choice")]([SubResource("Resource_choice_yes"), SubResource("Resource_choice_no")])
+condition = 1
+condition_quest = ExtResource("4_quest")
+
+[sub_resource type="Resource" id="Resource_line_task"]
+script = ExtResource("2_line")
+text = "Go for a swim in the pool, then come back and tell me how the water is."
+ends_dialogue = true
+entry = false
+
+[sub_resource type="Resource" id="Resource_line_waiting"]
+script = ExtResource("2_line")
+text = "The pool is over that way. Mind the walls, they are steep."
+ends_dialogue = true
+condition = 2
+condition_quest = ExtResource("4_quest")
+
+[sub_resource type="Resource" id="Resource_line_done"]
+script = ExtResource("2_line")
+text = "You are dripping, so the water must be fine. Enjoy the apples."
+ends_dialogue = true
+condition = 3
+condition_quest = ExtResource("4_quest")
+
+[resource]
+script = ExtResource("1_dialogue")
+lines = Array[ExtResource("2_line")]([SubResource("Resource_line_greeting"), SubResource("Resource_line_task"), SubResource("Resource_line_waiting"), SubResource("Resource_line_done")])

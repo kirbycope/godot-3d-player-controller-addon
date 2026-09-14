@@ -78,39 +78,39 @@ func _input(event: InputEvent) -> void:
 		return
 
 	if is_holding_rigidbody() and _is_held_object_control_event(event):
-		if event.is_action_pressed("focus") and not event.is_echo():
+		if event.is_action_pressed(&"focus") and not event.is_echo():
 			_lay_held_rigidbody_flat()
-		if event.is_action_pressed("throw") and not event.is_echo():
+		if event.is_action_pressed(&"throw") and not event.is_echo():
 			_is_held_rotation_mode = true
 			refresh_contextual_controls()
-		elif event.is_action_released("throw"):
+		elif event.is_action_released(&"throw"):
 			_is_held_rotation_mode = false
 			refresh_contextual_controls()
 
 		# Discrete 45-degree rotation snapping on D-pad press in rotation mode
 		if _is_held_rotation_mode and use_discrete_rotation_snap and event.is_pressed() and not event.is_echo():
-			if event.is_action("last_weapon"):
+			if event.is_action(&"last_weapon"):
 				held_rigidbody.rotate_object_local(Vector3.UP, deg_to_rad(rotation_snap_angle))
-			elif event.is_action("next_weapon"):
+			elif event.is_action(&"next_weapon"):
 				held_rigidbody.rotate_object_local(Vector3.UP, deg_to_rad(-rotation_snap_angle))
-			elif event.is_action("seeker"):
+			elif event.is_action(&"seeker"):
 				held_rigidbody.rotate_object_local(Vector3.RIGHT, deg_to_rad(-rotation_snap_angle))
-			elif event.is_action("whistle"):
+			elif event.is_action(&"whistle"):
 				held_rigidbody.rotate_object_local(Vector3.RIGHT, deg_to_rad(rotation_snap_angle))
 
 		get_viewport().set_input_as_handled()
 
-	if event.is_action_pressed("throw") and not event.is_echo() and not is_holding_object():
+	if event.is_action_pressed(&"throw") and not event.is_echo() and not is_holding_object():
 		if start_throwable_throw():
 			get_viewport().set_input_as_handled()
 		return
 
-	if event.is_action_released("throw") and is_holding_throwable():
+	if event.is_action_released(&"throw") and is_holding_throwable():
 		release_charging_throw()
 		get_viewport().set_input_as_handled()
 		return
 
-	if event.is_action_pressed("action") and not event.is_echo():
+	if event.is_action_pressed(&"action") and not event.is_echo():
 		if is_holding_rigidbody():
 			drop_held_rigidbody()
 			get_viewport().set_input_as_handled()
@@ -119,12 +119,12 @@ func _input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 
-	if event.is_action_pressed("shoot") and not event.is_echo() and is_holding_rigidbody():
+	if event.is_action_pressed(&"shoot") and not event.is_echo() and is_holding_rigidbody():
 		start_charging_throw()
 		get_viewport().set_input_as_handled()
 		return
 
-	if event.is_action_released("shoot") and not event.is_echo() and is_holding_rigidbody():
+	if event.is_action_released(&"shoot") and not event.is_echo() and is_holding_rigidbody():
 		release_charging_throw()
 		get_viewport().set_input_as_handled()
 
@@ -591,15 +591,15 @@ func _end_hold() -> void:
 
 
 func _update_held_object_transform(delta: float) -> void:
-	var dpad_input: Vector2 = Vector2.ZERO if player.is_typing else Input.get_vector("last_weapon", "next_weapon", "seeker", "whistle")
-	if Input.is_action_pressed("throw") and not player.is_typing:
+	var dpad_input: Vector2 = Vector2.ZERO if player.is_typing else player.get_vector(&"last_weapon", &"next_weapon", &"seeker", &"whistle")
+	if player.is_action_pressed(&"throw") and not player.is_typing:
 		var rotation_delta: Vector2 = dpad_input * held_rotation_speed * delta
 		held_rigidbody.rotate_object_local(Vector3.RIGHT, deg_to_rad(rotation_delta.y))
 		held_rigidbody.rotate_object_local(Vector3.UP, deg_to_rad(-rotation_delta.x))
 	else:
 		_held_distance = clampf(_held_distance - dpad_input.y * held_depth_speed * delta, held_min_distance, held_max_distance)
 
-	var move_input: Vector2 = Vector2.ZERO if player.is_typing else Input.get_vector("look_left", "look_right", "look_up", "look_down")
+	var move_input: Vector2 = Vector2.ZERO if player.is_typing else player.get_vector(&"look_left", &"look_right", &"look_up", &"look_down")
 	var move_multiplier: float = 1.0
 	if player.controls.current_input_type != player.controls.InputType.KEYBOARD_MOUSE:
 		move_multiplier = held_joypad_move_multiplier
@@ -618,16 +618,16 @@ func _lay_held_rigidbody_flat() -> void:
 
 
 func _is_held_object_control_event(event: InputEvent) -> bool:
-	return event.is_action("seeker") \
-		or event.is_action("whistle") \
-		or event.is_action("last_weapon") \
-		or event.is_action("next_weapon") \
-		or event.is_action("look_left") \
-		or event.is_action("look_right") \
-		or event.is_action("look_up") \
-		or event.is_action("look_down") \
-		or event.is_action("throw") \
-		or event.is_action("focus")
+	return event.is_action(&"seeker") \
+		or event.is_action(&"whistle") \
+		or event.is_action(&"last_weapon") \
+		or event.is_action(&"next_weapon") \
+		or event.is_action(&"look_left") \
+		or event.is_action(&"look_right") \
+		or event.is_action(&"look_up") \
+		or event.is_action(&"look_down") \
+		or event.is_action(&"throw") \
+		or event.is_action(&"focus")
 
 
 ## Stretches the connector scene from the origin to the held body.

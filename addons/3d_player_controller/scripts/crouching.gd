@@ -9,18 +9,18 @@ func _input(event: InputEvent) -> void:
 	if not player or player.is_paused or player.is_typing or player.is_ragdolling: return
 
 	# Attack; an exhausted Player is catching their breath, and HeavyBreathing has no path into the attack animations
-	if event.is_action_pressed("attack") and player.inventory.can_player_attack and not player.is_exhausted:
+	if event.is_action_pressed(&"attack") and player.inventory.can_player_attack and not player.is_exhausted:
 		player.state_machine.travel(state, States.ATTACKING)
 		return
 
 	# Jump
-	if event.is_action_pressed("jump"):
+	if event.is_action_pressed(&"jump"):
 		player.is_boxing = false
 		player.state_machine.travel(state, States.JUMPING)
 		return
 
 	# Crouch { Controller: Left Stick, Keyboard: Left Control }
-	if event.is_action_released("crouch"):
+	if event.is_action_released(&"crouch"):
 		# Start "standing"
 		player.state_machine.travel(state, States.STANDING)
 		return

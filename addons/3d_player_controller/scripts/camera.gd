@@ -115,13 +115,17 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not player or player.is_paused or player.is_typing or player.is_ragdolling: return
 
 	# Look-at interactables that take "action" (the skateboard, the push button); Equipment pickups are walk-over areas instead
-	if looking_at and event.is_action_pressed("action") and looking_at.has_method("equip"):
+	if looking_at and event.is_action_pressed(&"action") and looking_at.has_method("equip"):
 		looking_at.equip(player)
 		looking_at = null
 
 	# Perspective { Microsoft: ⧉, Nintendo: ⊝, Sony: ⦀, Keyboard: [F5] }
-	if event.is_action_pressed("perspective"):
+	if event.is_action_pressed(&"perspective"):
 		toggle_perspective()
+
+	# The mouse is one local player's; a pad player's camera ignores it (see Player.uses_mouse)
+	if event is InputEventMouse and not player.uses_mouse:
+		return
 
 	# With a visible cursor, holding right-click temporarily captures the mouse so rotation feels normal.
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT:
@@ -139,7 +143,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	and (DisplayServer.get_name() == "headless" or Input.mouse_mode == Input.MOUSE_MODE_CAPTURED) \
 	and not (player.is_riding and not current) \
 	and not is_radial_menu_open():
-		if player.is_focusing and not player.has_firearm_equipped:
+		if player.is_focusing and not player.has_firearm_equipped and player.lock_on_enabled():
 			if player.is_shooting:
 				var mouse_motion_input: Vector2 = event.relative
 				focus_aim_offset.x += deg_to_rad(-mouse_motion_input.x * mouse_sensitivity)
@@ -169,14 +173,14 @@ func _process(delta: float) -> void:
 	if not player: return
 
 	# Rotate the [Camera3D]'s [SpringArm3D] using the joypad motion input event
-	var joypad_motion_input: Vector2 = Input.get_vector("look_left", "look_right", "look_up", "look_down")
+	var joypad_motion_input: Vector2 = player.get_vector(&"look_left", &"look_right", &"look_up", &"look_down")
 	if joypad_motion_input != Vector2.ZERO \
 	and not player.is_paused \
 	and not player.is_typing \
 	and not player.is_ragdolling \
 	and not (player.is_riding and not current) \
 	and not is_radial_menu_open():
-		if player.is_focusing and not player.has_firearm_equipped:
+		if player.is_focusing and not player.has_firearm_equipped and player.lock_on_enabled():
 			if player.is_shooting:
 				focus_aim_offset.x += deg_to_rad(-joypad_motion_input.x * joypad_sensitivity * delta)
 				focus_aim_offset.y -= deg_to_rad(joypad_motion_input.y * joypad_sensitivity * delta)
@@ -191,14 +195,16 @@ func _process(delta: float) -> void:
 	# Only continue if the perspective is third-person
 	if perspective != Perspective.THIRD_PERSON: return
 
-	# Smoothly interpolate FOV and shoulder offset when aiming/shooting (BotW/TotK over-the-shoulder framing)
-	var is_aiming_now: bool = player.is_focusing if player.has_firearm_equipped \
+	# Smoothly interpolate FOV and shoulder offset when aiming/shooting (BotW/TotK over-the-shoulder framing).
+	# Free aim (a firearm, or the GTA scheme with anything in hand) is over the shoulder for as long as focus is held.
+	var is_aiming_now: bool = player.is_focusing if player.has_firearm_equipped or not player.lock_on_enabled() \
 			else player.is_shooting or player.is_drawing_arrow or player.is_aiming_bow
 	fov = lerpf(fov, aim_fov if is_aiming_now else default_fov, delta * 10.0)
 	h_offset = lerpf(h_offset, aim_h_offset if is_aiming_now else default_h_offset, delta * 10.0)
 
 	# Lerp camera to face the player's direction when focusing, driving, or skateboarding (and the follow delay has expired).
-	if player.is_focusing and not player.has_firearm_equipped:
+	# Free aim leaves the camera where the stick put it: the Player turns to face it instead (Player.apply_input).
+	if player.is_focusing and not player.has_firearm_equipped and player.lock_on_enabled():
 		var max_angle: float = get_max_focus_aim_angle()
 		focus_aim_offset = focus_aim_offset.limit_length(max_angle)
 		if not player.is_shooting:
@@ -246,7 +252,7 @@ func _physics_process(_delta: float) -> void:
 ## Rotates the [Camera3D]'s [SpringArm3D] using the input from a joypad motion event, while clamping the vertical rotation to prevent flipping.
 func rotate_camera_using_joypad_motion(delta: float) -> void:
 	# Get the input from the joypad motion event
-	var joypad_motion_input: Vector2 = Input.get_vector("look_left", "look_right", "look_up", "look_down")
+	var joypad_motion_input: Vector2 = player.get_vector(&"look_left", &"look_right", &"look_up", &"look_down")
 	# Rotate the [Camera3D]'s [CameraMount] horizontally using the joypad motion input's x value
 	if joypad_motion_input.x != 0:
 		camera_mount.rotate_y(deg_to_rad(-joypad_motion_input.x * joypad_sensitivity * delta))

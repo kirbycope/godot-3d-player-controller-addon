@@ -9,7 +9,7 @@ func _input(event: InputEvent) -> void:
 	if not player or player.is_paused or player.is_typing or player.is_ragdolling: return
 
 	# Jump action triggers while jumping
-	if event.is_action_pressed("jump") and not player.is_on_floor():
+	if event.is_action_pressed(&"jump") and not player.is_on_floor():
 		if player.ledge_detection_horizontal.is_colliding():
 			# Exhausted players cannot grab the wall
 			if not player.is_exhausted:

@@ -153,6 +153,38 @@ vertical_alignment = 1
 position = Vector2(8, 15)
 shape = SubResource("RectangleShape2D_p63df")
 
+[node name="ControlScheme" type="OptionButton" parent="Panel/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 8
+selected = 0
+item_count = 3
+popup/item_0/text = "Default"
+popup/item_0/id = 0
+popup/item_1/text = "Zelda"
+popup/item_1/id = 1
+popup/item_2/text = "GTA"
+popup/item_2/id = 2
+
+[node name="Label" type="Label" parent="Panel/VBoxContainer/ControlScheme"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -142.5
+offset_top = -11.5
+offset_right = 50.5
+offset_bottom = 11.5
+grow_horizontal = 2
+grow_vertical = 2
+text = " Scheme"
+vertical_alignment = 1
+
+[node name="ControlSchemeTouchScreenButton" type="TouchScreenButton" parent="Panel/VBoxContainer/ControlScheme"]
+position = Vector2(8, 15)
+shape = SubResource("RectangleShape2D_p63df")
+
 [node name="MSAA" type="OptionButton" parent="Panel/VBoxContainer" unique_id=1502894789]
 layout_mode = 2
 size_flags_horizontal = 8
@@ -365,6 +397,8 @@ shape = SubResource("RectangleShape2D_p63df")
 [connection signal="pressed" from="Panel/VBoxContainer/UIScale/UIScaleTouchScreenButton" to="." method="_on_ui_scale_touch_screen_button_pressed"]
 [connection signal="item_selected" from="Panel/VBoxContainer/OnScreenControls" to="." method="_on_on_screen_controls_item_selected"]
 [connection signal="pressed" from="Panel/VBoxContainer/OnScreenControls/OnScreenControlsTouchScreenButton" to="." method="_on_on_screen_controls_touch_screen_button_pressed"]
+[connection signal="item_selected" from="Panel/VBoxContainer/ControlScheme" to="." method="_on_control_scheme_item_selected"]
+[connection signal="pressed" from="Panel/VBoxContainer/ControlScheme/ControlSchemeTouchScreenButton" to="." method="_on_control_scheme_touch_screen_button_pressed"]
 [connection signal="item_selected" from="Panel/VBoxContainer/MSAA" to="." method="_on_msaa_item_selected"]
 [connection signal="pressed" from="Panel/VBoxContainer/MSAA/MSAATouchScreenButton" to="." method="_on_msaa_touch_screen_button_pressed"]
 [connection signal="item_selected" from="Panel/VBoxContainer/SSAA" to="." method="_on_ssaa_item_selected"]

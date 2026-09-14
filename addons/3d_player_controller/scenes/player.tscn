@@ -251,6 +251,10 @@
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/toon_filter.tscn" id="225_toon"]
 [ext_resource type="PackedScene" uid="uid://d0mxfe0dnkn0n" path="res://addons/3d_player_controller/scenes/chat.tscn" id="226_chat"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/seeker_wheel.tscn" id="227_seeker"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/death_screen.tscn" id="228_death"]
+[ext_resource type="Script" path="res://addons/3d_player_controller/scripts/quest_log.gd" id="233_questlog"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/dialogue_screen.tscn" id="234_dialogue"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/quest_tracker.tscn" id="235_tracker"]
 [ext_resource type="Script" path="res://addons/3d_player_controller/scripts/weapon_audio.gd" id="228_weapon_audio"]
 [ext_resource type="AudioStream" path="res://addons/3d_player_controller/resources/audio/sword_unsheath.tres" id="229_sword_unsheath"]
 [ext_resource type="AudioStream" path="res://addons/3d_player_controller/resources/audio/sword_sheath.tres" id="230_sword_sheath"]
@@ -2838,7 +2842,7 @@ shader_parameter/wave_strength = 0.0045
 shader_parameter/wave_speed = 1.6
 shader_parameter/vignette_strength = 0.35
 
-[node name="Player" type="CharacterBody3D" unique_id=548622605 node_paths=PackedStringArray("animation_tree") groups=["Focusable", "Player"]]
+[node name="Player" type="CharacterBody3D" unique_id=548622605 node_paths=PackedStringArray("animation_tree") groups=["Focusable", "Player", "Saveable"]]
 script = ExtResource("1_ho2o7")
 animation_tree = NodePath("AnimationTree")
 
@@ -4278,6 +4282,18 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.1, 0)
 wait_time = 3.0
 one_shot = true
 
+[node name="DeathScreen" parent="." node_paths=PackedStringArray("player") instance=ExtResource("228_death")]
+player = NodePath("..")
+
+[node name="QuestLog" type="Node" parent="." node_paths=PackedStringArray("player")]
+script = ExtResource("233_questlog")
+player = NodePath("..")
+
+[node name="DialogueScreen" parent="." node_paths=PackedStringArray("player") instance=ExtResource("234_dialogue")]
+player = NodePath("..")
+
+[node name="QuestTracker" parent="." instance=ExtResource("235_tracker")]
+
 [node name="Stamina" type="TextureProgressBar" parent="." unique_id=1209274681 node_paths=PackedStringArray("player")]
 visible = false
 anchors_preset = 8
@@ -4493,6 +4509,8 @@ bus = &"SFX"
 [connection signal="toggled" from="CameraMount/CameraSpringArm/Camera3D/ToonFilter" to="VideoSettings" method="_on_toon_filter_toggled"]
 [connection signal="cast_started" from="Abilities" to="." method="_on_abilities_cast_started"]
 [connection signal="died" from="Health" to="." method="_on_health_died"]
+[connection signal="died" from="Health" to="DeathScreen" method="_on_health_died"]
+[connection signal="respawned" from="." to="DeathScreen" method="_on_player_respawned"]
 [connection signal="energy_changed" from="Health" to="StatusBars3D" method="set_energy"]
 [connection signal="health_changed" from="Health" to="StatusBars3D" method="set_health"]
 [connection signal="timeout" from="RespawnTimer" to="." method="respawn"]

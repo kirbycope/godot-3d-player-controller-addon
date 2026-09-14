@@ -48,9 +48,39 @@ const PLAYER_ACTIONS: Dictionary = {
 	"ui_down": {"deadzone": 0.5, "buttons": [JOY_BUTTON_DPAD_DOWN]},
 }
 
+## Which game's pad the face buttons are laid out like. The keyboard keys behind them
+## ([constant PLAYER_ACTIONS]), the shoulders, the triggers, the sticks and the d-pad are the same in every
+## scheme; a scheme moves the four face buttons about and decides what Focus does (see
+## [method Player.lock_on_enabled]). [member Player.control_scheme] picks it.
+enum ControlScheme {
+	ZELDA, ## A Action, B Sprint, X Attack, Y Jump; Focus locks on to a target, Breath of the Wild style.
+	GTA, ## A Sprint, B Attack, X Jump, Y Action; Focus aims freely over the shoulder, Grand Theft Auto style.
+}
+
+## The face-button slot each scheme fills, by the slot's export name, in [enum ControlScheme] order.
+const SCHEME_SLOTS: Dictionary[ControlScheme, Dictionary] = {
+	ControlScheme.ZELDA: {
+		"action_button_0": &"action", "action_button_1": &"sprint", "action_button_2": &"attack", "action_button_3": &"jump",
+	},
+	ControlScheme.GTA: {
+		"action_button_0": &"sprint", "action_button_1": &"attack", "action_button_2": &"jump", "action_button_3": &"action",
+	},
+}
+
+## What a face button reads when nothing contextual is showing, by the action it stands for; the scene's own
+## label texts are for the Zelda layout, so a swapped button takes its text from here.
+const ACTION_LABELS: Dictionary[StringName, String] = {
+	&"action": "Action", &"sprint": "Sprint", &"attack": "Attack", &"jump": "Jump",
+}
+
 @export var player: Player
 
 var _seeker_shown: String = "" ## What [method seeker_label_text] said when the labels were last applied.
+var _hud_ready: bool = false ## The base has bound the slots and cached the art; a scheme change from here on rebinds live.
+## The actions a PlayerControls registered itself, across every instance there has been. The base takes any
+## action that exists before it registers its own for the project's, and leaves it alone; but a second Player (a
+## restart, a second local player) finds the first one's actions already there, and those are ours to rebind.
+static var _registered_actions: Dictionary[StringName, bool] = {}
 
 @onready var cast_bar: ProgressBar = %CastBar ## Fills while an ability with a cast time is cast.
 @onready var cast_label: Label = %CastLabel ## Names the ability being cast on the cast bar.
@@ -64,11 +94,77 @@ func _ready() -> void:
 	_clusters.append($BottomCenter) # the readouts under the crosshair scale with the corners
 	if player == null and get_parent() is Player:
 		player = get_parent() as Player
+	# The scheme's slots go on before the base registers them, so the pad is bound the way the Player asked
+	if player and not Engine.is_editor_hint():
+		apply_control_scheme(player.control_scheme)
 	extra_actions = PLAYER_ACTIONS
 	super()
 	if Engine.is_editor_hint():
 		return
+	_hud_ready = is_multiplayer_authority()
+	for action_name: StringName in _own_action_names():
+		if not _foreign_actions.has(String(action_name)):
+			_registered_actions[action_name] = true
 	contextual_labels_requested.connect(_on_contextual_labels_requested)
+
+
+## Lays the face buttons out for [param scheme]. Before the HUD is ready it only fills the slot exports, and the
+## base class binds them; afterwards it also moves each button off the action it stood for, binds it to the new
+## one, swaps the resting labels and redraws, so the switch works from the settings menu mid-game. An action the
+## project bound for itself is left exactly as it is, as the base leaves it.
+func apply_control_scheme(scheme: ControlScheme) -> void:
+	var slots: Dictionary = SCHEME_SLOTS[scheme]
+	# is_node_ready() is already true inside _ready, so the base's own setup is waited for explicitly
+	if not _hud_ready:
+		for slot: String in slots:
+			set(slot, slots[slot])
+		return
+	for slot: String in slots:
+		var previous: StringName = get(slot)
+		var wanted: StringName = slots[slot]
+		var events: Array[InputEvent] = _events_for(SLOT_EVENTS[slot.trim_prefix("action_")])
+		# Off the old action first, or A would still sprint after it became Action
+		if not previous.is_empty() and previous != wanted and _owns_action(previous):
+			for event: InputEvent in events:
+				if InputMap.action_has_event(previous, event):
+					InputMap.action_erase_event(previous, event)
+		set(slot, wanted)
+		if wanted.is_empty():
+			continue
+		if not InputMap.has_action(wanted):
+			InputMap.add_action(wanted, 0.2)
+			_registered_actions[wanted] = true
+		if _owns_action(wanted):
+			for event: InputEvent in events:
+				if not InputMap.action_has_event(wanted, event):
+					InputMap.action_add_event(wanted, event)
+	_apply_slot_actions()
+	for slot: String in slots:
+		var label: Label = get("joypad_%s_label" % slot.trim_prefix("action_"))
+		if label:
+			_label_texts[label] = ACTION_LABELS.get(slots[slot], String(slots[slot]).capitalize())
+	update_input_ui()
+	reset_labels()
+	if player:
+		player.refresh_contextual_controls()
+
+
+## The gameplay actions this HUD registered for its Player: the slots and the extra keys, ui_* aside.
+func _own_action_names() -> Array[StringName]:
+	var names: Array[StringName] = []
+	for action_name: StringName in get_slot_actions().values():
+		if not action_name.is_empty() and not String(action_name).begins_with("ui_") and not names.has(action_name):
+			names.append(action_name)
+	for key: String in extra_actions:
+		if not key.begins_with("ui_") and not names.has(StringName(key)):
+			names.append(StringName(key))
+	return names
+
+
+## Whether [param action_name] is this HUD's to rebind: one a PlayerControls created, rather than one the
+## project declared in its own input map.
+func _owns_action(action_name: StringName) -> bool:
+	return _registered_actions.has(action_name) or not _foreign_actions.has(String(action_name))
 
 
 ## The seeker label follows the aim, so holding or releasing focus has to be seen here too.

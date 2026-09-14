@@ -9,25 +9,25 @@ func _input(event: InputEvent) -> void:
 	if not player or player.is_paused or player.is_typing or player.is_ragdolling: return
 
 	# Attack; an exhausted Player is catching their breath, and HeavyBreathing has no path into the attack animations
-	if event.is_action_pressed("attack") and player.inventory.can_player_attack and not player.is_exhausted:
+	if event.is_action_pressed(&"attack") and player.inventory.can_player_attack and not player.is_exhausted:
 		get_viewport().set_input_as_handled()
 		player.state_machine.travel(state, States.ATTACKING)
 		return
 
 	# Jump
-	if event.is_action_pressed("jump"):
+	if event.is_action_pressed(&"jump"):
 		player.is_boxing = false
 		# While focusing (strafing), jumping with forward/backward input performs a flip.
-		player.is_front_flipping = player.is_focusing and Input.is_action_pressed("move_up")
+		player.is_front_flipping = player.is_focusing and player.is_action_pressed(&"move_up")
 		player.is_back_flipping = player.is_focusing \
-				and Input.is_action_pressed("move_down") \
+				and player.is_action_pressed(&"move_down") \
 				and not player.is_front_flipping
 		get_viewport().set_input_as_handled()
 		player.state_machine.travel(state, States.JUMPING)
 		return
 
 	# Crouch
-	if event.is_action_pressed("crouch"):
+	if event.is_action_pressed(&"crouch"):
 		get_viewport().set_input_as_handled()
 		player.state_machine.travel(state, States.CROUCHING)
 		return
@@ -40,7 +40,7 @@ func _physics_process(_delta: float) -> void:
 	if not player: return
 
 	# Sprint while the sprint action is held (a continuous action) and the player is moving
-	if Input.is_action_pressed("sprint") and not player.is_exhausted and not player.is_typing and (player.smoothed_motion.y > 0.0 if player.is_focusing else player.smoothed_motion.length() > 0.0):
+	if player.is_action_pressed(&"sprint") and not player.is_exhausted and not player.is_typing and (player.smoothed_motion.y > 0.0 if player.is_focusing else player.smoothed_motion.length() > 0.0):
 		player.state_machine.travel(state, States.SPRINTING)
 		return
 

@@ -4,7 +4,8 @@ extends Node
 ##
 ## Candidates are bodies in the "Focusable" group overlapping [member target_detection]; a target
 ## that leaves the area is dropped after [member target_loss_timer] elapses. Firearms use free aim
-## instead, so lock-on is disabled while one is equipped.
+## instead, so lock-on is disabled while one is equipped, and so does the GTA control scheme
+## ([method Player.lock_on_enabled]), where focus is the over-the-shoulder aim with anything in hand.
 
 @export var player: Player
 @export var target_detection: Area3D ## Area whose overlapping "Focusable" bodies can be locked on to.
@@ -23,14 +24,15 @@ func _input(event: InputEvent) -> void:
 	if player == null or player.is_paused or player.is_typing or player.is_ragdolling:
 		return
 	# Tapping focus while already locked on cycles to the next target.
-	if event.is_action_pressed("focus") and not event.is_echo() and is_instance_valid(current_focus_target):
+	if event.is_action_pressed(&"focus") and not event.is_echo() and is_instance_valid(current_focus_target):
 		cycle_focus_target(1)
 
 
 func _physics_process(_delta: float) -> void:
 	if player == null:
 		return
-	if not player.is_focusing:
+	if not player.is_focusing or not player.lock_on_enabled():
+		# Free aim (the GTA scheme) never locks on: focus is strafing and the shoulder camera, nothing more
 		if current_focus_target:
 			_clear_focus_target()
 	elif not is_instance_valid(current_focus_target):

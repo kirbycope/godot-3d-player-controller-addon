@@ -56,7 +56,8 @@ func show_menu() -> void:
 	if pauses_world and is_single_player():
 		get_tree().paused = true
 		_paused_world = true
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	if player == null or player.uses_mouse:
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if focus_on_show:
 		focus_on_show.grab_focus()
 
@@ -66,7 +67,8 @@ func hide_menu() -> void:
 	if player:
 		player.is_paused = false
 	resume_world()
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	if player == null or player.uses_mouse:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
 ## Runs the scene tree again, whichever menu paused it.

@@ -88,7 +88,7 @@ func _on_items_changed() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("reload"):
+	if event.is_action_pressed(&"reload"):
 		reload()
 
 

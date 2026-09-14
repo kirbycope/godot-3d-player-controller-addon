@@ -95,6 +95,17 @@ text = "Spells"
 position = Vector2(36, 15)
 shape = SubResource("RectangleShape2D_senyo")
 
+[node name="Quests" type="Button" parent="Panel/VBoxContainer"]
+visible = false
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Quests"
+
+[node name="QuestsTouchScreenButton" type="TouchScreenButton" parent="Panel/VBoxContainer/Quests"]
+position = Vector2(36, 15)
+shape = SubResource("RectangleShape2D_senyo")
+
 [node name="Extra" type="Button" parent="Panel/VBoxContainer"]
 visible = false
 custom_minimum_size = Vector2(0, 32)
@@ -103,6 +114,28 @@ size_flags_horizontal = 3
 text = "Journal"
 
 [node name="ExtraTouchScreenButton" type="TouchScreenButton" parent="Panel/VBoxContainer/Extra"]
+position = Vector2(36, 15)
+shape = SubResource("RectangleShape2D_senyo")
+
+[node name="Save" type="Button" parent="Panel/VBoxContainer"]
+visible = false
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Save Game"
+
+[node name="SaveTouchScreenButton" type="TouchScreenButton" parent="Panel/VBoxContainer/Save"]
+position = Vector2(36, 15)
+shape = SubResource("RectangleShape2D_senyo")
+
+[node name="Load" type="Button" parent="Panel/VBoxContainer"]
+visible = false
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Load Game"
+
+[node name="LoadTouchScreenButton" type="TouchScreenButton" parent="Panel/VBoxContainer/Load"]
 position = Vector2(36, 15)
 shape = SubResource("RectangleShape2D_senyo")
 
@@ -154,8 +187,14 @@ shape = SubResource("RectangleShape2D_senyo")
 [connection signal="pressed" from="Panel/VBoxContainer/Inventory/InventoryTouchScreenButton" to="." method="_on_inventory_touch_screen_button_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/Spells" to="." method="_on_spells_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/Spells/SpellsTouchScreenButton" to="." method="_on_spells_touch_screen_button_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Quests" to="." method="_on_quests_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Quests/QuestsTouchScreenButton" to="." method="_on_quests_touch_screen_button_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/Extra" to="." method="_on_extra_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/Extra/ExtraTouchScreenButton" to="." method="_on_extra_touch_screen_button_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Save" to="." method="_on_save_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Save/SaveTouchScreenButton" to="." method="_on_save_touch_screen_button_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Load" to="." method="_on_load_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Load/LoadTouchScreenButton" to="." method="_on_load_touch_screen_button_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/Restart" to="." method="_on_restart_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/Restart/RestartTouchScreenButton" to="." method="_on_restart_touch_screen_button_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/Settings" to="." method="_on_settings_pressed"]

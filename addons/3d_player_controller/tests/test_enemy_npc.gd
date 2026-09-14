@@ -1,0 +1,102 @@
+extends GutTest
+
+## Purpose: The EnemyNpc shipped with the addon idles until struck, hunts whoever struck it, takes damage, burns,
+## dies into its ragdoll, and comes back through a SaveGame: a saved fighter stands up where it was saved with the
+## health it had, a saved corpse stays dead.
+
+const PLAYER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player.tscn")
+const ENEMY_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/enemy_npc.tscn")
+
+var root: Node3D
+var player: Player
+var enemy: EnemyNpc
+
+
+func before_each() -> void:
+	root = Node3D.new()
+	add_child_autofree(root)
+	var floor_body := StaticBody3D.new()
+	var floor_shape := CollisionShape3D.new()
+	floor_shape.shape = BoxShape3D.new()
+	floor_shape.shape.size = Vector3(60.0, 1.0, 60.0)
+	floor_body.add_child(floor_shape)
+	floor_body.position.y = -0.5
+	root.add_child(floor_body)
+	player = PLAYER_SCENE.instantiate()
+	root.add_child(player)
+	enemy = ENEMY_SCENE.instantiate()
+	enemy.position = Vector3(0.0, 0.0, -12.0)
+	root.add_child(enemy)
+	await wait_physics_frames(3)
+
+
+func test_the_enemy_idles_until_struck_then_hunts_the_striker() -> void:
+	assert_null(enemy.target)
+	assert_true(enemy.is_in_group("Focusable"))
+	assert_true(enemy.is_in_group("Saveable"), "The enemy saves with the game")
+	watch_signals(enemy)
+	enemy.register_weapon_hit(player, null)
+	assert_eq(enemy.target, player, "Being struck starts the hunt")
+	assert_signal_emitted(enemy, "aggroed")
+	assert_eq(enemy.health.health, enemy.health.max_health - enemy.melee_hit_damage)
+	assert_true(player.hunters.has(enemy), "The Player knows who hunts them")
+	assert_true(player.health.regen_paused)
+
+
+func test_fire_ticks_damage_and_water_puts_it_out() -> void:
+	enemy.burn_tick_timer.wait_time = 0.05
+	enemy.burn(0.2, 40.0)
+	assert_true(enemy.is_burning)
+	await wait_seconds(0.12)
+	assert_lt(enemy.health.health, enemy.health.max_health, "Fire costs health")
+	enemy.extinguish()
+	assert_false(enemy.is_burning)
+	var after: float = enemy.health.health
+	await wait_seconds(0.12)
+	assert_eq(enemy.health.health, after, "Put out, it stops burning")
+
+
+func test_enough_damage_drops_it_into_the_ragdoll() -> void:
+	watch_signals(enemy)
+	enemy.take_hit(enemy.health.max_health, player.global_position)
+	await wait_physics_frames(2)
+	assert_true(enemy.is_dead)
+	assert_signal_emitted(enemy, "died")
+	assert_true(enemy.collision_shape.disabled)
+	assert_false(enemy.is_in_group("Focusable"), "A corpse cannot be locked on to")
+	assert_false(enemy.animation_tree.active)
+
+
+func test_a_saved_fighter_stands_up_where_it_was_saved() -> void:
+	enemy.health.health = 55.0
+	var state: Dictionary = enemy.save_state()
+	assert_eq(state["health"], 55.0)
+	assert_false(state["is_dead"])
+	enemy.take_hit(500.0, player.global_position)
+	await wait_physics_frames(2)
+	assert_true(enemy.is_dead)
+	enemy.load_state(state)
+	await wait_physics_frames(2)
+	assert_false(enemy.is_dead, "Loading a living save revives the corpse")
+	assert_eq(enemy.health.health, 55.0)
+	assert_false(enemy.collision_shape.disabled)
+	assert_true(enemy.animation_tree.active)
+	assert_true(enemy.is_in_group("Focusable"))
+	assert_almost_eq(enemy.global_position, Vector3(0.0, 0.0, -12.0), Vector3.ONE * 0.2)
+
+
+func test_a_saved_corpse_stays_dead() -> void:
+	enemy.take_hit(500.0, player.global_position)
+	await wait_physics_frames(2)
+	var state: Dictionary = enemy.save_state()
+	assert_true(state["is_dead"])
+	enemy.load_state(state)
+	await wait_physics_frames(1)
+	assert_true(enemy.is_dead)
+	# And a living enemy handed a corpse's save dies on the spot
+	var other: EnemyNpc = ENEMY_SCENE.instantiate()
+	root.add_child(other)
+	await wait_physics_frames(1)
+	other.load_state(state)
+	await wait_physics_frames(2)
+	assert_true(other.is_dead)

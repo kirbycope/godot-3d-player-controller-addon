@@ -28,7 +28,7 @@ func _input(event: InputEvent) -> void:
 	if not player or player.is_paused or player.is_typing or player.is_ragdolling: return
 
 	# Attack { Microsoft: Ⓧ, Nintendo: Ⓨ, Sony: 🟗, Keyboard: [Alt] }
-	if not event.is_action_pressed("attack") or not player.inventory.can_player_attack:
+	if not event.is_action_pressed(&"attack") or not player.inventory.can_player_attack:
 		return
 	# Start the attack sequence timer
 	player.attack_sequence_timer.start()

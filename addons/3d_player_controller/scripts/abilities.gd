@@ -62,9 +62,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		hold_timer.stop()
 		return
 
-	if event.is_action_pressed("ability"):
+	if event.is_action_pressed(&"ability"):
 		hold_timer.start()
-	elif event.is_action_released("ability"):
+	elif event.is_action_released(&"ability"):
 		# A release while the timer still runs is a tap; a timeout already opened the wheel.
 		if hold_timer.is_stopped():
 			return

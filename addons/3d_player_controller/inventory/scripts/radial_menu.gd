@@ -55,13 +55,13 @@ func _process(_delta: float) -> void:
 		else:
 			_set_hovered(int(fposmod(rad_to_deg(offset.angle()) + 90.0, 360.0) / segment_angle) % weapons.size())
 	else:
-		var stick: Vector2 = Input.get_vector(look_left_action, look_right_action, look_up_action, look_down_action)
+		var stick: Vector2 = player.get_vector(look_left_action, look_right_action, look_up_action, look_down_action)
 		if stick.length() > 0.3:
 			_set_hovered(int(fposmod(rad_to_deg(stick.angle()) + 90.0, 360.0) / segment_angle) % weapons.size())
 
 
 func is_menu_held() -> bool:
-	return hold_actions.any(func(action: StringName) -> bool: return Input.is_action_pressed(action))
+	return hold_actions.any(func(action: StringName) -> bool: return player.is_action_pressed(action))
 
 
 func is_open() -> bool:
@@ -76,13 +76,15 @@ func _on_hold_timer_timeout() -> void:
 	if weapons.is_empty(): # a custom provider with nothing to offer
 		return
 	show()
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if _is_keyboard_mouse() else Input.MOUSE_MODE_HIDDEN
+	if player.uses_mouse:
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if _is_keyboard_mouse() else Input.MOUSE_MODE_HIDDEN
 	player.crosshair.hide()
 
 
 func _close() -> void:
 	hide()
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	if player.uses_mouse:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	player.crosshair.show()
 	if hovered_index != -1:
 		equip_item(hovered_index)

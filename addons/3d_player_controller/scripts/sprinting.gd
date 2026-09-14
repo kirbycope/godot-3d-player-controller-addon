@@ -9,23 +9,23 @@ func _input(event: InputEvent) -> void:
 	if not player or player.is_paused or player.is_typing or player.is_ragdolling: return
 
 	# Attack
-	if event.is_action_pressed("attack") and player.inventory.can_player_attack:
+	if event.is_action_pressed(&"attack") and player.inventory.can_player_attack:
 		player.state_machine.travel(state, States.ATTACKING)
 		return
 
 	# Jump
-	if event.is_action_pressed("jump"):
+	if event.is_action_pressed(&"jump"):
 		player.is_boxing = false
 		player.state_machine.travel(state, States.JUMPING)
 		return
 
 	# Slide
-	if event.is_action_pressed("crouch"):
+	if event.is_action_pressed(&"crouch"):
 		player.state_machine.travel(state, States.SLIDING)
 		return
 
 	# Sprint { Microsoft: Ⓑ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Shift] }.
-	if event.is_action_released("sprint"):
+	if event.is_action_released(&"sprint"):
 		# Start "standing"
 		player.state_machine.travel(state, States.STANDING)
 		return
