@@ -18,6 +18,13 @@ const MAX_MESSAGE_LENGTH: int = 500 ## Longer messages from a peer are cut here.
 @export var player: Player
 @export var idle_seconds: float = 8.0 ## Seconds without a new message before the window fades.
 @export var idle_alpha: float = 0.0 ## Alpha the window fades to when idle; it still catches the mouse.
+## Show the window in full on load. Off by default: a chat box is not wanted on screen in a single
+## player scene until something is actually said. Off does not mean gone. The window stays in the tree
+## drawn at [member idle_alpha], because an embedded [Window] that is hidden outright receives no mouse
+## events at all, and hovering where the chat sits is one of the three ways it is asked back:
+## [method open_input] from the chat action, a message arriving, or the pointer going there.
+## A project that wants no chat at all hides the node itself in its own scene.
+@export var start_visible: bool = false
 @export var fade_seconds: float = 1.0 ## How long the fade out takes.
 @export var fade_in_seconds: float = 0.2 ## How long coming back takes.
 @export var name_color: Color = Color(1.0, 0.82, 0.3) ## Sender names in the history.
@@ -39,6 +46,7 @@ const MAX_MESSAGE_LENGTH: int = 500 ## Longer messages from a peer are cut here.
 var settings_res: PlayerSettingsResource
 var is_hovered: bool = false ## The mouse is over the window, which keeps it visible so the history can be scrolled.
 var _fade_tween: Tween
+var _visible_before_pause: bool = false ## What the window was before a menu opened, for [method _on_player_paused_changed].
 
 
 ## Called when the node enters the scene tree for the first time.
@@ -56,8 +64,13 @@ func _ready() -> void:
 		rect = Rect2(Vector2(SCREEN_MARGIN, screen.y - DEFAULT_SIZE.y - SCREEN_MARGIN), Vector2(DEFAULT_SIZE))
 	size = Vector2i(rect.size)
 	position = Vector2i(rect.position)
+	# The window is shown either way and it is the alpha that decides whether anything is on screen.
+	# Hiding it outright would cost the hover, since an embedded Window that is not visible never
+	# reports the mouse entering it.
 	show()
-	idle_timer.start()
+	content.modulate.a = 1.0 if start_visible else idle_alpha
+	if start_visible:
+		idle_timer.start() # It is on screen, so the idle fade has something to do
 	settings_res = settings # Set last: applying the saved rect above must not arm a save of its own
 
 
@@ -68,8 +81,13 @@ func _notification(what: int) -> void:
 
 ## Shows the input row and takes the keyboard; Enter or Send submits, Escape cancels.
 func open_input() -> void:
-	if not visible or input_row.visible:
+	if input_row.visible:
 		return
+	# A hidden window is opened by this, not blocked by it: with the chat starting hidden
+	# the action that opens it would otherwise do nothing at all.
+	if not visible:
+		show()
+		_fade_to(1.0, 0.0)
 	unfocusable = false
 	grab_focus()
 	input_row.show()
@@ -123,6 +141,9 @@ func _receive_message(sender: String, text: String) -> void:
 
 ## Appends "Name: text" with the name coloured; user text is escaped so it cannot inject bbcode.
 func append_message(sender: String, text: String) -> void:
+	# Somebody has said something, so the window earns its place on screen again.
+	if not visible:
+		show()
 	_append_line("[color=%s]%s:[/color] %s" % [name_color.to_html(false), escape_bbcode(sender), escape_bbcode(text)])
 
 
@@ -239,10 +260,18 @@ func _on_save_timer_timeout() -> void:
 	settings_res.save()
 
 
-## The embedded window draws above every CanvasLayer, so it hides while a menu is up to keep the menu clickable.
+## The embedded window draws above every CanvasLayer, so it hides while a menu is up to keep the menu
+## clickable.
+##
+## What it was before the menu opened is remembered and restored, rather than the window being shown
+## unconditionally on unpause: a project that hides the chat outright would otherwise have it appear
+## the first time the player opened and closed a menu.
 func _on_player_paused_changed(paused: bool) -> void:
 	if not is_multiplayer_authority():
 		return
 	if paused:
+		_visible_before_pause = visible
 		close_input()
-	visible = not paused
+		hide()
+	else:
+		visible = _visible_before_pause

@@ -91,7 +91,9 @@ func _type_key(keycode: Key, unicode: int) -> void:
 func test_chat_is_an_embedded_window_that_starts_bottom_left() -> void:
 	assert_true(get_viewport().gui_embed_subwindows, "The root viewport embeds subwindows, so the chat floats inside the game window")
 	assert_true(chat.is_embedded(), "The chat is an embedded Window")
-	assert_true(chat.visible, "The local Player's chat shows on ready")
+	assert_true(chat.visible, "The window is in the tree on ready, so it can catch the hover")
+	assert_almost_eq(chat.content.modulate.a, chat.idle_alpha, 0.01,
+		"but nothing is drawn: a chat box is not wanted on screen until it is asked for")
 	assert_true(chat.unfocusable, "Until the input opens the window never takes the keyboard from the game")
 	assert_false(chat.input_row.visible, "The input row is hidden until the chat is opened")
 	assert_eq(chat.size, ChatWindow.DEFAULT_SIZE, "Default size")
@@ -161,10 +163,57 @@ func test_teleport_moves_the_player_and_validates_its_arguments() -> void:
 	assert_eq(player.velocity, Vector3.ZERO, "warp_to clears motion")
 
 
+## The window starts drawn at nothing rather than hidden outright, because an embedded Window that is
+## not visible reports no mouse at all and hovering where the chat sits is one of the ways it is asked
+## back. These are the three ways, from the state the game actually starts in.
+func test_the_chat_starts_off_screen_and_comes_back_when_it_is_asked_for() -> void:
+	assert_almost_eq(chat.content.modulate.a, chat.idle_alpha, 0.01, "Nothing on screen to begin with")
+
+	# 1: hovering where it sits
+	chat.mouse_entered.emit()
+	await wait_physics_frames(2)
+	await wait_seconds(chat.fade_in_seconds + 0.1)
+	assert_almost_eq(chat.content.modulate.a, 1.0, 0.01, "Hovering where the chat sits brings it back")
+	chat.mouse_exited.emit()
+	chat.content.modulate.a = chat.idle_alpha
+
+	# 2: opening the chat
+	chat.open_input()
+	await wait_seconds(chat.fade_in_seconds + 0.1)
+	assert_true(chat.input_row.visible, "The chat action opens the input row")
+	assert_almost_eq(chat.content.modulate.a, 1.0, 0.01, "and brings the window back with it")
+	chat.close_input()
+	chat.content.modulate.a = chat.idle_alpha
+
+	# 3: somebody says something
+	chat.append_message("Someone", "hello")
+	await wait_seconds(chat.fade_in_seconds + 0.1)
+	assert_almost_eq(chat.content.modulate.a, 1.0, 0.01, "A message earns it a place on screen")
+	assert_string_contains(chat.history.get_parsed_text(), "hello")
+
+
+## A project that wants the chat on screen from the start says so.
+func test_start_visible_puts_it_on_screen_immediately() -> void:
+	var eager: ChatWindow = CHAT_SCENE.instantiate() as ChatWindow
+	eager.start_visible = true
+	player.add_child(eager)
+	await wait_physics_frames(2)
+	assert_true(eager.visible)
+	assert_almost_eq(eager.content.modulate.a, 1.0, 0.01, "On screen without being asked")
+	assert_false(eager.idle_timer.is_stopped(), "and the idle fade has something to do")
+	eager.queue_free()
+
+
 func test_idle_fade_lowers_alpha_and_hover_restores_it() -> void:
 	chat.fade_seconds = 0.05
 	chat.fade_in_seconds = 0.05
-	assert_true(chat.idle_timer.time_left > 0.0, "The idle timer runs from the start")
+	# The window starts off screen with nothing to fade, so the idle timer has no job until
+	# something puts it back on screen; a message is the ordinary way that happens.
+	assert_true(chat.idle_timer.is_stopped(), "Nothing to fade before the chat is asked for")
+	chat.append_message("Someone", "hello")
+	await wait_seconds(0.2)
+	assert_almost_eq(chat.content.modulate.a, 1.0, 0.01, "A message puts it on screen")
+	assert_true(chat.idle_timer.time_left > 0.0, "and starts the idle timer that fades it again")
 	chat.idle_timer.start(0.05)
 	await wait_seconds(0.4)
 	assert_almost_eq(chat.content.modulate.a, chat.idle_alpha, 0.01, "Idle fades the content to idle_alpha")
