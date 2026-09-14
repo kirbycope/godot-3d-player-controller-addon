@@ -18,6 +18,7 @@ const MAX_MESSAGE_LENGTH: int = 500 ## Longer messages from a peer are cut here.
 @export var player: Player
 @export var idle_seconds: float = 8.0 ## Seconds without a new message before the window fades.
 @export var idle_alpha: float = 0.0 ## Alpha the window fades to when idle; it still catches the mouse.
+@export var start_visible: bool = false ## Show the window on load. Off by default: a chat box is not wanted on screen in a single player scene until something is actually said, and it can be opened with the chat action or shown by calling [method show].
 @export var fade_seconds: float = 1.0 ## How long the fade out takes.
 @export var fade_in_seconds: float = 0.2 ## How long coming back takes.
 @export var name_color: Color = Color(1.0, 0.82, 0.3) ## Sender names in the history.
@@ -56,7 +57,10 @@ func _ready() -> void:
 		rect = Rect2(Vector2(SCREEN_MARGIN, screen.y - DEFAULT_SIZE.y - SCREEN_MARGIN), Vector2(DEFAULT_SIZE))
 	size = Vector2i(rect.size)
 	position = Vector2i(rect.position)
-	show()
+	if start_visible:
+		show()
+	else:
+		hide()
 	idle_timer.start()
 	settings_res = settings # Set last: applying the saved rect above must not arm a save of its own
 
@@ -68,8 +72,13 @@ func _notification(what: int) -> void:
 
 ## Shows the input row and takes the keyboard; Enter or Send submits, Escape cancels.
 func open_input() -> void:
-	if not visible or input_row.visible:
+	if input_row.visible:
 		return
+	# A hidden window is opened by this, not blocked by it: with the chat starting hidden
+	# the action that opens it would otherwise do nothing at all.
+	if not visible:
+		show()
+		_fade_to(1.0, 0.0)
 	unfocusable = false
 	grab_focus()
 	input_row.show()
@@ -123,6 +132,9 @@ func _receive_message(sender: String, text: String) -> void:
 
 ## Appends "Name: text" with the name coloured; user text is escaped so it cannot inject bbcode.
 func append_message(sender: String, text: String) -> void:
+	# Somebody has said something, so the window earns its place on screen again.
+	if not visible:
+		show()
 	_append_line("[color=%s]%s:[/color] %s" % [name_color.to_html(false), escape_bbcode(sender), escape_bbcode(text)])
 
 
@@ -240,9 +252,18 @@ func _on_save_timer_timeout() -> void:
 
 
 ## The embedded window draws above every CanvasLayer, so it hides while a menu is up to keep the menu clickable.
+##
+## What it was before the menu opened is remembered and restored, rather than the window
+## being shown unconditionally on unpause: a chat that starts hidden would otherwise
+## appear the first time the player opened and closed a menu.
+var _visible_before_pause: bool = false
+
 func _on_player_paused_changed(paused: bool) -> void:
 	if not is_multiplayer_authority():
 		return
 	if paused:
+		_visible_before_pause = visible
 		close_input()
-	visible = not paused
+		hide()
+	else:
+		visible = _visible_before_pause

@@ -407,7 +407,15 @@ var _ragdoll_was_enabled: bool = true ## enable_ragdoll before death forced it o
 @export var sync_blend_position: Vector2 = Vector2.ZERO:
 	set(value):
 		sync_blend_position = value
-		if not is_multiplayer_authority() and animation_tree and is_node_ready():
+		# `is_multiplayer_authority()` asserts the node is in the tree, and an exported
+		# property is assigned while the scene is still being built, before it is. The
+		# tree check has to come first or every load logs the failed assertion.
+		if (
+			is_inside_tree()
+			and not is_multiplayer_authority()
+			and animation_tree
+			and is_node_ready()
+		):
 			_apply_synced_blend_position(value)
 
 var display_name: String = "": ## The name over the head (the Steam persona); replicated, so every peer reads it. Empty hides the label.
