@@ -90,22 +90,20 @@ func test_one_pad_moves_one_player() -> void:
 	assert_eq(first.current_state, NodeStateMachine.States.STANDING, "And not the first")
 
 
-## A polled read asks the pad itself ([method Input.is_joy_button_pressed]), which answers from the hardware
-## rather than from the event queue, so a synthetic event cannot stand in for one: this needs a pad actually
-## plugged in. The event path above is what a machine without one can check, and it does.
+## A press parsed into the input queue is not readable the instant it is sent: it lands on a later frame, and
+## how many later depends on how loaded the machine is, so waiting a fixed frame or two is a flake on a busy
+## CI runner. Each read here waits for the state it expects instead, up to a second, and the assertion is that
+## it arrived at all and on the right player.
 func test_polled_reads_ask_the_players_own_pad() -> void:
-	if Input.get_connected_joypads().is_empty():
-		pass_test("Skipping: a polled read answers from a real pad, and none is connected")
-		return
 	var first: Player = split.get_player(0)
 	var second: Player = split.get_player(1)
 	_pad_button(0, JOY_BUTTON_Y, true)
-	await wait_physics_frames(1)
+	await wait_until(func() -> bool: return first.is_action_pressed(&"jump"), 1.0)
 	assert_true(first.is_action_pressed(&"jump"), "The first pad's Y is the first player's jump")
 	assert_false(second.is_action_pressed(&"jump"), "And nothing to the second")
 	assert_true(Input.is_action_pressed(&"jump"), "The whole input sees it, as a lone player would")
 	_pad_button(0, JOY_BUTTON_Y, false)
-	await wait_physics_frames(1)
+	await wait_until(func() -> bool: return not first.is_action_pressed(&"jump"), 1.0)
 	assert_false(first.is_action_pressed(&"jump"))
 
 
