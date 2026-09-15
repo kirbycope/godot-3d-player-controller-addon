@@ -2,7 +2,7 @@
 """Turn an in-engine screenshot into a repository preview image.
 
 Previews are 960x540, the size the portfolio site at kirbycope.github.io uses, and are compressed
-through TinyPNG before they are committed.
+losslessly with Pillow before they are committed.
 
     python tools/make_preview.py <screenshot.png> <destination.png>
 
@@ -50,20 +50,16 @@ def main() -> int:
     image.save(dest, "PNG", optimize=True)
     resized = dest.stat().st_size
 
+    # Lossless, and local. This used to post the file to the TinyPNG API, which compressed harder by
+    # quantizing the palette; it is not used anywhere now, so nothing here depends on a key, a quota
+    # or a network round trip.
     sys.path.insert(0, str(Path(__file__).parent))
     import tinyify
 
-    key = tinyify.load_api_key(Path.cwd())
-    if key is None:
-        print(f"{dest}: {WIDTH}x{HEIGHT}, {resized:,} bytes. No TinyPNG key found, not compressed.")
-        return 0
-
-    tinify = tinyify.get_tinify_module(key)
-    tinify.from_file(str(dest)).to_file(str(dest))
+    tinyify.optimize_file(dest)
     final = dest.stat().st_size
     print(f"{dest}: {WIDTH}x{HEIGHT}, {resized:,} -> {final:,} bytes "
-          f"({100 - final * 100 // resized}% off with TinyPNG)")
-    print(f"TinyPNG compressions used this month: {tinify.compression_count}")
+          f"({100 - final * 100 // resized}% off, losslessly)")
     return 0
 
 

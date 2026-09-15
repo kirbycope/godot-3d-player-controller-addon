@@ -482,6 +482,14 @@ again on the way out, so disabling the plugin leaves no entry pointing at nothin
 
 ## Assets
 
+Textures here are committed at the resolution they shipped with, compressed losslessly with Pillow
+and never downscaled (`python tools/tinyify.py addons/3d_player_controller/assets`), so a desktop
+build gets the fidelity the artist made. The 512 pixel cap belongs to the web build alone, where load time is the
+constraint: a size limit is an import-time setting baked into `.godot/imported` rather than
+something an export can choose, so `tools/web_texture_cap.py` applies it in the Pages workflow just
+before the import pass, on a CI checkout that is thrown away. The `.import` files in this
+repository carry no limit.
+
 | Folder | Source | License |
 |---|---|---|
 | `assets/game_icons/` | [game-icons.net](https://game-icons.net/) (authors listed in the `.txt` file next to each icon, e.g. Lorc) | CC BY 3.0 |
