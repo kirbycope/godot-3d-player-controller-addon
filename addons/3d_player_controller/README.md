@@ -468,6 +468,16 @@ CI runs the same three directories on every push and pull request to `main`, in
 `barichello/godot-ci:4.7` container the other addons here test in, because scenes saved by a 4.8 build
 carry a `unique_id` that 4.7 cannot parse.
 
+### The editor plugin's own guard
+
+`tests/test_editor_plugin.gd` covers `plugin.gd`, which every other check here misses: no test
+instantiates an `EditorPlugin`, and this project does not enable its own plugin, so a plugin that has
+stopped compiling stays green all the way to the project that installs the addon and finds it will not
+enable. Loading a GDScript compiles it and a preload of a missing file is a compile error, so
+`load()` on it comes back null when it is broken. The other two tests name the preload that does not
+resolve, and check that every custom type put in the Create New Node dialog on the way in is taken off
+again on the way out, so disabling the plugin leaves no entry pointing at nothing.
+
 ---
 
 ## Assets
