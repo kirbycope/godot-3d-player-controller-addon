@@ -1,0 +1,55 @@
+[gd_scene load_steps=8 format=3 uid="uid://c7gtarifle0001"]
+
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/sci_fi_essentials/Gun_Rifle.gltf" id="1_model"]
+[ext_resource type="Script" path="res://addons/3d_player_controller/scripts/rifle.gd" id="2_rifle"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/bullet.tscn" id="3_bullet"]
+[ext_resource type="Texture2D" path="res://addons/3d_player_controller/assets/game_icons/mp5.svg" id="4_icon"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/accuracy/rifle.tres" id="5_accuracy"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/laser_sight.tscn" id="6_laser"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/muzzle_flash.tscn" id="7_flash"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_pickup"]
+radius = 1.2
+
+[node name="Rifle" node_paths=PackedStringArray("muzzle", "fire_timer", "laser_sight") instance=ExtResource("1_model")]
+script = ExtResource("2_rifle")
+projectile_scene = ExtResource("3_bullet")
+fire_interval = 0.1
+reload_time = 1.8
+muzzle = NodePath("Muzzle")
+fire_timer = NodePath("FireTimer")
+laser_sight = NodePath("LaserSight")
+bone_attachment_bone_name = "RightHand"
+can_attack = true
+can_shoot = true
+display_name = "Rifle"
+description = "Thirty rounds, automatic. Hold Aim and hold the trigger."
+equipment_type = 6
+icon = ExtResource("4_icon")
+is_exclusive = true
+projectile_speed = 120.0
+accuracy = ExtResource("5_accuracy")
+position_offset = Vector3(0, 0.09, 0.025)
+rotation_offset_degrees = Vector3(0, 180, 80)
+
+[node name="Gun_Rifle" parent="." index="0"]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)
+
+[node name="Muzzle" type="Marker3D" parent="."]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 0.76, 0.1, 0)
+
+[node name="MuzzleFlash" parent="Muzzle" instance=ExtResource("7_flash")]
+
+[node name="FireTimer" type="Timer" parent="."]
+one_shot = true
+
+[node name="LaserSight" parent="." instance=ExtResource("6_laser")]
+visible = false
+
+[node name="PlayerDetection" type="Area3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PlayerDetection"]
+shape = SubResource("SphereShape3D_pickup")
+
+[connection signal="fired" from="." to="Muzzle/MuzzleFlash" method="flash"]
+[connection signal="body_entered" from="PlayerDetection" to="." method="_on_player_detection_body_entered"]

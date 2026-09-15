@@ -1,0 +1,50 @@
+[gd_scene load_steps=3 format=3 uid="uid://c7wantedlevel01"]
+
+[ext_resource type="Script" path="res://addons/3d_player_controller/scripts/wanted_level.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://addons/3d_player_controller/assets/icons/star.svg" id="2_star"]
+
+[node name="WantedLevel" type="Node" node_paths=PackedStringArray("decay_timer", "stars_container")]
+script = ExtResource("1_script")
+decay_timer = NodePath("DecayTimer")
+stars_container = NodePath("HUD/Stars")
+
+[node name="DecayTimer" type="Timer" parent="."]
+one_shot = true
+
+[node name="HUD" type="CanvasLayer" parent="."]
+layer = 6
+
+[node name="Stars" type="HBoxContainer" parent="HUD"]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -54.0
+offset_top = 96.0
+offset_right = 54.0
+offset_bottom = 128.0
+grow_horizontal = 2
+theme_override_constants/separation = 4
+
+[node name="Star1" type="TextureRect" parent="HUD/Stars"]
+modulate = Color(1, 1, 1, 0.25)
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+texture = ExtResource("2_star")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Star2" type="TextureRect" parent="HUD/Stars"]
+modulate = Color(1, 1, 1, 0.25)
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+texture = ExtResource("2_star")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Star3" type="TextureRect" parent="HUD/Stars"]
+modulate = Color(1, 1, 1, 0.25)
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+texture = ExtResource("2_star")
+expand_mode = 1
+stretch_mode = 5

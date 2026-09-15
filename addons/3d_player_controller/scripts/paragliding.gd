@@ -137,6 +137,6 @@ func get_contextual_controls(input_type: int) -> Dictionary:
 	return {
 		player.controls.left_joystick_label: "Steer",
 		player.controls.right_joystick_label: "Camera",
-		player.controls.joypad_button_1_label: "Dive",
-		player.controls.joypad_button_7_label if input_type == Controls.InputType.KEYBOARD_MOUSE else player.controls.joypad_button_0_label: "Cancel",
+		player.controls.action_label(&"sprint", player.controls.joypad_button_1_label): "Dive",
+		player.controls.joypad_button_7_label if input_type == Controls.InputType.KEYBOARD_MOUSE else player.controls.action_label(&"action", player.controls.joypad_button_0_label): "Cancel",
 	}

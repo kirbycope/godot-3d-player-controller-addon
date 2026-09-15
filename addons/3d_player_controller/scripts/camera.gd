@@ -26,6 +26,12 @@ const FOCUS_AIM_WORLD_RADIUS: float = 0.5 ## World-space radius in units/meters 
 @export var default_h_offset: float = 0.0 ## Base horizontal offset.
 @export var aim_h_offset: float = 0.25 ## Over-the-right-shoulder offset when aiming/shooting.
 @export var perspective: Perspective = Perspective.THIRD_PERSON ## What perspective should the Camera use?
+@export_group("Locked View", "locked_")
+@export var locked_view: bool = false ## Holds the third-person camera at [member locked_pitch_degrees] and [member locked_yaw_degrees], [member locked_distance] out, and ignores the look stick and the mouse: an action RPG's view from above.
+@export var locked_pitch_degrees: float = -55.0
+@export var locked_yaw_degrees: float = 0.0
+@export var locked_distance: float = 12.0
+@export_group("")
 @export var player: Player
 
 var focus_aim_offset: Vector2 = Vector2.ZERO ## Current aim offset applied on top of the focused lock-on target.
@@ -124,7 +130,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		toggle_perspective()
 
 	# The mouse is one local player's; a pad player's camera ignores it (see Player.uses_mouse)
-	if event is InputEventMouse and not player.uses_mouse:
+	if event is InputEventMouse and (not player.uses_mouse or locked_view):
 		return
 
 	# With a visible cursor, holding right-click temporarily captures the mouse so rotation feels normal.
@@ -171,6 +177,15 @@ func _unhandled_input(event: InputEvent) -> void:
 ## Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
 	if not player: return
+
+	# A locked view holds its angle whatever the stick, the target or the mouse say
+	if locked_view and perspective == Perspective.THIRD_PERSON:
+		camera_mount.rotation = Vector3(deg_to_rad(locked_pitch_degrees), deg_to_rad(locked_yaw_degrees), 0.0)
+		camera_spring_arm.spring_length = locked_distance
+		focus_aim_offset = Vector2.ZERO
+		fov = lerpf(fov, default_fov, delta * 10.0)
+		h_offset = lerpf(h_offset, default_h_offset, delta * 10.0)
+		return
 
 	# Rotate the [Camera3D]'s [SpringArm3D] using the joypad motion input event
 	var joypad_motion_input: Vector2 = player.get_vector(&"look_left", &"look_right", &"look_up", &"look_down")

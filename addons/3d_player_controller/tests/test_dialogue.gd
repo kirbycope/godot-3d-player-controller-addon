@@ -103,9 +103,14 @@ func test_choices_are_buttons_that_steer_the_conversation() -> void:
 	assert_eq(player.controls.prompt_action_label, "Choose")
 	screen.advance()
 	assert_eq(screen.text_label.text, "Coming?", "Action does not skip past a choice")
-	screen._choice_buttons[0].pressed.emit()
+	screen._choice_buttons[1].grab_focus()
+	screen._choice_buttons[0].grab_focus()
+	var confirm: InputEventAction = InputEventAction.new()
+	confirm.action = &"action"
+	confirm.pressed = true
+	screen._input(confirm)
 	assert_signal_emitted(screen, "choice_made")
-	assert_eq(screen.text_label.text, "Good", "Yes jumps where it points")
+	assert_eq(screen.text_label.text, "Good", "Action picks the focused choice: Yes jumps where it points")
 	screen.advance()
 	assert_false(screen.visible)
 	screen.start(dialogue)

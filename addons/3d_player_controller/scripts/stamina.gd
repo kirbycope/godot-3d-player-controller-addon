@@ -30,6 +30,21 @@ func _ready() -> void:
 	stamina = max_value
 
 
+## Takes [param amount] for a swing or a roll: true when it could be paid (always, with stamina off or a cost of 0),
+## false when the Player is exhausted; paying the last of it exhausts them, the way a sprint run out does.
+func spend(amount: float) -> bool:
+	if amount <= 0.0 or not player.enable_stamina:
+		return true
+	if player.is_exhausted:
+		return false
+	show()
+	timer.stop()
+	stamina -= amount
+	if stamina <= min_value:
+		player.is_exhausted = true
+	return true
+
+
 func _physics_process(delta: float) -> void:
 	# No signal exists for this export, so it is checked per frame.
 	if not player.enable_stamina:

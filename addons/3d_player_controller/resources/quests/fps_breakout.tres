@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="Quest" load_steps=6 format=3 uid="uid://c7questfpsbreak"]
+
+[ext_resource type="Script" path="res://addons/3d_player_controller/scripts/quest.gd" id="1_quest"]
+[ext_resource type="Script" path="res://addons/3d_player_controller/scripts/quest_objective.gd" id="2_objective"]
+[ext_resource type="Script" path="res://addons/3d_player_controller/inventory/scripts/item.gd" id="item_script"]
+
+[sub_resource type="Resource" id="Resource_card"]
+script = ExtResource("2_objective")
+id = &"find_card"
+description = "Find the security card"
+required = 1
+
+[sub_resource type="Resource" id="Resource_door"]
+script = ExtResource("2_objective")
+id = &"open_door"
+description = "Open the armoury"
+required = 1
+
+[sub_resource type="Resource" id="Resource_lift"]
+script = ExtResource("2_objective")
+id = &"reach_lift"
+description = "Reach the lift"
+required = 1
+
+[resource]
+script = ExtResource("1_quest")
+id = &"fps_breakout"
+title = "Breakout"
+description = "The base is on lockdown. A security card opens the armoury; the lift is past it."
+objectives = Array[ExtResource("2_objective")]([SubResource("Resource_card"), SubResource("Resource_door"), SubResource("Resource_lift")])
+rewards = Dictionary[ExtResource("item_script"), int]({})
+tracked_on_start = true

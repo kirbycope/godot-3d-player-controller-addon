@@ -10,6 +10,7 @@ func _input(event: InputEvent) -> void:
 
 	# Attack
 	if event.is_action_pressed(&"attack") and player.inventory.can_player_attack:
+		get_viewport().set_input_as_handled()
 		player.state_machine.travel(state, States.ATTACKING)
 		return
 
@@ -26,6 +27,9 @@ func _input(event: InputEvent) -> void:
 
 	# Sprint { Microsoft: Ⓑ, Nintendo: Ⓐ, Sony: Ⓞ, Keyboard: [Shift] }.
 	if event.is_action_released(&"sprint"):
+		# A tap rather than a hold is a roll; a hold let go is a walk again
+		if player.try_dodge(state):
+			return
 		# Start "standing"
 		player.state_machine.travel(state, States.STANDING)
 		return

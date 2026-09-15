@@ -254,10 +254,10 @@ func _get_collision_height() -> float:
 
 func get_contextual_controls(_input_type: int) -> Dictionary:
 	var controls: Dictionary = {
-		player.controls.joypad_button_1_label: "Fast Swim",
+		player.controls.action_label(&"sprint", player.controls.joypad_button_1_label): "Fast Swim",
 		player.controls.left_joystick_label: "Swim",
 		player.controls.right_joystick_label: "Camera",
-		player.controls.joypad_button_3_label: "Surface" if player.is_diving else "Climb Out",
+		player.controls.action_label(&"jump", player.controls.joypad_button_3_label): "Surface" if player.is_diving else "Climb Out",
 	}
 	if player.is_diving:
 		controls[player.controls.joypad_button_7_label] = "Dive Deeper"

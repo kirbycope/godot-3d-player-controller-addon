@@ -1,0 +1,29 @@
+[gd_scene load_steps=5 format=3 uid="uid://c7bouncepad0001"]
+
+[ext_resource type="Script" path="res://addons/3d_player_controller/scripts/bounce_pad.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/stylized_nature/Mushroom_Common.gltf" id="2_model"]
+
+[sub_resource type="CylinderShape3D" id="shape_cap"]
+height = 0.4
+radius = 1.1
+
+[sub_resource type="CylinderShape3D" id="shape_stem"]
+height = 1.2
+radius = 0.5
+
+[node name="BouncePad" type="Area3D"]
+collision_layer = 0
+script = ExtResource("1_script")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.45, 0)
+shape = SubResource("shape_cap")
+
+[node name="Model" parent="." instance=ExtResource("2_model")]
+transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0)
+
+[node name="Stem" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Stem"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+shape = SubResource("shape_stem")

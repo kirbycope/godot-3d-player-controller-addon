@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="Item" load_steps=3 format=3 uid="uid://c7itemcash0001"]
+
+[ext_resource type="Script" path="res://addons/3d_player_controller/inventory/scripts/item.gd" id="1_item"]
+[ext_resource type="Texture2D" path="res://addons/3d_player_controller/assets/icons/cash.svg" id="2_icon"]
+
+[resource]
+script = ExtResource("1_item")
+id = &"cash"
+display_name = "Cash"
+description = "Dollars. Nobody in this town asks where they came from."
+icon = ExtResource("2_icon")
+icon_color = Color(0.6, 0.9, 0.6, 1)
+category = 1
+max_stack = 999

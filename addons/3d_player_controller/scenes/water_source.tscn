@@ -1,0 +1,19 @@
+[gd_scene load_steps=4 format=3 uid="uid://c7watersource01"]
+
+[ext_resource type="Script" path="res://addons/3d_player_controller/scripts/water_source.gd" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://dokp6v1sufknx" path="res://addons/controls/action_prompt.tscn" id="2_prompt"]
+
+[sub_resource type="BoxShape3D" id="shape_near"]
+size = Vector3(4, 2, 2)
+
+[node name="WaterSource" type="Area3D"]
+collision_layer = 0
+script = ExtResource("1_script")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+shape = SubResource("shape_near")
+
+[node name="ActionPrompt" parent="." instance=ExtResource("2_prompt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 0)
+message_end = "to drink"

@@ -1,0 +1,382 @@
+[gd_scene load_steps=29 format=3 uid="uid://c7tpsdemo000001"]
+
+[ext_resource type="Script" path="res://addons/3d_player_controller/scenes/demo/tps/tps_demo.gd" id="script"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/player.tscn" id="player"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/checkpoint.tscn" id="checkpoint"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/kill_zone.tscn" id="killzone"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/save_game.tscn" id="savegame"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/locked_door.tscn" id="door"]
+[ext_resource type="Script" path="res://addons/3d_player_controller/scripts/wave_spawner.gd" id="spawner_script"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/inventory/scenes/item_pickup.tscn" id="pickup"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/items/pistol_clip.tres" id="clip"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/items/rifle_magazine.tres" id="magazine"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/items/health_pack.tres" id="health_pack"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/gta/pistol.tscn" id="pistol"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/gta/rifle.tscn" id="rifle"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/fps/sentry.tscn" id="sentry"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/gta/crate.tscn" id="crate"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/gta/barrel.tscn" id="barrel"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/sci_fi_essentials/Prop_Crate_Large.gltf" id="crate_large"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/sci_fi_essentials/Prop_Ammo.gltf" id="ammo_crate"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/sci_fi_essentials/Prop_SatelliteDish.gltf" id="dish"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/downtown_city/Prop_Bollard.gltf" id="bollard"]
+
+[sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
+sky_top_color = Color(0.02, 0.03, 0.08, 1)
+sky_horizon_color = Color(0.12, 0.12, 0.2, 1)
+ground_horizon_color = Color(0.12, 0.12, 0.2, 1)
+ground_bottom_color = Color(0.02, 0.02, 0.03, 1)
+
+[sub_resource type="Sky" id="sky"]
+sky_material = SubResource("sky_mat")
+
+[sub_resource type="Environment" id="env"]
+background_mode = 2
+sky = SubResource("sky")
+ambient_light_source = 3
+ambient_light_color = Color(0.45, 0.5, 0.65, 1)
+ambient_light_energy = 1.1
+tonemap_mode = 2
+glow_enabled = true
+
+[sub_resource type="NavigationMesh" id="navmesh"]
+agent_radius = 0.6
+cell_size = 0.3
+cell_height = 0.3
+agent_max_climb = 0.3
+
+[sub_resource type="StandardMaterial3D" id="mat_ground"]
+albedo_color = Color(0.3, 0.3, 0.3, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="mat_wall"]
+albedo_color = Color(0.4, 0.4, 0.42, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="mat_sandbag"]
+albedo_color = Color(0.5, 0.45, 0.32, 1)
+roughness = 1.0
+
+[sub_resource type="StandardMaterial3D" id="mat_pad"]
+albedo_color = Color(0.9, 0.6, 0.2, 1)
+emission_enabled = true
+emission = Color(1, 0.55, 0.15, 1)
+emission_energy_multiplier = 1.5
+
+[sub_resource type="BoxShape3D" id="shape_pad"]
+size = Vector3(4, 3, 4)
+
+[sub_resource type="BoxShape3D" id="shape_hold"]
+size = Vector3(26, 3, 14)
+
+[node name="TpsDemo" type="Node3D" node_paths=PackedStringArray("spawner", "gate", "extraction", "hold_position", "navigation_region")]
+script = ExtResource("script")
+control_scheme = 1
+spawner = NodePath("WaveSpawner")
+gate = NodePath("Gate")
+extraction = NodePath("Extraction/ExtractionTrigger")
+hold_position = NodePath("HoldPosition")
+navigation_region = NodePath("NavigationRegion3D")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("env")
+
+[node name="Moon" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.866025, -0.353553, 0.353553, 0, 0.707107, 0.707107, -0.5, -0.612372, 0.612372, 0, 30, 0)
+light_color = Color(0.6, 0.7, 1, 1)
+light_energy = 0.6
+shadow_enabled = true
+
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
+navigation_mesh = SubResource("navmesh")
+
+[node name="Ground" type="CSGBox3D" parent="NavigationRegion3D" groups=["STONE"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, -20)
+use_collision = true
+size = Vector3(90, 2, 110)
+material = SubResource("mat_ground")
+
+[node name="Walls" type="CSGCombiner3D" parent="NavigationRegion3D" groups=["STONE"]]
+use_collision = true
+
+[node name="West" type="CSGBox3D" parent="NavigationRegion3D/Walls"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 2, -20)
+size = Vector3(1, 4, 60)
+material = SubResource("mat_wall")
+
+[node name="East" type="CSGBox3D" parent="NavigationRegion3D/Walls"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 2, -20)
+size = Vector3(1, 4, 60)
+material = SubResource("mat_wall")
+
+[node name="South" type="CSGBox3D" parent="NavigationRegion3D/Walls"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 10)
+size = Vector3(41, 4, 1)
+material = SubResource("mat_wall")
+
+[node name="NorthLeft" type="CSGBox3D" parent="NavigationRegion3D/Walls"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.5, 2, -50)
+size = Vector3(18, 4, 1)
+material = SubResource("mat_wall")
+
+[node name="NorthRight" type="CSGBox3D" parent="NavigationRegion3D/Walls"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.5, 2, -50)
+size = Vector3(18, 4, 1)
+material = SubResource("mat_wall")
+
+[node name="Breach" type="CSGBox3D" parent="NavigationRegion3D/Walls"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, -50)
+operation = 2
+size = Vector3(6, 3.2, 2)
+material = SubResource("mat_wall")
+
+[node name="Cover" type="Node3D" parent="NavigationRegion3D"]
+
+[node name="SandbagA" type="CSGBox3D" parent="NavigationRegion3D/Cover" groups=["STONE"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0.5, -14)
+use_collision = true
+size = Vector3(6, 1, 1.2)
+material = SubResource("mat_sandbag")
+
+
+[node name="SandbagB" type="CSGBox3D" parent="NavigationRegion3D/Cover" groups=["STONE"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0.5, -14)
+use_collision = true
+size = Vector3(6, 1, 1.2)
+material = SubResource("mat_sandbag")
+
+
+[node name="SandbagC" type="CSGBox3D" parent="NavigationRegion3D/Cover" groups=["STONE"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, -22)
+use_collision = true
+size = Vector3(8, 1, 1.2)
+material = SubResource("mat_sandbag")
+
+
+[node name="SandbagD" type="CSGBox3D" parent="NavigationRegion3D/Cover" groups=["STONE"]]
+transform = Transform3D(0.939693, 0, 0.34202, 0, 1, 0, -0.34202, 0, 0.939693, -9, 0.5, -30)
+use_collision = true
+size = Vector3(5, 1, 1.2)
+material = SubResource("mat_sandbag")
+
+
+[node name="SandbagE" type="CSGBox3D" parent="NavigationRegion3D/Cover" groups=["STONE"]]
+transform = Transform3D(0.939693, 0, -0.34202, 0, 1, 0, 0.34202, 0, 0.939693, 9, 0.5, -30)
+use_collision = true
+size = Vector3(5, 1, 1.2)
+material = SubResource("mat_sandbag")
+
+
+[node name="Crate1" parent="NavigationRegion3D/Cover" instance=ExtResource("crate")]
+transform = Transform3D(0.984808, 0, 0.173648, 0, 1, 0, -0.173648, 0, 0.984808, -13, 0, -24)
+
+[node name="Crate2" parent="NavigationRegion3D/Cover" instance=ExtResource("crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 0, -26)
+
+[node name="Crate3" parent="NavigationRegion3D/Cover" instance=ExtResource("crate")]
+transform = Transform3D(0.866025, 0, 0.5, 0, 1, 0, -0.5, 0, 0.866025, -3, 0, -38)
+
+[node name="Crate4" parent="NavigationRegion3D/Cover" instance=ExtResource("crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, -40)
+
+[node name="Crate5" parent="NavigationRegion3D/Cover" instance=ExtResource("crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, -40)
+
+[node name="Barrel1" parent="NavigationRegion3D/Cover" instance=ExtResource("barrel")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, -8)
+
+[node name="Barrel2" parent="NavigationRegion3D/Cover" instance=ExtResource("barrel")]
+transform = Transform3D(0.766044, 0, 0.642788, 0, 1, 0, -0.642788, 0, 0.766044, 15, 0, -9.2)
+
+[node name="Barrel3" parent="NavigationRegion3D/Cover" instance=ExtResource("barrel")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0, -36)
+
+[node name="Lights" type="Node3D" parent="."]
+
+[node name="Pole1" type="CSGCylinder3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 3, -4)
+radius = 0.12
+height = 6.0
+material = SubResource("mat_wall")
+
+[node name="Flood1" type="SpotLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 0.5, 0.866025, 0, -0.866025, 0.5, -18, 6, -4)
+light_color = Color(1, 0.95, 0.85, 1)
+light_energy = 16.0
+spot_range = 45.0
+spot_angle = 60.0
+shadow_enabled = true
+
+
+[node name="Pole2" type="CSGCylinder3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 3, -4)
+radius = 0.12
+height = 6.0
+material = SubResource("mat_wall")
+
+[node name="Flood2" type="SpotLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 0.5, 0.866025, 0, -0.866025, 0.5, 18, 6, -4)
+light_color = Color(1, 0.95, 0.85, 1)
+light_energy = 16.0
+spot_range = 45.0
+spot_angle = 60.0
+shadow_enabled = true
+
+
+[node name="Pole3" type="CSGCylinder3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 3, -36)
+radius = 0.12
+height = 6.0
+material = SubResource("mat_wall")
+
+[node name="Flood3" type="SpotLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 0.5, 0.866025, 0, -0.866025, 0.5, -18, 6, -36)
+light_color = Color(1, 0.95, 0.85, 1)
+light_energy = 16.0
+spot_range = 45.0
+spot_angle = 60.0
+shadow_enabled = true
+
+
+[node name="Pole4" type="CSGCylinder3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 3, -36)
+radius = 0.12
+height = 6.0
+material = SubResource("mat_wall")
+
+[node name="Flood4" type="SpotLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 0.5, 0.866025, 0, -0.866025, 0.5, 18, 6, -36)
+light_color = Color(1, 0.95, 0.85, 1)
+light_energy = 16.0
+spot_range = 45.0
+spot_angle = 60.0
+shadow_enabled = true
+
+
+[node name="Gear" type="Node3D" parent="."]
+
+[node name="Rifle" parent="Gear" instance=ExtResource("rifle")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -2.5, 0.06, 4)
+
+[node name="Pistol" parent="Gear" instance=ExtResource("pistol")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 2.5, 0.06, 4)
+
+[node name="Magazines" parent="Gear" instance=ExtResource("pickup")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.15, 4)
+item = ExtResource("magazine")
+count = 6
+show_icon = false
+
+[node name="AmmoCache1" parent="Gear" instance=ExtResource("pickup")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0.15, -11.5)
+item = ExtResource("magazine")
+count = 4
+show_icon = false
+
+[node name="AmmoCache2" parent="Gear" instance=ExtResource("pickup")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0.15, -11.5)
+item = ExtResource("clip")
+count = 3
+show_icon = false
+
+[node name="HealthPack1" parent="Gear" instance=ExtResource("pickup")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0.3, -24)
+item = ExtResource("health_pack")
+show_icon = false
+
+[node name="HealthPack2" parent="Gear" instance=ExtResource("pickup")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0.3, -9)
+item = ExtResource("health_pack")
+show_icon = false
+
+[node name="AmmoCrate" parent="Gear" instance=ExtResource("ammo_crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5, 0, -11.5)
+
+[node name="Dish" parent="Gear" instance=ExtResource("dish")]
+transform = Transform3D(0.866025, 0, -0.5, 0, 1, 0, 0.5, 0, 0.866025, 15, 0, 6)
+
+[node name="CrateLarge" parent="Gear" instance=ExtResource("crate_large")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, 4)
+
+[node name="HoldPosition" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -13)
+collision_layer = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="HoldPosition"]
+shape = SubResource("shape_hold")
+
+[node name="Gate" parent="." instance=ExtResource("door")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -50)
+sealed = true
+open_offset = Vector3(0, 2.8, 0)
+prompt_label = "Open"
+locked_label = "Sealed"
+
+[node name="Extraction" type="Node3D" parent="."]
+
+[node name="Pad" type="CSGBox3D" parent="Extraction"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.03, -58)
+size = Vector3(5, 0.06, 5)
+material = SubResource("mat_pad")
+
+[node name="ExtractionTrigger" type="Area3D" parent="Extraction"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -58)
+collision_layer = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Extraction/ExtractionTrigger"]
+shape = SubResource("shape_pad")
+
+[node name="WaveSpawns" type="Node3D" parent="."]
+
+[node name="Spawn1" type="Marker3D" parent="WaveSpawns"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -56)
+
+[node name="Spawn2" type="Marker3D" parent="WaveSpawns"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, -57)
+
+[node name="Spawn3" type="Marker3D" parent="WaveSpawns"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, -57)
+
+[node name="Spawn4" type="Marker3D" parent="WaveSpawns"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 0, -47)
+
+[node name="Spawn5" type="Marker3D" parent="WaveSpawns"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0, -47)
+
+[node name="WaveSpawner" type="Node" parent="." node_paths=PackedStringArray("spawn_points")]
+script = ExtResource("spawner_script")
+enemy_scenes = Array[PackedScene]([ExtResource("sentry")])
+spawn_points = NodePath("../WaveSpawns")
+waves = Array[int]([3, 4, 5])
+between_waves = 5.0
+
+[node name="Markers" type="Node3D" parent="."]
+
+[node name="Start" type="Marker3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 6)
+
+[node name="CoverA" type="Marker3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, -12.6)
+
+[node name="CoverB" type="Marker3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, -12.6)
+
+[node name="CoverC" type="Marker3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -20.6)
+
+[node name="GateMouth" type="Marker3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -46)
+
+[node name="SpawnCheckpoint" parent="." instance=ExtResource("checkpoint")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 6)
+
+[node name="KillZone" parent="." instance=ExtResource("killzone")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -30, -20)
+
+[node name="SaveGame" parent="." instance=ExtResource("savegame")]
+
+[node name="Player" parent="." instance=ExtResource("player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 6)
+
+[connection signal="body_entered" from="HoldPosition" to="." method="_on_hold_position_body_entered"]
+[connection signal="body_entered" from="Extraction/ExtractionTrigger" to="." method="_on_extraction_body_entered"]

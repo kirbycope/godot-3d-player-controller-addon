@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="Item" load_steps=3 format=3 uid="uid://c7itemberrie00sv"]
+
+[ext_resource type="Script" path="res://addons/3d_player_controller/inventory/scripts/item.gd" id="1_item"]
+[ext_resource type="Texture2D" path="res://addons/3d_player_controller/assets/icons/berries.svg" id="2_icon"]
+
+[resource]
+script = ExtResource("1_item")
+id = &"berries"
+display_name = "Berries"
+description = "Red and ripe. Eating one puts thirty on the hunger."
+icon = ExtResource("2_icon")
+category = 2
+max_stack = 20
+consumable = true

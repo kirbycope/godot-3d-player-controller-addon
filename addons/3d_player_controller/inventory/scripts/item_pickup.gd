@@ -19,6 +19,7 @@ const TURN_SECONDS: float = 6.0 ## One full turn of the model.
 @export_range(1, 999) var count: int = 1
 @export var show_icon: bool = true ## Float the item's icon as a billboard; turn off when the pickup has its own mesh.
 @export var take_action: StringName = &"action" ## The action that takes the stack while the prompt is up.
+@export var auto_take: bool = false ## Taken the moment the Player touches it, no prompt: a platformer's coin.
 
 var player: Player ## The Player in range, shown the prompt.
 var _turn: Tween
@@ -74,6 +75,9 @@ func _vanish() -> void:
 func _on_player_detection_body_entered(body: Node3D) -> void:
 	if body is Player and body.is_multiplayer_authority() and not (body as Player).is_riding:
 		player = body
+		if auto_take:
+			take()
+			return
 		action_prompt.show_for(player.controls, "Pick Up")
 
 

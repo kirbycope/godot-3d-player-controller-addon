@@ -10,6 +10,10 @@ func _input(event: InputEvent) -> void:
 
 	# Jump action triggers while jumping
 	if event.is_action_pressed(&"jump") and not player.is_on_floor():
+		# A game with a double jump means the jump, wall or no wall
+		if player.air_jump():
+			get_viewport().set_input_as_handled()
+			return
 		if player.ledge_detection_horizontal.is_colliding():
 			# Exhausted players cannot grab the wall
 			if not player.is_exhausted:
@@ -53,6 +57,11 @@ func start() -> void:
 	player.is_jumping = true
 	# Flag the player as having a "jump queued"
 	player.is_jump_queued = true
+	# A platformer leaves the ground now; the clip's keyframe then finds nothing queued, and the clip is asked for
+	# by name since the tree's own edge waits for a queued jump
+	if player.instant_jump and player.is_on_floor():
+		player.execute_jump()
+		player.travel_locomotion("RunningJump" if player.has_move_input else "JumpingUp")
 	# HeavyBreathing has no direct jump edge; return to the normal locomotion graph.
 	if player.current_locomotion_node == "HeavyBreathing":
 		player.travel_locomotion("StandingLocomotion")

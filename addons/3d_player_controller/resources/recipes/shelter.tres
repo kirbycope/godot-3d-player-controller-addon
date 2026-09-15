@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="Recipe" load_steps=6 format=3 uid="uid://c7recipeshelt01"]
+
+[ext_resource type="Script" path="res://addons/3d_player_controller/scripts/recipe.gd" id="1_recipe"]
+[ext_resource type="Script" path="res://addons/3d_player_controller/inventory/scripts/item.gd" id="item_script"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/items/shelter_kit.tres" id="result"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/items/wood.tres" id="ing0"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/items/stone.tres" id="ing1"]
+
+[resource]
+script = ExtResource("1_recipe")
+title = "Shelter"
+ingredients = Dictionary[ExtResource("item_script"), int]({
+ExtResource("ing0"): 8,
+ExtResource("ing1"): 4
+})
+result = ExtResource("result")
+result_count = 1

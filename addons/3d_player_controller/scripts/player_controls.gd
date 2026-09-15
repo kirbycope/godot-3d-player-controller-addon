@@ -35,6 +35,7 @@ const PLAYER_ACTIONS: Dictionary = {
 
 	# Actions with no button on the HUD.
 	"reload": {"keys": [KEY_R]}, ## Refill the equipped firearm; an empty magazine also reloads on the next trigger pull. Keyboard: [R]
+	"flashlight": {"keys": [KEY_F]}, ## A [Flashlight] on or off; a scene that wants it on the pad rebinds a slot ([method bind_slot]). Keyboard: [F]
 	"broadcast": {"keys": [KEY_V]}, ## Push-to-talk. Keyboard: [V]
 	"chat": {"keycodes": [KEY_ENTER, KEY_KP_ENTER]}, ## Opens the chat window; handled in _unhandled_input so menus keep Enter. Keyboard: [Enter]
 	"debug": {"keycodes": [KEY_F3]}, ## Debug HUD. Keyboard: [F3]
@@ -55,6 +56,7 @@ const PLAYER_ACTIONS: Dictionary = {
 enum ControlScheme {
 	ZELDA, ## A Action, B Sprint, X Attack, Y Jump; Focus locks on to a target, Breath of the Wild style.
 	GTA, ## A Sprint, B Attack, X Jump, Y Action; Focus aims freely over the shoulder, Grand Theft Auto style.
+	PLATFORMER, ## A Jump, B Sprint, X Attack, Y Action; Focus locks on, the way a Mario or a Sonic puts the jump on the bottom button.
 }
 
 ## The face-button slot each scheme fills, by the slot's export name, in [enum ControlScheme] order.
@@ -64,6 +66,9 @@ const SCHEME_SLOTS: Dictionary[ControlScheme, Dictionary] = {
 	},
 	ControlScheme.GTA: {
 		"action_button_0": &"sprint", "action_button_1": &"attack", "action_button_2": &"jump", "action_button_3": &"action",
+	},
+	ControlScheme.PLATFORMER: {
+		"action_button_0": &"jump", "action_button_1": &"sprint", "action_button_2": &"attack", "action_button_3": &"action",
 	},
 }
 
@@ -143,6 +148,39 @@ func apply_control_scheme(scheme: ControlScheme) -> void:
 		var label: Label = get("joypad_%s_label" % slot.trim_prefix("action_"))
 		if label:
 			_label_texts[label] = ACTION_LABELS.get(slots[slot], String(slots[slot]).capitalize())
+	update_input_ui()
+	reset_labels()
+	if player:
+		player.refresh_contextual_controls()
+
+
+## Puts [param action] on one face, shoulder or d-pad [param slot] ("button_12" for d-pad down) live, the way a
+## scheme moves the four face buttons: the button comes off the action it carried, goes on to the new one, and
+## reads [param label] at rest. A scene that needs a button the layout lacks (a horror game's flashlight on the
+## d-pad) asks for it here; a project-bound action is left as it is, as the base leaves it.
+func bind_slot(slot: String, action: StringName, label: String = "") -> void:
+	var property: String = "action_" + slot
+	var previous: StringName = get(property)
+	if previous == action:
+		return
+	var events: Array[InputEvent] = _events_for(SLOT_EVENTS[slot])
+	if not previous.is_empty() and _owns_action(previous):
+		for event: InputEvent in events:
+			if InputMap.action_has_event(previous, event):
+				InputMap.action_erase_event(previous, event)
+	set(property, action)
+	if not action.is_empty():
+		if not InputMap.has_action(action):
+			InputMap.add_action(action, 0.2)
+			_registered_actions[action] = true
+		if _owns_action(action):
+			for event: InputEvent in events:
+				if not InputMap.action_has_event(action, event):
+					InputMap.action_add_event(action, event)
+	_apply_slot_actions()
+	var label_node: Label = get("joypad_%s_label" % slot) as Label
+	if label_node:
+		_label_texts[label_node] = label if not label.is_empty() else String(action).capitalize()
 	update_input_ui()
 	reset_labels()
 	if player:

@@ -123,8 +123,12 @@ func test_saved_setting_overrides_the_scene() -> void:
 
 func test_the_video_settings_menu_lists_the_schemes() -> void:
 	var menu: OptionButton = player.video_settings.get_node("Panel/VBoxContainer/ControlScheme")
-	assert_eq(menu.item_count, 3)
+	assert_eq(menu.item_count, 4)
 	assert_eq(menu.get_item_text(1), "Zelda")
 	assert_eq(menu.get_item_text(2), "GTA")
+	assert_eq(menu.get_item_text(3), "Platformer")
 	player.video_settings._on_control_scheme_item_selected(2)
 	assert_eq(player.control_scheme, PlayerControls.ControlScheme.GTA, "Picking GTA in the menu lays the pad out that way at once")
+	player.video_settings._on_control_scheme_item_selected(3)
+	assert_eq(player.control_scheme, PlayerControls.ControlScheme.PLATFORMER)
+	assert_eq(player.controls.action_button_0, &"jump", "Jump is on the bottom button")

@@ -1,6 +1,6 @@
 class_name TalkingNpc
 extends FollowerNpc
-## Somebody to talk to. Look at them and the prompt offers Talk; Action opens their [member dialogue] in the
+## Somebody to talk to. Walk up to them (or look at them) and the prompt offers Talk; Action opens their [member dialogue] in the
 ## Player's [DialogueScreen], and they turn to face whoever is talking to them until it ends. Left with no
 ## [member FollowerNpc.player] they stand where they are; given one they follow, as any FollowerNpc does. The
 ## walk and run blend replicates like the enemy's. [signal talked_to] is for a game that wants to know.
@@ -15,6 +15,7 @@ const LOCOMOTION_BLEND_PATH: String = "parameters/blend_position"
 @export var faces_talker: bool = true
 
 var talker: Player ## Who is in conversation with this NPC, while one is.
+var _nearby: Player ## The Player inside the detection area, whose prompt is up.
 var _control_speed: float = 0.0
 var locomotion_blend: float = 0.0: ## Replicated: 0 idle, 0.5 walk, 1 run.
 	set(value):
@@ -43,6 +44,27 @@ func _physics_process(delta: float) -> void:
 		return
 	super(delta)
 	_update_locomotion()
+
+
+## The walk-up prompt: Action talks for whoever is standing by.
+func _input(event: InputEvent) -> void:
+	if _nearby and talker == null and not _nearby.is_paused and event.is_action_pressed(&"action") and not event.is_echo():
+		if talk(_nearby):
+			get_viewport().set_input_as_handled()
+
+
+## Wired to PlayerDetection.body_entered.
+func _on_player_detection_body_entered(body: Node3D) -> void:
+	if body is Player and body.is_multiplayer_authority():
+		_nearby = body
+		display_menu(_nearby)
+
+
+## Wired to PlayerDetection.body_exited.
+func _on_player_detection_body_exited(body: Node3D) -> void:
+	if body == _nearby:
+		_nearby = null
+		hide_menu()
 
 
 ## Called by [Camera] while the Player looks at this NPC.
@@ -80,6 +102,8 @@ func talk(who: Player) -> bool:
 
 func _on_dialogue_ended(_dialogue: Dialogue) -> void:
 	talker = null
+	if _nearby:
+		display_menu(_nearby)
 
 
 func _face(target: Vector3, delta: float) -> void:

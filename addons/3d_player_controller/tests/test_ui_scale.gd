@@ -90,13 +90,36 @@ func test_the_player_follows_the_device_in_hand_and_the_setting() -> void:
 	await wait_physics_frames(2)
 	var touchscreen: bool = DisplayServer.is_touchscreen_available()
 	player.controls.current_input_type = Controls.InputType.TOUCH
-	assert_eq(player.controls.visible, touchscreen, "A touch player sees the HUD on a touchscreen")
+	assert_eq(not player.controls.contextual_only, touchscreen, "A touch player sees the HUD on a touchscreen")
 	player.controls.current_input_type = Controls.InputType.KEYBOARD_MOUSE
-	assert_false(player.controls.visible, "Picking up the keyboard hides it")
+	assert_true(player.controls.contextual_only, "Picking up the keyboard leaves only the contextual hints")
 	PlayerSettingsResource.load_or_create().hud_mode = PlayerSettingsResource.HudMode.SHOWN
 	player.controls.hide() # something took the screen for a while
 	player.apply_hud_visibility()
-	assert_true(player.controls.visible, "and giving it back restores the rule rather than the last state")
+	assert_false(player.controls.contextual_only, "and giving it back restores the rule rather than the last state")
 	PlayerSettingsResource.load_or_create().hud_mode = PlayerSettingsResource.HudMode.HIDDEN
 	player.controls.current_input_type = Controls.InputType.TOUCH
-	assert_false(player.controls.visible, "Hidden wins over touch")
+	assert_true(player.controls.contextual_only, "Hidden wins over touch")
+
+
+## The HUD node itself stays visible whatever the setting: a hidden HUD is the contextual-only one, so a prompt
+## still pops its button in, and a demo can force the whole set with the override.
+func test_a_hidden_hud_still_pops_contextual_hints_and_a_demo_can_force_it() -> void:
+	var player: Player = PLAYER_SCENE.instantiate()
+	add_child_autofree(player)
+	await wait_physics_frames(2)
+	player.controls.current_input_type = Controls.InputType.KEYBOARD_MOUSE
+	var settings: PlayerSettingsResource = PlayerSettingsResource.load_or_create()
+	settings.hud_mode = PlayerSettingsResource.HudMode.HIDDEN
+	player.apply_hud_visibility()
+	assert_true(player.controls.visible, "The node is never hidden outright")
+	assert_true(player.controls.contextual_only)
+	assert_false(player.controls.joypad_button_0.visible, "Resting, the Action button is off")
+	player.controls.claim_action_label("Pick Up", self)
+	assert_true(player.controls.joypad_button_0.visible, "A prompt's word brings its button in")
+	player.controls.release_action_label(self)
+	player.hud_mode_override = PlayerSettingsResource.HudMode.SHOWN
+	assert_false(player.controls.contextual_only, "A demo forces the whole set")
+	assert_true(player.controls.joypad_button_0.visible)
+	player.hud_mode_override = -1
+	assert_true(player.controls.contextual_only, "Back to the setting")

@@ -1,0 +1,381 @@
+[gd_scene load_steps=38 format=3 uid="uid://c7gtademo00001"]
+
+[ext_resource type="Script" path="res://addons/3d_player_controller/scenes/demo/gta/gta_demo.gd" id="script"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/player.tscn" id="player"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/talking_npc.tscn" id="talker"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/dialogues/gta_fixer.tres" id="fixer_dialogue"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/dialogues/gta_pedestrian.tres" id="ped_dialogue"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/checkpoint.tscn" id="checkpoint"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/kill_zone.tscn" id="killzone"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/save_game.tscn" id="savegame"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/wanted_level.tscn" id="wanted"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/inventory/scenes/item_pickup.tscn" id="pickup"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/items/pistol_clip.tres" id="clip"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/items/rifle_magazine.tres" id="magazine"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/items/health_pack.tres" id="health_pack"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/items/data_card.tres" id="card"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/gta/pistol.tscn" id="pistol"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/gta/rifle.tscn" id="rifle"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/gta/gang_gunman.tscn" id="gunman"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/gta/patrol_cop.tscn" id="cop"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/downtown_city/Street_4WayIntersection.gltf" id="intersection"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/downtown_city/Street_4Lane.gltf" id="street"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/downtown_city/Prop_Bollard.gltf" id="bollard"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/downtown_city/Prop_Planter_Single.gltf" id="planter"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/downtown_city/Prop_ManholeCover.gltf" id="manhole"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/downtown_city/Prop_Drain.gltf" id="drain"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/downtown_city/Prop_ACUnit.gltf" id="ac_unit"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/gta/building_large.tscn" id="building_large"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/gta/building_medium.tscn" id="building_medium"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/gta/building_small.tscn" id="building_small"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/gta/crate.tscn" id="crate"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/gta/barrel.tscn" id="barrel"]
+
+[sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
+sky_top_color = Color(0.36, 0.5, 0.7, 1)
+sky_horizon_color = Color(0.78, 0.76, 0.74, 1)
+ground_horizon_color = Color(0.78, 0.76, 0.74, 1)
+ground_bottom_color = Color(0.2, 0.2, 0.2, 1)
+
+[sub_resource type="Sky" id="sky"]
+sky_material = SubResource("sky_mat")
+
+[sub_resource type="Environment" id="env"]
+background_mode = 2
+sky = SubResource("sky")
+ambient_light_source = 3
+ambient_light_color = Color(0.75, 0.75, 0.78, 1)
+tonemap_mode = 2
+glow_enabled = true
+
+[sub_resource type="NavigationMesh" id="navmesh"]
+vertices = PackedVector3Array(-59.5, 0.5, -59.5, -59.5, 0.5, 59.5, 59.5, 0.5, 59.5, 59.5, 0.5, -59.5)
+polygons = [PackedInt32Array(3, 2, 0), PackedInt32Array(0, 2, 1)]
+
+[sub_resource type="StandardMaterial3D" id="mat_concrete"]
+albedo_color = Color(0.55, 0.54, 0.52, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="mat_wall"]
+albedo_color = Color(0.42, 0.4, 0.38, 1)
+roughness = 0.9
+
+[sub_resource type="BoxShape3D" id="shape_lot"]
+size = Vector3(20, 4, 20)
+
+[sub_resource type="BoxShape3D" id="shape_curb"]
+size = Vector3(120, 1, 120)
+
+[node name="GtaDemo" type="Node3D" node_paths=PackedStringArray("wanted", "lot_gunmen", "lot_trigger")]
+script = ExtResource("script")
+control_scheme = 1
+wanted = NodePath("WantedLevel")
+lot_gunmen = NodePath("Lot/Gunmen")
+lot_trigger = NodePath("Lot/LotTrigger")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("env")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.866025, -0.353553, 0.353553, 0, 0.707107, 0.707107, -0.5, -0.612372, 0.612372, 0, 30, 0)
+light_energy = 1.1
+shadow_enabled = true
+
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
+navigation_mesh = SubResource("navmesh")
+
+[node name="Ground" type="CSGBox3D" parent="NavigationRegion3D" groups=["STONE"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.001, 0)
+use_collision = true
+size = Vector3(120, 2, 120)
+material = SubResource("mat_concrete")
+
+[node name="Streets" type="Node3D" parent="."]
+
+[node name="Intersection" parent="Streets" instance=ExtResource("intersection")]
+
+[node name="East1" parent="Streets" instance=ExtResource("street")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.33, 0, 0)
+
+[node name="West1" parent="Streets" instance=ExtResource("street")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.33, 0, 0)
+
+[node name="North1" parent="Streets" instance=ExtResource("street")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, 0, -15.33)
+
+[node name="South1" parent="Streets" instance=ExtResource("street")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, 0, 15.33)
+
+[node name="East2" parent="Streets" instance=ExtResource("street")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21.33, 0, 0)
+
+[node name="West2" parent="Streets" instance=ExtResource("street")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.33, 0, 0)
+
+[node name="North2" parent="Streets" instance=ExtResource("street")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, 0, -21.33)
+
+[node name="South2" parent="Streets" instance=ExtResource("street")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, 0, 21.33)
+
+[node name="East3" parent="Streets" instance=ExtResource("street")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27.33, 0, 0)
+
+[node name="West3" parent="Streets" instance=ExtResource("street")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27.33, 0, 0)
+
+[node name="North3" parent="Streets" instance=ExtResource("street")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, 0, -27.33)
+
+[node name="South3" parent="Streets" instance=ExtResource("street")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, 0, 27.33)
+
+[node name="East4" parent="Streets" instance=ExtResource("street")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 33.33, 0, 0)
+
+[node name="West4" parent="Streets" instance=ExtResource("street")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.33, 0, 0)
+
+[node name="North4" parent="Streets" instance=ExtResource("street")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, 0, -33.33)
+
+[node name="South4" parent="Streets" instance=ExtResource("street")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, 0, 33.33)
+
+[node name="Manhole" parent="Streets" instance=ExtResource("manhole")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0.01, 4)
+
+[node name="Drain1" parent="Streets" instance=ExtResource("drain")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.6, 0.01, -7.2)
+
+[node name="Drain2" parent="Streets" instance=ExtResource("drain")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.6, 0.01, 7.2)
+
+[node name="Bollard1" parent="Streets" instance=ExtResource("bollard")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.8, 0, 9.8)
+
+[node name="Bollard2" parent="Streets" instance=ExtResource("bollard")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.9, 0, 9.8)
+
+[node name="Bollard3" parent="Streets" instance=ExtResource("bollard")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, 9.8)
+
+[node name="Bollard4" parent="Streets" instance=ExtResource("bollard")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.8, 0, -9.8)
+
+[node name="Bollard5" parent="Streets" instance=ExtResource("bollard")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.9, 0, -9.8)
+
+[node name="Bollard6" parent="Streets" instance=ExtResource("bollard")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, -9.8)
+
+[node name="Bollard7" parent="Streets" instance=ExtResource("bollard")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.8, 0, 9.8)
+
+[node name="Bollard8" parent="Streets" instance=ExtResource("bollard")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.9, 0, 9.8)
+
+[node name="Bollard9" parent="Streets" instance=ExtResource("bollard")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0, 9.8)
+
+[node name="Bollard10" parent="Streets" instance=ExtResource("bollard")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.8, 0, -9.8)
+
+[node name="Bollard11" parent="Streets" instance=ExtResource("bollard")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.9, 0, -9.8)
+
+[node name="Bollard12" parent="Streets" instance=ExtResource("bollard")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0, -9.8)
+
+[node name="Blocks" type="Node3D" parent="."]
+
+[node name="BuildingLarge" parent="Blocks" instance=ExtResource("building_large")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, -13)
+
+[node name="BuildingMedium" parent="Blocks" instance=ExtResource("building_medium")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 0, -13)
+
+[node name="BuildingSmall" parent="Blocks" instance=ExtResource("building_small")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 18, 0, 15)
+
+[node name="ACUnit1" parent="Blocks" instance=ExtResource("ac_unit")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -12.2, 2.6, -16)
+
+[node name="ACUnit2" parent="Blocks" instance=ExtResource("ac_unit")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 12.6, 3, -20)
+
+[node name="Lot" type="Node3D" parent="."]
+
+[node name="WestWall" type="CSGBox3D" parent="Lot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.25, 1.5, 22.5)
+use_collision = true
+size = Vector3(0.5, 3, 20)
+material = SubResource("mat_wall")
+
+[node name="SouthWall" type="CSGBox3D" parent="Lot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.25, 1.5, 32.25)
+use_collision = true
+size = Vector3(20.5, 3, 0.5)
+material = SubResource("mat_wall")
+
+[node name="EastWall" type="CSGBox3D" parent="Lot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.25, 1.5, 26.25)
+use_collision = true
+size = Vector3(0.5, 3, 12.5)
+material = SubResource("mat_wall")
+
+[node name="LotTrigger" type="Area3D" parent="Lot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 2, 22)
+collision_layer = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Lot/LotTrigger"]
+shape = SubResource("shape_lot")
+
+[node name="Planter1" parent="Lot" instance=ExtResource("planter")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, 11)
+
+[node name="Planter2" parent="Lot" instance=ExtResource("planter")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.5, 0, 11)
+
+[node name="Crate1" parent="Lot" instance=ExtResource("crate")]
+transform = Transform3D(0.939693, 0, 0.34202, 0, 1, 0, -0.34202, 0, 0.939693, -31, 0, 15)
+
+[node name="Crate2" parent="Lot" instance=ExtResource("crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31, 0, 18.5)
+
+[node name="Crate3" parent="Lot" instance=ExtResource("crate")]
+transform = Transform3D(0.819152, 0, 0.573576, 0, 1, 0, -0.573576, 0, 0.819152, -13.5, 0, 23)
+
+[node name="Crate4" parent="Lot" instance=ExtResource("crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26, 0, 30.5)
+
+[node name="Crate5" parent="Lot" instance=ExtResource("crate")]
+transform = Transform3D(0.984808, 0, 0.173648, 0, 1, 0, -0.173648, 0, 0.984808, -22, 0, 30.5)
+
+[node name="Crate6" parent="Lot" instance=ExtResource("crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.5, 0, 30.5)
+
+[node name="Barrel1" parent="Lot" instance=ExtResource("barrel")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 0, 26)
+
+[node name="Barrel2" parent="Lot" instance=ExtResource("barrel")]
+transform = Transform3D(0.766044, 0, 0.642788, 0, 1, 0, -0.642788, 0, 0.766044, -29.2, 0, 27.1)
+
+[node name="Barrel3" parent="Lot" instance=ExtResource("barrel")]
+transform = Transform3D(0.173648, 0, 0.984808, 0, 1, 0, -0.984808, 0, 0.173648, -16.5, 0, 14)
+
+[node name="Barrel4" parent="Lot" instance=ExtResource("barrel")]
+transform = Transform3D(-0.5, 0, 0.866025, 0, 1, 0, -0.866025, 0, -0.5, -17.4, 0, 14.3)
+
+[node name="Rifle" parent="Lot" instance=ExtResource("rifle")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -21, 0.06, 28.9)
+
+[node name="DataCard" parent="Lot" instance=ExtResource("pickup")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26, 1.6, 29.8)
+item = ExtResource("card")
+show_icon = false
+
+[node name="LotHealthPack" parent="Lot" instance=ExtResource("pickup")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.5, 0.3, 20)
+item = ExtResource("health_pack")
+show_icon = false
+
+[node name="LotMagazines" parent="Lot" instance=ExtResource("pickup")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.4, 0.15, 28.9)
+item = ExtResource("magazine")
+count = 3
+show_icon = false
+
+[node name="Gunmen" type="Node3D" parent="Lot"]
+
+[node name="Gunman1" parent="Lot/Gunmen" instance=ExtResource("gunman")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -20, 0, 20)
+
+[node name="Gunman2" parent="Lot/Gunmen" instance=ExtResource("gunman")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -25, 0, 26)
+
+[node name="Gunman3" parent="Lot/Gunmen" instance=ExtResource("gunman")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -16, 0, 29)
+
+[node name="Sidewalk" type="Node3D" parent="."]
+
+[node name="Pistol" parent="Sidewalk" instance=ExtResource("pistol")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -15, 0.05, 9.3)
+
+[node name="AmmoBox" parent="Sidewalk" instance=ExtResource("pickup")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0.15, 9.3)
+item = ExtResource("clip")
+count = 4
+show_icon = false
+
+[node name="HealthPack" parent="Sidewalk" instance=ExtResource("pickup")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0.3, 11)
+item = ExtResource("health_pack")
+show_icon = false
+
+[node name="People" type="Node3D" parent="."]
+
+[node name="Fixer" parent="People" instance=ExtResource("talker")]
+transform = Transform3D(-0.707107, 0, -0.707107, 0, 1, 0, 0.707107, 0, -0.707107, -10.8, 0, -10.8)
+display_name = "Fixer"
+dialogue = ExtResource("fixer_dialogue")
+
+[node name="Pedestrian1" parent="People" instance=ExtResource("talker")]
+transform = Transform3D(-0.707107, 0, 0.707107, 0, 1, 0, -0.707107, 0, -0.707107, 10.8, 0, -10.8)
+display_name = "Pedestrian"
+dialogue = ExtResource("ped_dialogue")
+
+[node name="Pedestrian2" parent="People" instance=ExtResource("talker")]
+transform = Transform3D(0.707107, 0, 0.707107, 0, 1, 0, -0.707107, 0, 0.707107, 11, 0, 11)
+display_name = "Pedestrian"
+dialogue = ExtResource("ped_dialogue")
+
+[node name="CopSpawns" type="Node3D" parent="."]
+
+[node name="Spawn1" type="Marker3D" parent="CopSpawns"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 36, 0, 6)
+
+[node name="Spawn2" type="Marker3D" parent="CopSpawns"]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -36, 0, -6)
+
+[node name="Spawn3" type="Marker3D" parent="CopSpawns"]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 6, 0, -36)
+
+[node name="Spawn4" type="Marker3D" parent="CopSpawns"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, 36)
+
+[node name="WantedLevel" parent="." node_paths=PackedStringArray("spawn_points") instance=ExtResource("wanted")]
+officer_scene = ExtResource("cop")
+spawn_points = NodePath("../CopSpawns")
+min_spawn_distance = 30.0
+decay_seconds = 4.0
+
+[node name="Markers" type="Node3D" parent="."]
+
+[node name="ByFixer" type="Marker3D" parent="Markers"]
+transform = Transform3D(-0.707107, 0, -0.707107, 0, 1, 0, 0.707107, 0, -0.707107, -9.4, 0, -9)
+
+[node name="LotMouth" type="Marker3D" parent="Markers"]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -22, 0, 10.5)
+
+[node name="Stash" type="Marker3D" parent="Markers"]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -24, 0, 27)
+
+[node name="ByCard" type="Marker3D" parent="Markers"]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -26, 0, 28)
+
+[node name="Street" type="Marker3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, 4)
+
+[node name="SpawnCheckpoint" parent="." instance=ExtResource("checkpoint")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.5, 0, 10.5)
+
+[node name="KillZone" parent="." instance=ExtResource("killzone")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -30, 0)
+
+[node name="SaveGame" parent="." instance=ExtResource("savegame")]
+
+[node name="Player" parent="." instance=ExtResource("player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.5, 0, 9.5)
+
+[connection signal="body_entered" from="Lot/LotTrigger" to="." method="_on_lot_trigger_body_entered"]

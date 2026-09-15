@@ -116,8 +116,15 @@ func _input(event: InputEvent) -> void:
 	super(event)
 	if not visible or dialogue == null or current_line == null:
 		return
-	# With choices up the buttons take the press themselves, through the GUI; here would swallow it first
 	if not current_line.choices.is_empty() and is_line_revealed():
+		# Action or Confirm picks the focused choice here rather than through the GUI, so one press of the pad's A
+		# (which is both) chooses once, and a scripted action press (a recording, a test) chooses the way it does.
+		# The sticks and the d-pad still move the focus; with no focus (the window lost it) the first choice stands.
+		if (event.is_action_pressed(continue_action) or event.is_action_pressed(&"ui_accept")) and not event.is_echo():
+			var focus: Control = get_viewport().gui_get_focus_owner()
+			var button: Button = focus as Button if focus is Button and _choice_buttons.has(focus as Button) else _choice_buttons[0]
+			button.pressed.emit()
+			get_viewport().set_input_as_handled()
 		return
 	if (event.is_action_pressed(continue_action) or event.is_action_pressed(&"ui_accept")) and not event.is_echo():
 		advance()

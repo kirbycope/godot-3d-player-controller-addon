@@ -1,0 +1,23 @@
+[gd_scene load_steps=5 format=3 uid="uid://c7survbush00001"]
+
+[ext_resource type="Script" path="res://addons/3d_player_controller/scripts/harvestable.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/stylized_nature/Bush_Common_Flowers.gltf" id="2_model"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/items/berries.tres" id="3_item"]
+
+[sub_resource type="SphereShape3D" id="shape"]
+radius = 0.9
+
+[node name="BerryBush" type="StaticBody3D" groups=["WOOD"] node_paths=PackedStringArray("shake_node")]
+script = ExtResource("1_script")
+item = ExtResource("3_item")
+yield_count = 2
+hits_per_yield = 1
+total_yields = 2
+needs = 0
+shake_node = NodePath("Model")
+
+[node name="Model" parent="." instance=ExtResource("2_model")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+shape = SubResource("shape")

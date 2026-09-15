@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="AmmoItem" load_steps=4 format=3 uid="uid://c7itemriflemag1"]
+
+[ext_resource type="Script" path="res://addons/3d_player_controller/scripts/ammo_item.gd" id="1_ammo"]
+[ext_resource type="Texture2D" path="res://addons/3d_player_controller/assets/icons/ammo.svg" id="2_icon"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/sci_fi_essentials/Prop_Ammo_Small.gltf" id="3_model"]
+
+[resource]
+script = ExtResource("1_ammo")
+weapon_type = 6
+rounds_per_unit = 0
+id = &"rifle_magazine"
+display_name = "Rifle Magazine"
+description = "Thirty rounds for the rifle."
+icon = ExtResource("2_icon")
+icon_color = Color(1, 0.85, 0.5, 1)
+category = 1
+max_stack = 20
+consumable = true
+model_scene = ExtResource("3_model")

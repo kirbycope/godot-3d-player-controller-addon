@@ -10,6 +10,10 @@ func _input(event: InputEvent) -> void:
 
 	# Jump action triggers while falling
 	if event.is_action_pressed(&"jump"):
+		# A game with a double jump means the jump, wall or no wall
+		if player.air_jump():
+			get_viewport().set_input_as_handled()
+			return
 		if player.ledge_detection_horizontal.is_colliding():
 			# Exhausted players cannot grab the wall
 			if not player.is_exhausted:

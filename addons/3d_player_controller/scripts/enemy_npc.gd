@@ -36,10 +36,16 @@ const LOCOMOTION_BLEND_PATH: String = "parameters/Locomotion/blend_position"
 @export var skill_level: int = 0 ## Marksmanship: shrinks [member accuracy]'s spread (0 novice, expert at the resource's expert_level).
 @export var melee_hit_damage: float = 25.0 ## Damage taken from one of the Player's melee swings.
 @export var leash_distance: float = 30.0 ## A target further than this from the post is given up on; the enemy resets.
+@export var patrol_points: Node3D ## With nobody to hunt, walks its [Node3D] children in a loop; empty stands at the post.
+@export var patrol_wait: float = 1.5 ## Seconds paused at each patrol point.
+@export var patrol_speed: float = 1.4 ## Walking pace on patrol.
+@export var sneak_attack_multiplier: float = 1.0 ## A melee hit from a Player this enemy is not hunting lands this many times harder: a takedown from behind.
 @export var footstep_sfx: AudioStream ## Played by the walk and run animations' method tracks.
 
 var target: Node3D ## The Player being hunted; abilities read it through [method Ability.get_target].
 var is_returning_home: bool = false ## Walking back to the spawn point with nobody to hunt.
+var patrol_index: int = 0 ## The patrol point walked to next.
+var _patrol_pause: float = 0.0
 var _control_speed: float = 0.0 ## How fast the navigation wants to go this frame; picks Idle, Walking or Running.
 var _spawn_transform: Transform3D
 var is_dead: bool = false: ## Replicated; the setter drops the body into the ragdoll on every peer.
@@ -109,6 +115,10 @@ func _physics_process(delta: float) -> void:
 		_return_home(delta)
 		_update_locomotion()
 		return
+	if target == null and patrol_points and patrol_points.get_child_count() > 0:
+		_patrol(delta)
+		_update_locomotion()
+		return
 	var drove_off: bool = target != null and target.get("is_riding") and global_position.distance_to(target.global_position) > attack_range * 1.25
 	if target and (drove_off or target.global_position.distance_to(_spawn_transform.origin) > leash_distance):
 		# Off the leash (a respawn at the far spawn point, a chase that went too far) or driven out of reach: reset
@@ -143,6 +153,46 @@ func aggro(who: Node) -> void:
 	if is_boss:
 		boss.engage(who.get_multiplayer_authority())
 	aggroed.emit(target)
+
+
+## Gives up the hunt on purpose (a [VisionCone] that lost sight of the Player) and heads back to the post.
+func lose_target() -> void:
+	if target == null:
+		return
+	_drop_target()
+	is_returning_home = true
+
+
+## Walks the patrol points in turn, pausing [member patrol_wait] at each, at [member patrol_speed].
+func _patrol(delta: float) -> void:
+	if not is_on_floor():
+		velocity += get_gravity() * delta
+	if _patrol_pause > 0.0:
+		_patrol_pause -= delta
+		_stop_moving()
+		return
+	var point: Node3D = patrol_points.get_child(patrol_index % patrol_points.get_child_count()) as Node3D
+	if point == null:
+		return
+	if _walk_toward(point.global_position, delta, patrol_speed):
+		patrol_index = (patrol_index + 1) % patrol_points.get_child_count()
+		_patrol_pause = patrol_wait
+
+
+## One step along the navigation mesh toward [param point] at [param speed]; true once within reach of it.
+func _walk_toward(point: Vector3, delta: float, speed: float) -> bool:
+	if (point - global_position).slide(up_direction).length() <= 0.5:
+		_stop_moving()
+		return true
+	navigation_agent_3d.target_position = point
+	var next: Vector3 = navigation_agent_3d.get_next_path_position() if navigation_agent_3d.is_target_reachable() else point
+	var direction: Vector3 = global_position.direction_to(next).slide(up_direction)
+	if direction.length_squared() < 0.0001:
+		direction = global_position.direction_to(point).slide(up_direction)
+	direction = direction.normalized()
+	global_transform = global_transform.interpolate_with(global_transform.looking_at(global_position + direction, up_direction), turn_speed * delta)
+	_move_with_control(direction * speed * movement_scale)
+	return false
 
 
 ## Gives up the hunt: the target died or went past the leash.
@@ -200,7 +250,9 @@ func _on_aggro_area_body_entered(body: Node3D) -> void:
 func register_weapon_hit(equipment: Node = null, _hit_node: Node = null) -> void:
 	var attacker: Node = (equipment as Equipment).player if equipment is Equipment else equipment
 	var from: Vector3 = (attacker as Node3D).global_position if attacker is Node3D else global_position
-	take_hit(melee_hit_damage, from)
+	# Caught unaware (not hunting the one who struck): the sneak attack lands harder
+	var damage: float = melee_hit_damage * (sneak_attack_multiplier if target != attacker and sneak_attack_multiplier > 1.0 else 1.0)
+	take_hit(damage, from)
 	aggro(attacker)
 
 
@@ -404,10 +456,13 @@ func load_state(state: Dictionary) -> void:
 
 ## Undoes [method _apply_death]: the animation drives the body again, it collides, it can be focused and hunts.
 ## Only the authority revives; the flag replicates the rest.
-func revive() -> void:
+func revive(at_post: bool = false) -> void:
 	if not is_dead or not is_multiplayer_authority():
 		return
 	is_dead = false
+	if at_post:
+		global_transform = _spawn_transform
+		velocity = Vector3.ZERO
 	physical_bone_simulator.physical_bones_stop_simulation()
 	for bone: Node in physical_bone_simulator.find_children("*", "PhysicalBone3D", true, false):
 		(bone as PhysicalBone3D).set_collision_layer_value(1, false)

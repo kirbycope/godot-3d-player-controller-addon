@@ -58,6 +58,15 @@ var uses_mouse: bool: ## Whether the mouse is this Player's: only a Player on th
 @export var enable_paraglider: bool = false
 @export var enable_ragdoll: bool = false
 @export var enable_stamina: bool = false
+@export var enable_double_jump: bool = false ## Jump again in the air, [member air_jumps] times before landing (a platformer's double jump).
+@export var air_jumps: int = 1 ## Jumps allowed off nothing before the feet touch ground again.
+@export var jump_speed: float = 5.0 ## The upward speed a jump starts with, on the ground (at the clip's keyframe) or in the air (at once).
+@export var instant_jump: bool = false ## Leave the ground on the press itself rather than at the clip's keyframe a third of a second later: a platformer's jump, timed at the edge.
+@export var enable_dodge: bool = false ## A tap of Sprint rolls (Souls style): forward in the direction moved, a backstep when still. Holding still sprints.
+@export var dodge_stamina_cost: float = 20.0 ## Stamina a roll spends when stamina is on; an exhausted Player cannot roll.
+@export var dodge_tap_seconds: float = 0.25 ## Sprint released within this many seconds of the press is a tap, and a roll.
+@export var dodge_iframe_seconds: float = 0.45 ## The roll's first seconds take no hit at all.
+@export var attack_stamina_cost: float = 0.0 ## Stamina every swing spends when stamina is on; 0 makes swings free.
 @export_category("Optional Gadgets & Gear")
 @export var paraglider_scene: PackedScene
 @export_category("Optional Interaction")
@@ -289,6 +298,15 @@ func get_vector(negative_x: StringName, positive_x: StringName, negative_y: Stri
 	return Vector2(get_action_strength(positive_x) - get_action_strength(negative_x), get_action_strength(positive_y) - get_action_strength(negative_y)).limit_length(1.0)
 
 
+## A [enum PlayerSettingsResource.HudMode] this Player draws its on-screen controls by instead of the saved
+## setting; -1 follows the setting. A demo scene sets SHOWN so the whole HUD is on screen whatever the player saved.
+var hud_mode_override: int = -1:
+	set(value):
+		hud_mode_override = value
+		if is_node_ready():
+			apply_hud_visibility()
+
+
 ## Whether Focus locks on to a target (the Zelda scheme) rather than aiming freely over the shoulder (GTA).
 func lock_on_enabled() -> bool:
 	return control_scheme == PlayerControls.ControlScheme.ZELDA
@@ -368,6 +386,10 @@ var is_shooting: bool: ## Is the Player currently shooting? Replicated: a puppet
 		return is_action_pressed(&"shoot") and inventory.can_player_shoot
 var is_sitting: bool = false ## Is the Player currently sitting?
 var is_sliding: bool = false ## Is the Player currently sliding?
+var is_dodging: bool = false ## Is the Player mid-roll (see [member enable_dodge])?
+var air_jumps_left: int = 0 ## Air jumps still to be had before landing; refilled on the ground.
+var dodge_invulnerable: bool = false ## The roll's invulnerability frames are on: [method take_hit] does nothing.
+var _sprint_pressed_msec: int = -1 ## When Sprint last went down, for telling a tap (a roll) from a hold (a sprint).
 var is_sprinting: bool = false ## Is the Player currently sprinting?
 var is_standing: bool = false ## Is the Player currently standing?
 var is_typing_at_keyboard: bool = false ## Is the Player seated and typing? The AnimationTree advances the Sitting -> SittingToTyping -> SittingTyping chain off this, the way [member is_sitting] drives Sitting itself; it is the keyboard pose, unrelated to [member is_typing], which means a text field has focus.
@@ -658,6 +680,8 @@ func _physics_process(delta: float) -> void:
 
 	# Treat "jumping" as queued jump or upward airborne movement.
 	is_jumping = is_jump_queued or (not is_on_floor() and current_locomotion_node.contains("Jump"))
+	if is_on_floor():
+		air_jumps_left = air_jumps
 
 	# Stop emote state when the animation finishes and reset the blend amount.
 	if is_emoting:
@@ -868,12 +892,34 @@ func execute_jump() -> void:
 		return
 	# A rideable applies its own jump on the press; here the keyframe only clears the queue
 	if not is_riding:
-		velocity = velocity.slide(up_direction) + (up_direction * 5.0)
+		velocity = velocity.slide(up_direction) + (up_direction * jump_speed)
 	is_jump_queued = false
 	is_jumping = true
 	# Flip flags are only needed to enter the flip animation state, so clear them here.
 	is_front_flipping = false
 	is_back_flipping = false
+
+
+## A jump off nothing: one of [member air_jumps_left] is spent and the Player goes up at [member jump_speed] at
+## once (the clip's keyframe would come too late in the air), with the jump clip played again for the look of
+## it. The air states call it on a Jump press when [member enable_double_jump] is on; false when none is left.
+func air_jump() -> bool:
+	if not enable_double_jump or air_jumps_left <= 0 or is_on_floor():
+		return false
+	air_jumps_left -= 1
+	bounce(jump_speed)
+	return true
+
+
+## Thrown upward at [param speed] by a spring, a mushroom, a stomp: straight into the air, the jump clip on.
+func bounce(speed: float) -> void:
+	if current_state != NodeStateMachine.States.JUMPING:
+		state_machine.travel(current_state, NodeStateMachine.States.JUMPING)
+	# After the travel: an instant ground jump in Jumping.start would otherwise have the last word on the speed
+	velocity = velocity.slide(up_direction) + up_direction * speed
+	is_jump_queued = false
+	is_jumping = true
+	travel_locomotion("JumpingUp")
 
 
 ## Snaps the model orientation to face the given direction on the movement plane.
@@ -1468,14 +1514,20 @@ func dismount(immediate: bool = false) -> void:
 	state_machine.travel(NodeStateMachine.States.RIDING, NodeStateMachine.States.STANDING)
 
 
-## Re-applies the current state's contextual control labels (after something else borrowed them).
-## Shows or hides the on-screen controls the way the saved [member PlayerSettingsResource.hud_mode] asks: on
-## touch only by default. Anything that hid the HUD for a while (a game taking the screen) calls this to give it
-## back rather than showing it outright.
+## Draws the on-screen controls the way the saved [member PlayerSettingsResource.hud_mode] (or
+## [member hud_mode_override]) asks. The whole HUD shows on touch, or when Shown; otherwise only the contextual
+## buttons show, the ones whose label means something right now (Pick Up on Action by a pickup, Climb on Jump at
+## a wall, the fishing buttons with the rod out; see [member Controls.contextual_only]), so a desktop player
+## keeps a clean screen and still sees what to press. Anything that hid the HUD for a while (a game taking the
+## screen) calls this to give it back rather than showing it outright.
 func apply_hud_visibility() -> void:
 	if controls == null or not is_multiplayer_authority():
 		return
-	controls.visible = PlayerSettingsResource.load_or_create().hud_shown(controls.current_input_type, DisplayServer.is_touchscreen_available())
+	var settings: PlayerSettingsResource = PlayerSettingsResource.load_or_create()
+	var mode: int = hud_mode_override if hud_mode_override >= 0 else settings.hud_mode
+	var shown: bool = PlayerSettingsResource.hud_shown_for(mode, controls.current_input_type, DisplayServer.is_touchscreen_available())
+	controls.contextual_only = not shown
+	controls.visible = true
 
 
 func _on_controls_input_type_changed(_input_type: int) -> void:
@@ -1496,6 +1548,7 @@ func riding_blocks_hands() -> bool:
 
 
 ## Teleports the Player to the given transform, clearing motion and restoring the model and collision poses.
+## A Player warped out of the water climbs out of it too, once the physics step has seen where they went.
 func warp_to(target: Transform3D) -> void:
 	global_transform = target
 	velocity = Vector3.ZERO
@@ -1503,6 +1556,18 @@ func warp_to(target: Transform3D) -> void:
 	orientation = Transform3D(target.basis, Vector3.ZERO)
 	player_model.transform = initial_player_model_transform
 	collision_shape.transform = initial_collision_shape_transform
+	# A wall state has no gravity and no wall to hold once teleported, so it ends here; the ground decides the rest
+	if state_machine and current_state in [NodeStateMachine.States.CLIMBING, NodeStateMachine.States.HANGING]:
+		state_machine.travel(current_state, NodeStateMachine.States.FALLING)
+	if current_water_area:
+		_leave_water_if_out.call_deferred()
+
+
+## After a warp: the water area reports its overlaps on the physics step, so this waits for one.
+func _leave_water_if_out() -> void:
+	await get_tree().physics_frame
+	if is_instance_valid(current_water_area) and not current_water_area.overlaps_body(self):
+		exit_water(current_water_area)
 
 
 var movement_scale: float = 1.0 ## Fraction of normal movement speed; [method slow] lowers it for a while.
@@ -1610,7 +1675,7 @@ func take_hit(damage: float, from: Vector3) -> void:
 	if not is_multiplayer_authority():
 		take_hit.rpc_id(get_multiplayer_authority(), damage, from)
 		return
-	if not health.is_alive():
+	if not health.is_alive() or dodge_invulnerable:
 		return
 	health.damage(damage, from)
 	var away: Vector3 = (global_position - from).slide(up_direction)
@@ -1629,13 +1694,15 @@ func hunted_by(enemy_path: NodePath, hunting: bool) -> void:
 		hunted_by.rpc_id(get_multiplayer_authority(), enemy_path, hunting)
 		return
 	var enemy: Node = get_node_or_null(enemy_path)
-	if hunting and enemy and not hunters.has(enemy):
-		hunters.append(enemy)
-	elif not hunting:
-		hunters.erase(enemy)
-	for hunter: Node in hunters.duplicate():
-		if not is_instance_valid(hunter):
-			hunters.erase(hunter)
+	# A hunter freed without a word (a wave that stood down) is dropped before the list is touched, or the typed
+	# array chokes on the dead reference
+	var living: Array[Node] = []
+	for hunter: Node in hunters:
+		if is_instance_valid(hunter) and hunter != enemy:
+			living.append(hunter)
+	if hunting and is_instance_valid(enemy):
+		living.append(enemy)
+	hunters = living
 	health.regen_paused = not hunters.is_empty()
 
 
@@ -1682,6 +1749,28 @@ func respawn() -> void:
 	enable_ragdoll = _ragdoll_was_enabled
 	warp_to(respawn_transform)
 	respawned.emit()
+
+
+## Every state watches for the Sprint press so a tap can be told from a hold; see [method try_dodge].
+func _input(event: InputEvent) -> void:
+	if enable_dodge and event.is_action_pressed(&"sprint") and not event.is_echo():
+		_sprint_pressed_msec = Time.get_ticks_msec()
+
+
+## A Sprint release: when [member enable_dodge] is on, the press was a tap ([member dodge_tap_seconds]), the Player
+## is on the ground and can afford it, this rolls ([constant NodeStateMachine.States.DODGING]) from [param from_state]
+## and returns true; the grounded states call it on the release and stop there when it took.
+func try_dodge(from_state: NodeStateMachine.States) -> bool:
+	if not enable_dodge or _sprint_pressed_msec < 0 or is_paused or is_typing:
+		return false
+	var held: float = (Time.get_ticks_msec() - _sprint_pressed_msec) / 1000.0
+	_sprint_pressed_msec = -1
+	if held > dodge_tap_seconds or not is_on_floor() or is_exhausted or is_riding or is_swimming or is_climbing:
+		return false
+	if not stamina.spend(dodge_stamina_cost):
+		return false
+	state_machine.travel(from_state, NodeStateMachine.States.DODGING)
+	return true
 
 
 ## Makes [param transform] where the Player comes back after dying; a [Checkpoint] calls it as it is taken.

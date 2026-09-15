@@ -1,0 +1,38 @@
+[gd_scene load_steps=3 format=3 uid="uid://c7arpgghoul001"]
+
+[ext_resource type="PackedScene" uid="uid://c7enemynpcbase" path="res://addons/3d_player_controller/scenes/enemy_npc.tscn" id="1_base"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/fantasy_props/Sword_Bronze.gltf" id="2_weapon"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_blade"]
+size = Vector3(1.1, 0.3, 0.3)
+
+[node name="Ghoul" instance=ExtResource("1_base")]
+attack_animation = "SwordAttack"
+attack_range = 1.8
+attack_damage = 6.0
+attack_interval = 1.4
+melee_hit_damage = 25.0
+move_speed = 2.6
+follow_distance = 1.2
+leash_distance = 200.0
+max_follow_distance = 200.0
+
+[node name="Mannequin_M" parent="." index="0"]
+transform = Transform3D(-0.9, 0, 0, 0, 0.9, 0, 0, 0, -0.9, 0, 0, 0)
+
+[node name="Weapon" parent="Mannequin_M/Armature/GeneralSkeleton/WeaponAttachment" instance=ExtResource("2_weapon")]
+position = Vector3(0, 0.1, 0.025)
+rotation_degrees = Vector3(0, 90, 180)
+
+[node name="CollisionShape3D" parent="Mannequin_M/Armature/GeneralSkeleton/WeaponAttachment/WeaponHitbox"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, 0.135, 0.025)
+shape = SubResource("BoxShape3D_blade")
+
+[node name="CollisionShape3D" parent="AggroArea" index="0"]
+disabled = true
+
+[node name="Health" parent="." index="0"]
+max_health = 30.0
+
+[node name="Boss" parent="." index="0"]
+boss_name = "Ghoul"

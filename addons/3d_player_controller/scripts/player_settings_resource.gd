@@ -37,7 +37,7 @@ enum HudMode { AUTO, SHOWN, HIDDEN } ## Auto shows the on-screen controls on tou
 @export var hud_mode: int = HudMode.AUTO ## Whether the Player's on-screen controls ([member Player.controls]) are drawn; a [enum HudMode].
 
 # Controls Settings
-enum SchemeSetting { GAME_DEFAULT, ZELDA, GTA } ## Game Default keeps [member Player.control_scheme] as the scene set it; the rest are [enum PlayerControls.ControlScheme] plus one.
+enum SchemeSetting { GAME_DEFAULT, ZELDA, GTA, PLATFORMER } ## Game Default keeps [member Player.control_scheme] as the scene set it; the rest are [enum PlayerControls.ControlScheme] plus one.
 @export var control_scheme_index: int = SchemeSetting.GAME_DEFAULT ## Which pad layout and aiming the player picked; a [enum SchemeSetting].
 
 var _scaled_window: Window ## The window Auto follows on resize, connected once.
@@ -135,7 +135,12 @@ func _on_window_resized() -> void:
 ## [param touchscreen] saying whether the machine has one: the HUD starts out as touch before any event arrives,
 ## and on Auto a desktop should not flash the buttons until the first key is pressed.
 func hud_shown(input_type: int, touchscreen: bool) -> bool:
-	match hud_mode:
+	return hud_shown_for(hud_mode, input_type, touchscreen)
+
+
+## [method hud_shown] for any [param mode], for a Player overriding the saved one ([member Player.hud_mode_override]).
+static func hud_shown_for(mode: int, input_type: int, touchscreen: bool) -> bool:
+	match mode:
 		HudMode.SHOWN:
 			return true
 		HudMode.HIDDEN:

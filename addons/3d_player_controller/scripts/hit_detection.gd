@@ -23,6 +23,13 @@ const SWING_NODES: Array[String] = [
 @export var player: Player
 @export var left_hand_hitbox: Area3D
 @export var right_hand_hitbox: Area3D
+@export var strike_reach: float = 1.9 ## A swing also lands on any body of [member strike_groups] this close in front of the Player (see [method _strike_ahead]); 0 leaves it to the hitboxes alone.
+@export var strike_groups: Array[StringName] = [&"Focusable", &"Harvestable"] ## The groups a swing reaches without the blade touching: enemies, and the trees and rocks a tool works.
+@export var strike_arc_degrees: float = 110.0 ## How wide in front of the Player the reach counts.
+@export var strike_delay: float = 0.28 ## Seconds into a swing node when the reach is checked, the blade roughly level with the target.
+
+var _strike_timer: Timer
+var _strike_equipment: Node = null
 
 var _hitboxes: Array[Area3D] = [] ## Hitboxes of the current loadout (hands when unarmed).
 var _weapon_bodies: Array[AnimatableBody3D] = [] ## WeaponBody nodes of the equipped weapons.
@@ -32,6 +39,10 @@ var _swing_hit_targets: Array[Node] = [] ## Targets already notified during the 
 func _ready() -> void:
 	if player == null or not is_multiplayer_authority():
 		return
+	_strike_timer = Timer.new()
+	_strike_timer.one_shot = true
+	_strike_timer.timeout.connect(_strike_ahead)
+	add_child(_strike_timer)
 	left_hand_hitbox.body_entered.connect(_on_hitbox_body_entered.bind(left_hand_hitbox, null))
 	right_hand_hitbox.body_entered.connect(_on_hitbox_body_entered.bind(right_hand_hitbox, null))
 	_hitboxes.assign([left_hand_hitbox, right_hand_hitbox])
@@ -47,6 +58,35 @@ func _on_locomotion_node_changed(state_path: String) -> void:
 	var is_swing_node: bool = state_path.get_file() in SWING_NODES
 	for body: AnimatableBody3D in _weapon_bodies:
 		body.set_collision_layer_value(WEAPONS_LAYER, is_swing_node)
+	if is_swing_node and strike_reach > 0.0 and _strike_timer:
+		_strike_timer.start(strike_delay)
+
+
+## The reach of a swing: the thin blade shape sweeps past a body standing square in front more often than it
+## touches it, so partway into every swing node any "Focusable" body within [member strike_reach] and inside the
+## front arc is struck once, the way an action game lands what is plainly in range. Props still need the blade.
+func _strike_ahead() -> void:
+	if player == null or not (player.is_attacking_1 or player.is_attacking_2 or player.is_attacking_3):
+		return
+	var facing: Vector3 = player.get_facing_direction()
+	if facing == Vector3.ZERO:
+		return
+	var equipment: Node = player
+	for piece: Equipment in player.inventory.equipment:
+		if piece.can_attack:
+			equipment = piece
+			break
+	var cosine: float = cos(deg_to_rad(strike_arc_degrees * 0.5))
+	var seen: Array[Node] = []
+	for group: StringName in strike_groups:
+		for body: Node in get_tree().get_nodes_in_group(group):
+			if body == player or seen.has(body) or not body is Node3D or not body.has_method("register_weapon_hit"):
+				continue
+			seen.append(body)
+			var offset: Vector3 = ((body as Node3D).global_position - player.global_position).slide(player.up_direction)
+			if offset.length() > strike_reach or offset.normalized().dot(facing) < cosine:
+				continue
+			_register_weapon_hit(body, equipment)
 
 
 ## Rebuilds the hitbox and weapon body lists from the equipped weapons (hands when unarmed).

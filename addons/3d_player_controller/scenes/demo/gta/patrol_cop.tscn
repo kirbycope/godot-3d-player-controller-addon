@@ -1,0 +1,37 @@
+[gd_scene load_steps=6 format=3 uid="uid://c7gtapatrolcop"]
+
+[ext_resource type="PackedScene" uid="uid://c7enemynpcbase" path="res://addons/3d_player_controller/scenes/enemy_npc.tscn" id="1_base"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/sci_fi_essentials/Gun_Rifle.gltf" id="2_weapon"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/bullet.tscn" id="3_bullet"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/accuracy/rifle.tres" id="4_accuracy"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/muzzle_flash.tscn" id="5_flash"]
+
+[node name="PatrolCop" instance=ExtResource("1_base")]
+attack_animation = "RifleAttack"
+attack_range = 16.0
+attack_interval = 2.0
+strike_delay = 0.5
+projectile_scene = ExtResource("3_bullet")
+projectile_speed = 90.0
+accuracy = ExtResource("4_accuracy")
+skill_level = 3
+follow_distance = 9.0
+max_follow_distance = 120.0
+leash_distance = 90.0
+
+[node name="Weapon" parent="Mannequin_M/Armature/GeneralSkeleton/WeaponAttachment" instance=ExtResource("2_weapon")]
+position = Vector3(0, 0.09, 0.025)
+rotation_degrees = Vector3(0, 180, 80)
+
+[node name="Gun_Rifle" parent="Mannequin_M/Armature/GeneralSkeleton/WeaponAttachment/Weapon"]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)
+
+[node name="MuzzleFlash" parent="Muzzle" instance=ExtResource("5_flash")]
+
+[node name="Health" parent="." index="0"]
+max_health = 80.0
+
+[node name="Boss" parent="." index="0"]
+boss_name = "Officer"
+
+[connection signal="fired" from="." to="Muzzle/MuzzleFlash" method="flash"]

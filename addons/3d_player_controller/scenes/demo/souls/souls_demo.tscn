@@ -1,0 +1,345 @@
+[gd_scene load_steps=29 format=3 uid="uid://c7soulsdemo0001"]
+
+[ext_resource type="Script" path="res://addons/3d_player_controller/scenes/demo/souls/souls_demo.gd" id="script"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/player.tscn" id="player"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/bonfire.tscn" id="bonfire"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/items/red_potion.tres" id="potion"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/kill_zone.tscn" id="killzone"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/save_game.tscn" id="savegame"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/zelda/bronze_sword.tscn" id="sword"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/zelda/wooden_shield.tscn" id="shield"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/souls/bronze_greatsword.tscn" id="greatsword"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/souls/hollow.tscn" id="hollow"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/souls/gravelord.tscn" id="boss"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/fantasy_props/Banner_1.gltf" id="banner"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/fantasy_props/Lantern_Wall.gltf" id="lantern"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/fantasy_props/CandleStick_Stand.gltf" id="candles"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/fantasy_props/Cage_Small.gltf" id="cage"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/fantasy_props/Cauldron.gltf" id="cauldron"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/fantasy_props/Vase_Rubble_Medium.gltf" id="rubble"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/fantasy_props/Chain_Coil.gltf" id="chain"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/nature/pine_2.tscn" id="pine"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/nature/rock_medium_3.tscn" id="rock"]
+
+[sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
+sky_top_color = Color(0.07, 0.08, 0.12, 1)
+sky_horizon_color = Color(0.3, 0.28, 0.27, 1)
+ground_horizon_color = Color(0.3, 0.28, 0.27, 1)
+ground_bottom_color = Color(0.05, 0.05, 0.06, 1)
+sun_angle_max = 10.0
+
+[sub_resource type="Sky" id="sky"]
+sky_material = SubResource("sky_mat")
+
+[sub_resource type="Environment" id="env"]
+background_mode = 2
+sky = SubResource("sky")
+ambient_light_source = 3
+ambient_light_color = Color(0.45, 0.45, 0.5, 1)
+ambient_light_energy = 0.7
+tonemap_mode = 2
+glow_enabled = true
+fog_enabled = true
+fog_light_color = Color(0.32, 0.31, 0.3, 1)
+fog_density = 0.012
+
+[sub_resource type="NavigationMesh" id="navmesh"]
+vertices = PackedVector3Array(-49.5, 0.5, -99.5, -49.5, 0.5, 29.5, 49.5, 0.5, 29.5, 49.5, 0.5, -99.5)
+polygons = [PackedInt32Array(3, 2, 0), PackedInt32Array(0, 2, 1)]
+
+[sub_resource type="StandardMaterial3D" id="mat_ground"]
+albedo_color = Color(0.3, 0.31, 0.28, 1)
+roughness = 1.0
+
+[sub_resource type="StandardMaterial3D" id="mat_stone"]
+albedo_color = Color(0.42, 0.4, 0.38, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="mat_fog"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.9, 0.9, 1, 0.22)
+emission_enabled = true
+emission = Color(0.6, 0.6, 0.8, 1)
+
+[sub_resource type="BoxShape3D" id="shape_gate"]
+size = Vector3(4.4, 4, 1.2)
+
+[node name="SoulsDemo" type="Node3D" node_paths=PackedStringArray("bonfire", "hollows", "boss", "fog_gate")]
+script = ExtResource("script")
+control_scheme = 0
+bonfire = NodePath("Bonfire")
+hollows = NodePath("Enemies/Hollows")
+boss = NodePath("Enemies/Gravelord")
+fog_gate = NodePath("Gate/FogGate")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("env")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.866025, -0.25, 0.433013, 0, 0.866025, 0.5, -0.5, -0.433013, 0.75, 0, 20, 0)
+light_color = Color(1, 0.85, 0.7, 1)
+light_energy = 0.45
+shadow_enabled = true
+
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
+navigation_mesh = SubResource("navmesh")
+
+[node name="Ground" type="CSGBox3D" parent="NavigationRegion3D" groups=["STONE"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, -35)
+use_collision = true
+size = Vector3(120, 2, 150)
+material = SubResource("mat_ground")
+
+[node name="Bonfire" parent="." node_paths=PackedStringArray("revives") instance=ExtResource("bonfire")]
+flask = ExtResource("potion")
+flasks = 3
+revives = NodePath("../Enemies/Hollows")
+
+[node name="Gear" type="Node3D" parent="."]
+
+[node name="BronzeSword" parent="Gear" instance=ExtResource("sword")]
+transform = Transform3D(0.866025, 0, 0.5, 0, 1, 0, -0.5, 0, 0.866025, -2.6, 0.05, 1.8)
+
+[node name="WoodenShield" parent="Gear" instance=ExtResource("shield")]
+transform = Transform3D(0.866025, 0, -0.5, 0, 1, 0, 0.5, 0, 0.866025, 2.6, 0.1, 1.8)
+
+[node name="Altar" type="CSGBox3D" parent="Gear" groups=["STONE"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, -30)
+use_collision = true
+size = Vector3(1.8, 0.9, 0.9)
+material = SubResource("mat_stone")
+
+[node name="BronzeGreatsword" parent="Gear" instance=ExtResource("greatsword")]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, -0.4, 1.0, -30)
+
+[node name="Corridor" type="Node3D" parent="."]
+
+[node name="WestWall" type="CSGBox3D" parent="Corridor" groups=["STONE"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 2, -19)
+use_collision = true
+size = Vector3(1, 4, 28)
+material = SubResource("mat_stone")
+
+[node name="EastWall" type="CSGBox3D" parent="Corridor" groups=["STONE"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 2, -19)
+use_collision = true
+size = Vector3(1, 4, 28)
+material = SubResource("mat_stone")
+
+[node name="Pillar1" type="CSGCylinder3D" parent="Corridor" groups=["STONE"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.2, 2.5, -8)
+use_collision = true
+radius = 0.6
+height = 5.0
+material = SubResource("mat_stone")
+
+[node name="Pillar2" type="CSGCylinder3D" parent="Corridor" groups=["STONE"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.2, 2.5, -8)
+use_collision = true
+radius = 0.6
+height = 5.0
+material = SubResource("mat_stone")
+
+[node name="Pillar3" type="CSGCylinder3D" parent="Corridor" groups=["STONE"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.2, 2.5, -14)
+use_collision = true
+radius = 0.6
+height = 5.0
+material = SubResource("mat_stone")
+
+[node name="Pillar4" type="CSGCylinder3D" parent="Corridor" groups=["STONE"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.2, 2.5, -14)
+use_collision = true
+radius = 0.6
+height = 5.0
+material = SubResource("mat_stone")
+
+[node name="Pillar5" type="CSGCylinder3D" parent="Corridor" groups=["STONE"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.2, 2.5, -20)
+use_collision = true
+radius = 0.6
+height = 5.0
+material = SubResource("mat_stone")
+
+[node name="Pillar6" type="CSGCylinder3D" parent="Corridor" groups=["STONE"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.2, 2.5, -20)
+use_collision = true
+radius = 0.6
+height = 5.0
+material = SubResource("mat_stone")
+
+[node name="Pillar7" type="CSGCylinder3D" parent="Corridor" groups=["STONE"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.2, 2.5, -26)
+use_collision = true
+radius = 0.6
+height = 5.0
+material = SubResource("mat_stone")
+
+[node name="Pillar8" type="CSGCylinder3D" parent="Corridor" groups=["STONE"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.2, 2.5, -26)
+use_collision = true
+radius = 0.6
+height = 5.0
+material = SubResource("mat_stone")
+
+[node name="Banner1" parent="Corridor" instance=ExtResource("banner")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -7.3, 3.4, -11)
+
+[node name="Banner2" parent="Corridor" instance=ExtResource("banner")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 7.3, 3.4, -23)
+
+[node name="Lantern1" parent="Corridor" instance=ExtResource("lantern")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 7.3, 2.4, -17)
+
+[node name="Lantern2" parent="Corridor" instance=ExtResource("lantern")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -7.3, 2.4, -27)
+
+[node name="Candles" parent="Corridor" instance=ExtResource("candles")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.2, 0, -24)
+
+[node name="Cage" parent="Corridor" instance=ExtResource("cage")]
+transform = Transform3D(0.939693, 0, 0.34202, 0, 1, 0, -0.34202, 0, 0.939693, 4.2, 0, -9)
+
+[node name="Cauldron" parent="Corridor" instance=ExtResource("cauldron")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.8, 0, -29)
+
+[node name="Rubble1" parent="Corridor" instance=ExtResource("rubble")]
+transform = Transform3D(0.766044, 0, 0.642788, 0, 1, 0, -0.642788, 0, 0.766044, -3.2, 0, -15)
+
+[node name="Rubble2" parent="Corridor" instance=ExtResource("rubble")]
+transform = Transform3D(0.34202, 0, -0.939693, 0, 1, 0, 0.939693, 0, 0.34202, 2.5, 0, -31)
+
+[node name="Chain" parent="Corridor" instance=ExtResource("chain")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.3, 0, -21)
+
+[node name="Gate" type="Node3D" parent="."]
+
+[node name="LeftPost" type="CSGCylinder3D" parent="Gate" groups=["STONE"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.6, 2.5, -34)
+use_collision = true
+radius = 0.55
+height = 5.0
+material = SubResource("mat_stone")
+
+[node name="RightPost" type="CSGCylinder3D" parent="Gate" groups=["STONE"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6, 2.5, -34)
+use_collision = true
+radius = 0.55
+height = 5.0
+material = SubResource("mat_stone")
+
+[node name="Lintel" type="CSGBox3D" parent="Gate" groups=["STONE"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.9, -34)
+use_collision = true
+size = Vector3(6.4, 0.8, 1.2)
+material = SubResource("mat_stone")
+
+[node name="Fog" type="CSGBox3D" parent="Gate"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.25, -34)
+size = Vector3(4.1, 4.5, 0.08)
+material = SubResource("mat_fog")
+
+[node name="FogGate" type="Area3D" parent="Gate"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -34)
+collision_layer = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Gate/FogGate"]
+shape = SubResource("shape_gate")
+
+[node name="Arena" type="CSGCombiner3D" parent="." groups=["STONE"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, -62)
+use_collision = true
+
+[node name="Outer" type="CSGCylinder3D" parent="Arena"]
+radius = 27.0
+height = 5.0
+material = SubResource("mat_stone")
+
+[node name="Inner" type="CSGCylinder3D" parent="Arena"]
+operation = 2
+radius = 26.0
+height = 5.2
+
+[node name="Opening" type="CSGBox3D" parent="Arena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 26.5)
+operation = 2
+size = Vector3(5, 5.4, 4)
+
+[node name="Enemies" type="Node3D" parent="."]
+
+[node name="Hollows" type="Node3D" parent="Enemies"]
+
+[node name="Hollow1" parent="Enemies/Hollows" instance=ExtResource("hollow")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -13)
+
+[node name="Hollow2" parent="Enemies/Hollows" instance=ExtResource("hollow")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.5, 0, -19.5)
+
+[node name="Hollow3" parent="Enemies/Hollows" instance=ExtResource("hollow")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 0, -25.5)
+
+[node name="Gravelord" parent="Enemies" instance=ExtResource("boss")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -62)
+
+[node name="Dressing" type="Node3D" parent="."]
+
+[node name="Pine1" parent="Dressing" instance=ExtResource("pine")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, 6)
+
+[node name="Pine2" parent="Dressing" instance=ExtResource("pine")]
+transform = Transform3D(0.766044, 0, 0.642788, 0, 1, 0, -0.642788, 0, 0.766044, 12, 0, 2)
+
+[node name="Pine3" parent="Dressing" instance=ExtResource("pine")]
+transform = Transform3D(0.984808, 0, 0.173648, 0, 1, 0, -0.173648, 0, 0.984808, -14, 0, -30)
+
+[node name="Pine4" parent="Dressing" instance=ExtResource("pine")]
+transform = Transform3D(0.173648, 0, 0.984808, 0, 1, 0, -0.984808, 0, 0.173648, 16, 0, -26)
+
+[node name="Pine5" parent="Dressing" instance=ExtResource("pine")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 0, -40)
+
+[node name="Pine6" parent="Dressing" instance=ExtResource("pine")]
+transform = Transform3D(0.866025, 0, 0.5, 0, 1, 0, -0.5, 0, 0.866025, 11, 0, -62)
+
+[node name="Pine7" parent="Dressing" instance=ExtResource("pine")]
+transform = Transform3D(0.642788, 0, 0.766044, 0, 1, 0, -0.766044, 0, 0.642788, -13, 0, -58)
+
+[node name="Rock1" parent="Dressing" instance=ExtResource("rock")]
+transform = Transform3D(0.939693, 0, 0.34202, 0, 1, 0, -0.34202, 0, 0.939693, -7.5, 0, -3)
+
+[node name="Rock2" parent="Dressing" instance=ExtResource("rock")]
+transform = Transform3D(0.34202, 0, 0.939693, 0, 1, 0, -0.939693, 0, 0.34202, 8, 0, -5)
+
+[node name="Rock3" parent="Dressing" instance=ExtResource("rock")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.5, 0, -35)
+
+[node name="Rock4" parent="Dressing" instance=ExtResource("rock")]
+transform = Transform3D(-0.34202, 0, 0.939693, 0, 1, 0, -0.939693, 0, -0.34202, 22, 0, -36)
+
+[node name="Markers" type="Node3D" parent="."]
+
+[node name="ByFire" type="Marker3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 3.2)
+
+[node name="Corridor" type="Marker3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -6.5)
+
+[node name="Altar" type="Marker3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -27.8)
+
+[node name="Gate" type="Marker3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -31.8)
+
+[node name="Arena" type="Marker3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -48)
+
+[node name="KillZone" parent="." instance=ExtResource("killzone")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -30, -35)
+
+[node name="SaveGame" parent="." instance=ExtResource("savegame")]
+
+[node name="Player" parent="." instance=ExtResource("player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4)
+
+[connection signal="body_entered" from="Gate/FogGate" to="." method="_on_fog_gate_body_entered"]

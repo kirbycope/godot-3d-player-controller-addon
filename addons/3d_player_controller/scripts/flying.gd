@@ -108,8 +108,8 @@ func stop() -> void:
 
 func get_contextual_controls(input_type: int) -> Dictionary:
 	return {
-		player.controls.joypad_button_3_label: "Fly Up",
+		player.controls.action_label(&"jump", player.controls.joypad_button_3_label): "Fly Up",
 		player.controls.left_joystick_label: "Fly",
 		player.controls.right_joystick_label: "Camera",
-		player.controls.joypad_button_7_label if input_type == Controls.InputType.KEYBOARD_MOUSE else player.controls.joypad_button_0_label: "Fly Down",
+		player.controls.joypad_button_7_label if input_type == Controls.InputType.KEYBOARD_MOUSE else player.controls.action_label(&"action", player.controls.joypad_button_0_label): "Fly Down",
 	}

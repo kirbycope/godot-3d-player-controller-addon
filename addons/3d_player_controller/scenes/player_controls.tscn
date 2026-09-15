@@ -76,6 +76,7 @@ outline_color = Color(0, 0, 0, 1)
 
 [node name="PlayerControls" instance=ExtResource("1_base")]
 script = ExtResource("2_script")
+prompt_action = &"action"
 action_button_0 = &"action"
 action_button_1 = &"sprint"
 action_button_2 = &"attack"

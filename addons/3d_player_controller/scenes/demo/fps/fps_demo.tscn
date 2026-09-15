@@ -1,0 +1,453 @@
+[gd_scene load_steps=33 format=3 uid="uid://c7fpsdemo000001"]
+
+[ext_resource type="Script" path="res://addons/3d_player_controller/scenes/demo/fps/fps_demo.gd" id="script"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/player.tscn" id="player"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/checkpoint.tscn" id="checkpoint"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/kill_zone.tscn" id="killzone"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/save_game.tscn" id="savegame"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/locked_door.tscn" id="door"]
+[ext_resource type="Script" path="res://addons/3d_player_controller/scripts/wave_spawner.gd" id="spawner_script"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/inventory/scenes/item_pickup.tscn" id="pickup"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/items/pistol_clip.tres" id="clip"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/items/rifle_magazine.tres" id="magazine"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/items/health_pack.tres" id="health_pack"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/items/security_card.tres" id="card"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/gta/pistol.tscn" id="pistol"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/gta/rifle.tscn" id="rifle"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/fps/sentry.tscn" id="sentry"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/gta/crate.tscn" id="crate"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/gta/barrel.tscn" id="barrel"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/sci_fi_essentials/Prop_Locker.gltf" id="locker"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/sci_fi_essentials/Prop_Shelves_WideTall.gltf" id="shelves"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/sci_fi_essentials/Prop_Desk_Medium.gltf" id="desk"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/sci_fi_essentials/Prop_Chair.gltf" id="chair"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/sci_fi_essentials/Prop_Crate_Large.gltf" id="crate_large"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/sci_fi_essentials/Prop_Barrel2_Closed.gltf" id="barrel2"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/sci_fi_essentials/Prop_Ammo.gltf" id="ammo_crate"]
+
+[sub_resource type="Environment" id="env"]
+background_mode = 1
+background_color = Color(0.03, 0.03, 0.04, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.5, 0.55, 0.65, 1)
+ambient_light_energy = 0.35
+tonemap_mode = 2
+glow_enabled = true
+glow_intensity = 0.6
+
+[sub_resource type="NavigationMesh" id="navmesh"]
+agent_radius = 0.6
+cell_size = 0.3
+cell_height = 0.3
+agent_max_climb = 0.3
+
+[sub_resource type="StandardMaterial3D" id="mat_floor"]
+albedo_color = Color(0.22, 0.23, 0.26, 1)
+metallic = 0.3
+roughness = 0.7
+
+[sub_resource type="StandardMaterial3D" id="mat_wall"]
+albedo_color = Color(0.3, 0.32, 0.36, 1)
+metallic = 0.4
+roughness = 0.6
+
+[sub_resource type="StandardMaterial3D" id="mat_ceiling"]
+albedo_color = Color(0.15, 0.16, 0.18, 1)
+roughness = 0.8
+
+[sub_resource type="StandardMaterial3D" id="mat_strip"]
+albedo_color = Color(0.4, 0.8, 1, 1)
+emission_enabled = true
+emission = Color(0.4, 0.8, 1, 1)
+emission_energy_multiplier = 2.5
+
+[sub_resource type="StandardMaterial3D" id="mat_lift"]
+albedo_color = Color(0.9, 0.6, 0.2, 1)
+emission_enabled = true
+emission = Color(1, 0.55, 0.15, 1)
+emission_energy_multiplier = 2.0
+
+[sub_resource type="BoxShape3D" id="shape_lift"]
+size = Vector3(3, 3, 3)
+
+[sub_resource type="BoxShape3D" id="shape_alarm"]
+size = Vector3(12, 3, 3)
+
+[node name="FpsDemo" type="Node3D" node_paths=PackedStringArray("door", "spawner", "lift", "navigation_region")]
+script = ExtResource("script")
+control_scheme = 0
+door = NodePath("Armoury/Door")
+spawner = NodePath("WaveSpawner")
+lift = NodePath("Lift/LiftTrigger")
+navigation_region = NodePath("NavigationRegion3D")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("env")
+
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
+navigation_mesh = SubResource("navmesh")
+
+[node name="Base" type="CSGCombiner3D" parent="NavigationRegion3D" groups=["STONE"]]
+use_collision = true
+
+[node name="CellBlockShell" type="CSGBox3D" parent="NavigationRegion3D/Base"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+size = Vector3(15, 5, 15)
+material = SubResource("mat_wall")
+
+
+[node name="CorridorShell" type="CSGBox3D" parent="NavigationRegion3D/Base"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -14)
+size = Vector3(5, 5, 15)
+material = SubResource("mat_wall")
+
+
+[node name="ControlShell" type="CSGBox3D" parent="NavigationRegion3D/Base"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -28)
+size = Vector3(15, 5, 15)
+material = SubResource("mat_wall")
+
+
+[node name="ArmouryShell" type="CSGBox3D" parent="NavigationRegion3D/Base"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 2, -28)
+size = Vector3(15, 5, 11)
+material = SubResource("mat_wall")
+
+
+[node name="LiftBayShell" type="CSGBox3D" parent="NavigationRegion3D/Base"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 2, -38)
+size = Vector3(7, 5, 11)
+material = SubResource("mat_wall")
+
+
+[node name="CellBlockHollow" type="CSGBox3D" parent="NavigationRegion3D/Base"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.25, 0)
+operation = 2
+size = Vector3(14, 4.5, 14)
+material = SubResource("mat_wall")
+
+
+[node name="CorridorHollow" type="CSGBox3D" parent="NavigationRegion3D/Base"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.25, -14)
+operation = 2
+size = Vector3(4, 4.5, 14)
+material = SubResource("mat_wall")
+
+
+[node name="ControlHollow" type="CSGBox3D" parent="NavigationRegion3D/Base"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.25, -28)
+operation = 2
+size = Vector3(14, 4.5, 14)
+material = SubResource("mat_wall")
+
+
+[node name="ArmouryHollow" type="CSGBox3D" parent="NavigationRegion3D/Base"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 2.25, -28)
+operation = 2
+size = Vector3(14, 4.5, 10)
+material = SubResource("mat_wall")
+
+
+[node name="LiftBayHollow" type="CSGBox3D" parent="NavigationRegion3D/Base"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 2.25, -38)
+operation = 2
+size = Vector3(6, 4.5, 10)
+material = SubResource("mat_wall")
+
+
+[node name="Floor" type="CSGBox3D" parent="NavigationRegion3D/Base"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, -0.25, -19)
+size = Vector3(40, 0.5, 60)
+material = SubResource("mat_floor")
+
+[node name="Ceiling" type="CSGBox3D" parent="NavigationRegion3D/Base"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 4.75, -19)
+size = Vector3(40, 0.5, 60)
+material = SubResource("mat_ceiling")
+
+[node name="ArmouryDoorway" type="CSGBox3D" parent="NavigationRegion3D/Base"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 1.5, -28)
+operation = 2
+size = Vector3(2, 3, 2.8)
+material = SubResource("mat_wall")
+
+[node name="LiftDoorway" type="CSGBox3D" parent="NavigationRegion3D/Base"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 1.5, -33)
+operation = 2
+size = Vector3(3, 3, 2)
+material = SubResource("mat_wall")
+
+[node name="Lights" type="Node3D" parent="."]
+
+[node name="CellBlockLight" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.6, -1)
+light_color = Color(0.85, 0.9, 1, 1)
+light_energy = 2.2
+omni_range = 11.0
+shadow_enabled = true
+
+[node name="CellBlockStrip" type="CSGBox3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.45, -1)
+size = Vector3(3, 0.08, 0.5)
+material = SubResource("mat_strip")
+
+
+[node name="CorridorALight" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.6, -11)
+light_color = Color(0.85, 0.9, 1, 1)
+light_energy = 2.2
+omni_range = 11.0
+shadow_enabled = true
+
+[node name="CorridorAStrip" type="CSGBox3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.45, -11)
+size = Vector3(3, 0.08, 0.5)
+material = SubResource("mat_strip")
+
+
+[node name="CorridorBLight" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.6, -17)
+light_color = Color(0.85, 0.9, 1, 1)
+light_energy = 2.2
+omni_range = 11.0
+shadow_enabled = true
+
+[node name="CorridorBStrip" type="CSGBox3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.45, -17)
+size = Vector3(3, 0.08, 0.5)
+material = SubResource("mat_strip")
+
+
+[node name="ControlLight" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.6, -28)
+light_color = Color(0.85, 0.9, 1, 1)
+light_energy = 2.2
+omni_range = 11.0
+shadow_enabled = true
+
+[node name="ControlStrip" type="CSGBox3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.45, -28)
+size = Vector3(3, 0.08, 0.5)
+material = SubResource("mat_strip")
+
+
+[node name="ArmouryLight" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 3.6, -28)
+light_color = Color(0.85, 0.9, 1, 1)
+light_energy = 2.2
+omni_range = 11.0
+shadow_enabled = true
+
+[node name="ArmouryStrip" type="CSGBox3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 4.45, -28)
+size = Vector3(3, 0.08, 0.5)
+material = SubResource("mat_strip")
+
+
+[node name="LiftBayLight" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 3.6, -38)
+light_color = Color(0.85, 0.9, 1, 1)
+light_energy = 2.2
+omni_range = 11.0
+shadow_enabled = true
+
+[node name="LiftBayStrip" type="CSGBox3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 4.45, -38)
+size = Vector3(3, 0.08, 0.5)
+material = SubResource("mat_strip")
+
+
+[node name="CellBlock" type="Node3D" parent="."]
+
+[node name="Desk" parent="CellBlock" instance=ExtResource("desk")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, -5.6)
+
+[node name="Chair" parent="CellBlock" instance=ExtResource("chair")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -4, 0, -4.2)
+
+[node name="Pistol" parent="CellBlock" instance=ExtResource("pistol")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -4, 0.85, -5.6)
+
+[node name="Clips" parent="CellBlock" instance=ExtResource("pickup")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.4, 0.85, -5.6)
+item = ExtResource("clip")
+count = 6
+show_icon = false
+
+[node name="Locker1" parent="CellBlock" instance=ExtResource("locker")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 6.3, 0, -4)
+
+[node name="Locker2" parent="CellBlock" instance=ExtResource("locker")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 6.3, 0, -2.8)
+
+[node name="Locker3" parent="CellBlock" instance=ExtResource("locker")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 6.3, 0, -1.6)
+
+[node name="HealthPack1" parent="CellBlock" instance=ExtResource("pickup")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 0.3, 4)
+item = ExtResource("health_pack")
+show_icon = false
+
+[node name="Shelves" parent="CellBlock" instance=ExtResource("shelves")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -6.3, 0, 3)
+
+[node name="Corridor" type="Node3D" parent="."]
+
+[node name="Barrel1" parent="Corridor" instance=ExtResource("barrel")]
+transform = Transform3D(0.939693, 0, 0.34202, 0, 1, 0, -0.34202, 0, 0.939693, 1.4, 0, -9.5)
+
+[node name="Barrel2" parent="Corridor" instance=ExtResource("barrel")]
+transform = Transform3D(0.5, 0, 0.866025, 0, 1, 0, -0.866025, 0, 0.5, -1.4, 0, -16.5)
+
+[node name="Control" type="Node3D" parent="."]
+
+[node name="Desk" parent="Control" instance=ExtResource("desk")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 0, -33.6)
+
+[node name="Chair" parent="Control" instance=ExtResource("chair")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 4.5, 0, -32.2)
+
+[node name="SecurityCard" parent="Control" instance=ExtResource("pickup")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 0.85, -33.6)
+item = ExtResource("card")
+show_icon = false
+
+[node name="Crate1" parent="Control" instance=ExtResource("crate")]
+transform = Transform3D(0.965926, 0, 0.258819, 0, 1, 0, -0.258819, 0, 0.965926, -3, 0, -25)
+
+[node name="Crate2" parent="Control" instance=ExtResource("crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.2, 0, -27.5)
+
+[node name="CrateLarge" parent="Control" instance=ExtResource("crate_large")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 0, -32.5)
+
+[node name="AmmoCrate" parent="Control" instance=ExtResource("ammo_crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 0, -24)
+
+[node name="HealthPack2" parent="Control" instance=ExtResource("pickup")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.8, 0.3, -23)
+item = ExtResource("health_pack")
+show_icon = false
+
+[node name="Sentries" type="Node3D" parent="."]
+
+[node name="Sentry1" parent="Sentries" instance=ExtResource("sentry")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -12)
+
+[node name="Sentry2" parent="Sentries" instance=ExtResource("sentry")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8, 0, -19)
+
+[node name="Sentry3" parent="Sentries" instance=ExtResource("sentry")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -2, 0, -29)
+
+[node name="Sentry4" parent="Sentries" instance=ExtResource("sentry")]
+transform = Transform3D(0.866025, 0, -0.5, 0, 1, 0, 0.5, 0, 0.866025, 3, 0, -24)
+
+[node name="Armoury" type="Node3D" parent="."]
+
+[node name="Door" parent="Armoury" instance=ExtResource("door")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -7, 0, -28)
+key = ExtResource("card")
+locked_label = "Card needed"
+
+[node name="Rifle" parent="Armoury" instance=ExtResource("rifle")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0.85, -31.6)
+
+[node name="RifleDesk" parent="Armoury" instance=ExtResource("desk")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0, -31.6)
+
+[node name="Magazines" parent="Armoury" instance=ExtResource("pickup")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.2, 0.85, -31.6)
+item = ExtResource("magazine")
+count = 4
+show_icon = false
+
+[node name="HealthPack3" parent="Armoury" instance=ExtResource("pickup")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 0.3, -25)
+item = ExtResource("health_pack")
+show_icon = false
+
+[node name="Barrel2A" parent="Armoury" instance=ExtResource("barrel2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 0, -30)
+
+[node name="Barrel2B" parent="Armoury" instance=ExtResource("barrel2")]
+transform = Transform3D(0.642788, 0, 0.766044, 0, 1, 0, -0.766044, 0, 0.642788, -18.6, 0, -30.6)
+
+[node name="Locker1" parent="Armoury" instance=ExtResource("locker")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, -32.3)
+
+[node name="Locker2" parent="Armoury" instance=ExtResource("locker")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.8, 0, -32.3)
+
+[node name="Lift" type="Node3D" parent="."]
+
+[node name="LiftFloor" type="CSGBox3D" parent="Lift"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0.03, -40)
+size = Vector3(4, 0.06, 4)
+material = SubResource("mat_lift")
+
+[node name="LiftTrigger" type="Area3D" parent="Lift"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 1.5, -40)
+collision_layer = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Lift/LiftTrigger"]
+shape = SubResource("shape_lift")
+
+[node name="WaveSpawns" type="Node3D" parent="."]
+
+[node name="Spawn1" type="Marker3D" parent="WaveSpawns"]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, -9)
+
+[node name="Spawn2" type="Marker3D" parent="WaveSpawns"]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 5, 0, -22)
+
+[node name="Spawn3" type="Marker3D" parent="WaveSpawns"]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -5, 0, -22)
+
+[node name="WaveSpawner" type="Node" parent="." node_paths=PackedStringArray("spawn_points")]
+script = ExtResource("spawner_script")
+enemy_scenes = Array[PackedScene]([ExtResource("sentry")])
+spawn_points = NodePath("../WaveSpawns")
+waves = Array[int]([3])
+
+[node name="Markers" type="Node3D" parent="."]
+
+[node name="Start" type="Marker3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4)
+
+[node name="CorridorMouth" type="Marker3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -5.5)
+
+[node name="ControlMouth" type="Marker3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -20.5)
+
+[node name="ByCard" type="Marker3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 0, -31.6)
+
+[node name="ByDoor" type="Marker3D" parent="Markers"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -5, 0, -28)
+
+[node name="ArmouryDoor" type="Marker3D" parent="Markers"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -8.5, 0, -28)
+
+[node name="ArmouryBack" type="Marker3D" parent="Markers"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -12, 0, -28)
+
+[node name="LiftMouth" type="Marker3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, -31.5)
+
+[node name="SpawnCheckpoint" parent="." instance=ExtResource("checkpoint")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4)
+
+[node name="ControlCheckpoint" parent="." instance=ExtResource("checkpoint")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -22)
+
+[node name="KillZone" parent="." instance=ExtResource("killzone")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -30, -20)
+
+[node name="SaveGame" parent="." instance=ExtResource("savegame")]
+
+[node name="Player" parent="." instance=ExtResource("player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4)
+
+[connection signal="body_entered" from="Lift/LiftTrigger" to="." method="_on_lift_body_entered"]

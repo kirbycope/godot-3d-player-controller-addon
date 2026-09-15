@@ -208,6 +208,7 @@
 [ext_resource type="Script" uid="uid://dpu8h1ngv3sta" path="res://addons/3d_player_controller/scripts/pushing.gd" id="146_pshng"]
 [ext_resource type="AnimationLibrary" uid="uid://clvln650ter4p" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Shove Reaction.glb" id="147_pxmv8"]
 [ext_resource type="Script" uid="uid://cfolkbq3v2mtf" path="res://addons/3d_player_controller/scripts/sliding.gd" id="147_x0r6x"]
+[ext_resource type="Script" path="res://addons/3d_player_controller/scripts/dodging.gd" id="147_dodging"]
 [ext_resource type="Script" uid="uid://c6mt7ujyuf5lm" path="res://addons/3d_player_controller/scripts/jumping.gd" id="148_7fh25"]
 [ext_resource type="Script" uid="uid://ckfcvipflgbec" path="res://addons/3d_player_controller/scripts/sprinting.gd" id="150_16twp"]
 [ext_resource type="AnimationLibrary" uid="uid://bnu1fi6khgekd" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Standing Backflip.glb" id="151_arxrc"]
@@ -4376,6 +4377,11 @@ process_callback = 0
 [node name="Crouching" type="Node" parent="NodeStateMachine" unique_id=1537110706 node_paths=PackedStringArray("player")]
 process_mode = 4
 script = ExtResource("144_x0r6x")
+player = NodePath("../..")
+
+[node name="Dodging" type="Node" parent="NodeStateMachine" node_paths=PackedStringArray("player")]
+process_mode = 4
+script = ExtResource("147_dodging")
 player = NodePath("../..")
 
 [node name="Falling" type="Node" parent="NodeStateMachine" unique_id=1065851108 node_paths=PackedStringArray("player")]

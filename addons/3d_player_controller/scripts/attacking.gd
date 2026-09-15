@@ -30,6 +30,12 @@ func _input(event: InputEvent) -> void:
 	# Attack { Microsoft: Ⓧ, Nintendo: Ⓨ, Sony: 🟗, Keyboard: [Alt] }
 	if not event.is_action_pressed(&"attack") or not player.inventory.can_player_attack:
 		return
+	# The press that brought the Player here was paid for in start(); the grounded states mark it handled
+	if get_viewport().is_input_handled():
+		return
+	# The next swing in the sequence costs what the first did; out of breath, the combo ends here
+	if not player.stamina.spend(player.attack_stamina_cost):
+		return
 	# Start the attack sequence timer
 	player.attack_sequence_timer.start()
 	var current_node: String = player.current_locomotion_node
@@ -110,6 +116,8 @@ func start() -> void:
 	player.attack_sequence_timer.start()
 	# Reset the attack state variables
 	player.attack_sequence = 0
+	# The first swing's stamina (the state is only entered with breath to spare)
+	player.stamina.spend(player.attack_stamina_cost)
 
 
 ## Stop "attacking".

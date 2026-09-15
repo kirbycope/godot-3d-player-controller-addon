@@ -14,6 +14,11 @@ func _input(event: InputEvent) -> void:
 		player.state_machine.travel(state, States.ATTACKING)
 		return
 
+	# A tap of Sprint while still is a backstep (a roll needs the dodge enabled)
+	if event.is_action_released(&"sprint") and player.try_dodge(state):
+		get_viewport().set_input_as_handled()
+		return
+
 	# Jump
 	if event.is_action_pressed(&"jump"):
 		player.is_boxing = false

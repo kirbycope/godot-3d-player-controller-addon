@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="Item" load_steps=4 format=3 uid="uid://c7itemdatacard"]
+
+[ext_resource type="Script" path="res://addons/3d_player_controller/inventory/scripts/item.gd" id="1_item"]
+[ext_resource type="Texture2D" path="res://addons/3d_player_controller/assets/icons/keycard.svg" id="2_icon"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/sci_fi_essentials/Prop_KeyCard.gltf" id="3_model"]
+
+[resource]
+script = ExtResource("1_item")
+id = &"data_card"
+display_name = "Data Card"
+description = "The gang's ledger. The fixer wants it back."
+icon = ExtResource("2_icon")
+category = 3
+max_stack = 1
+model_scene = ExtResource("3_model")

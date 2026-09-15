@@ -1,0 +1,26 @@
+[gd_scene load_steps=5 format=3 uid="uid://c7readable00001"]
+
+[ext_resource type="Script" path="res://addons/3d_player_controller/scripts/readable.gd" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://dokp6v1sufknx" path="res://addons/controls/action_prompt.tscn" id="2_prompt"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/fantasy_props/Scroll_1.gltf" id="3_model"]
+
+[sub_resource type="SphereShape3D" id="shape_near"]
+radius = 1.6
+
+[node name="Readable" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="Model" parent="." instance=ExtResource("3_model")]
+
+[node name="PlayerDetection" type="Area3D" parent="."]
+collision_layer = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PlayerDetection"]
+shape = SubResource("shape_near")
+
+[node name="ActionPrompt" parent="." instance=ExtResource("2_prompt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+message_end = "to read"
+
+[connection signal="body_entered" from="PlayerDetection" to="." method="_on_player_detection_body_entered"]
+[connection signal="body_exited" from="PlayerDetection" to="." method="_on_player_detection_body_exited"]

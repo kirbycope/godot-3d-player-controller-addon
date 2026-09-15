@@ -28,9 +28,12 @@ func get_respawn_transform() -> Transform3D:
 
 ## Wired to body_entered: the Player's own peer takes the checkpoint.
 func _on_body_entered(body: Node3D) -> void:
-	if not body is Player or not body.is_multiplayer_authority():
-		return
-	var player: Player = body as Player
+	if body is Player and body.is_multiplayer_authority():
+		take(body as Player)
+
+
+## Hands [param player] this checkpoint (a bonfire rested at, a shrine prayed at), as walking through it would.
+func take(player: Player) -> void:
 	if one_shot and _activated_by.has(player):
 		return
 	if not _activated_by.has(player):

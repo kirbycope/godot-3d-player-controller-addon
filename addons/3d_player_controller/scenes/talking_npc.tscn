@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://c7talkingnpc01"]
+[gd_scene load_steps=13 format=3 uid="uid://c7talkingnpc01"]
 
 [ext_resource type="Script" path="res://addons/3d_player_controller/scripts/talking_npc.gd" id="1_script"]
 [ext_resource type="PackedScene" uid="uid://fbu1qtdmvo0k" path="res://addons/3d_player_controller/assets/quaternius/characters/Mannequin_M.glb" id="2_model"]
@@ -30,6 +30,9 @@ min_space = 0.0
 radius = 0.3
 height = 1.8
 
+[sub_resource type="SphereShape3D" id="SphereShape3D_reach"]
+radius = 2.2
+
 [node name="TalkingNpc" type="CharacterBody3D"]
 script = ExtResource("1_script")
 
@@ -58,5 +61,15 @@ shape = SubResource("CapsuleShape3D_body")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.1, 0)
 message_end = "to talk"
 
+[node name="PlayerDetection" type="Area3D" parent="."]
+collision_layer = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PlayerDetection"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("SphereShape3D_reach")
+
 [node name="BodySynchronizer" type="MultiplayerSynchronizer" parent="."]
 replication_config = ExtResource("7_body_sync")
+
+[connection signal="body_entered" from="PlayerDetection" to="." method="_on_player_detection_body_entered"]
+[connection signal="body_exited" from="PlayerDetection" to="." method="_on_player_detection_body_exited"]

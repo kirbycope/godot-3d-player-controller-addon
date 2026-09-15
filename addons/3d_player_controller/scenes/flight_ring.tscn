@@ -1,0 +1,23 @@
+[gd_scene load_steps=3 format=3 uid="uid://c7flightring001"]
+
+[sub_resource type="TorusMesh" id="mesh_ring"]
+inner_radius = 3.4
+outer_radius = 4.0
+rings = 32
+ring_segments = 12
+
+[sub_resource type="CylinderShape3D" id="shape_ring"]
+height = 1.0
+radius = 3.4
+
+[node name="FlightRing" type="Area3D"]
+collision_layer = 0
+
+[node name="Torus" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0)
+mesh = SubResource("mesh_ring")
+cast_shadow = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0)
+shape = SubResource("shape_ring")

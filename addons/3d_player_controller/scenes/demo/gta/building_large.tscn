@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/downtown_city/Building_Large_2.gltf" id="1_model"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_body"]
+size = Vector3(20.64, 28, 16.64)
+
+[node name="BuildingLarge" type="StaticBody3D" groups=["STONE"]]
+
+[node name="Model" parent="." instance=ExtResource("1_model")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.0, 14, -8.0)
+shape = SubResource("BoxShape3D_body")
