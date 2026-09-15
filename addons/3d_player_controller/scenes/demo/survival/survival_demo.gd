@@ -77,7 +77,7 @@ func build_autopilot(pilot: DemoAutopilot) -> void:
 	pilot.warp(player, here.call("ByStream")).wait(0.3).walk_to(stream, 4.0, 1.2).wait(0.3).tap(&"action").wait(0.8) # a drink
 	pilot.warp(player, here.call("ByTrees")).wait(0.3)
 	for tree_name: String in ["Tree1", "Tree4", "Tree2"]:
-		var tree: Harvestable = get_node("Woods/" + tree_name)
+		var tree: Gatherable = get_node("Woods/" + tree_name)
 		pilot.walk_to(tree, 5.0, 1.6).wait(0.2)
 		for i: int in 9:
 			pilot.tap(&"attack").wait(0.85)

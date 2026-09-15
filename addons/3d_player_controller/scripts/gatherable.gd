@@ -1,10 +1,10 @@
-class_name Harvestable
+class_name Gatherable
 extends StaticBody3D
 ## A tree, a boulder, a berry bush: something in the world that gives [member item] when struck. A swing from a
 ## piece of [Equipment] that [member needs] what it needs (the axe's [member Equipment.can_log], the pickaxe's
 ## [member Equipment.can_mine], or nothing at all for a bush) counts a hit; every [member hits_per_yield] hits put
 ## [member yield_count] of the item straight in the striker's [Inventory], and after [member total_yields] the
-## thing is spent: hidden, and back after [member regrow_seconds] when that is set. In the "Harvestable" group so
+## thing is spent: hidden, and back after [member regrow_seconds] when that is set. In the "Gatherable" group so
 ## a swing reaches it the way it reaches an enemy ([member HitDetection.strike_groups]).
 
 signal harvested(by: Player, item: Item, count: int)
@@ -29,7 +29,7 @@ var _regrow_timer: Timer
 
 
 func _ready() -> void:
-	add_to_group(&"Harvestable")
+	add_to_group(&"Gatherable")
 	if shake_node == null:
 		for child: Node in get_children():
 			if child is Node3D and not child is CollisionShape3D:

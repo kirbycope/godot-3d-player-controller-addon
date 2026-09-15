@@ -54,10 +54,10 @@ func test_berries_and_the_stream_feed_the_vitals() -> void:
 
 
 func test_a_bush_gives_to_bare_hands_but_a_tree_needs_the_axe() -> void:
-	var bush: Harvestable = demo.get_node("Woods/Bush1")
+	var bush: Gatherable = demo.get_node("Woods/Bush1")
 	bush.register_weapon_hit(player, player)
 	assert_eq(player.inventory.count_of(BERRIES), 2, "One punch, two berries")
-	var tree: Harvestable = demo.get_node("Woods/Tree1")
+	var tree: Gatherable = demo.get_node("Woods/Tree1")
 	tree.register_weapon_hit(player, player)
 	tree.register_weapon_hit(player, player)
 	tree.register_weapon_hit(player, player)

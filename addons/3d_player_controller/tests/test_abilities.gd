@@ -616,3 +616,136 @@ func _assert_piece_ghosted(piece: Equipment, alpha: float, text: String) -> void
 		assert_not_null(ghost, piece.name + " wears the ghost")
 		if ghost:
 			assert_almost_eq(float(ghost.get_shader_parameter(&"alpha")), alpha, 0.02, text)
+
+
+## A stand-in for anything a spell can land on: it records what it was hit for and whether it was slowed.
+class Dummy extends Node3D:
+	var hits: Array[float] = []
+	var slowed_to: float = 1.0
+	var slowed_for: float = 0.0
+	func take_hit(amount: float, _from: Vector3) -> void:
+		hits.append(amount)
+	func total() -> float:
+		var sum: float = 0.0
+		for h: float in hits:
+			sum += h
+		return sum
+	func slow(factor: float, seconds: float) -> void:
+		slowed_to = factor
+		slowed_for = seconds
+
+
+func _make_dummy(at: Vector3, focusable: bool = true) -> Dummy:
+	var dummy := Dummy.new()
+	dummy.position = at
+	if focusable:
+		dummy.add_to_group(&"Focusable")
+	add_child_autofree(dummy)
+	return dummy
+
+
+## The plain case: the hit lands on the target for the ability's damage, and on nothing else.
+func test_a_damage_ability_hurts_what_it_lands_on() -> void:
+	var bolt := DamageAbility.new()
+	bolt.damage = 24.0
+	var target: Dummy = _make_dummy(Vector3.ZERO)
+	var bystander: Dummy = _make_dummy(Vector3(3.0, 0.0, 0.0))
+
+	bolt.impact(player, target)
+
+	assert_eq(target.hits, [24.0] as Array[float], "The target takes the damage")
+	assert_eq(bystander.hits.size(), 0, "and nobody standing near it does")
+
+
+## With a splash radius everything Focusable inside it takes the hit as well, and the caster never hits itself.
+func test_splash_catches_the_focusable_bodies_around_the_impact() -> void:
+	var bolt := DamageAbility.new()
+	bolt.damage = 10.0
+	bolt.splash_radius = 4.0
+	var target: Dummy = _make_dummy(Vector3.ZERO)
+	var near: Dummy = _make_dummy(Vector3(3.0, 0.0, 0.0))
+	var far: Dummy = _make_dummy(Vector3(9.0, 0.0, 0.0))
+	var unlisted: Dummy = _make_dummy(Vector3(1.0, 0.0, 0.0), false)
+
+	bolt.impact(player, target)
+
+	assert_eq(target.total(), 10.0, "The target is hit")
+	assert_eq(near.total(), 10.0, "and so is what stands inside the splash")
+	assert_eq(far.hits.size(), 0, "but not what stands outside it")
+	assert_eq(unlisted.hits.size(), 0, "and not a body that is not Focusable")
+
+
+## A frostbolt slows what it hits, for as long as it says, through the target's own slow().
+func test_a_slowing_ability_slows_what_it_hits() -> void:
+	var bolt := DamageAbility.new()
+	bolt.damage = 18.0
+	bolt.slow_factor = 0.6
+	bolt.slow_duration = 5.0
+	var target: Dummy = _make_dummy(Vector3.ZERO)
+
+	bolt.impact(player, target)
+
+	assert_almost_eq(target.slowed_to, 0.6, 0.001, "The target is slowed to the ability's fraction")
+	assert_almost_eq(target.slowed_for, 5.0, 0.001, "for the ability's duration")
+
+
+## No slow set, nothing slowed: the same class is a plain bolt until it is given one.
+func test_an_ability_with_no_slow_leaves_the_target_at_speed() -> void:
+	var bolt := DamageAbility.new()
+	var target: Dummy = _make_dummy(Vector3.ZERO)
+
+	bolt.impact(player, target)
+
+	assert_eq(target.slowed_to, 1.0, "Nothing took the target's speed")
+	assert_eq(target.slowed_for, 0.0)
+
+
+## A burn keeps hurting after the hit, one tick a second, the stated damage spread over the duration.
+func test_damage_over_time_ticks_after_the_hit() -> void:
+	var bolt := DamageAbility.new()
+	bolt.damage = 10.0
+	bolt.over_time_damage = 9.0
+	bolt.over_time_duration = 3.0
+	var target: Dummy = _make_dummy(Vector3.ZERO)
+
+	bolt.impact(player, target)
+	assert_eq(target.hits.size(), 1, "The hit itself lands at once")
+
+	await wait_seconds(3.4)
+
+	assert_eq(target.hits.size(), 4, "and three ticks follow it, one a second")
+	assert_almost_eq(target.total(), 19.0, 0.01, "The burn deals what it says over the duration")
+
+
+## The details a spells screen reads out name every part the ability actually has, and nothing it does not.
+func test_the_details_read_out_every_part_the_ability_has() -> void:
+	var plain := DamageAbility.new()
+	plain.damage = 30.0
+	var plain_details: String = plain.get_details()
+	assert_string_contains(plain_details, "Damage: 30")
+	assert_false(plain_details.contains("Slows"), "A plain bolt does not claim a slow")
+	assert_false(plain_details.contains("Splash"), "nor a splash")
+
+	var frost := DamageAbility.new()
+	frost.damage = 18.0
+	frost.splash_radius = 3.0
+	frost.slow_factor = 0.6
+	frost.slow_duration = 5.0
+	frost.over_time_damage = 9.0
+	frost.over_time_duration = 3.0
+	var frost_details: String = frost.get_details()
+	assert_string_contains(frost_details, "Damage: 18")
+	assert_string_contains(frost_details, "Splash: 3 m")
+	assert_string_contains(frost_details, "Damage over time: 9 over 3 s")
+	assert_string_contains(frost_details, "Slows to 60% for 5 s")
+
+
+## A damage spell an NPC has no target for is not cast at all, so no cooldown is spent on nothing; a Player
+## always may, because the crosshair sends it wherever it is aimed.
+func test_an_npc_needs_a_target_before_it_can_cast_a_bolt() -> void:
+	var bolt := DamageAbility.new()
+	var npc := Node3D.new()
+	add_child_autofree(npc)
+
+	assert_false(bolt.can_cast(npc), "Nothing to send it at")
+	assert_true(bolt.can_cast(player), "The Player aims it with the crosshair")

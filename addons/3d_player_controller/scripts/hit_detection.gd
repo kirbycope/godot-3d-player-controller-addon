@@ -24,7 +24,7 @@ const SWING_NODES: Array[String] = [
 @export var left_hand_hitbox: Area3D
 @export var right_hand_hitbox: Area3D
 @export var strike_reach: float = 1.9 ## A swing also lands on any body of [member strike_groups] this close in front of the Player (see [method _strike_ahead]); 0 leaves it to the hitboxes alone.
-@export var strike_groups: Array[StringName] = [&"Focusable", &"Harvestable"] ## The groups a swing reaches without the blade touching: enemies, and the trees and rocks a tool works.
+@export var strike_groups: Array[StringName] = [&"Focusable", &"Gatherable"] ## The groups a swing reaches without the blade touching: enemies, and the trees and rocks a tool works.
 @export var strike_arc_degrees: float = 110.0 ## How wide in front of the Player the reach counts.
 @export var strike_delay: float = 0.28 ## Seconds into a swing node when the reach is checked, the blade roughly level with the target.
 
