@@ -40,8 +40,10 @@ VRAM_COMPRESSED = 2
 # Godot writes the project-wide defaults with quoted StringName keys and the per-file ones bare.
 PROJECT_COMPRESS = re.compile(r'(&"compress/mode":\s*)(\d+)')
 PROJECT_DETECT_3D = re.compile(r'(&"detect_3d/compress_to":\s*)(\d+)')
+PROJECT_SIZE_LIMIT = re.compile(r'(&"process/size_limit":\s*)(\d+)')
 IMPORT_COMPRESS = re.compile(r"^(compress/mode=)(\d+)$", re.MULTILINE)
 IMPORT_DETECT_3D = re.compile(r"^(detect_3d/compress_to=)(\d+)$", re.MULTILINE)
+IMPORT_SIZE_LIMIT = re.compile(r"^(process/size_limit=)(\d+)$", re.MULTILINE)
 
 SKIP_DIRS = {".git", ".godot", ".addon_cache", "build", "__pycache__"}
 
@@ -82,6 +84,9 @@ def fix_project_file(project_file: Path, dry_run: bool = False) -> list[str]:
     if (match := PROJECT_DETECT_3D.search(fixed)) and int(match.group(2)) != 1:
         changed.append(f"detect_3d/compress_to {match.group(2)} -> 1")
         fixed = PROJECT_DETECT_3D.sub(lambda m: f"{m.group(1)}1", fixed)
+    if (match := PROJECT_SIZE_LIMIT.search(fixed)) and int(match.group(2)) != 0:
+        changed.append(f"process/size_limit {match.group(2)} -> 0")
+        fixed = PROJECT_SIZE_LIMIT.sub(lambda m: f"{m.group(1)}0", fixed)
 
     if changed and not dry_run:
         project_file.write_text(fixed)
@@ -89,7 +94,13 @@ def fix_project_file(project_file: Path, dry_run: bool = False) -> list[str]:
 
 
 def fix_import_files(root: Path, dry_run: bool = False) -> tuple[int, int]:
-    """Put every off-policy .import back on it. Returns (fixed, left as VRAM compressed)."""
+    """Put every off-policy .import back on it. Returns (fixed, left as VRAM compressed).
+
+    Two separate things can be off policy, and a file can be off on either. `compress/mode` decides
+    how much of the image survives the import; `process/size_limit` decides how much of it is even
+    read, and a committed 512 there is the downscale rule wearing a different hat. The web build
+    puts its own limit back on a CI checkout, which is thrown away.
+    """
     fixed: int = 0
     vram: int = 0
     vendored: set[Path] = vendored_addons(root)
@@ -101,16 +112,22 @@ def fix_import_files(root: Path, dry_run: bool = False) -> tuple[int, int]:
             continue
         text: str = path.read_text()
         mode: int | None = read_mode(text)
-        if mode is None or mode == LOSSLESS:
-            continue
-        if mode == VRAM_COMPRESSED:
-            vram += 1
+        if mode is None:
             continue
 
-        # Lossy, or one of the Basis Universal modes: back to lossless, and let the editor promote
-        # it to VRAM compressed the first time it sees the texture on a 3D material.
-        updated: str = IMPORT_COMPRESS.sub(lambda m: f"{m.group(1)}{LOSSLESS}", text)
-        updated = IMPORT_DETECT_3D.sub(lambda m: f"{m.group(1)}1", updated)
+        updated: str = text
+        if mode == VRAM_COMPRESSED:
+            vram += 1
+        elif mode != LOSSLESS:
+            # Lossy, or one of the Basis Universal modes: back to lossless, and let the editor
+            # promote it to VRAM compressed the first time it sees the texture on a 3D material.
+            updated = IMPORT_COMPRESS.sub(lambda m: f"{m.group(1)}{LOSSLESS}", updated)
+            updated = IMPORT_DETECT_3D.sub(lambda m: f"{m.group(1)}1", updated)
+
+        updated = IMPORT_SIZE_LIMIT.sub(lambda m: f"{m.group(1)}0", updated)
+
+        if updated == text:
+            continue
         fixed += 1
         if not dry_run:
             path.write_text(updated)

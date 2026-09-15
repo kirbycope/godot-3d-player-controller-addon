@@ -29,14 +29,17 @@ func test_the_importer_defaults_are_lossless_full_size_and_promote_in_3d() -> vo
 	var project := ConfigFile.new()
 	assert_eq(project.load("res://project.godot"), OK, "project.godot should be readable")
 	var texture: Dictionary = project.get_value("importer_defaults", "texture", {})
-	assert_false(texture.is_empty(), "project.godot should carry texture importer defaults")
-	assert_eq(int(texture.get(&"compress/mode", -1)), LOSSLESS, "Textures import Lossless, not Lossy")
+
+	# A project that overrides nothing is already on policy, because the policy is Godot's own
+	# default. Only what it does override has to be checked, so each key falls back to the value
+	# the engine would have used.
+	assert_eq(int(texture.get(&"compress/mode", LOSSLESS)), LOSSLESS, "Textures import Lossless, not Lossy")
 	assert_eq(
-		int(texture.get(&"detect_3d/compress_to", -1)),
+		int(texture.get(&"detect_3d/compress_to", DETECT_3D_VRAM_COMPRESSED)),
 		DETECT_3D_VRAM_COMPRESSED,
 		"and a texture the editor sees used in 3D is promoted to VRAM Compressed"
 	)
-	assert_eq(int(texture.get(&"process/size_limit", -1)), 0, "and nothing is capped on disk; the web build caps itself")
+	assert_eq(int(texture.get(&"process/size_limit", 0)), 0, "and nothing is capped on disk; the web build caps itself")
 
 
 func test_no_texture_in_the_project_is_imported_as_lossy() -> void:

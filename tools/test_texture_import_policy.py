@@ -84,14 +84,25 @@ class TextureImportPolicyTests(unittest.TestCase):
         self.assertEqual(vram, 0)
         self.assertIn("compress/mode=0", path.read_text())
         self.assertIn("detect_3d/compress_to=1", path.read_text())
+        self.assertIn("process/size_limit=0", path.read_text(), "a committed 512 is the downscale rule again")
 
-    def test_a_texture_godot_already_promoted_is_left_alone(self) -> None:
+    def test_a_texture_godot_already_promoted_keeps_its_mode(self) -> None:
         path = self.write("assets/wall.png.import", VRAM_IMPORT)
 
         fixed, vram = fix_import_files(self.root)
 
         self.assertEqual((fixed, vram), (0, 1))
         self.assertEqual(path.read_text(), VRAM_IMPORT, "VRAM Compressed is Godot's own end state")
+
+    def test_a_size_limit_is_cleared_even_on_a_texture_that_keeps_its_mode(self) -> None:
+        path = self.write("assets/wall.png.import", VRAM_IMPORT.replace(
+            "detect_3d/compress_to=0", "detect_3d/compress_to=0\nprocess/size_limit=512"))
+
+        fixed, vram = fix_import_files(self.root)
+
+        self.assertEqual((fixed, vram), (1, 1), "the limit is off policy even where the mode is not")
+        self.assertIn("compress/mode=2", path.read_text(), "and the mode it already reached is kept")
+        self.assertIn("process/size_limit=0", path.read_text())
 
     def test_a_file_that_is_not_a_texture_is_untouched(self) -> None:
         path = self.write("assets/hit.wav.import", '[remap]\n\nimporter="wav"\n')
@@ -127,6 +138,15 @@ class TextureImportPolicyTests(unittest.TestCase):
         self.assertIn('&"compress/mode": 0', project.read_text())
         self.assertIn('&"detect_3d/compress_to": 1', project.read_text())
         self.assertIn('&"process/size_limit": 0', project.read_text(), "the web build caps itself, not the source")
+
+    def test_a_project_wide_size_limit_is_cleared(self) -> None:
+        project = self.write("project.godot", FORCED_PROJECT.replace(
+            '&"process/size_limit": 0', '&"process/size_limit": 512'))
+
+        changed = fix_project_file(project)
+
+        self.assertEqual(len(changed), 3, changed)
+        self.assertIn('&"process/size_limit": 0', project.read_text(), "the source keeps its resolution")
 
     def test_a_project_already_on_policy_reports_no_change(self) -> None:
         project = self.write("project.godot", FORCED_PROJECT)
