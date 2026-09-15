@@ -490,6 +490,15 @@ something an export can choose, so `tools/web_texture_cap.py` applies it in the 
 before the import pass, on a CI checkout that is thrown away. The `.import` files in this
 repository carry no limit.
 
+They are also imported **Lossless**, with `detect_3d/compress_to` on so the editor promotes a
+texture to VRAM Compressed the first time it sees it used in 3D. That is Godot's own default. The
+addon used to force `compress/mode=1` (Lossy) with promotion disabled, which re-encoded every image
+through WebP at quality 0.7 before Godot ever saw it, wrecked normal maps and ORM masks, and still
+uploaded uncompressed to VRAM, so it cost quality and saved nothing at run time; it existed only to
+squeeze a committed `.pck` under GitHub's 100 MB limit, and nothing built is committed now.
+`python tools/texture_import_policy.py` puts a repository back on that policy, `--check` reports
+without writing, and `tests/test_texture_import_policy.gd` fails if anything drifts off it.
+
 | Folder | Source | License |
 |---|---|---|
 | `assets/game_icons/` | [game-icons.net](https://game-icons.net/) (authors listed in the `.txt` file next to each icon, e.g. Lorc) | CC BY 3.0 |
