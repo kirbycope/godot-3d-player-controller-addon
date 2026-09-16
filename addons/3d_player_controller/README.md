@@ -419,8 +419,13 @@ To prepare and import custom Mixamo animations with Root Motion:
 Each animation imported with **Save to File** leaves a `.tres` beside its `.glb`. Some of those are
 edited by hand afterwards and the edits live only in the `.tres`, because re-importing the `.glb`
 gives back the raw Mixamo capture. The three swim animations are the current example: the
-`%GeneralSkeleton:Hips` position track in each is offset to sit the body at the waterline, and
-`Swimming To Edge` carries reworked arm and leg rotation curves as well.
+`%GeneralSkeleton:Hips` position track in each is offset to sit the body at the waterline.
+
+Check the whole folder rather than the animation someone noticed, and check it by magnitude. The
+restructure that reverted the swim heights also rewrote 16 other `.tres` files beside them, which
+looks alarming until the deltas are measured: every one is a rotation difference of about 1e-7, so
+float32 noise from a re-export, with no position change at all. Only these three moved by anything
+a player could see, between 0.298 and 0.4 metres. A diff alone cannot tell the two apart.
 
 | Animation | Hips height | Raw capture |
 | --- | --- | --- |
