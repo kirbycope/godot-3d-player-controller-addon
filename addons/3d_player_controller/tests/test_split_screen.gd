@@ -83,7 +83,7 @@ func test_one_pad_moves_one_player() -> void:
 	assert_eq(first.current_state, NodeStateMachine.States.STANDING)
 	assert_eq(second.current_state, NodeStateMachine.States.STANDING)
 	_pad_button(1, JOY_BUTTON_Y, true) # Y is Jump on the Zelda layout
-	await wait_physics_frames(2)
+	await wait_until(func() -> bool: return second.current_state == NodeStateMachine.States.JUMPING, 1.0)
 	_pad_button(1, JOY_BUTTON_Y, false)
 	await wait_physics_frames(1)
 	assert_eq(second.current_state, NodeStateMachine.States.JUMPING, "The second pad jumps the second player")
@@ -125,7 +125,7 @@ func test_a_lone_player_reads_the_whole_input() -> void:
 	assert_eq(lone.input_device, -1)
 	assert_true(lone.uses_mouse)
 	_pad_button(1, JOY_BUTTON_Y, true)
-	await wait_physics_frames(1)
+	await wait_until(func() -> bool: return lone.is_action_pressed(&"jump"), 1.0)
 	assert_true(lone.is_action_pressed(&"jump"), "Any pad")
 	_pad_button(1, JOY_BUTTON_Y, false)
-	await wait_physics_frames(1)
+	await wait_until(func() -> bool: return not lone.is_action_pressed(&"jump"), 1.0)
