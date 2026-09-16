@@ -414,6 +414,33 @@ To prepare and import custom Mixamo animations with Root Motion:
    vendors this addon and takes new work with `python tools/pull_addons.py 3d_player_controller`;
    the projects that still consume it as a git submodule bump their pointer instead.
 
+### Hand-tuned animations are source, not artifacts
+
+Each animation imported with **Save to File** leaves a `.tres` beside its `.glb`. Some of those are
+edited by hand afterwards and the edits live only in the `.tres`, because re-importing the `.glb`
+gives back the raw Mixamo capture. The three swim animations are the current example: the
+`%GeneralSkeleton:Hips` position track in each is offset to sit the body at the waterline, and
+`Swimming To Edge` carries reworked arm and leg rotation curves as well.
+
+| Animation | Hips height | Raw capture |
+| --- | --- | --- |
+| `Swimming.tres` | 1.0995283 | 0.69952834 |
+| `Swimming At Edge.tres` | 1.2018158 | 1.4994758 |
+| `Swimming To Edge.tres` | 1.1010405 | 1.4610405 |
+
+The importer is not the hazard here. A headless re-import leaves an existing Save to File resource
+alone with a cold `.godot` cache, after the asset has moved, with a stale `uid`, with
+`importer_version` bumped and with the source `.glb` altered. What loses the work is a file-level
+copy: a restructure, a mirror, or `tools/pull_addons.py`, whose `mirror()` overwrites any locally
+edited addon file that also exists upstream and only warns about files that are *absent* upstream.
+The swim heights were lost that way twice before anyone noticed, both times in a large structural
+commit rather than an animation change.
+
+So after any restructure, mirror or addon pull, check the tuned animations before committing.
+`tests/test_swim_animation_heights.gd` fails the moment one of them comes back as the raw capture,
+which turns a silent loss into a red test. Add a row above and a case to that test whenever another
+animation is tuned by hand.
+
 ---
 
 ## Example resources
