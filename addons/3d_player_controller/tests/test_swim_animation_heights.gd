@@ -48,33 +48,38 @@ const HIPS_TRACK: String = "%GeneralSkeleton:Hips"
 ## get reverted three times and said nothing.
 const EXPECTED_HIPS: Dictionary = {
 	"Backflip": [0.9305699, 0.6450410, 1.3755330],
-	"Bow Standing Jump Running To Run Forward": [],
-	"Bow Standing Jumping": [],
-	"Great Sword Jump Forward": [],
-	"Great Sword Jump": [],
-	"Jumping Up": [],
-	"Pistol Jump Forward": [],
-	"Pistol Jump": [],
 	"Ready To Cast Spell Standing Idle": [0.8914642, 0.8442172, 0.8951364],
-	"Rifle Jump Forward": [],
-	"Rifle Jump Up": [],
-	"Running Forward Flip": [0.9208747, 0.7412975, 1.7819712],
-	"Running Jump": [],
-	"Running Slide": [0.9207888, 0.2397544, 0.9444287],
 	"Running": [0.9219201, 0.9032632, 0.9703432],
+	"Running Forward Flip": [0.9208747, 0.7412975, 1.7819712],
+	"Running Slide": [0.9207888, 0.2397544, 0.9444287],
 	"Sprint": [0.8830373, 0.8738528, 0.9565051],
-	"Sword and Shield Jump Forward": [],
-	"Sword and Shield Jump": [],
 	"Throw": [0.9800626, 0.9555750, 1.0105404],
 }
 
 ## The animations taken out of the import pipeline, same shape.
 const EXPECTED_TUNED: Dictionary = {
+	"Bow Standing Jump Running To Run Forward": [0.8787579, 0.8170261, 1.2609407],
+	"Bow Standing Jumping": [0.9059604, 0.6815044, 1.2559845],
 	"Driving": [0.6188195, 0.6188195, 0.6188195],
 	"Entering Car": [0.9920238, 0.7420000, 1.0130469],
+	"Great Sword Jump": [0.9484800, 0.9053215, 1.3391531],
+	"Great Sword Jump Attack": [0.9468914, 0.8564712, 1.1684833],
+	"Great Sword Jump Forward": [0.9468913, 0.9468912, 1.1508582],
+	"Jump": [0.8938875, 0.7940333, 1.4365578],
+	"Jumping Up": [0.9305623, 0.5556197, 1.4869212],
+	"Pistol Jump": [0.9525008, 0.5582689, 1.3935983],
+	"Pistol Jump Forward": [0.9157895, 0.8392248, 1.3117052],
+	"Rifle Aiming Jump": [0.9153314, 0.7656575, 1.0098870],
+	"Rifle Jump Backward": [0.9331605, 0.9039738, 1.0851871],
+	"Rifle Jump Forward": [0.8126116, 0.7970697, 1.2510505],
+	"Rifle Jump Up": [0.9398913, 0.6895890, 0.9398913],
+	"Running Jump": [0.8596953, 0.8596953, 1.3047173],
 	"Swimming": [1.0995283, 1.0838133, 1.1031445],
 	"Swimming At Edge": [1.2018158, 1.1959828, 1.2044084],
 	"Swimming To Edge": [1.1010405, 1.0896482, 1.1420684],
+	"Sword And Shield Jump Attack": [0.9028425, 0.3710695, 1.7480969],
+	"Sword and Shield Jump": [0.8496348, 0.8051223, 1.3529737],
+	"Sword and Shield Jump Forward": [0.9019135, 0.9019135, 1.5937138],
 }
 
 ## Total keys across every 3D track, per animation. The Hips figures above say where the body sits;
@@ -86,28 +91,33 @@ const EXPECTED_TUNED: Dictionary = {
 ## cannot drift on its own: a re-export rounds values, it does not add or remove keys.
 const EXPECTED_KEYS: Dictionary = {
 	"Backflip": 2849,
-	"Bow Standing Jump Running To Run Forward": 2029,
-	"Bow Standing Jumping": 1669,
+	"Bow Standing Jump Running To Run Forward": 2086,
+	"Bow Standing Jumping": 1715,
 	"Driving": 1392,
 	"Entering Car": 6159,
-	"Great Sword Jump Forward": 506,
-	"Great Sword Jump": 666,
-	"Jumping Up": 1140,
-	"Pistol Jump Forward": 593,
-	"Pistol Jump": 1385,
+	"Great Sword Jump": 693,
+	"Great Sword Jump Attack": 1866,
+	"Great Sword Jump Forward": 524,
+	"Jump": 1494,
+	"Jumping Up": 1167,
+	"Pistol Jump": 1446,
+	"Pistol Jump Forward": 614,
 	"Ready To Cast Spell Standing Idle": 2694,
-	"Rifle Jump Forward": 1222,
-	"Rifle Jump Up": 428,
-	"Running Forward Flip": 1335,
-	"Running Jump": 1491,
-	"Running Slide": 2038,
+	"Rifle Aiming Jump": 1969,
+	"Rifle Jump Backward": 889,
+	"Rifle Jump Forward": 1250,
+	"Rifle Jump Up": 446,
 	"Running": 883,
+	"Running Forward Flip": 1335,
+	"Running Jump": 1518,
+	"Running Slide": 2038,
 	"Sprint": 765,
 	"Swimming": 5799,
 	"Swimming At Edge": 978,
 	"Swimming To Edge": 3358,
-	"Sword and Shield Jump Forward": 641,
-	"Sword and Shield Jump": 986,
+	"Sword And Shield Jump Attack": 2488,
+	"Sword and Shield Jump": 1014,
+	"Sword and Shield Jump Forward": 664,
 	"Throw": 2561,
 }
 
@@ -151,7 +161,7 @@ func test_the_swim_offsets_are_on_the_whole_track_and_not_one_key() -> void:
 	# the loop, with the remaining keys stranded a full offset away.
 	for name: String in EXPECTED_TUNED:
 		if not name.begins_with("Swimming"):
-			continue  # Entering Car is meant to dip; only the swim clips hold the body flat.
+			continue  # Only the swim clips hold the body flat; everything else here dips or leaps.
 		var animation: Animation = _tuned(name)
 		if animation == null:
 			continue

@@ -69,7 +69,20 @@ def bake_root_motion(source_dir: Path, dest_dir: Path):
             
             # Determine if vertical extraction needed. Name filter standard pipeline practice.
             # Math heuristics break on foot-bobs and crouches. Explicit tags safe.
-            is_vertical_anim = any(tag in file_path.name.lower() for tag in ["braced", "climb", "hang", "hop", "jump", "pull_up"])
+            #
+            # Extract the vertical ONLY for states where the controller consumes it. In player.gd,
+            # is_climbing / is_climbing_on / is_climbing_hopping_* take vertical_speed from
+            # h_velocity.dot(up_direction), and the hanging states pin it to 0. Those are the tags
+            # below.
+            #
+            # "jump" used to be in this list and was wrong. A jump falls through to the gravity
+            # branch, and velocity is assembled as h_velocity.slide(up_direction) + up * vertical_speed,
+            # so the slide() throws the extracted vertical away. Meanwhile root_motion_track is
+            # %GeneralSkeleton:Root, so Godot holds that track out of the skeleton pose too. The lift
+            # was extracted, excluded from the pose, and then discarded: seventeen clips tucked their
+            # legs and never rose. Their .tres files now live in assets/mixamo/animations/tuned/ with
+            # the lift put back on Hips; re-baking them would need this list to stay as it is.
+            is_vertical_anim = any(tag in file_path.name.lower() for tag in ["braced", "climb", "hang", "hop", "pull_up"])
             print(f"  [Info] vertical extraction: {'on' if is_vertical_anim else 'off'}")
             
             # --- Transfer Up/Down (Hips Local Y [1] to Root Local Z [2]) ---
@@ -119,3 +132,8 @@ if __name__ == "__main__":
     bake_root_motion(source_p, dest_p)
 
 # blender --background --python tools/bake_root_motion.py
+#
+# Does not run on Blender 5.x as written: actions are slotted there, and action.fcurves was removed
+# in favour of action.layers[].strips[].channelbag(slot).fcurves. On Blender 5.2.0 this raises
+# AttributeError: 'Action' object has no attribute 'fcurves' on the first file. Port that access
+# before re-baking anything.
