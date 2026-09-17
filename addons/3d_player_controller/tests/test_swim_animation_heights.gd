@@ -1,32 +1,41 @@
 extends GutTest
 
-## Purpose: every animation saved beside its .glb still holds the pose it was last given, rather
-## than the raw Mixamo capture.
+## Purpose: every animation still holds the pose it was last given, rather than the raw Mixamo
+## capture the importer would put back.
 ##
-## Each animation imported with Save to File leaves a .tres next to its .glb that looks generated.
-## It is not always. Some are edited by hand afterwards and the edit lives only in the .tres,
-## because re-importing the .glb gives back the raw capture. The three swim animations are the
-## current case: the %GeneralSkeleton:Hips position track in each is offset to sit the body at the
-## waterline.
+## An animation imported with Save to File leaves a .tres next to its .glb that looks generated, and
+## for most of them it is. Three are not: the %GeneralSkeleton:Hips position track in each swim
+## animation is offset by hand to sit the body at the waterline, between 0.298 and 0.4 metres.
 ##
-## Those heights were lost twice. Set to 1.2, back to the raw 0.69952834; set to 1.0995283, back to
-## 0.69952834 again in the Asset Library restructure. The player swam 0.65 m under the surface
-## instead of 0.25 m and was invisible from the ordinary camera. The importer is not the hazard: a
-## headless re-import leaves an existing Save to File resource alone with a cold .godot cache, after
-## a move, with a stale uid, with importer_version bumped and with the source .glb altered. A
-## file-level copy is, so a restructure, a mirror or tools/pull_addons.py.
+## That work was lost twice. Set to 1.2, back to the raw 0.69952834; set to 1.0995283, back to
+## 0.69952834 again. The player swam 0.65 m under instead of 0.25 m, invisible from the ordinary
+## camera. The cause is the importer, and it is worth being exact about how it was pinned down,
+## because the obvious experiment says the opposite. Re-importing a small project holding just the
+## .glb, its .import and the .tres leaves the file alone, even with a cold .godot cache, after a
+## move, with a stale uid and with importer_version bumped. Cloning this repository fresh and
+## importing it wipes all three on the first pass. Neither keep_custom_tracks nor marking the track
+## imported=false survives it, and an import_script runs with the right offsets but too late, after
+## the resource has already been written.
 ##
-## The table below covers the whole folder rather than the three that were noticed, because the
-## folder is the unit at risk: whatever wipes one wipes its neighbours in the same pass. A diff
-## cannot sort real work from noise here, only magnitude can. That same restructure also rewrote 16
-## other files, every one of them a rotation difference of about 1e-7 from a re-export with no
-## position change at all, against 0.298 to 0.4 metres for the three that mattered.
+## So the swim animations were taken out of the import pipeline. They are hand-owned
+## AnimationLibrary resources under tuned/, save_to_file is off for their .glb files, and an
+## importer that does not own a file cannot rewrite it. Verified on a fresh clone across a cold
+## import and two editor opens.
 ##
-## There is no raw reference to compare against at run time: with Save to File enabled the .glb's
-## AnimationLibrary hands back the .tres itself, the very same instance, so the expected values have
-## to be recorded. Tuning another animation means changing its number here, and the failure says so.
+## Everything else is still importer output and still worth watching, so the table covers the whole
+## folder rather than the three that were noticed: whatever wipes one wipes its neighbours in the
+## same pass. Judge a diff there by magnitude, not by its existence. The restructure that reverted
+## the swim heights also rewrote 16 other animations, every one a rotation difference of about 1e-7
+## from a re-export, with no position change at all.
 
 const ANIMATIONS_PATH: String = "res://addons/3d_player_controller/assets/mixamo/animations/root_motion"
+
+## The swim animations are hand-owned AnimationLibrary resources here rather than importer output,
+## which is what stops a cold import rewriting them. Each holds one animation, named as the .glb's
+## was so player.tscn's "Swimming/mixamo_com" still resolves.
+const TUNED_PATH: String = "res://addons/3d_player_controller/assets/mixamo/animations/tuned"
+
+const TUNED_ANIMATION: StringName = &"mixamo_com"
 
 const HIPS_TRACK: String = "%GeneralSkeleton:Hips"
 
@@ -51,9 +60,6 @@ const EXPECTED_HIPS_HEIGHT: Dictionary = {
 	"Running Slide": 0.9207888,
 	"Running": 0.9219201,
 	"Sprint": 0.8830373,
-	"Swimming": 1.0995283,
-	"Swimming At Edge": 1.2018158,
-	"Swimming To Edge": 1.1010405,
 	"Sword and Shield Jump Forward": NAN,
 	"Sword and Shield Jump": NAN,
 	"Throw": 0.9800626,
@@ -61,7 +67,11 @@ const EXPECTED_HIPS_HEIGHT: Dictionary = {
 
 ## The swim animations hold the body flat at the surface, so their Hips barely move. The others
 ## jump, flip and slide, and one of them rides 0.86 up, so a shared ceiling would mean nothing.
-const SWIM_ANIMATIONS: PackedStringArray = ["Swimming", "Swimming At Edge", "Swimming To Edge"]
+const EXPECTED_TUNED_HEIGHT: Dictionary = {
+	"Swimming": 1.0995283,
+	"Swimming At Edge": 1.2018158,
+	"Swimming To Edge": 1.1010405,
+}
 
 ## Loose enough to survive a re-save rounding the float, tight enough that a raw capture fails: the
 ## smallest offset being guarded is 0.298.
@@ -113,12 +123,41 @@ func test_every_saved_animation_keeps_its_hips_height() -> void:
 		)
 
 
+func test_the_swim_animations_keep_their_tuned_height() -> void:
+	for name: String in EXPECTED_TUNED_HEIGHT:
+		var animation: Animation = _tuned(name)
+		assert_not_null(animation, "%s should load from tuned/ as an AnimationLibrary" % name)
+		if animation == null:
+			continue
+		var track: int = _hips_position_track(animation)
+		assert_gt(track, -1, "%s has lost its %s track" % [name, HIPS_TRACK])
+		if track < 0:
+			continue
+		var height: float = (animation.track_get_key_value(track, 0) as Vector3).y
+		assert_almost_eq(
+			height,
+			float(EXPECTED_TUNED_HEIGHT[name]),
+			TOLERANCE,
+			"%s floats at %f rather than %f" % [name, height, EXPECTED_TUNED_HEIGHT[name]]
+		)
+
+
+func test_no_swim_animation_is_importer_output_any_more() -> void:
+	# The whole point of tuned/: an importer that does not own the file cannot rewrite it. A .tres
+	# reappearing beside the .glb means save_to_file was switched back on and the edit is at risk.
+	for name: String in EXPECTED_TUNED_HEIGHT:
+		assert_false(
+			ResourceLoader.exists("%s/%s.tres" % [ANIMATIONS_PATH, name]),
+			"%s is importer output again; a cold import will overwrite it" % name
+		)
+
+
 func test_the_swim_offsets_are_on_the_whole_track_and_not_one_key() -> void:
 	# The offset is applied to the track, so every key moves together and the body keeps its bob.
 	# Offsetting key zero alone would satisfy the test above and still swim wrong for the rest of
 	# the loop, with the remaining keys stranded a full offset away.
-	for name: String in SWIM_ANIMATIONS:
-		var animation: Animation = load("%s/%s.tres" % [ANIMATIONS_PATH, name]) as Animation
+	for name: String in EXPECTED_TUNED_HEIGHT:
+		var animation: Animation = _tuned(name)
 		if animation == null:
 			continue
 		var track: int = _hips_position_track(animation)
@@ -137,6 +176,12 @@ func test_the_swim_offsets_are_on_the_whole_track_and_not_one_key() -> void:
 			MAXIMUM_SWIM_BOB,
 			"%s has a key %f from its first. The offset belongs on the whole track, not one key." % [name, furthest]
 		)
+
+
+## The one animation inside a hand-owned library under tuned/.
+func _tuned(name: String) -> Animation:
+	var library: AnimationLibrary = load("%s/%s.tres" % [TUNED_PATH, name]) as AnimationLibrary
+	return library.get_animation(TUNED_ANIMATION) if library != null else null
 
 
 ## Every animation saved beside its .glb, by name without the extension.

@@ -414,37 +414,43 @@ To prepare and import custom Mixamo animations with Root Motion:
    vendors this addon and takes new work with `python tools/pull_addons.py 3d_player_controller`;
    the projects that still consume it as a git submodule bump their pointer instead.
 
-### Hand-tuned animations are source, not artifacts
+### Hand-tuned animations live in `tuned/`, outside the import pipeline
 
-Each animation imported with **Save to File** leaves a `.tres` beside its `.glb`. Some of those are
-edited by hand afterwards and the edits live only in the `.tres`, because re-importing the `.glb`
-gives back the raw Mixamo capture. The three swim animations are the current example: the
-`%GeneralSkeleton:Hips` position track in each is offset to sit the body at the waterline.
+An animation imported with **Save to File** leaves a `.tres` beside its `.glb`, and for most of them
+that file really is generated output. Three are not. The `%GeneralSkeleton:Hips` position track in
+each swim animation is offset by hand so the body sits at the waterline, and re-importing the `.glb`
+gives back the raw Mixamo capture.
 
-Check the whole folder rather than the animation someone noticed, and check it by magnitude. The
-restructure that reverted the swim heights also rewrote 16 other `.tres` files beside them, which
-looks alarming until the deltas are measured: every one is a rotation difference of about 1e-7, so
-float32 noise from a re-export, with no position change at all. Only these three moved by anything
-a player could see, between 0.298 and 0.4 metres. A diff alone cannot tell the two apart.
+| Animation | Hips height | Raw capture | Offset |
+| --- | --- | --- | --- |
+| `Swimming` | 1.0995283 | 0.69952834 | +0.4 |
+| `Swimming At Edge` | 1.2018158 | 1.4994758 | -0.29766 Y, -0.1 Z |
+| `Swimming To Edge` | 1.1010405 | 1.4610405 | -0.36 |
 
-| Animation | Hips height | Raw capture |
-| --- | --- | --- |
-| `Swimming.tres` | 1.0995283 | 0.69952834 |
-| `Swimming At Edge.tres` | 1.2018158 | 1.4994758 |
-| `Swimming To Edge.tres` | 1.1010405 | 1.4610405 |
+That work was lost twice before anyone traced it, and the way it is lost is worth stating plainly,
+because the obvious experiment gives the wrong answer. Re-importing a small project holding only the
+`.glb`, its `.import` and the `.tres` leaves the file alone, even with a cold `.godot` cache, after
+the asset has moved, with a stale `uid` and with `importer_version` bumped. **Cloning this
+repository fresh and letting Godot import it wipes all three on the first pass.** Scale and context
+matter, so test a fresh clone, not a reduction of one.
 
-The importer is not the hazard here. A headless re-import leaves an existing Save to File resource
-alone with a cold `.godot` cache, after the asset has moved, with a stale `uid`, with
-`importer_version` bumped and with the source `.glb` altered. What loses the work is a file-level
-copy: a restructure, a mirror, or `tools/pull_addons.py`, whose `mirror()` overwrites any locally
-edited addon file that also exists upstream and only warns about files that are *absent* upstream.
-The swim heights were lost that way twice before anyone noticed, both times in a large structural
-commit rather than an animation change.
+Godot offers no setting that saves them. `keep_custom_tracks` does not, on its own or with the track
+marked `imported=false`; an `import_script` runs with the right offsets but too late, after the
+resource has been written.
 
-So after any restructure, mirror or addon pull, check the tuned animations before committing.
-`tests/test_swim_animation_heights.gd` fails the moment one of them comes back as the raw capture,
-which turns a silent loss into a red test. Add a row above and a case to that test whenever another
-animation is tuned by hand.
+So these three are no longer importer output. They are hand-owned `AnimationLibrary` resources in
+[`assets/mixamo/animations/tuned/`](assets/mixamo/animations/tuned), each holding one animation still
+named `mixamo_com`, with `save_to_file` switched off for their `.glb` files and `player.tscn`
+pointing at the library rather than the `.glb`. An importer that does not own a file cannot rewrite
+it. Verified on a fresh clone across a cold import and two editor opens.
+
+Tune another animation the same way rather than editing beside its `.glb`: save the library into
+`tuned/`, repoint `player.tscn`, turn its `save_to_file` off, and add it to
+`tests/test_swim_animation_heights.gd`. That test holds the heights of every saved animation, not
+only these three, and fails if any of them comes back raw or if one of these reappears as importer
+output. Judge a diff in `root_motion/` by magnitude rather than by its existence: the restructure
+that reverted the swim heights also rewrote 16 other animations, every one a rotation difference of
+about 1e-7 from a re-export with no position change at all.
 
 ---
 
