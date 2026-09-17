@@ -50,7 +50,6 @@ const EXPECTED_HIPS: Dictionary = {
 	"Backflip": [0.9305699, 0.6450410, 1.3755330],
 	"Bow Standing Jump Running To Run Forward": [],
 	"Bow Standing Jumping": [],
-	"Driving": [0.6188195, 0.6188195, 0.6188195],
 	"Great Sword Jump Forward": [],
 	"Great Sword Jump": [],
 	"Jumping Up": [],
@@ -71,10 +70,45 @@ const EXPECTED_HIPS: Dictionary = {
 
 ## The animations taken out of the import pipeline, same shape.
 const EXPECTED_TUNED: Dictionary = {
+	"Driving": [0.6188195, 0.6188195, 0.6188195],
 	"Entering Car": [0.9920238, 0.7420000, 1.0130469],
 	"Swimming": [1.0995283, 1.0838133, 1.1031445],
 	"Swimming At Edge": [1.2018158, 1.1959828, 1.2044084],
 	"Swimming To Edge": [1.1010405, 1.0896482, 1.1420684],
+}
+
+## Total keys across every 3D track, per animation. The Hips figures above say where the body sits;
+## this says whether the curves are still the shape someone left them.
+##
+## Driving is why it is here. Its hand edit collapsed the two LowerLeg rotation tracks from 10 and 47
+## keys to 2 each, straightening the leg so the foot stopped poking through the floor of the CRV. No
+## height moved, so a Hips check saw nothing, and the revert went unnoticed for months. A key count
+## cannot drift on its own: a re-export rounds values, it does not add or remove keys.
+const EXPECTED_KEYS: Dictionary = {
+	"Backflip": 2849,
+	"Bow Standing Jump Running To Run Forward": 2029,
+	"Bow Standing Jumping": 1669,
+	"Driving": 1392,
+	"Entering Car": 6159,
+	"Great Sword Jump Forward": 506,
+	"Great Sword Jump": 666,
+	"Jumping Up": 1140,
+	"Pistol Jump Forward": 593,
+	"Pistol Jump": 1385,
+	"Ready To Cast Spell Standing Idle": 2694,
+	"Rifle Jump Forward": 1222,
+	"Rifle Jump Up": 428,
+	"Running Forward Flip": 1335,
+	"Running Jump": 1491,
+	"Running Slide": 2038,
+	"Running": 883,
+	"Sprint": 765,
+	"Swimming": 5799,
+	"Swimming At Edge": 978,
+	"Swimming To Edge": 3358,
+	"Sword and Shield Jump Forward": 641,
+	"Sword and Shield Jump": 986,
+	"Throw": 2561,
 }
 
 ## Loose enough to survive a re-save rounding the float, tight enough that a raw capture fails: the
@@ -152,6 +186,28 @@ func _hips_position_track(animation: Animation) -> int:
 		if str(animation.track_get_path(track)) == HIPS_TRACK:
 			return track
 	return -1
+
+
+func test_no_animation_has_gained_or_lost_keys() -> void:
+	for name: String in EXPECTED_KEYS:
+		var animation: Animation = _tuned(name) if EXPECTED_TUNED.has(name) else \
+			load("%s/%s.tres" % [ANIMATIONS_PATH, name]) as Animation
+		assert_not_null(animation, "%s should load" % name)
+		if animation == null:
+			continue
+		var total: int = 0
+		for track: int in animation.get_track_count():
+			var type: int = animation.track_get_type(track)
+			if type == Animation.TYPE_POSITION_3D or type == Animation.TYPE_ROTATION_3D \
+					or type == Animation.TYPE_SCALE_3D:
+				total += animation.track_get_key_count(track)
+		assert_eq(
+			total,
+			int(EXPECTED_KEYS[name]),
+			"%s has %d keys rather than %d. A re-export rounds values, it never adds or removes keys, so a curve was reshaped or a reshape was reverted." % [
+				name, total, EXPECTED_KEYS[name],
+			]
+		)
 
 
 ## Checks a Hips track against [first, lowest, highest]; an empty expectation means no track at all.
