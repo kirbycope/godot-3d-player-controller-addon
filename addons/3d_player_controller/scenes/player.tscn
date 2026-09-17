@@ -129,7 +129,7 @@
 [ext_resource type="AnimationLibrary" uid="uid://dwjd1v4rfjjjx" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Digging.glb" id="40_sqjrs"]
 [ext_resource type="AnimationLibrary" uid="uid://60xljws23jjn" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Boxing Short Step Forward.glb" id="40_xw6m8"]
 [ext_resource type="AnimationLibrary" uid="uid://dnsos1fdevv0t" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Driving.glb" id="41_y7usr"]
-[ext_resource type="AnimationLibrary" uid="uid://hfmvc78vy0pd" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Entering Car.glb" id="42_f3q3i"]
+[ext_resource type="AnimationLibrary" path="res://addons/3d_player_controller/assets/mixamo/animations/tuned/Entering Car.tres" id="42_f3q3i"]
 [ext_resource type="AnimationLibrary" uid="uid://c2pah74fnrio" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Exiting Car.glb" id="43_gfa47"]
 [ext_resource type="AnimationLibrary" uid="uid://bugsa3lyewwkl" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Fishing Cast.glb" id="45_sjfj8"]
 [ext_resource type="AnimationLibrary" uid="uid://3qmtml1pyq4" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Great Sword Downward Slash.glb" id="45_u0uda"]

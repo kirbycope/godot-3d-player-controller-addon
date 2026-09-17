@@ -39,38 +39,42 @@ const TUNED_ANIMATION: StringName = &"mixamo_com"
 
 const HIPS_TRACK: String = "%GeneralSkeleton:Hips"
 
-## Y of the first key of each animation's Hips position track. NAN records that the animation has no
-## such track at all, which most of the jumps do not, carrying their lift on Root instead.
-const EXPECTED_HIPS_HEIGHT: Dictionary = {
-	"Backflip": 0.9305699,
-	"Bow Standing Jump Running To Run Forward": NAN,
-	"Bow Standing Jumping": NAN,
-	"Driving": 0.6188195,
-	"Entering Car": 0.9920238,
-	"Great Sword Jump Forward": NAN,
-	"Great Sword Jump": NAN,
-	"Jumping Up": NAN,
-	"Pistol Jump Forward": NAN,
-	"Pistol Jump": NAN,
-	"Ready To Cast Spell Standing Idle": 0.8914642,
-	"Rifle Jump Forward": NAN,
-	"Rifle Jump Up": NAN,
-	"Running Forward Flip": 0.9208747,
-	"Running Jump": NAN,
-	"Running Slide": 0.9207888,
-	"Running": 0.9219201,
-	"Sprint": 0.8830373,
-	"Sword and Shield Jump Forward": NAN,
-	"Sword and Shield Jump": NAN,
-	"Throw": 0.9800626,
+## The Hips position track of each animation the importer still owns, as [first key, lowest, highest].
+## An empty array records that the animation has no such track, which most of the jumps do not,
+## carrying their lift on Root instead.
+##
+## Lowest and highest are not decoration. Entering Car's hand edit sank the dip as the driver sits
+## into the seat from 0.842 to 0.742 and never touched the first key, so a first-key check watched it
+## get reverted three times and said nothing.
+const EXPECTED_HIPS: Dictionary = {
+	"Backflip": [0.9305699, 0.6450410, 1.3755330],
+	"Bow Standing Jump Running To Run Forward": [],
+	"Bow Standing Jumping": [],
+	"Driving": [0.6188195, 0.6188195, 0.6188195],
+	"Great Sword Jump Forward": [],
+	"Great Sword Jump": [],
+	"Jumping Up": [],
+	"Pistol Jump Forward": [],
+	"Pistol Jump": [],
+	"Ready To Cast Spell Standing Idle": [0.8914642, 0.8442172, 0.8951364],
+	"Rifle Jump Forward": [],
+	"Rifle Jump Up": [],
+	"Running Forward Flip": [0.9208747, 0.7412975, 1.7819712],
+	"Running Jump": [],
+	"Running Slide": [0.9207888, 0.2397544, 0.9444287],
+	"Running": [0.9219201, 0.9032632, 0.9703432],
+	"Sprint": [0.8830373, 0.8738528, 0.9565051],
+	"Sword and Shield Jump Forward": [],
+	"Sword and Shield Jump": [],
+	"Throw": [0.9800626, 0.9555750, 1.0105404],
 }
 
-## The swim animations hold the body flat at the surface, so their Hips barely move. The others
-## jump, flip and slide, and one of them rides 0.86 up, so a shared ceiling would mean nothing.
-const EXPECTED_TUNED_HEIGHT: Dictionary = {
-	"Swimming": 1.0995283,
-	"Swimming At Edge": 1.2018158,
-	"Swimming To Edge": 1.1010405,
+## The animations taken out of the import pipeline, same shape.
+const EXPECTED_TUNED: Dictionary = {
+	"Entering Car": [0.9920238, 0.7420000, 1.0130469],
+	"Swimming": [1.0995283, 1.0838133, 1.1031445],
+	"Swimming At Edge": [1.2018158, 1.1959828, 1.2044084],
+	"Swimming To Edge": [1.1010405, 1.0896482, 1.1420684],
 }
 
 ## Loose enough to survive a re-save rounding the float, tight enough that a raw capture fails: the
@@ -81,71 +85,26 @@ const TOLERANCE: float = 0.001
 const MAXIMUM_SWIM_BOB: float = 0.15
 
 
-func test_the_folder_holds_exactly_the_animations_this_test_knows_about() -> void:
+func test_both_folders_hold_exactly_the_animations_this_test_knows_about() -> void:
 	# Otherwise a new animation could be added, never be checked, and be wiped in the same silence.
-	var found: PackedStringArray = _saved_animation_names()
-	found.sort()
-	var expected: PackedStringArray = PackedStringArray(EXPECTED_HIPS_HEIGHT.keys())
-	expected.sort()
-	assert_eq(
-		found,
-		expected,
-		"Add the new animation to EXPECTED_HIPS_HEIGHT with the Hips height it should keep."
-	)
+	assert_eq(_names_in(ANIMATIONS_PATH), _sorted_keys(EXPECTED_HIPS), "Update EXPECTED_HIPS.")
+	assert_eq(_names_in(TUNED_PATH), _sorted_keys(EXPECTED_TUNED), "Update EXPECTED_TUNED.")
 
 
-func test_every_saved_animation_keeps_its_hips_height() -> void:
-	for name: String in EXPECTED_HIPS_HEIGHT:
-		var animation: Animation = load("%s/%s.tres" % [ANIMATIONS_PATH, name]) as Animation
-		assert_not_null(animation, "%s.tres should load as an Animation" % name)
-		if animation == null:
-			continue
-
-		var track: int = _hips_position_track(animation)
-		var expected: float = EXPECTED_HIPS_HEIGHT[name]
-
-		if is_nan(expected):
-			assert_eq(track, -1, "%s has gained a %s track; record its height" % [name, HIPS_TRACK])
-			continue
-
-		assert_gt(track, -1, "%s has lost its %s track entirely" % [name, HIPS_TRACK])
-		if track < 0:
-			continue
-
-		var height: float = (animation.track_get_key_value(track, 0) as Vector3).y
-		assert_almost_eq(
-			height,
-			expected,
-			TOLERANCE,
-			"%s sits at %f rather than %f. Either the hand edit was overwritten, or it was retuned and this table is stale." % [
-				name, height, expected,
-			]
-		)
+func test_every_animation_the_importer_owns_keeps_its_hips_track() -> void:
+	for name: String in EXPECTED_HIPS:
+		_check(load("%s/%s.tres" % [ANIMATIONS_PATH, name]) as Animation, name, EXPECTED_HIPS[name])
 
 
-func test_the_swim_animations_keep_their_tuned_height() -> void:
-	for name: String in EXPECTED_TUNED_HEIGHT:
-		var animation: Animation = _tuned(name)
-		assert_not_null(animation, "%s should load from tuned/ as an AnimationLibrary" % name)
-		if animation == null:
-			continue
-		var track: int = _hips_position_track(animation)
-		assert_gt(track, -1, "%s has lost its %s track" % [name, HIPS_TRACK])
-		if track < 0:
-			continue
-		var height: float = (animation.track_get_key_value(track, 0) as Vector3).y
-		assert_almost_eq(
-			height,
-			float(EXPECTED_TUNED_HEIGHT[name]),
-			TOLERANCE,
-			"%s floats at %f rather than %f" % [name, height, EXPECTED_TUNED_HEIGHT[name]]
-		)
+func test_every_hand_owned_animation_keeps_its_hips_track() -> void:
+	for name: String in EXPECTED_TUNED:
+		_check(_tuned(name), name, EXPECTED_TUNED[name])
 
 
-func test_no_swim_animation_is_importer_output_any_more() -> void:
-	# The whole point of tuned/: an importer that does not own the file cannot rewrite it. A .tres
-	# reappearing beside the .glb means save_to_file was switched back on and the edit is at risk.
-	for name: String in EXPECTED_TUNED_HEIGHT:
+func test_no_hand_owned_animation_is_importer_output_any_more() -> void:
+	# The whole point of tuned/: an importer that does not own a file cannot rewrite it. A .tres
+	# reappearing beside the .glb means save_to_file came back on and the edit is at risk again.
+	for name: String in EXPECTED_TUNED:
 		assert_false(
 			ResourceLoader.exists("%s/%s.tres" % [ANIMATIONS_PATH, name]),
 			"%s is importer output again; a cold import will overwrite it" % name
@@ -156,7 +115,9 @@ func test_the_swim_offsets_are_on_the_whole_track_and_not_one_key() -> void:
 	# The offset is applied to the track, so every key moves together and the body keeps its bob.
 	# Offsetting key zero alone would satisfy the test above and still swim wrong for the rest of
 	# the loop, with the remaining keys stranded a full offset away.
-	for name: String in EXPECTED_TUNED_HEIGHT:
+	for name: String in EXPECTED_TUNED:
+		if not name.begins_with("Swimming"):
+			continue  # Entering Car is meant to dip; only the swim clips hold the body flat.
 		var animation: Animation = _tuned(name)
 		if animation == null:
 			continue
@@ -184,10 +145,53 @@ func _tuned(name: String) -> Animation:
 	return library.get_animation(TUNED_ANIMATION) if library != null else null
 
 
-## Every animation saved beside its .glb, by name without the extension.
-func _saved_animation_names() -> PackedStringArray:
+func _hips_position_track(animation: Animation) -> int:
+	for track: int in animation.get_track_count():
+		if animation.track_get_type(track) != Animation.TYPE_POSITION_3D:
+			continue
+		if str(animation.track_get_path(track)) == HIPS_TRACK:
+			return track
+	return -1
+
+
+## Checks a Hips track against [first, lowest, highest]; an empty expectation means no track at all.
+func _check(animation: Animation, name: String, expected: Array) -> void:
+	assert_not_null(animation, "%s should load" % name)
+	if animation == null:
+		return
+	var track: int = _hips_position_track(animation)
+	if expected.is_empty():
+		assert_eq(track, -1, "%s has gained a %s track; record it" % [name, HIPS_TRACK])
+		return
+	assert_gt(track, -1, "%s has lost its %s track entirely" % [name, HIPS_TRACK])
+	if track < 0:
+		return
+
+	var first: float = (animation.track_get_key_value(track, 0) as Vector3).y
+	var lowest: float = INF
+	var highest: float = -INF
+	for key: int in animation.track_get_key_count(track):
+		var y: float = (animation.track_get_key_value(track, key) as Vector3).y
+		lowest = minf(lowest, y)
+		highest = maxf(highest, y)
+
+	var label: String = "%s [first %f, lowest %f, highest %f] against [%f, %f, %f]" % [
+		name, first, lowest, highest, expected[0], expected[1], expected[2],
+	]
+	assert_almost_eq(first, float(expected[0]), TOLERANCE, label)
+	assert_almost_eq(lowest, float(expected[1]), TOLERANCE, label)
+	assert_almost_eq(highest, float(expected[2]), TOLERANCE, label)
+
+
+func _sorted_keys(table: Dictionary) -> PackedStringArray:
+	var names: PackedStringArray = PackedStringArray(table.keys())
+	names.sort()
+	return names
+
+
+func _names_in(folder: String) -> PackedStringArray:
 	var names: PackedStringArray = []
-	var directory := DirAccess.open(ANIMATIONS_PATH)
+	var directory := DirAccess.open(folder)
 	if directory == null:
 		return names
 	directory.list_dir_begin()
@@ -197,13 +201,5 @@ func _saved_animation_names() -> PackedStringArray:
 			names.append(file.trim_suffix(".tres"))
 		file = directory.get_next()
 	directory.list_dir_end()
+	names.sort()
 	return names
-
-
-func _hips_position_track(animation: Animation) -> int:
-	for track: int in animation.get_track_count():
-		if animation.track_get_type(track) != Animation.TYPE_POSITION_3D:
-			continue
-		if str(animation.track_get_path(track)) == HIPS_TRACK:
-			return track
-	return -1
