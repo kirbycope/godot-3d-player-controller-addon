@@ -3,6 +3,27 @@ import sys
 import argparse
 from pathlib import Path
 
+def action_fcurves(action, armature):
+    """The action's F-curves, on slotted actions and on older ones alike.
+
+    Blender 4.4 moved animation data into slots and layers, and 5.x dropped Action.fcurves
+    entirely, so reading it raises AttributeError there. The curves now live on the channelbag
+    for the slot the armature is bound to.
+    """
+    if hasattr(action, "fcurves"):
+        return action.fcurves
+
+    slot = getattr(armature.animation_data, "action_slot", None)
+    if slot is None:
+        slot = action.slots[0] if len(action.slots) else action.slots.new(
+            id_type='OBJECT', name=armature.name)
+        armature.animation_data.action_slot = slot
+
+    layer = action.layers[0] if len(action.layers) else action.layers.new("Layer")
+    strip = layer.strips[0] if len(layer.strips) else layer.strips.new(type='KEYFRAME')
+    return strip.channelbag(slot, ensure=True).fcurves
+
+
 def bake_root_motion(source_dir: Path, dest_dir: Path):
     if not source_dir.exists():
         print(f"[Error] Source directory not found: {source_dir}")
@@ -50,7 +71,7 @@ def bake_root_motion(source_dir: Path, dest_dir: Path):
 
         if action:
             action.name = "mixamo_com"
-            fcurves = action.fcurves
+            fcurves = action_fcurves(action, armature)
             
             # Identify Mixamo Hips Local Tracks: 0=X (Side), 1=Y (Up/Down), 2=Z (Forward/Back)
             chips_loc = {fc.array_index: fc for fc in fcurves if fc.data_path == f'pose.bones["{hips_name}"].location'}
@@ -133,7 +154,6 @@ if __name__ == "__main__":
 
 # blender --background --python tools/bake_root_motion.py
 #
-# Does not run on Blender 5.x as written: actions are slotted there, and action.fcurves was removed
-# in favour of action.layers[].strips[].channelbag(slot).fcurves. On Blender 5.2.0 this raises
-# AttributeError: 'Action' object has no attribute 'fcurves' on the first file. Port that access
-# before re-baking anything.
+# Runs on Blender 4.x and 5.x. Blender 4.4 moved animation data into slots and layers and 5.x
+# dropped Action.fcurves, so action_fcurves() reads the channelbag instead when it has to.
+# Verified on Blender 5.2.0.
