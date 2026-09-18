@@ -30,14 +30,25 @@ var _phase: float = 0.0
 
 
 func _ready() -> void:
-	if noise == null and not Engine.is_editor_hint():
-		var player: Player = get_tree().get_first_node_in_group(&"Player") as Player
-		if player:
-			noise = player.get_node_or_null(^"PlayerNoise") as PlayerNoise
 	set_process(true)
 
 
+## The Player is spawned rather than sitting in the level, so it is rarely there when this is ready. Look again
+## each frame until one turns up, which costs a group lookup on an empty group until it does.
+func _find_noise() -> void:
+	var player: Player = get_tree().get_first_node_in_group(&"Player") as Player
+	if player == null:
+		return
+	var found: PlayerNoise = player.get_node_or_null(^"PlayerNoise") as PlayerNoise
+	if found:
+		noise = found
+
+
 func _process(delta: float) -> void:
+	if noise == null:
+		if not Engine.is_editor_hint():
+			_find_noise()
+		return
 	# A flat line has nothing to animate, so a silent meter costs a redraw only while it is settling
 	if level <= 0.001 and is_equal_approx(_phase, 0.0):
 		return

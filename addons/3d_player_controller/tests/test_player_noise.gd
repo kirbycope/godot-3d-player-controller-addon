@@ -135,3 +135,16 @@ func test_the_meter_follows_the_reading() -> void:
 
 	assert_gt(line.level, 0.0, "The drawn level follows PlayerNoise")
 	assert_almost_eq(line.level, noise.level, 0.001, "and is the same reading, not a second opinion")
+
+
+## The Player is spawned into the level rather than sitting in it, so it is rarely there when the meter is
+## ready. The meter keeps looking rather than resolving once, which is why it is left to _process.
+func test_the_meter_finds_the_player_without_being_wired_to_it() -> void:
+	var meter: Control = METER_SCENE.instantiate()
+	add_child_autofree(meter)
+	var line: NoiseMeter = meter.get_node("Line") as NoiseMeter
+	assert_null(line.noise, "Nothing is wired at instantiation")
+
+	await wait_process_frames(3)
+
+	assert_eq(line.noise, noise, "It finds the Player's own PlayerNoise on its own")
