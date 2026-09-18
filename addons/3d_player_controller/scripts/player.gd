@@ -504,8 +504,12 @@ var display_name: String = "": ## The name over the head (the Steam persona); re
 			steam_persona_name.text = value
 			steam_persona_name.visible = not value.is_empty()
 
+const VOICE_FALLOFF_PER_SECOND: float = 2.5 ## How fast [member voice_loudness] falls once the talk key is let go.
+const VOICE_LOUDNESS_GAIN: float = 4.0 ## Speech sits well below full scale, so the measured level is lifted to fill the range.
+
 var voice_playback: AudioStreamGeneratorPlayback = null
 var is_broadcasting: bool = false
+var voice_loudness: float = 0.0 ## How loudly this Player is speaking on push-to-talk, 0 to 1, measured from the captured voice rather than from the fact of holding the key. [PlayerNoise] treats it as noise, so talking gives you away.
 var current_water_area: Area3D = null
 
 
@@ -652,7 +656,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 ## Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	var steam: Object = _get_steam_running() if is_multiplayer_authority() and is_broadcasting else null
 	if steam:
 		var available_voice: Dictionary = steam.getAvailableVoice()
@@ -660,8 +664,15 @@ func _process(_delta: float) -> void:
 			var voice_data: Dictionary = steam.getVoice()
 			if voice_data.get("result") == STEAM_VOICE_RESULT_OK:
 				var buffer: PackedByteArray = voice_data.get("buffer", PackedByteArray())
-				if not buffer.is_empty() and multiplayer.has_multiplayer_peer() and multiplayer.get_peers().size() > 0:
-					_receive_voice_packet.rpc(buffer)
+				if not buffer.is_empty():
+					voice_loudness = _measure_voice(steam, buffer)
+					if multiplayer.has_multiplayer_peer() and multiplayer.get_peers().size() > 0:
+						_receive_voice_packet.rpc(buffer)
+	elif not is_broadcasting and voice_loudness > 0.0:
+		# Let it fall away rather than cutting, so the meter settles the way the rest of the noise does. Only
+		# letting go of the key starts that: a missing Steam is not the same as having stopped talking, and
+		# draining it here would empty the reading while the key was still held.
+		voice_loudness = maxf(voice_loudness - delta * VOICE_FALLOFF_PER_SECOND, 0.0)
 
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
@@ -1375,6 +1386,35 @@ func stop_broadcasting() -> void:
 			steam.setInGameVoiceSpeaking(my_id, false)
 	if multiplayer.has_multiplayer_peer() and multiplayer.get_peers().size() > 0:
 		_set_voice_indicator.rpc(false)
+
+
+## How loud [param buffer] is, 0 to 1, as the root mean square of the samples inside it. Steam hands over
+## compressed voice, so this decodes our own packet to look at it, which is work only done while the talk key
+## is held. The result is a level rather than a peak, so a shout reads louder than a mutter instead of both
+## pegging on the first loud syllable.
+func _measure_voice(steam: Object, buffer: PackedByteArray) -> float:
+	var sample_rate: int = steam.getVoiceOptimalSampleRate()
+	if sample_rate <= 0:
+		sample_rate = 48000
+	var decompressed: Dictionary = steam.decompressVoice(buffer, sample_rate)
+	if decompressed.get("result") != STEAM_VOICE_RESULT_OK:
+		return voice_loudness
+	var pcm: PackedByteArray = decompressed.get("uncompressed", PackedByteArray())
+	return loudness_of(pcm)
+
+
+## The root mean square of 16-bit mono samples in [param pcm], scaled so ordinary speech lands near the top of
+## the range rather than down in the noise. Separate from [method _measure_voice] so it can be tested without
+## Steam anywhere near it.
+static func loudness_of(pcm: PackedByteArray) -> float:
+	var samples: int = pcm.size() / 2
+	if samples <= 0:
+		return 0.0
+	var sum_squares: float = 0.0
+	for i: int in samples:
+		var sample: float = float(pcm.decode_s16(i * 2)) / 32768.0
+		sum_squares += sample * sample
+	return clampf(sqrt(sum_squares / float(samples)) * VOICE_LOUDNESS_GAIN, 0.0, 1.0)
 
 
 ## Voice from the owning peer, decoded into this copy's 3D player; only the authority ever sends it.

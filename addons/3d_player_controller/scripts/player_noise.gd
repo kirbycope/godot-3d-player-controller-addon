@@ -2,9 +2,12 @@ class_name PlayerNoise
 extends Node
 ## How much noise the Player is making, from 0 (silent) to 1 (as loud as they get), and who can hear it.
 ##
-## Two things feed it. Moving sets a floor: sneaking is almost silent, walking low, running and sprinting
+## Three things feed it. Moving sets a floor: sneaking is almost silent, walking low, running and sprinting
 ## loud, and being [member Player.is_stealthed] quiets all of it. On top of that sit one-off noises that spike
-## the reading and fall back, a landing, a slide, a swing, a thrown object, a gunshot.
+## the reading and fall back, a landing, a slide, a swing, a thrown object, a gunshot. And talking on
+## push-to-talk is noise like any other: the reading follows how loudly you are actually speaking, measured
+## from the captured voice rather than from the fact of holding the key, so a whisper carries less than a
+## shout and saying nothing with the key held carries nothing at all.
 ##
 ## Anything within [member hearing_range] scaled by the current level hears it: every [EnemyNpc] in earshot is
 ## told to [code]aggro[/code] the Player, which is what makes sprinting past a sleeping enemy a mistake and
@@ -31,6 +34,9 @@ signal heard_by(listener: Node3D) ## [param listener] was close enough to hear a
 @export var melee_noise: float = 0.5 ## A swing that lands.
 @export var throw_noise: float = 0.4
 @export var firearm_noise: float = 1.0 ## A gunshot, the loudest thing the Player has.
+
+@export_group("Voice")
+@export var voice_multiplier: float = 0.85 ## What a full-voice shout on push-to-talk reads. Talking is sustained rather than a one-off, so it holds the reading up for as long as you speak.
 
 @export_group("Response")
 @export var decay_per_second: float = 1.1 ## How fast a one-off noise falls back to the moving floor.
@@ -71,7 +77,7 @@ func _physics_process(delta: float) -> void:
 	if not player.is_multiplayer_authority():
 		return
 	_spike = maxf(_spike - decay_per_second * delta, 0.0)
-	var target: float = maxf(moving_level(), _spike)
+	var target: float = maxf(maxf(moving_level(), voice_level()), _spike)
 	level = move_toward(level, target, smoothing * delta)
 
 	_since_listen += delta
@@ -98,6 +104,14 @@ func moving_level() -> float:
 	if player.is_swimming:
 		out *= swimming_multiplier
 	return out
+
+
+## How much of the reading the Player's own voice accounts for. Push-to-talk only: a Player who is not
+## broadcasting is not speaking, whatever their microphone is picking up.
+func voice_level() -> float:
+	if not player.is_broadcasting:
+		return 0.0
+	return clampf(player.voice_loudness, 0.0, 1.0) * voice_multiplier
 
 
 ## A one-off noise of [param amount], which spikes the reading and falls back. Anything in the world can call

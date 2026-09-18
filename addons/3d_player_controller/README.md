@@ -56,6 +56,14 @@ Organized state machine architecture separating primary lower-body locomotion st
   a thrown object, and a gunshot, which is the loudest thing the Player has. `make_noise(amount)` is public,
   so a slamming door or a breaking pot can be just as loud.
 
+  **Talking on push-to-talk is noise too.** While `broadcast` is held, `Player` decodes its own captured Steam
+  voice packet and takes the root mean square of it into `voice_loudness`, so the reading follows how loudly
+  you are actually speaking rather than the fact that the key is down: a whisper carries less than a shout,
+  and holding the key in silence carries nothing. `Player.loudness_of(pcm)` is a static that does the
+  measuring, deliberately separate from Steam so it can be tested with no network and no microphone. Letting
+  the key go is what starts the falloff; a missing Steam is not the same as having stopped talking. The
+  consequence in play is the one you would want: saying anything over voice chat gives your position away.
+
   Everything within `hearing_range` scaled by the reading hears it, which is every `EnemyNpc` in the `Enemies`
   group inside that distance; they are told to `aggro` the Player, and `EnemyNpc.aggro` already refuses a dead
   enemy, a dead Player and one it is already hunting, so it can be shouted every sweep. Sustained noise is
