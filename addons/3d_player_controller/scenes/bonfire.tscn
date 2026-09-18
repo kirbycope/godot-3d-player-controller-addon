@@ -7,9 +7,10 @@
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/nature/rock_medium_1.tscn" id="5_rock1"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/nature/rock_medium_2.tscn" id="6_rock2"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/nature/rock_medium_3.tscn" id="7_rock3"]
+[ext_resource type="Script" uid="uid://c4myfm4eswcy7" path="res://addons/3d_player_controller/scripts/interaction_reach.gd" id="reach_script"]
 
 [sub_resource type="SphereShape3D" id="shape_near"]
-radius = 2.4
+radius = 1.5
 
 [sub_resource type="StandardMaterial3D" id="mat_flame"]
 transparency = 1
@@ -92,6 +93,7 @@ omni_range = 8.0
 shadow_enabled = true
 
 [node name="PlayerDetection" type="Area3D" parent="."]
+script = ExtResource("reach_script")
 collision_layer = 0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="PlayerDetection"]
@@ -102,7 +104,7 @@ shape = SubResource("shape_near")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, 0)
 message_end = "to rest"
 
-[connection signal="body_entered" from="PlayerDetection" to="." method="_on_player_detection_body_entered"]
-[connection signal="body_exited" from="PlayerDetection" to="." method="_on_player_detection_body_exited"]
+[connection signal="body_entered" from="PlayerDetection" to="PlayerDetection" method="_on_body_entered"]
+[connection signal="body_exited" from="PlayerDetection" to="PlayerDetection" method="_on_body_exited"]
 
 [editable path="Checkpoint"]

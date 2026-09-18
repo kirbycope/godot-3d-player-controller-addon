@@ -11,21 +11,12 @@ signal crafted(by: Player, recipe: Recipe)
 @export var station_name: String = "Workbench"
 @export var crafting_screen: CraftingScreen ## The menu to open; the first in the "CraftingScreen" group when empty.
 
-var _nearby: Player = null
-
 @onready var action_prompt: ActionPrompt = $ActionPrompt
 
 
 func _ready() -> void:
 	if crafting_screen == null:
 		crafting_screen = get_tree().get_first_node_in_group(&"CraftingScreen") as CraftingScreen
-
-
-func _input(event: InputEvent) -> void:
-	if _nearby == null or _nearby.is_paused or not event.is_action_pressed(&"action") or event.is_echo():
-		return
-	if open(_nearby):
-		get_viewport().set_input_as_handled()
 
 
 ## Opens the screen for [param who].
@@ -50,15 +41,19 @@ func craft(who: Player, recipe: Recipe) -> bool:
 	return true
 
 
-## Wired to PlayerDetection.body_entered.
-func _on_player_detection_body_entered(body: Node3D) -> void:
-	if body is Player and body.is_multiplayer_authority():
-		_nearby = body
-		action_prompt.show_for(_nearby.controls, prompt_label)
+## Called by [Camera] when this is the one thing the action button would act on.
+func display_menu(who: Player) -> void:
+	action_prompt.show_for(who.controls, prompt_label)
 
 
-## Wired to PlayerDetection.body_exited.
-func _on_player_detection_body_exited(body: Node3D) -> void:
-	if body == _nearby:
-		action_prompt.hide_for(_nearby.controls)
-		_nearby = null
+## Called by [Camera] when it is not.
+func hide_menu() -> void:
+	for who: Node in get_tree().get_nodes_in_group(&"Player"):
+		if who is Player and (who as Player).controls:
+			action_prompt.hide_for((who as Player).controls)
+	action_prompt.hide()
+
+
+## The Camera's Action hook: open the screen for whoever pressed it.
+func equip(who: Player) -> void:
+	open(who)

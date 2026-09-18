@@ -2,6 +2,7 @@ extends Camera3D
 class_name Camera
 
 signal looking_at_changed(previous: Node3D, current: Node3D) ## Emitted when the interactable under the camera ray changes (either may be null).
+signal interaction_target_changed(previous: Node3D, current: Node3D) ## Emitted when the one thing the action button would act on changes (either may be null).
 
 enum Perspective {
 	FIRST_PERSON, ## Rendered from the viewpoint of the player character
@@ -43,6 +44,14 @@ var looking_at: Node3D = null: ## The nearest ancestor of the camera ray's colli
 		var previous: Node3D = looking_at
 		looking_at = value
 		looking_at_changed.emit(previous, value)
+var in_reach: Array[Node3D] = [] ## Everything whose [InteractionReach] the Player is standing in right now.
+var interaction_target: Node3D = null: ## The one thing the action button acts on, and the only one showing a prompt.
+	set(value):
+		if value == interaction_target:
+			return
+		var previous: Node3D = interaction_target
+		interaction_target = value
+		interaction_target_changed.emit(previous, value)
 
 @onready var camera_initial_transform: Transform3D = transform
 @onready var camera_ray_cast: RayCast3D = $CameraRayCast
@@ -78,7 +87,7 @@ func _ready() -> void:
 	if is_multiplayer_authority():
 		make_current()
 
-	looking_at_changed.connect(_on_looking_at_changed)
+	interaction_target_changed.connect(_on_interaction_target_changed)
 
 	# Ensure the [RayCast3D] doesn't collide with the player
 	camera_ray_cast.add_exception(player)
@@ -96,8 +105,9 @@ func _ready() -> void:
 	_update_raycast()
 
 
-## Shows the interaction prompt of the object now under the camera ray and hides the previous one.
-func _on_looking_at_changed(previous: Node3D, current: Node3D) -> void:
+## Shows the interaction prompt of the one thing the button would act on, and hides the previous one. Only
+## ever one prompt is up, which is what tells the player which of a crowd they are about to talk to.
+func _on_interaction_target_changed(previous: Node3D, current: Node3D) -> void:
 	if is_instance_valid(previous) and previous.has_method("hide_menu"):
 		previous.hide_menu()
 	if is_instance_valid(current):
@@ -120,10 +130,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	# Do nothing if the player is not set or is paused/ragdolling
 	if not player or player.is_paused or player.is_typing or player.is_ragdolling: return
 
-	# Look-at interactables that take "action" (the skateboard, the push button); Equipment pickups are walk-over areas instead
-	if looking_at and event.is_action_pressed(&"action") and looking_at.has_method("equip"):
-		looking_at.equip(player)
-		looking_at = null
+	# Interactables that take "action" (the NPC, the chest, the skateboard); Equipment pickups are walk-over areas instead
+	if interaction_target and event.is_action_pressed(&"action") and interaction_target.has_method("equip"):
+		interaction_target.equip(player)
+		interaction_target = null
 
 	# Perspective { Microsoft: ⧉, Nintendo: ⊝, Sony: ⦀, Keyboard: [F5] }
 	if event.is_action_pressed(&"perspective"):
@@ -262,6 +272,44 @@ func _physics_process(_delta: float) -> void:
 	while target and not target.has_method("display_menu"):
 		target = target.get_parent()
 	looking_at = target as Node3D
+	_resolve_interaction_target()
+
+
+## Picks the single thing the action button acts on. What the camera ray lands on wins, so a crowd is settled
+## by where the player is pointing; when the ray lands on nothing, the nearest thing in reach does, so walking
+## up to something still offers it. Anything carrying an [InteractionReach] has to be in that reach to qualify,
+## which is what stops a distant NPC answering across the road just because they are under the crosshair.
+func _resolve_interaction_target() -> void:
+	in_reach = in_reach.filter(func(node: Node3D) -> bool: return is_instance_valid(node))
+	if looking_at and (not looking_at.is_in_group(InteractionReach.GROUP) or in_reach.has(looking_at)):
+		interaction_target = looking_at
+		return
+	interaction_target = nearest_in_reach()
+
+
+## The thing in reach closest to the Player, or null while nothing is.
+func nearest_in_reach() -> Node3D:
+	var best: Node3D = null
+	var shortest: float = INF
+	for node: Node3D in in_reach:
+		var distance: float = player.global_position.distance_squared_to(node.global_position)
+		if distance < shortest:
+			shortest = distance
+			best = node
+	return best
+
+
+## Called by an [InteractionReach] when the Player steps into it.
+func reach_entered(host: Node3D) -> void:
+	if is_instance_valid(host) and not in_reach.has(host):
+		in_reach.append(host)
+
+
+## Called by an [InteractionReach] when the Player steps out of it.
+func reach_exited(host: Node3D) -> void:
+	in_reach.erase(host)
+	if interaction_target == host:
+		_resolve_interaction_target()
 
 
 ## Rotates the [Camera3D]'s [SpringArm3D] using the input from a joypad motion event, while clamping the vertical rotation to prevent flipping.

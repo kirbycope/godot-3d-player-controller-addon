@@ -24,8 +24,6 @@ var is_open: bool = false: ## Replicated; the setter swings the lid on every pee
 		if is_node_ready():
 			_show_lid(true)
 
-var _nearby: Player ## The Player inside the detection area, whose prompt is up.
-
 @onready var action_prompt: ActionPrompt = $ActionPrompt
 
 
@@ -34,34 +32,13 @@ func _ready() -> void:
 	_show_lid()
 
 
-## The walk-up prompt: Action opens for whoever is standing by.
-func _input(event: InputEvent) -> void:
-	if _nearby and not is_open and not _nearby.is_paused and event.is_action_pressed(&"action") and not event.is_echo():
-		if open(_nearby):
-			get_viewport().set_input_as_handled()
-
-
-## Wired to PlayerDetection.body_entered.
-func _on_player_detection_body_entered(body: Node3D) -> void:
-	if body is Player and body.is_multiplayer_authority() and not is_open:
-		_nearby = body
-		display_menu(_nearby)
-
-
-## Wired to PlayerDetection.body_exited.
-func _on_player_detection_body_exited(body: Node3D) -> void:
-	if body == _nearby:
-		_nearby = null
-		hide_menu()
-
-
-## Called by [Camera] while the Player looks at the chest.
+## Called by [Camera] when this is the one thing the action button would act on.
 func display_menu(looking: Player) -> void:
 	if not is_open:
 		action_prompt.show_for(looking.controls, prompt_label)
 
 
-## Called by [Camera] when the Player looks away.
+## Called by [Camera] when it is not.
 func hide_menu() -> void:
 	for looking: Node in get_tree().get_nodes_in_group(&"Player"):
 		if looking is Player and (looking as Player).controls:
@@ -94,7 +71,7 @@ func _request_open(player_path: NodePath) -> void:
 
 func _open_for(who: Player) -> void:
 	is_open = true
-	_nearby = null
+	hide_menu()
 	if who and who.inventory:
 		for item: Item in items:
 			if item.category == Item.Category.EQUIPMENT and item.equipment_scene:

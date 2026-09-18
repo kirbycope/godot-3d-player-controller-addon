@@ -8,23 +8,16 @@ signal drank(by: Player)
 @export var drink_amount: float = 40.0
 @export var prompt_label: String = "Drink"
 
-var _nearby: Player = null
-
 @onready var action_prompt: ActionPrompt = $ActionPrompt
 
 
 func _ready() -> void:
+	# Its own reach, since the water you are standing in is the area itself rather than a volume hung on an object
+	add_to_group(InteractionReach.GROUP)
 	if not body_entered.is_connected(_on_body_entered):
 		body_entered.connect(_on_body_entered)
 	if not body_exited.is_connected(_on_body_exited):
 		body_exited.connect(_on_body_exited)
-
-
-func _input(event: InputEvent) -> void:
-	if _nearby == null or _nearby.is_paused or not event.is_action_pressed(&"action") or event.is_echo():
-		return
-	drink(_nearby)
-	get_viewport().set_input_as_handled()
 
 
 func drink(who: Player) -> void:
@@ -34,13 +27,38 @@ func drink(who: Player) -> void:
 	drank.emit(who)
 
 
+## Called by [Camera] when this is the one thing the action button would act on.
+func display_menu(who: Player) -> void:
+	action_prompt.show_for(who.controls, prompt_label)
+
+
+## Called by [Camera] when it is not.
+func hide_menu() -> void:
+	for who: Node in get_tree().get_nodes_in_group(&"Player"):
+		if who is Player and (who as Player).controls:
+			action_prompt.hide_for((who as Player).controls)
+	action_prompt.hide()
+
+
+## The Camera's Action hook: drink for whoever pressed it.
+func equip(who: Player) -> void:
+	drink(who)
+
+
 func _on_body_entered(body: Node3D) -> void:
-	if body is Player and body.is_multiplayer_authority():
-		_nearby = body
-		action_prompt.show_for(_nearby.controls, prompt_label)
+	var camera: Camera = _camera_of(body)
+	if camera:
+		camera.reach_entered(self)
 
 
 func _on_body_exited(body: Node3D) -> void:
-	if body == _nearby:
-		action_prompt.hide_for(_nearby.controls)
-		_nearby = null
+	var camera: Camera = _camera_of(body)
+	if camera:
+		camera.reach_exited(self)
+
+
+## The [Camera] arbitrating for [param body], when it is a Player this peer is driving.
+func _camera_of(body: Node3D) -> Camera:
+	if body is Player and (body as Player).is_multiplayer_authority():
+		return (body as Player).camera as Camera
+	return null

@@ -13,29 +13,25 @@ signal rested(player: Player)
 @export var revives: Node ## The enemies a rest brings back: this node's [EnemyNpc] descendants, or every one in the tree when empty.
 @export var prompt_label: String = "Rest" ## What the Action button reads beside the fire.
 
-var _nearby: Player = null
-
 @onready var action_prompt: ActionPrompt = $ActionPrompt
 
 
-func _input(event: InputEvent) -> void:
-	if _nearby and not _nearby.is_paused and event.is_action_pressed(&"action") and not event.is_echo():
-		rest(_nearby)
-		get_viewport().set_input_as_handled()
+## Called by [Camera] when this is the one thing the action button would act on.
+func display_menu(who: Player) -> void:
+	action_prompt.show_for(who.controls, prompt_label)
 
 
-## Wired to PlayerDetection.body_entered.
-func _on_player_detection_body_entered(body: Node3D) -> void:
-	if body is Player and body.is_multiplayer_authority():
-		_nearby = body
-		action_prompt.show_for(_nearby.controls, prompt_label)
+## Called by [Camera] when it is not.
+func hide_menu() -> void:
+	for who: Node in get_tree().get_nodes_in_group(&"Player"):
+		if who is Player and (who as Player).controls:
+			action_prompt.hide_for((who as Player).controls)
+	action_prompt.hide()
 
 
-## Wired to PlayerDetection.body_exited.
-func _on_player_detection_body_exited(body: Node3D) -> void:
-	if body == _nearby:
-		action_prompt.hide_for(_nearby.controls)
-		_nearby = null
+## The Camera's Action hook: rest for whoever pressed it.
+func equip(who: Player) -> void:
+	rest(who)
 
 
 ## [param who] rests here: checkpoint, health, flasks, and the dead back at their posts.

@@ -20,7 +20,6 @@ signal refused(by: Player) ## Action without the key.
 @export var stays_open: bool = true ## Off, and it closes again once the Player has walked away.
 
 var is_open: bool = false
-var _nearby: Player = null
 var _panel_rest: Transform3D
 var _tween: Tween
 
@@ -32,16 +31,6 @@ func _ready() -> void:
 	if panel == null:
 		panel = self
 	_panel_rest = panel.transform
-
-
-func _input(event: InputEvent) -> void:
-	if _nearby == null or is_open or _nearby.is_paused or not event.is_action_pressed(&"action") or event.is_echo():
-		return
-	get_viewport().set_input_as_handled()
-	if not has_key(_nearby):
-		refused.emit(_nearby)
-		return
-	open(_nearby)
 
 
 ## Whether [param who] carries [member key] and the door is not [member sealed].
@@ -57,8 +46,7 @@ func open(who: Player) -> bool:
 		who.inventory.remove_item(key, 1)
 	is_open = true
 	collision_shape.disabled = true
-	if _nearby:
-		action_prompt.hide_for(_nearby.controls)
+	hide_menu()
 	_move_panel(true)
 	opened.emit(who)
 	return true
@@ -82,17 +70,33 @@ func _move_panel(opening: bool) -> void:
 	_tween.tween_property(panel, "transform", target, open_seconds)
 
 
-## Wired to PlayerDetection.body_entered.
-func _on_player_detection_body_entered(body: Node3D) -> void:
-	if body is Player and body.is_multiplayer_authority() and not is_open:
-		_nearby = body
-		action_prompt.show_for(_nearby.controls, prompt_label if has_key(_nearby) else locked_label)
+## Called by [Camera] when this is the one thing the action button would act on. An open door offers nothing,
+## and a locked one says so rather than pretending it will open.
+func display_menu(who: Player) -> void:
+	if is_open:
+		return
+	action_prompt.show_for(who.controls, prompt_label if has_key(who) else locked_label)
 
 
-## Wired to PlayerDetection.body_exited.
-func _on_player_detection_body_exited(body: Node3D) -> void:
-	if body == _nearby:
-		action_prompt.hide_for(_nearby.controls)
-		_nearby = null
-		if is_open and not stays_open:
-			close()
+## Called by [Camera] when it is not.
+func hide_menu() -> void:
+	for who: Node in get_tree().get_nodes_in_group(&"Player"):
+		if who is Player and (who as Player).controls:
+			action_prompt.hide_for((who as Player).controls)
+	action_prompt.hide()
+
+
+## The Camera's Action hook: open for whoever pressed it, or refuse when they have no key.
+func equip(who: Player) -> void:
+	if is_open or who == null:
+		return
+	if not has_key(who):
+		refused.emit(who)
+		return
+	open(who)
+
+
+## Wired to PlayerDetection.player_exited: a door that does not stay open swings shut once nobody is by it.
+func _on_player_detection_player_exited(_player: Player) -> void:
+	if is_open and not stays_open:
+		close()

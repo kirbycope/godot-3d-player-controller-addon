@@ -7,6 +7,7 @@
 [ext_resource type="AnimationLibrary" path="res://addons/3d_player_controller/assets/mixamo/animations/tuned/Running.tres" id="5_run"]
 [ext_resource type="PackedScene" uid="uid://dokp6v1sufknx" path="res://addons/controls/action_prompt.tscn" id="6_prompt"]
 [ext_resource type="SceneReplicationConfig" path="res://addons/3d_player_controller/resources/character_body_replication.tres" id="7_body_sync"]
+[ext_resource type="Script" uid="uid://c4myfm4eswcy7" path="res://addons/3d_player_controller/scripts/interaction_reach.gd" id="reach_script"]
 
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_idle"]
 animation = &"Idle/mixamo_com"
@@ -31,7 +32,7 @@ radius = 0.3
 height = 1.8
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_reach"]
-radius = 2.2
+radius = 1.5
 
 [node name="TalkingNpc" type="CharacterBody3D"]
 script = ExtResource("1_script")
@@ -62,6 +63,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.1, 0)
 message_end = "to talk"
 
 [node name="PlayerDetection" type="Area3D" parent="."]
+script = ExtResource("reach_script")
 collision_layer = 0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="PlayerDetection"]
@@ -71,5 +73,5 @@ shape = SubResource("SphereShape3D_reach")
 [node name="BodySynchronizer" type="MultiplayerSynchronizer" parent="."]
 replication_config = ExtResource("7_body_sync")
 
-[connection signal="body_entered" from="PlayerDetection" to="." method="_on_player_detection_body_entered"]
-[connection signal="body_exited" from="PlayerDetection" to="." method="_on_player_detection_body_exited"]
+[connection signal="body_entered" from="PlayerDetection" to="PlayerDetection" method="_on_body_entered"]
+[connection signal="body_exited" from="PlayerDetection" to="PlayerDetection" method="_on_body_exited"]

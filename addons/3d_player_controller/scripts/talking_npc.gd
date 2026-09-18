@@ -15,7 +15,6 @@ const LOCOMOTION_BLEND_PATH: String = "parameters/blend_position"
 @export var faces_talker: bool = true
 
 var talker: Player ## Who is in conversation with this NPC, while one is.
-var _nearby: Player ## The Player inside the detection area, whose prompt is up.
 var _control_speed: float = 0.0
 var locomotion_blend: float = 0.0: ## Replicated: 0 idle, 0.5 walk, 1 run.
 	set(value):
@@ -46,35 +45,14 @@ func _physics_process(delta: float) -> void:
 	_update_locomotion()
 
 
-## The walk-up prompt: Action talks for whoever is standing by.
-func _input(event: InputEvent) -> void:
-	if _nearby and talker == null and not _nearby.is_paused and event.is_action_pressed(&"action") and not event.is_echo():
-		if talk(_nearby):
-			get_viewport().set_input_as_handled()
-
-
-## Wired to PlayerDetection.body_entered.
-func _on_player_detection_body_entered(body: Node3D) -> void:
-	if body is Player and body.is_multiplayer_authority():
-		_nearby = body
-		display_menu(_nearby)
-
-
-## Wired to PlayerDetection.body_exited.
-func _on_player_detection_body_exited(body: Node3D) -> void:
-	if body == _nearby:
-		_nearby = null
-		hide_menu()
-
-
-## Called by [Camera] while the Player looks at this NPC.
+## Called by [Camera] when this NPC is the one thing the action button would act on.
 func display_menu(looking: Player) -> void:
 	if talker or dialogue == null:
 		return
 	action_prompt.show_for(looking.controls, prompt_label)
 
 
-## Called by [Camera] when the Player looks away.
+## Called by [Camera] when they are not.
 func hide_menu() -> void:
 	for looking: Node in get_tree().get_nodes_in_group(&"Player"):
 		if looking is Player and (looking as Player).controls:
@@ -101,9 +79,11 @@ func talk(who: Player) -> bool:
 
 
 func _on_dialogue_ended(_dialogue: Dialogue) -> void:
+	var was: Player = talker
 	talker = null
-	if _nearby:
-		display_menu(_nearby)
+	# The Camera holds the target across the conversation, so the prompt comes back for whoever was talking
+	if was and is_instance_valid(was) and (was.camera as Camera) and (was.camera as Camera).interaction_target == self:
+		display_menu(was)
 
 
 func _face(target: Vector3, delta: float) -> void:
