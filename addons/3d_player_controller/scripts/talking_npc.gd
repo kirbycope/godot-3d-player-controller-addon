@@ -12,9 +12,11 @@ const LOCOMOTION_BLEND_PATH: String = "parameters/blend_position"
 @export var display_name: String = "Villager" ## Who the dialogue box says is speaking, for lines with no speaker of their own.
 @export var dialogue: Dialogue
 @export var prompt_label: String = "Talk" ## What the bottom-action button reads while the prompt is up.
-@export var faces_talker: bool = true
+@export var faces_talker: bool = true ## Turns on the spot to face whoever they are attending to, yaw only; the head modifier does the rest.
+@export var head_tracks_player: bool = true ## Turns the head alone to the Player's own head, on top of whatever the body is doing.
 
 var talker: Player ## Who is in conversation with this NPC, while one is.
+var _attention: Player ## Who this NPC has noticed: the one being offered a prompt, or the one being talked to.
 var _control_speed: float = 0.0
 var locomotion_blend: float = 0.0: ## Replicated: 0 idle, 0.5 walk, 1 run.
 	set(value):
@@ -25,6 +27,7 @@ var locomotion_blend: float = 0.0: ## Replicated: 0 idle, 0.5 walk, 1 run.
 @onready var mannequin: Node3D = $Mannequin_M
 @onready var animation_tree: AnimationTree = $AnimationTree
 @onready var action_prompt: ActionPrompt = $ActionPrompt
+@onready var head_look_at_modifier: LookAtModifier3D = $Mannequin_M/Armature/GeneralSkeleton/HeadLookAtModifier3D ## Turns the head alone; the body's yaw is [method _face].
 
 
 func _ready() -> void:
@@ -35,9 +38,12 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	if not is_multiplayer_authority():
 		return
+	var attending: Player = talker if talker else _attention
+	if attending and is_instance_valid(attending) and faces_talker:
+		# Yaw only. The body turns on the spot and the head modifier carries the pitch, so an NPC looking at a
+		# Player on a step above them tips their head rather than leaning the whole torso back.
+		_face(attending.global_position, delta)
 	if talker:
-		if faces_talker:
-			_face(talker.global_position, delta)
 		_stop_moving()
 		_update_locomotion()
 		return
@@ -45,11 +51,29 @@ func _physics_process(delta: float) -> void:
 	_update_locomotion()
 
 
-## Called by [Camera] when this NPC is the one thing the action button would act on.
+## Called by [Camera] when this NPC is the one thing the action button would act on. Being the chosen one is
+## also when they notice you: they turn to face you and their head comes up, which is the clearest sign of
+## which of a crowd is about to be talked to.
 func display_menu(looking: Player) -> void:
 	if talker or dialogue == null:
 		return
 	action_prompt.show_for(looking.controls, prompt_label)
+	notice(looking)
+
+
+## Turns this NPC's attention to [param who], or lets go when null: the body turns to face them and the head
+## modifier tracks their head. Public so a scene can have somebody watch a Player without a prompt.
+func notice(who: Player) -> void:
+	_attention = who
+	if head_look_at_modifier == null:
+		return
+	var head: Node3D = who.head_attachment if who and is_instance_valid(who) else null
+	if head and head_tracks_player:
+		head_look_at_modifier.target_node = head_look_at_modifier.get_path_to(head)
+		head_look_at_modifier.active = true
+	else:
+		head_look_at_modifier.target_node = NodePath("")
+		head_look_at_modifier.active = false
 
 
 ## Called by [Camera] when they are not.
@@ -58,6 +82,8 @@ func hide_menu() -> void:
 		if looking is Player and (looking as Player).controls:
 			action_prompt.hide_for((looking as Player).controls)
 	action_prompt.hide()
+	if talker == null:
+		notice(null)
 
 
 ## The Camera's Action hook: talk to whoever pressed it.
@@ -73,6 +99,7 @@ func talk(who: Player) -> bool:
 	if not who.dialogue_screen.start(dialogue, self, display_name):
 		return false
 	talker = who
+	notice(who)
 	who.dialogue_screen.dialogue_ended.connect(_on_dialogue_ended, CONNECT_ONE_SHOT)
 	talked_to.emit(who)
 	return true
@@ -84,6 +111,8 @@ func _on_dialogue_ended(_dialogue: Dialogue) -> void:
 	# The Camera holds the target across the conversation, so the prompt comes back for whoever was talking
 	if was and is_instance_valid(was) and (was.camera as Camera) and (was.camera as Camera).interaction_target == self:
 		display_menu(was)
+	else:
+		notice(null)
 
 
 func _face(target: Vector3, delta: float) -> void:

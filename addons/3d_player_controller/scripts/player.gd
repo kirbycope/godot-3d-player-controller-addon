@@ -458,6 +458,7 @@ var _ragdoll_was_enabled: bool = true ## enable_ragdoll before death forced it o
 @onready var paraglider_raycast: RayCast3D = $ParagliderRaycast
 @onready var projectile_raycast: RayCast3D = $CameraMount/ProjectileRaycast
 @onready var skeleton: Skeleton3D = $PlayerModel/Armature/GeneralSkeleton
+@onready var head_attachment: BoneAttachment3D = $PlayerModel/Armature/GeneralSkeleton/HeadAttachment ## Follows the Head bone; what a [TalkingNpc] looks at, and where the headshot area sits.
 @onready var look_at_modifier: LookAtModifier3D = $PlayerModel/Armature/GeneralSkeleton/LookAtModifier3D
 @onready var head_look_at_modifier: LookAtModifier3D = $PlayerModel/Armature/GeneralSkeleton/HeadLookAtModifier3D ## Turns the head alone; the spine one above is for aiming.
 @onready var right_hand_ik: TwoBoneIK3D = $PlayerModel/Armature/GeneralSkeleton/RightHandIK

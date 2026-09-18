@@ -2848,6 +2848,7 @@ script = ExtResource("1_ho2o7")
 animation_tree = NodePath("AnimationTree")
 
 [node name="PlayerModel" parent="." unique_id=1771073607 instance=ExtResource("2_om2v3")]
+editor_description = "The rig: Quaternius' Mannequin_M, its Armature, the GeneralSkeleton every attachment and modifier hangs off, and the AnimationPlayer holding the animation libraries."
 transform = Transform3D(-1, 0, -1.509958e-07, 0, 1, 0, 1.509958e-07, 0, -1, 0, 0, 0)
 
 [node name="GeneralSkeleton" parent="PlayerModel/Armature" parent_id_path=PackedInt32Array(1771073607, 744856598) index="0" unique_id=1546446464]
@@ -2911,11 +2912,13 @@ bones/63/rotation = Quaternion(0.007611704, 0.67625195, -0.73600453, -0.03037766
 bones/64/rotation = Quaternion(-2.3556426e-07, 0.99810296, 0.061568595, -2.4643779e-08)
 
 [node name="FirstPersonCameraBoneAttachment" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton" index="2" unique_id=1896825249]
+editor_description = "Rides the Neck bone. First person puts the camera here, so the view moves with the head the animation is giving it."
 unique_name_in_owner = true
 bone_name = "Neck"
 bone_idx = 5
 
 [node name="LookAtModifier3D" type="LookAtModifier3D" parent="PlayerModel/Armature/GeneralSkeleton" index="3" unique_id=703324849]
+editor_description = "Bends the Spine towards CameraMount/ProjectileRaycast/LookAtTarget, so the torso turns to the aim. Limited to about 110 degrees either way, and only active while HeldObject or Bow asks for it through Player.set_look_at_target."
 active = false
 target_node = NodePath("../../../../CameraMount/ProjectileRaycast/LookAtTarget")
 bone_name = "Spine"
@@ -2931,10 +2934,12 @@ secondary_limit_angle = 1.9198622
 secondary_damp_threshold = 1.0
 
 [node name="ParagliderBoneAttachment" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton" index="4" unique_id=1910251258]
+editor_description = "Rides the RightHand bone and carries the paraglider, so the glider hangs off the hand that holds it."
 bone_name = "RightHand"
 bone_idx = 35
 
 [node name="PhysicalBoneSimulator3D" type="PhysicalBoneSimulator3D" parent="PlayerModel/Armature/GeneralSkeleton" index="5" unique_id=389631199]
+editor_description = "The ragdoll. Its PhysicalBone3D children mirror the skeleton and take over on a lethal fall or a knock-down, then hand back when the Player gets up."
 
 [node name="Physical Bone Hips" type="PhysicalBone3D" parent="PlayerModel/Armature/GeneralSkeleton/PhysicalBoneSimulator3D" unique_id=1979407776]
 transform = Transform3D(0.9951105, -0.07762049, -0.06107518, -0.04460811, 0.1985016, -0.9790849, 0.088120565, 0.9770221, 0.19406854, 0.005878281, 1.042423, -0.01093205)
@@ -3769,6 +3774,7 @@ transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0, 0)
 shape = SubResource("CapsuleShape3D_krtyc")
 
 [node name="RightHandIK" type="TwoBoneIK3D" parent="PlayerModel/Armature/GeneralSkeleton" index="6" unique_id=942617038]
+editor_description = "Two-bone IK pulling the right hand onto a target, aimed by RightHandIKPole. Used where an animation alone will not put the hand where the world needs it, such as a grip on a ledge or a handlebar."
 active = false
 influence = 0.0
 setting_count = 1
@@ -3785,10 +3791,12 @@ settings/0/use_virtual_end = false
 settings/0/extend_end_bone = false
 
 [node name="HeldItemConnector" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton" index="7" unique_id=327941306]
+editor_description = "Where equipment and carried objects are parented, so whatever is in hand follows the hand bone."
 bone_name = "RightIndexProximal"
 bone_idx = 40
 
 [node name="LeftHandHitboxAttachment" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton" index="8" unique_id=85372565]
+editor_description = "Rides the left hand; the melee hitbox for an unarmed strike hangs here."
 bone_name = "LeftHand"
 bone_idx = 11
 
@@ -3802,6 +3810,7 @@ monitorable = false
 shape = SubResource("SphereShape3D_hand_hitbox")
 
 [node name="RightHandHitboxAttachment" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton" index="9" unique_id=118412252]
+editor_description = "The same on the right hand, and where a weapon's own hitbox sits while it is swung."
 bone_name = "RightHand"
 bone_idx = 35
 
@@ -3815,6 +3824,7 @@ monitorable = false
 shape = SubResource("SphereShape3D_hand_hitbox")
 
 [node name="HeadAttachment" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton" index="10" unique_id=1176968755]
+editor_description = "Rides the Head bone. It carries the Head area, which is the headshot hitbox, and it is what a TalkingNpc points its own head modifier at."
 bone_name = "Head"
 bone_idx = 6
 
@@ -3829,10 +3839,12 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0)
 shape = SubResource("SphereShape3D_head")
 
 [node name="SpellHand" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton" index="11" unique_id=602208519]
+editor_description = "The hand a spell leaves from, so a cast starts at the fingertips rather than the Player's origin."
 bone_name = "RightHand"
 bone_idx = 35
 
 [node name="HeadLookAtModifier3D" type="LookAtModifier3D" parent="PlayerModel/Armature/GeneralSkeleton" index="12"]
+editor_description = "Bends the Head alone, and is deliberately the last child of the skeleton so it applies after the spine look-at and the hand IK. Narrower limits than the spine one (about 70 degrees across, 60 up and down) so a target behind the Player is simply not followed. Driven by Player.set_head_look_at_target, which is how the Player can read a screen while their hands keep typing."
 active = false
 bone_name = "Head"
 bone = 6
@@ -3847,6 +3859,7 @@ secondary_limit_angle = 1.0471976
 secondary_damp_threshold = 1.0
 
 [node name="AnimationPlayer" parent="PlayerModel" index="1" unique_id=2123832645]
+editor_description = "Holds the animation libraries, one per clip. The 29 hand-tuned ones come from assets/mixamo/animations/tuned; the rest are read straight from their .glb."
 "libraries/Axe Standing Melee Attack Downward" = ExtResource("4_dtq52")
 "libraries/Axe Standing Melee Attack Horizontal" = ExtResource("5_barxw")
 libraries/Backflip = ExtResource("5_phnwv")
@@ -4051,14 +4064,17 @@ libraries/Throw = ExtResource("169_xw6m8")
 libraries/Waving = ExtResource("87_bdiue")
 
 [node name="HangingBracedDetection" type="RayCast3D" parent="PlayerModel" unique_id=1549617633]
+editor_description = "Looks for a wall in front while hanging, which is what tells a braced hang from a free one."
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0)
 visible = false
 target_position = Vector3(0, 0, 1)
 
 [node name="RightHandIKPole" type="Marker3D" parent="PlayerModel" unique_id=1287346059]
+editor_description = "The pole target aiming the right arm's elbow, so RightHandIK bends it the way an elbow bends."
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0.8)
 
 [node name="LedgeDetectionHorizontal" type="RayCast3D" parent="PlayerModel" unique_id=258103021]
+editor_description = "Looks forward for a ledge to grab; the Climbing and Hanging states use it with the vertical check to decide where the hands land."
 transform = Transform3D(-1, 0, 1.509958e-07, 0, 1, 0, -1.509958e-07, 0, -1, 0, 1.4, 0)
 visible = false
 target_position = Vector3(0, 0, -1)
@@ -4071,14 +4087,17 @@ target_position = Vector3(0, -2, 0)
 mesh = SubResource("SphereMesh_senyo")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=2015024909]
+editor_description = "The Player's body capsule. Its height and position are recorded on ready as initial_collision_shape_height/position, and crouching and sliding shrink it from those."
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 shape = SubResource("CapsuleShape3D_senyo")
 
 [node name="SeparationRayShape3D" type="CollisionShape3D" parent="." unique_id=614897632]
+editor_description = "A separation ray under the capsule that keeps the Player from sinking into steep ground. Its rest transform is kept as initial_separation_ray_transform and restored after states that move it."
 transform = Transform3D(1, 0, 0, 0, 0.258819, -0.9659258, 0, 0.9659258, 0.258819, 0, 0.4, -0.35)
 shape = SubResource("SeparationRayShape3D_senyo")
 
 [node name="AnimationTree" type="AnimationTree" parent="." unique_id=2016387581]
+editor_description = "Drives every animation. Its state machine is the locomotion graph the NodeStateMachine states travel, and root motion comes off the Root bone."
 root_node = NodePath("../PlayerModel")
 root_motion_track = NodePath("%GeneralSkeleton:Root")
 tree_root = SubResource("AnimationNodeBlendTree_senyo")
@@ -4103,18 +4122,23 @@ parameters/LocomotionTimeScale/scale = 1.0
 parameters/EmoteSpineBlend2/blend_amount = 0.0
 
 [node name="RootMotionView" type="RootMotionView" parent="." unique_id=114774248]
+editor_description = "Editor-only gizmo drawing the root motion AnimationTree above reports. Invisible at run time; it is here to debug a clip that drifts."
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0)
 animation_path = NodePath("../AnimationTree")
 
 [node name="NavigationAgent3D" type="NavigationAgent3D" parent="." unique_id=350131034]
+editor_description = "Pathfinding for a Player driven by something other than a person: the click-to-move demo and any scripted walk."
 
 [node name="CameraMount" type="Node3D" parent="." unique_id=1567725441]
+editor_description = "The yaw pivot the look input turns. Everything to do with the view hangs off it, so the Player's own model can face somewhere else while the camera does not."
 transform = Transform3D(1, 0, 0, 0, 0.96592575, 0.258819, 0, -0.258819, 0.96592575, 0, 2, 0)
 
 [node name="CameraSpringArm" type="SpringArm3D" parent="CameraMount" unique_id=1983020082]
+editor_description = "Keeps the third-person camera out of walls by pulling it in when something is between it and the Player. The Player's own body is excluded so it never collides with the character it is following."
 spring_length = 2.0
 
 [node name="Camera3D" type="Camera3D" parent="CameraMount/CameraSpringArm" unique_id=63604691 node_paths=PackedStringArray("camera_mount", "camera_spring_arm", "player")]
+editor_description = "The view. Camera class: it owns the perspective swap, the aim FOV and shoulder offset, and resolves what the Player is looking at."
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1)
 script = ExtResource("12_mv4yd")
 camera_mount = NodePath("../..")
@@ -4122,73 +4146,91 @@ camera_spring_arm = NodePath("..")
 player = NodePath("../../..")
 
 [node name="CameraRayCast" type="RayCast3D" parent="CameraMount/CameraSpringArm/Camera3D" unique_id=45396852]
+editor_description = "The interaction ray. What it hits resolves to the nearest ancestor with display_menu, which the Camera stores as looking_at; collide_with_areas is on so a prompt volume counts."
 transform = Transform3D(1, 0, 0, 0, 0.99999994, 0, 0, 0, 0.99999994, 0, -1.1920929e-07, -0.9999997)
 target_position = Vector3(0, 0, -3)
 collide_with_areas = true
 
 [node name="CameraFollowTimer" type="Timer" parent="CameraMount/CameraSpringArm/Camera3D" unique_id=285025250]
+editor_description = "Runs while the camera holds a rotation the player set by hand, before it goes back to following behind the Player."
 wait_time = 0.8
 one_shot = true
 
 [node name="ToonFilter" parent="CameraMount/CameraSpringArm/Camera3D" instance=ExtResource("225_toon")]
+editor_description = "The cel and newspaper post-process, switched from the Video settings menu. Cel needs Forward+, so it is greyed elsewhere."
 
 [node name="ItemSpringArm" type="SpringArm3D" parent="CameraMount" unique_id=333552600]
+editor_description = "The same idea for whatever is in the Player's hands, so a held object shortens against a wall instead of pushing through it."
 unique_name_in_owner = true
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
 spring_length = 2.0
 margin = 0.4
 
 [node name="ProjectileRaycast" type="RayCast3D" parent="CameraMount" unique_id=1969161568]
+editor_description = "The line rounds and arrows actually travel, kept on the camera's centre so the crosshair and the shot agree."
 transform = Transform3D(1, 0, 0, 0, 1.0000001, 0, 0, 0, 1.0000001, 0, 0, 0)
 visible = false
 target_position = Vector3(0, 0, -40)
 collide_with_areas = true
 
 [node name="LookAtTarget" type="Marker3D" parent="CameraMount/ProjectileRaycast" unique_id=1053507932]
+editor_description = "What the spine LookAtModifier3D aims at: a point out along the projectile ray, so the torso turns to where the shot is going."
 transform = Transform3D(1, 0, 0, 0, 0.99999994, 0, 0, 0, 0.99999994, 0, -1.0728836e-06, -40)
 
 [node name="FallingRaycast" type="RayCast3D" parent="." unique_id=1944469402]
+editor_description = "Looks down for ground. How far it reaches decides whether a step off an edge is a fall or just a drop, so the Falling state does not flicker on stairs."
 target_position = Vector3(0, -0.5, 0)
 
 [node name="ParagliderRaycast" type="RayCast3D" parent="." unique_id=1114703451]
+editor_description = "Looks down for the ground the paraglider needs below it, so the glider cannot be opened with no room to fly."
 
 [node name="AudioListener3D" type="AudioListener3D" parent="." unique_id=1609068324]
+editor_description = "Puts the ears on the Player rather than the camera, so a third-person view does not hear the world from behind the shoulder."
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 0)
 
 [node name="FocusTargetMarker" type="Marker3D" parent="." unique_id=932247395]
+editor_description = "The lock-on indicator. top_level, so Focus can park it in world space above whatever is targeted instead of carrying it around with the Player."
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
 top_level = true
 visible = false
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="FocusTargetMarker" unique_id=1815027829]
+editor_description = "The indicator itself."
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
 mesh = SubResource("QuadMesh_5xw05")
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="FocusTargetMarker" unique_id=519238968]
+editor_description = "Its idle spin or pulse while a target is held."
 root_node = NodePath("../MeshInstance3D")
 libraries/ = SubResource("AnimationLibrary_5h1fl")
 autoplay = &"bounce"
 
 [node name="Audio" parent="." unique_id=1498112001 node_paths=PackedStringArray("player") instance=ExtResource("174_audio_comp")]
+editor_description = "The Player's own sound: footsteps, landings, the voice one-shots the states fire."
 player = NodePath("..")
 
 [node name="SteamPersonaName" type="Label3D" parent="." unique_id=190455524]
+editor_description = "The name over the head. Written by the display_name setter, which is replicated, and cleared for a solo session."
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
 visible = false
 billboard = 1
 text = "Name"
 
 [node name="TargetDetection" type="Area3D" parent="." unique_id=803010061]
+editor_description = "The sphere Focus watches for lock-on candidates; its body_entered and body_exited are wired to Focus. The camera reads its radius to size the focus window."
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="TargetDetection" unique_id=442436861]
+editor_description = "The lock-on sphere. The Camera reads its radius to work out how far off centre a target may drift before focus lets go."
 shape = SubResource("SphereShape3D_5xw05")
 
 [node name="VoiceChatIndicator" type="MeshInstance3D" parent="." unique_id=1500520104]
+editor_description = "The little mark shown while this Player is talking on Steam voice, driven by is_broadcasting."
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.3000002, 0)
 visible = false
 mesh = SubResource("QuadMesh_voice")
 
 [node name="VoiceAudioPlayer" type="AudioStreamPlayer3D" parent="." unique_id=190455525]
+editor_description = "Plays this Player's incoming Steam voice through the Voice bus, positioned so a speaking peer is heard from where they stand."
 playback_type = 1
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 0)
 stream = SubResource("AudioStreamGenerator_voice")
@@ -4196,34 +4238,45 @@ autoplay = true
 bus = &"Voice"
 
 [node name="AttackSequenceTimer" type="Timer" parent="." unique_id=724736604]
+editor_description = "Holds the melee combo window open. Its timeout ends the sequence, so a late second swing starts a new one rather than continuing the old."
 wait_time = 0.4
 one_shot = true
 
 [node name="UpdraftVfxTimer" type="Timer" parent="." unique_id=1673872706]
+editor_description = "Polls for thermals five times a second (timeout goes to _update_updraft_vfx) rather than testing every frame, since the aura only needs to appear promptly, not instantly."
 wait_time = 0.2
 autostart = true
 
 [node name="Controls" parent="." unique_id=1181235604 instance=ExtResource("13_fjdng")]
+editor_description = "The on-screen input hints and the button mapping, from the controls addon. Player.controls is this node, and a world prompt names its bottom-action button."
 
 [node name="Chat" parent="." node_paths=PackedStringArray("player") instance=ExtResource("226_chat")]
+editor_description = "The text chat window. Copes with no Steamworks autoload, so a project without Steam and a web export still run."
 player = NodePath("..")
 
 [node name="Debug" parent="." unique_id=2032410064 node_paths=PackedStringArray("player") instance=ExtResource("20_07327")]
+editor_description = "The debug overlay: state, speed, position and the rest, for a build that wants to see them."
 visible = false
 player = NodePath("..")
 
 [node name="Inventory" parent="." unique_id=509190037 node_paths=PackedStringArray("player") instance=ExtResource("173_0fqn4")]
+editor_description = "The bag and what is worn. Owns items, equipment, the crafting side and the pause menu's pages."
 player = NodePath("..")
 
 [node name="AbilityFx" type="Node3D" parent="." unique_id=164144031]
+editor_description = "Where the spell audio lives: channelling, casting and impact, kept together so Abilities can fire them by name."
 
 [node name="ChannelingAudio" type="AudioStreamPlayer3D" parent="AbilityFx" unique_id=168469685]
+editor_description = "The wind-up of a channelled spell."
 
 [node name="CastingAudio" type="AudioStreamPlayer3D" parent="AbilityFx" unique_id=1372958549]
+editor_description = "The moment a spell is released, after any channelling has finished."
 
 [node name="ImpactAudio" type="AudioStreamPlayer3D" parent="AbilityFx" unique_id=406147478]
+editor_description = "The spell arriving on whatever it hit, played where it landed."
 
 [node name="Abilities" parent="." unique_id=1423797243 node_paths=PackedStringArray("player", "fx_root", "hand_anchor", "channeling_audio", "casting_audio", "impact_audio") instance=ExtResource("219_abil")]
+editor_description = "The spell and skill set, and the cooldowns behind it."
 player = NodePath("..")
 fx_root = NodePath("../AbilityFx")
 hand_anchor = NodePath("../PlayerModel/Armature/GeneralSkeleton/SpellHand")
@@ -4233,31 +4286,38 @@ impact_audio = NodePath("../AbilityFx/ImpactAudio")
 abilities = Array[ExtResource("220_ability")]([ExtResource("221_stealth"), ExtResource("222_heal")])
 
 [node name="SeekerWheel" parent="." node_paths=PackedStringArray("player") instance=ExtResource("227_seeker")]
+editor_description = "The second radial menu on the Seeker button: ammunition kinds while aiming, throwables otherwise."
 player = NodePath("..")
 
 [node name="Pause" parent="." unique_id=498429169 node_paths=PackedStringArray("player") instance=ExtResource("173_errws")]
+editor_description = "The pause menu and the layer every other menu sits under."
 visible = false
 inventory_screen_scene = "res://addons/3d_player_controller/inventory/scenes/inventory_screen.tscn"
 spells_screen_scene = "res://addons/3d_player_controller/inventory/scenes/spells_screen.tscn"
 player = NodePath("..")
 
 [node name="Settings" parent="." unique_id=955686872 node_paths=PackedStringArray("player") instance=ExtResource("174_xwibx")]
+editor_description = "The settings menu the pause menu opens, and the way through to Audio and Video."
 visible = false
 player = NodePath("..")
 
 [node name="AudioSettings" parent="." unique_id=1733087110 node_paths=PackedStringArray("player") instance=ExtResource("174_audio")]
+editor_description = "The volume sliders, saved to PlayerSettingsResource on this machine."
 visible = false
 player = NodePath("..")
 
 [node name="VideoSettings" parent="." unique_id=1733087111 node_paths=PackedStringArray("player") instance=ExtResource("174_video")]
+editor_description = "VSync, UI scale, HUD mode, control scheme, toon shading and the anti-aliasing options, applied through PlayerSettingsResource.apply_video_settings."
 visible = false
 player = NodePath("..")
 
 [node name="LobbyManager" parent="." unique_id=1733087115 node_paths=PackedStringArray("player") instance=ExtResource("174_lobbymgr")]
+editor_description = "The Steam lobby: creating one, joining one, and keeping the member list."
 visible = false
 player = NodePath("..")
 
 [node name="Crosshair" type="TextureRect" parent="." unique_id=1819190414]
+editor_description = "The aiming reticle, shown while a firearm or bow is up and hidden while the hands are blocked."
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
@@ -4274,28 +4334,36 @@ pivot_offset = Vector2(26, 26)
 texture = SubResource("AtlasTexture_fk680")
 
 [node name="Health" parent="." unique_id=1045609922 instance=ExtResource("223_health")]
+editor_description = "Hit points, damage and death. Its died signal starts the RespawnTimer through the death screen."
 max_energy = 100.0
 
 [node name="StatusBars3D" parent="." unique_id=578331059 instance=ExtResource("224_bars")]
+editor_description = "The health and status bars drawn in the world over this Player, so other peers can see them."
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.1, 0)
 
 [node name="RespawnTimer" type="Timer" parent="." unique_id=910877534]
+editor_description = "Counts down on the death screen; its timeout calls respawn."
 wait_time = 3.0
 one_shot = true
 
 [node name="DeathScreen" parent="." node_paths=PackedStringArray("player") instance=ExtResource("228_death")]
+editor_description = "The screen shown on death, counting the RespawnTimer down. Wired to Health.died and Player.respawned."
 player = NodePath("..")
 
 [node name="QuestLog" type="Node" parent="." node_paths=PackedStringArray("player")]
+editor_description = "What this Player has taken on and how far along it is; the quest pages and the tracker read it."
 script = ExtResource("233_questlog")
 player = NodePath("..")
 
 [node name="DialogueScreen" parent="." node_paths=PackedStringArray("player") instance=ExtResource("234_dialogue")]
+editor_description = "The conversation box at the bottom. A TalkingNpc or a Readable opens it, and it pauses the Player the way a menu does."
 player = NodePath("..")
 
 [node name="QuestTracker" parent="." instance=ExtResource("235_tracker")]
+editor_description = "The objectives list in the corner, following the QuestLog."
 
 [node name="Stamina" type="TextureProgressBar" parent="." unique_id=1209274681 node_paths=PackedStringArray("player")]
+editor_description = "The stamina bar and the pool behind it, spent by sprinting, climbing and gliding."
 visible = false
 anchors_preset = 8
 anchor_left = 0.5
@@ -4320,13 +4388,16 @@ player = NodePath("..")
 one_shot = true
 
 [node name="InputSynchronizer" type="MultiplayerSynchronizer" parent="." unique_id=1044493989]
+editor_description = "Replicates this Player's inputs to the authority, so a peer's movement intent crosses the wire rather than their resulting position."
 replication_config = SubResource("SceneReplicationConfig_x4u5g")
 script = ExtResource("8_wyssh")
 
 [node name="PlayerSynchronizer" type="MultiplayerSynchronizer" parent="." unique_id=1044493990]
+editor_description = "Replicates the state every other peer has to see: the animation flags, the blend position, display_name and the rest."
 replication_config = SubResource("SceneReplicationConfig_player")
 
 [node name="Focus" type="Node" parent="." unique_id=252522396 node_paths=PackedStringArray("player", "target_detection", "focus_target_marker", "target_loss_timer")]
+editor_description = "Lock-on: picks a target out of TargetDetection, keeps the camera on it and moves the FocusTargetMarker above it."
 script = ExtResource("208_focus")
 player = NodePath("..")
 target_detection = NodePath("../TargetDetection")
@@ -4338,35 +4409,42 @@ wait_time = 0.5
 one_shot = true
 
 [node name="HeldObject" type="Node" parent="." unique_id=194795531 node_paths=PackedStringArray("player", "throw_charge_bar", "throw_hand")]
+editor_description = "The thing in the Player's hands, carried, and thrown. It points the spine LookAtModifier3D while a body is held."
 script = ExtResource("209_heldobj")
 player = NodePath("..")
 throw_charge_bar = NodePath("../Controls/BottomCenter/ThrowChargeBar")
 throw_hand = NodePath("../PlayerModel/Armature/GeneralSkeleton/HeldItemConnector")
 
 [node name="HitDetection" type="Node" parent="." unique_id=486677887 node_paths=PackedStringArray("player", "left_hand_hitbox", "right_hand_hitbox")]
+editor_description = "Resolves melee hits: which hitbox touched what, and whether it counts as a headshot."
 script = ExtResource("210_hitdet")
 player = NodePath("..")
 left_hand_hitbox = NodePath("../PlayerModel/Armature/GeneralSkeleton/LeftHandHitboxAttachment/LeftHandHitbox")
 right_hand_hitbox = NodePath("../PlayerModel/Armature/GeneralSkeleton/RightHandHitboxAttachment/RightHandHitbox")
 
 [node name="NodeStateMachine" type="Node" parent="." unique_id=933239176 node_paths=PackedStringArray("player")]
+editor_description = "The movement states. One is current at a time and each owns its own transitions, so a state can be swapped or removed without touching the others."
 script = ExtResource("142_aujnh")
 player = NodePath("..")
 
 [node name="Attacking" type="Node" parent="NodeStateMachine" unique_id=1859911169 node_paths=PackedStringArray("player")]
+editor_description = "Movement state: swinging, shooting and the melee combo window. Owns its own transitions, so it can be changed without touching its neighbours."
 process_mode = 4
 script = ExtResource("143_5j8id")
 player = NodePath("../..")
 
 [node name="BoxingInactivityTimer" type="Timer" parent="NodeStateMachine/Attacking" unique_id=1782114043]
+editor_description = "Drops the Player out of the boxing stance after a spell with no swing."
 process_callback = 0
 one_shot = true
 
 [node name="AttackTimeoutTimer" type="Timer" parent="NodeStateMachine/Attacking" unique_id=1782114044]
+editor_description = "Ends an attack that never resolved, so a cancelled swing cannot leave the state stuck."
 process_callback = 0
 one_shot = true
 
 [node name="Climbing" type="Node" parent="NodeStateMachine" unique_id=735495711 node_paths=PackedStringArray("player")]
+editor_description = "Movement state: going up a wall or a ladder, hands on. Owns its own transitions, so it can be changed without touching its neighbours."
 process_mode = 4
 script = ExtResource("142_barxw")
 player = NodePath("../..")
@@ -4375,41 +4453,49 @@ player = NodePath("../..")
 process_callback = 0
 
 [node name="Crouching" type="Node" parent="NodeStateMachine" unique_id=1537110706 node_paths=PackedStringArray("player")]
+editor_description = "Movement state: crouched movement, with the capsule shortened. Owns its own transitions, so it can be changed without touching its neighbours."
 process_mode = 4
 script = ExtResource("144_x0r6x")
 player = NodePath("../..")
 
 [node name="Dodging" type="Node" parent="NodeStateMachine" node_paths=PackedStringArray("player")]
+editor_description = "Movement state: the roll, and the moment of it that does not take a hit. Owns its own transitions, so it can be changed without touching its neighbours."
 process_mode = 4
 script = ExtResource("147_dodging")
 player = NodePath("../..")
 
 [node name="Falling" type="Node" parent="NodeStateMachine" unique_id=1065851108 node_paths=PackedStringArray("player")]
+editor_description = "Movement state: off the ground with no glider out. Owns its own transitions, so it can be changed without touching its neighbours."
 process_mode = 4
 script = ExtResource("144_108j8")
 player = NodePath("../..")
 
 [node name="Flying" type="Node" parent="NodeStateMachine" unique_id=936802932 node_paths=PackedStringArray("player")]
+editor_description = "Movement state: free flight, where the project enables it. Owns its own transitions, so it can be changed without touching its neighbours."
 process_mode = 4
 script = ExtResource("187_8fd3h")
 player = NodePath("../..")
 
 [node name="Hanging" type="Node" parent="NodeStateMachine" unique_id=1621275317 node_paths=PackedStringArray("player")]
+editor_description = "Movement state: hanging from a ledge, braced or free. Owns its own transitions, so it can be changed without touching its neighbours."
 process_mode = 4
 script = ExtResource("144_0ktn1")
 player = NodePath("../..")
 
 [node name="Jumping" type="Node" parent="NodeStateMachine" unique_id=1550884623 node_paths=PackedStringArray("player")]
+editor_description = "Movement state: the launch, until the arc takes over. Owns its own transitions, so it can be changed without touching its neighbours."
 process_mode = 4
 script = ExtResource("148_7fh25")
 player = NodePath("../..")
 
 [node name="Paragliding" type="Node" parent="NodeStateMachine" unique_id=1245808360 node_paths=PackedStringArray("player")]
+editor_description = "Movement state: under the glider, including the lift a thermal gives. Owns its own transitions, so it can be changed without touching its neighbours."
 process_mode = 4
 script = ExtResource("145_8f4nr")
 player = NodePath("../..")
 
 [node name="Pushing" type="Node" parent="NodeStateMachine" unique_id=1918273645 node_paths=PackedStringArray("player")]
+editor_description = "Movement state: shoving a rigid body along. Owns its own transitions, so it can be changed without touching its neighbours."
 process_mode = 4
 script = ExtResource("146_pshng")
 player = NodePath("../..")
@@ -4420,42 +4506,50 @@ wait_time = 0.15
 one_shot = true
 
 [node name="Ragdolling" type="Node" parent="NodeStateMachine" unique_id=1826584439 node_paths=PackedStringArray("player")]
+editor_description = "Movement state: knocked down, with the PhysicalBoneSimulator3D driving the body. Owns its own transitions, so it can be changed without touching its neighbours."
 process_mode = 4
 script = ExtResource("188_ah825")
 player = NodePath("../..")
 
 [node name="Sitting" type="Node" parent="NodeStateMachine" unique_id=1719545523 node_paths=PackedStringArray("player")]
+editor_description = "Movement state: seated, as in a chair or at the computer. Owns its own transitions, so it can be changed without touching its neighbours."
 process_mode = 4
 script = ExtResource("207_gl6xl")
 player = NodePath("../..")
 
 [node name="Riding" type="Node" parent="NodeStateMachine" unique_id=148693985 node_paths=PackedStringArray("player")]
+editor_description = "Movement state: on a rideable, which owns the ground contact while this lasts. Owns its own transitions, so it can be changed without touching its neighbours."
 process_mode = 4
 script = ExtResource("177_riding")
 player = NodePath("../..")
 
 [node name="Sliding" type="Node" parent="NodeStateMachine" unique_id=1184718739 node_paths=PackedStringArray("player")]
+editor_description = "Movement state: the slide out of a sprint, with the capsule shortened. Owns its own transitions, so it can be changed without touching its neighbours."
 process_mode = 4
 script = ExtResource("147_x0r6x")
 player = NodePath("../..")
 
 [node name="Sprinting" type="Node" parent="NodeStateMachine" unique_id=1724353584 node_paths=PackedStringArray("player")]
+editor_description = "Movement state: running, spending stamina. Owns its own transitions, so it can be changed without touching its neighbours."
 process_mode = 4
 script = ExtResource("150_16twp")
 player = NodePath("../..")
 
 [node name="Standing" type="Node" parent="NodeStateMachine" unique_id=1426308531 node_paths=PackedStringArray("player")]
+editor_description = "Movement state: the resting state: idle and ordinary walking. Owns its own transitions, so it can be changed without touching its neighbours."
 process_mode = 4
 script = ExtResource("187_c5lmm")
 player = NodePath("../..")
 
 [node name="Swimming" type="Node" parent="NodeStateMachine" unique_id=1592831893 node_paths=PackedStringArray("player")]
+editor_description = "Movement state: in water, including the dive and the climb out. Owns its own transitions, so it can be changed without touching its neighbours."
 process_mode = 4
 script = ExtResource("185_sp0uh")
 splash_scene = ExtResource("186_splash")
 player = NodePath("../..")
 
 [node name="UnderwaterOverlay" type="CanvasLayer" parent="." unique_id=556784208]
+editor_description = "The full-screen tint while the head is under water; the Swimming state shows and hides it."
 layer = -1
 visible = false
 
@@ -4469,28 +4563,34 @@ grow_vertical = 2
 mouse_filter = 2
 
 [node name="WeaponAudio" type="Node3D" parent="." node_paths=PackedStringArray("player")]
+editor_description = "Weapon sound: drawing, stowing, swinging and landing a hit, with a settle timer so a stow that follows a draw does not talk over it."
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
 script = ExtResource("228_weapon_audio")
 player = NodePath("..")
 
 [node name="SettleTimer" type="Timer" parent="WeaponAudio"]
+editor_description = "Spaces weapon sounds out, so a stow following a draw does not talk over it."
 wait_time = 1.5
 one_shot = true
 autostart = true
 
 [node name="EquipAudio" type="AudioStreamPlayer3D" parent="WeaponAudio"]
+editor_description = "Plays as a weapon comes out, spaced from the stow sound by SettleTimer."
 stream = ExtResource("229_sword_unsheath")
 bus = &"SFX"
 
 [node name="StowAudio" type="AudioStreamPlayer3D" parent="WeaponAudio"]
+editor_description = "Plays as a weapon goes back, spaced from the draw sound by SettleTimer."
 stream = ExtResource("230_sword_sheath")
 bus = &"SFX"
 
 [node name="AttackAudio" type="AudioStreamPlayer3D" parent="WeaponAudio"]
+editor_description = "The swing itself, fired by the attack animation rather than by the button."
 stream = ExtResource("231_sword_attack")
 bus = &"SFX"
 
 [node name="HitAudio" type="AudioStreamPlayer3D" parent="WeaponAudio"]
+editor_description = "The swing connecting, fired by HitDetection once it resolves what was hit."
 stream = ExtResource("232_sword_impact")
 bus = &"SFX"
 

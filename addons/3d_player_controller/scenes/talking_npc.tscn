@@ -45,6 +45,20 @@ libraries/Idle = ExtResource("3_idle")
 "libraries/Standard Walk" = ExtResource("4_walk")
 libraries/Running = ExtResource("5_run")
 
+[node name="HeadLookAtModifier3D" type="LookAtModifier3D" parent="Mannequin_M/Armature/GeneralSkeleton"]
+active = false
+bone_name = "Head"
+bone = 6
+forward_axis = 4
+duration = 0.35
+ease_type = 2
+use_angle_limitation = true
+symmetry_limitation = true
+primary_limit_angle = 1.2217305
+primary_damp_threshold = 1.0
+secondary_limit_angle = 1.0471976
+secondary_damp_threshold = 1.0
+
 [node name="AnimationTree" type="AnimationTree" parent="."]
 root_node = NodePath("../Mannequin_M")
 root_motion_track = NodePath("%GeneralSkeleton:Root")

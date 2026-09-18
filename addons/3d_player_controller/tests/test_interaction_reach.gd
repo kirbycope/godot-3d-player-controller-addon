@@ -125,6 +125,49 @@ func test_walking_out_of_reach_clears_the_offer() -> void:
 	assert_false(npc.action_prompt.visible, "and the prompt goes with it")
 
 
+func test_the_noticed_npc_turns_to_face_the_player_and_tracks_their_head() -> void:
+	var npc: TalkingNpc = _npc(Vector3(0.0, 0.0, -1.2))
+	# Start them facing away, so any turn towards the Player is unmistakable
+	npc.global_rotation = Vector3(0.0, 0.0, 0.0)
+	await wait_physics_frames(4)
+	assert_eq(camera.interaction_target, npc, "Set up with the NPC noticed")
+
+	var to_player: Vector3 = (player.global_position - npc.global_position).slide(Vector3.UP).normalized()
+	for i: int in 40:
+		await wait_physics_frames(1)
+		if (-npc.global_basis.z).normalized().dot(to_player) > 0.99:
+			break
+	var facing: Vector3 = (-npc.global_basis.z).normalized()
+
+	assert_almost_eq(facing.dot(to_player), 1.0, 0.02, "The body comes round to face the Player")
+	assert_almost_eq(npc.global_rotation.x, 0.0, 0.001, "and stays upright: the turn is yaw only")
+	assert_almost_eq(npc.global_rotation.z, 0.0, 0.001, "with no roll either")
+	assert_true(npc.head_look_at_modifier.active, "The head modifier is following")
+	assert_eq(npc.head_look_at_modifier.get_node(npc.head_look_at_modifier.target_node), player.head_attachment,
+		"and it is following the Player's own head")
+
+
+func test_looking_away_lets_the_npc_go() -> void:
+	var npc: TalkingNpc = _npc(Vector3(0.0, 0.0, -1.2))
+	await wait_physics_frames(4)
+	assert_true(npc.head_look_at_modifier.active, "Noticed while being offered")
+
+	npc.global_position = player.global_position + Vector3(0.0, 0.0, -20.0)
+	await wait_physics_frames(4)
+
+	assert_null(npc._attention, "Out of reach, the NPC stops attending")
+	assert_false(npc.head_look_at_modifier.active, "and the head goes back to the animation")
+
+
+func test_the_head_tracking_can_be_turned_off_while_the_body_still_turns() -> void:
+	var npc: TalkingNpc = _npc(Vector3(0.0, 0.0, -1.2))
+	npc.head_tracks_player = false
+	await wait_physics_frames(4)
+
+	assert_eq(npc._attention, player, "Still noticed")
+	assert_false(npc.head_look_at_modifier.active, "but the head is left to the animation")
+
+
 ## A stand-in for the things reachable by the camera ray alone, with no InteractionReach on them.
 class RayOnly:
 	extends StaticBody3D
