@@ -19,13 +19,12 @@ extends Area3D
 signal player_entered(player: Player) ## For a host that cares about proximity itself, like a door that swings shut once you walk off.
 signal player_exited(player: Player)
 
-const GROUP: StringName = &"InteractionReach" ## The host joins this, so the Camera knows the ray alone does not reach it.
-
-
 func _ready() -> void:
+	# The group name is the Camera's, so only this script names both: a class_name pointing each way stops
+	# camera.gd compiling the first time a project loads it, and its Player comes up with a plain Camera3D.
 	var host: Node3D = get_host()
 	if host:
-		host.add_to_group(GROUP)
+		host.add_to_group(Camera.REACH_GROUP)
 
 
 ## The thing this reach belongs to: its parent, which is what carries the prompt and the action.

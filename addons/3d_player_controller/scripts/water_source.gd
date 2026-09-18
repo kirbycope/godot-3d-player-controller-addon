@@ -13,7 +13,7 @@ signal drank(by: Player)
 
 func _ready() -> void:
 	# Its own reach, since the water you are standing in is the area itself rather than a volume hung on an object
-	add_to_group(InteractionReach.GROUP)
+	add_to_group(Camera.REACH_GROUP)
 	if not body_entered.is_connected(_on_body_entered):
 		body_entered.connect(_on_body_entered)
 	if not body_exited.is_connected(_on_body_exited):

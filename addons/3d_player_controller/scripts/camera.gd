@@ -9,6 +9,7 @@ enum Perspective {
 	THIRD_PERSON, ## Rendered from a fixed distance behind and slightly above the player character.
 }
 
+const REACH_GROUP: StringName = &"InteractionReach" ## Anything in it has an [InteractionReach], so the ray alone does not reach it.
 const FOCUS_AIM_WORLD_RADIUS: float = 0.5 ## World-space radius in units/meters that the aim can deviate from the target center.
 
 @export var camera_mount: Node3D
@@ -281,7 +282,7 @@ func _physics_process(_delta: float) -> void:
 ## which is what stops a distant NPC answering across the road just because they are under the crosshair.
 func _resolve_interaction_target() -> void:
 	in_reach = in_reach.filter(func(node: Node3D) -> bool: return is_instance_valid(node))
-	if looking_at and (not looking_at.is_in_group(InteractionReach.GROUP) or in_reach.has(looking_at)):
+	if looking_at and (not looking_at.is_in_group(REACH_GROUP) or in_reach.has(looking_at)):
 		interaction_target = looking_at
 		return
 	interaction_target = nearest_in_reach()
