@@ -261,6 +261,7 @@
 [ext_resource type="AudioStream" path="res://addons/3d_player_controller/resources/audio/sword_sheath.tres" id="230_sword_sheath"]
 [ext_resource type="AudioStream" path="res://addons/3d_player_controller/resources/audio/sword_attack.tres" id="231_sword_attack"]
 [ext_resource type="AudioStream" path="res://addons/3d_player_controller/resources/audio/sword_impact.tres" id="232_sword_impact"]
+[ext_resource type="Script" uid="uid://dyyg6cvd72gkw" path="res://addons/3d_player_controller/scripts/player_noise.gd" id="noise_script"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_ym3ug"]
 radius = 0.009999072
@@ -4414,6 +4415,11 @@ script = ExtResource("209_heldobj")
 player = NodePath("..")
 throw_charge_bar = NodePath("../Controls/BottomCenter/ThrowChargeBar")
 throw_hand = NodePath("../PlayerModel/Armature/GeneralSkeleton/HeldItemConnector")
+
+[node name="PlayerNoise" type="Node" parent="." node_paths=PackedStringArray("player")]
+script = ExtResource("noise_script")
+player = NodePath("..")
+editor_description = "How much noise the Player is making, 0 to 1, from how they are moving plus one-off noises like a landing or a gunshot. Anything in earshot is told to come looking, and the HUD's NoiseMeter draws it."
 
 [node name="HitDetection" type="Node" parent="." unique_id=486677887 node_paths=PackedStringArray("player", "left_hand_hitbox", "right_hand_hitbox")]
 editor_description = "Resolves melee hits: which hitbox touched what, and whether it counts as a headshot."

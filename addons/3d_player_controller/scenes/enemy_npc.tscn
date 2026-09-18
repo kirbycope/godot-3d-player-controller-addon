@@ -362,7 +362,7 @@ graph_offset = Vector2(-334.13638, -114)
 [sub_resource type="SphereShape3D" id="SphereShape3D_head"]
 radius = 0.14
 
-[node name="EnemyNpc" type="CharacterBody3D" groups=["Burnable", "Focusable", "Saveable"]]
+[node name="EnemyNpc" type="CharacterBody3D" groups=["Burnable", "Enemies", "Focusable", "Saveable"]]
 script = ExtResource("1_script")
 move_speed = 3.5
 walk_speed = 1.4
