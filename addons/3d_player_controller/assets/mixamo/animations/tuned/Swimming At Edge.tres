@@ -1,4 +1,4 @@
-[gd_resource type="AnimationLibrary" format=3]
+[gd_resource type="AnimationLibrary" format=3 uid="uid://b3rse23rt1oyw"]
 
 [sub_resource type="Animation" id="Animation_l023j"]
 resource_name = "mixamo_com"
