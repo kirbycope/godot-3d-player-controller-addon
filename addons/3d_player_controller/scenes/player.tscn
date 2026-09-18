@@ -2848,7 +2848,7 @@ script = ExtResource("1_ho2o7")
 animation_tree = NodePath("AnimationTree")
 
 [node name="PlayerModel" parent="." unique_id=1771073607 instance=ExtResource("2_om2v3")]
-editor_description = "The rig: Quaternius' Mannequin_M, its Armature, the GeneralSkeleton every attachment and modifier hangs off, and the AnimationPlayer holding the animation libraries."
+editor_description = "The rig: Mixamo's Y Bot (assets/mixamo/characters/y_bot_root.glb), its Armature, the GeneralSkeleton every attachment and modifier hangs off, and the AnimationPlayer holding the animation libraries. The animations are Mixamo's too. Quaternius supplies the NPC mannequins, not this."
 transform = Transform3D(-1, 0, -1.509958e-07, 0, 1, 0, 1.509958e-07, 0, -1, 0, 0, 0)
 
 [node name="GeneralSkeleton" parent="PlayerModel/Armature" parent_id_path=PackedInt32Array(1771073607, 744856598) index="0" unique_id=1546446464]

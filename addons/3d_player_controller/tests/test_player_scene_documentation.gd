@@ -5,7 +5,7 @@ extends GutTest
 
 const PLAYER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player.tscn")
 
-## Nodes that come out of the Quaternius model rather than being put there by this scene. They belong to the
+## Nodes that come out of Mixamo's Y Bot rather than being put there by this scene. They belong to the
 ## imported .glb, so describing them would mean overriding nodes inside an instanced scene and inviting churn
 ## every time the model reimports.
 const FROM_THE_MODEL: Array[String] = ["Armature", "Alpha_Joints", "Alpha_Surface"]
