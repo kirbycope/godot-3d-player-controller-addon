@@ -4,7 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://fbu1qtdmvo0k" path="res://addons/3d_player_controller/assets/quaternius/characters/Mannequin_M.glb" id="2_model"]
 [ext_resource type="AnimationLibrary" uid="uid://cqhv3e722j6b6" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Idle.glb" id="3_idle"]
 [ext_resource type="AnimationLibrary" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Standard Walk.glb" id="4_walk"]
-[ext_resource type="AnimationLibrary" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Running.glb" id="5_run"]
+[ext_resource type="AnimationLibrary" path="res://addons/3d_player_controller/assets/mixamo/animations/tuned/Running.tres" id="5_run"]
 [ext_resource type="PackedScene" uid="uid://dokp6v1sufknx" path="res://addons/controls/action_prompt.tscn" id="6_prompt"]
 [ext_resource type="SceneReplicationConfig" path="res://addons/3d_player_controller/resources/character_body_replication.tres" id="7_body_sync"]
 

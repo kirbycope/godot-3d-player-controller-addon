@@ -3,9 +3,11 @@ extends GutTest
 ## Purpose: every animation still holds the pose it was last given, rather than the raw Mixamo
 ## capture the importer would put back.
 ##
-## An animation imported with Save to File leaves a .tres next to its .glb that looks generated, and
-## for most of them it is. Three are not: the %GeneralSkeleton:Hips position track in each swim
-## animation is offset by hand to sit the body at the waterline, between 0.298 and 0.4 metres.
+## An animation imported with Save to File leaves a .tres next to its .glb that looks generated.
+## Some of them were not. The %GeneralSkeleton:Hips position track in each swim animation is offset
+## by hand to sit the body at the waterline, between 0.298 and 0.4 metres, and Driving's LowerLeg
+## curves were collapsed to straighten the leg so the foot stopped poking through the floor of the
+## CRV.
 ##
 ## That work was lost twice. Set to 1.2, back to the raw 0.69952834; set to 1.0995283, back to
 ## 0.69952834 again. The player swam 0.65 m under instead of 0.25 m, invisible from the ordinary
@@ -13,51 +15,41 @@ extends GutTest
 ## because the obvious experiment says the opposite. Re-importing a small project holding just the
 ## .glb, its .import and the .tres leaves the file alone, even with a cold .godot cache, after a
 ## move, with a stale uid and with importer_version bumped. Cloning this repository fresh and
-## importing it wipes all three on the first pass. Neither keep_custom_tracks nor marking the track
-## imported=false survives it, and an import_script runs with the right offsets but too late, after
+## importing it wipes them on the first pass. Neither keep_custom_tracks nor marking a track
+## imported = false saves an imported track, and an import_script runs with the right offsets but too late, after
 ## the resource has already been written.
 ##
-## So the swim animations were taken out of the import pipeline. They are hand-owned
-## AnimationLibrary resources under tuned/, save_to_file is off for their .glb files, and an
-## importer that does not own a file cannot rewrite it. Verified on a fresh clone across a cold
-## import and two editor opens.
+## So every animation resource was taken out of the import pipeline. All 29 live under tuned/ as
+## hand-owned AnimationLibrary resources, no .glb has save_to_file enabled any more, every track in
+## them is marked imported = false, and an importer that does not own a file cannot rewrite it.
+## Verified on a fresh clone: a cold import of 1640 files changed nothing under tuned/ and recreated
+## no .tres.
 ##
-## Everything else is still importer output and still worth watching, so the table covers the whole
-## folder rather than the three that were noticed: whatever wipes one wipes its neighbours in the
-## same pass. Judge a diff there by magnitude, not by its existence. The restructure that reverted
-## the swim heights also rewrote 16 other animations, every one a rotation difference of about 1e-7
-## from a re-export, with no position change at all.
+## The table covers every animation rather than the ones that were noticed, because whatever wipes
+## one wipes its neighbours in the same pass. Judge a diff here by magnitude, not by its existence.
+## The restructure that reverted the swim heights also rewrote 16 other animations, every one a
+## rotation difference of about 1e-7 from a re-export, with no position change at all.
 
+## Where the .glb files and their import settings live. No .tres belongs here any more.
 const ANIMATIONS_PATH: String = "res://addons/3d_player_controller/assets/mixamo/animations/root_motion"
 
-## The swim animations are hand-owned AnimationLibrary resources here rather than importer output,
-## which is what stops a cold import rewriting them. Each holds one animation, named as the .glb's
-## was so player.tscn's "Swimming/mixamo_com" still resolves.
+## The hand-owned resources, which is what stops a cold import rewriting them. Each holds one
+## animation, named as the .glb's was so player.tscn's "Swimming/mixamo_com" still resolves.
 const TUNED_PATH: String = "res://addons/3d_player_controller/assets/mixamo/animations/tuned"
 
 const TUNED_ANIMATION: StringName = &"mixamo_com"
 
 const HIPS_TRACK: String = "%GeneralSkeleton:Hips"
 
-## The Hips position track of each animation the importer still owns, as [first key, lowest, highest].
-## An empty array records that the animation has no such track, which most of the jumps do not,
-## carrying their lift on Root instead.
+## The Hips position track of every animation, as [first key, lowest, highest]. All 29 are
+## hand-owned now, so this one table covers the lot. An empty array records that the animation has
+## no such track, which most of the jumps do not, carrying their lift on Root instead.
 ##
 ## Lowest and highest are not decoration. Entering Car's hand edit sank the dip as the driver sits
 ## into the seat from 0.842 to 0.742 and never touched the first key, so a first-key check watched it
 ## get reverted three times and said nothing.
-const EXPECTED_HIPS: Dictionary = {
-	"Backflip": [0.9305699, 0.6450410, 1.3755330],
-	"Ready To Cast Spell Standing Idle": [0.8914642, 0.8442172, 0.8951364],
-	"Running": [0.9219201, 0.9032632, 0.9703432],
-	"Running Forward Flip": [0.9208747, 0.7412975, 1.7819712],
-	"Running Slide": [0.9207888, 0.2397544, 0.9444287],
-	"Sprint": [0.8830373, 0.8738528, 0.9565051],
-	"Throw": [0.9800626, 0.9555750, 1.0105404],
-}
-
-## The animations taken out of the import pipeline, same shape.
 const EXPECTED_TUNED: Dictionary = {
+	"Backflip": [0.9305699, 0.6450410, 1.3755330],
 	"Bow Standing Jump Running To Run Forward": [0.8787579, 0.8170261, 1.2609407],
 	"Bow Standing Jumping": [0.9059604, 0.6815044, 1.2559845],
 	"Driving": [0.6188195, 0.6188195, 0.6188195],
@@ -69,17 +61,23 @@ const EXPECTED_TUNED: Dictionary = {
 	"Jumping Up": [0.9305623, 0.5556197, 1.4869212],
 	"Pistol Jump": [0.9525008, 0.5582689, 1.3935983],
 	"Pistol Jump Forward": [0.9157895, 0.8392248, 1.3117052],
+	"Ready To Cast Spell Standing Idle": [0.8914642, 0.8442172, 0.8951364],
 	"Rifle Aiming Jump": [0.9153314, 0.7656575, 1.0098870],
 	"Rifle Jump Backward": [0.9331605, 0.9039738, 1.0851871],
 	"Rifle Jump Forward": [0.8126116, 0.7970697, 1.2510505],
 	"Rifle Jump Up": [0.9398913, 0.6895890, 0.9398913],
+	"Running": [0.9219201, 0.9032632, 0.9703432],
+	"Running Forward Flip": [0.9208747, 0.7412975, 1.7819712],
 	"Running Jump": [0.8596953, 0.8596953, 1.3047173],
+	"Running Slide": [0.9207888, 0.2397544, 0.9444287],
+	"Sprint": [0.8830373, 0.8738528, 0.9565051],
 	"Swimming": [1.0995283, 1.0838133, 1.1031445],
 	"Swimming At Edge": [1.2018158, 1.1959828, 1.2044084],
 	"Swimming To Edge": [1.1010405, 1.0896482, 1.1420684],
 	"Sword And Shield Jump Attack": [0.9028425, 0.3710695, 1.7480969],
 	"Sword and Shield Jump": [0.8496348, 0.8051223, 1.3529737],
 	"Sword and Shield Jump Forward": [0.9019135, 0.9019135, 1.5937138],
+	"Throw": [0.9800626, 0.9555750, 1.0105404],
 }
 
 ## Total keys across every 3D track, per animation. The Hips figures above say where the body sits;
@@ -129,15 +127,51 @@ const TOLERANCE: float = 0.001
 const MAXIMUM_SWIM_BOB: float = 0.15
 
 
-func test_both_folders_hold_exactly_the_animations_this_test_knows_about() -> void:
+func test_the_importer_owns_no_animation_resource_any_more() -> void:
+	# The whole fix in one assertion. A .tres beside the .glb files is importer output, and a cold
+	# import rewrites importer output from the capture, discarding whatever was tuned by hand.
+	assert_eq(
+		_names_in(ANIMATIONS_PATH),
+		PackedStringArray(),
+		"A .tres has reappeared beside the .glb files. Move it to tuned/ and turn save_to_file off."
+	)
+
+
+func test_tuned_holds_exactly_the_animations_this_test_knows_about() -> void:
 	# Otherwise a new animation could be added, never be checked, and be wiped in the same silence.
-	assert_eq(_names_in(ANIMATIONS_PATH), _sorted_keys(EXPECTED_HIPS), "Update EXPECTED_HIPS.")
 	assert_eq(_names_in(TUNED_PATH), _sorted_keys(EXPECTED_TUNED), "Update EXPECTED_TUNED.")
 
 
-func test_every_animation_the_importer_owns_keeps_its_hips_track() -> void:
-	for name: String in EXPECTED_HIPS:
-		_check(load("%s/%s.tres" % [ANIMATIONS_PATH, name]) as Animation, name, EXPECTED_HIPS[name])
+func test_no_glb_is_configured_to_write_an_animation_resource() -> void:
+	# Godot writes a .tres only for a .glb whose import has save_to_file enabled, so that setting is
+	# what would put these files back under the importer's control.
+	var enabled: PackedStringArray = []
+	for file: String in _import_files():
+		if FileAccess.get_file_as_string(file).contains("\"save_to_file/enabled\": true"):
+			enabled.append(file.get_file())
+	assert_eq(enabled, PackedStringArray(), "save_to_file is back on; these .glb files would overwrite a .tres.")
+
+
+func test_every_hand_owned_glb_keeps_custom_tracks_if_save_to_file_ever_returns() -> void:
+	# Belt and braces for the setting above, over the 29 animations that have a .tres to protect.
+	# keep_custom_tracks cannot save an imported track, but it does preserve the method tracks that
+	# call execute_jump, which exist in no .glb at all. The other imports write nothing and have
+	# nothing to keep, so they are left alone rather than churned.
+	var wrong: PackedStringArray = []
+	for file: String in _hand_owned_import_files():
+		if not FileAccess.get_file_as_string(file).contains("\"save_to_file/keep_custom_tracks\": true"):
+			wrong.append(file.get_file())
+	assert_eq(wrong, PackedStringArray(), "keep_custom_tracks is not true for these.")
+
+
+func test_no_hand_owned_track_is_still_marked_imported() -> void:
+	# An imported track is one the importer claims, and keep_custom_tracks does not protect it. These
+	# resources are hand-owned now, so nothing in them should say otherwise.
+	var claimed: PackedStringArray = []
+	for name: String in EXPECTED_TUNED:
+		if FileAccess.get_file_as_string("%s/%s.tres" % [TUNED_PATH, name]).contains("imported = true"):
+			claimed.append(name)
+	assert_eq(claimed, PackedStringArray(), "These still carry tracks marked imported = true.")
 
 
 func test_every_hand_owned_animation_keeps_its_hips_track() -> void:
@@ -200,8 +234,7 @@ func _hips_position_track(animation: Animation) -> int:
 
 func test_no_animation_has_gained_or_lost_keys() -> void:
 	for name: String in EXPECTED_KEYS:
-		var animation: Animation = _tuned(name) if EXPECTED_TUNED.has(name) else \
-			load("%s/%s.tres" % [ANIMATIONS_PATH, name]) as Animation
+		var animation: Animation = _tuned(name)
 		assert_not_null(animation, "%s should load" % name)
 		if animation == null:
 			continue
@@ -269,3 +302,36 @@ func _names_in(folder: String) -> PackedStringArray:
 	directory.list_dir_end()
 	names.sort()
 	return names
+
+
+## Every .glb.import beside the animations, which is where save_to_file lives.
+func _import_files() -> PackedStringArray:
+	var files: PackedStringArray = []
+	var directory := DirAccess.open(ANIMATIONS_PATH)
+	if directory == null:
+		return files
+	directory.list_dir_begin()
+	var file: String = directory.get_next()
+	while file != "":
+		if not directory.current_is_dir() and file.ends_with(".glb.import"):
+			files.append("%s/%s" % [ANIMATIONS_PATH, file])
+		file = directory.get_next()
+	directory.list_dir_end()
+	files.sort()
+	return files
+
+
+## The .glb.import files belonging to the hand-owned animations. Most are named after the animation,
+## but the flip's .glb spells it "Foward", so the recorded fallback path is checked first.
+func _hand_owned_import_files() -> PackedStringArray:
+	var owned: PackedStringArray = []
+	for file: String in _import_files():
+		var text: String = FileAccess.get_file_as_string(file)
+		var claimed: bool = false
+		for name: String in EXPECTED_TUNED:
+			if text.contains("/%s.tres\"" % name) or file.get_file() == "%s.glb.import" % name:
+				claimed = true
+				break
+		if claimed:
+			owned.append(file)
+	return owned

@@ -414,12 +414,15 @@ To prepare and import custom Mixamo animations with Root Motion:
    vendors this addon and takes new work with `python tools/pull_addons.py 3d_player_controller`;
    the projects that still consume it as a git submodule bump their pointer instead.
 
-### Hand-tuned animations live in `tuned/`, outside the import pipeline
+### Every animation lives in `tuned/`, outside the import pipeline
 
-An animation imported with **Save to File** leaves a `.tres` beside its `.glb`, and for most of them
-that file really is generated output. Three are not. The `%GeneralSkeleton:Hips` position track in
-each swim animation is offset by hand so the body sits at the waterline, and re-importing the `.glb`
-gives back the raw Mixamo capture.
+An animation imported with **Save to File** leaves a `.tres` beside its `.glb` that looks like
+generated output. Some of it was not. The `%GeneralSkeleton:Hips` position track in each swim
+animation is offset by hand so the body sits at the waterline, `Driving`'s two `LowerLeg` rotation
+curves were collapsed to straighten the leg so the foot stopped poking through the floor of the CRV,
+`Entering Car`'s seat dip was lowered, seventeen jump clips carry their lift on `Hips`, and fourteen
+clips carry an `execute_jump` method track that exists in no `.glb` at all. Re-importing gives back
+the raw Mixamo capture and drops every one of those edits.
 
 | Animation | Hips height | Raw capture | Offset |
 | --- | --- | --- | --- |
@@ -431,26 +434,37 @@ That work was lost twice before anyone traced it, and the way it is lost is wort
 because the obvious experiment gives the wrong answer. Re-importing a small project holding only the
 `.glb`, its `.import` and the `.tres` leaves the file alone, even with a cold `.godot` cache, after
 the asset has moved, with a stale `uid` and with `importer_version` bumped. **Cloning this
-repository fresh and letting Godot import it wipes all three on the first pass.** Scale and context
+repository fresh and letting Godot import it wipes them on the first pass.** Scale and context
 matter, so test a fresh clone, not a reduction of one.
 
-Godot offers no setting that saves them. `keep_custom_tracks` does not, on its own or with the track
-marked `imported=false`; an `import_script` runs with the right offsets but too late, after the
-resource has been written.
+Godot offers no setting that saves an imported track. `keep_custom_tracks` does not, on its own or
+with the track marked `imported = false`; an `import_script` runs with the right offsets but too
+late, after the resource has been written.
 
-So these three are no longer importer output. They are hand-owned `AnimationLibrary` resources in
+So no animation is importer output any more. All 29 saved animations are hand-owned
+`AnimationLibrary` resources in
 [`assets/mixamo/animations/tuned/`](assets/mixamo/animations/tuned), each holding one animation still
-named `mixamo_com`, with `save_to_file` switched off for their `.glb` files and `player.tscn`
-pointing at the library rather than the `.glb`. An importer that does not own a file cannot rewrite
-it. Verified on a fresh clone across a cold import and two editor opens.
+named `mixamo_com` so `"Swimming/mixamo_com"` resolves unchanged. Four things hold the line together:
+
+- **No `.tres` sits beside a `.glb`.** `root_motion/` holds sources and import settings only.
+- **No `.glb` has `save_to_file` enabled.** That setting is the only thing that makes Godot write an
+  animation resource, so with it off across all 202 imports the importer writes none.
+- **`keep_custom_tracks` is `true` for all 29**, so if `save_to_file` is ever turned back on, the
+  method tracks calling `execute_jump` survive even though an imported track would not. The other
+  173 imports write nothing and have nothing to keep, so they are left as they are.
+- **Every track in `tuned/` is marked `imported = false`**, 1589 of them, because none of it is the
+  importer's to claim any more.
+
+Verified on a fresh clone: a cold import of 1640 files changed nothing under `tuned/` and recreated
+no `.tres`.
 
 Tune another animation the same way rather than editing beside its `.glb`: save the library into
-`tuned/`, repoint `player.tscn`, turn its `save_to_file` off, and add it to
-`tests/test_swim_animation_heights.gd`. That test holds the heights of every saved animation, not
-only these three, and fails if any of them comes back raw or if one of these reappears as importer
-output. Judge a diff in `root_motion/` by magnitude rather than by its existence: the restructure
-that reverted the swim heights also rewrote 16 other animations, every one a rotation difference of
-about 1e-7 from a re-export with no position change at all.
+`tuned/`, repoint `player.tscn`, turn its `save_to_file` off, mark its tracks `imported = false`, and
+add it to `tests/test_swim_animation_heights.gd`. That test holds the Hips height and total key count
+of all 29, fails if any comes back raw, and fails if a `.tres` reappears beside a `.glb` or a
+`save_to_file` is switched on. Judge a diff by magnitude rather than by its existence: the
+restructure that reverted the swim heights also rewrote 16 other animations, every one a rotation
+difference of about 1e-7 from a re-export with no position change at all.
 
 ---
 
