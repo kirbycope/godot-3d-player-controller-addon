@@ -36,15 +36,29 @@ func test_standing_still_is_silence() -> void:
 	assert_almost_eq(noise.moving_level(), 0.0, 0.001, "A Player who is not moving makes no noise")
 
 
-func test_crouching_is_quieter_than_walking_at_the_same_pace() -> void:
+## Crouching halves the noise, it does not mute it. It used to be a hard ceiling, which meant a crouch-walk
+## read the same flat line however fast you were going, and the meter looked broken while you were moving.
+func test_crouching_halves_the_noise_rather_than_silencing_it() -> void:
 	player.velocity = Vector3(3.0, 0.0, 0.0)
 	player.is_crouching = false
 	var walking: float = noise.moving_level()
 	player.is_crouching = true
-	var sneaking: float = noise.moving_level()
+	var crouched: float = noise.moving_level()
 
-	assert_gt(walking, sneaking, "The same pace crouched is quieter")
-	assert_lt(sneaking, 0.1, "and a sneak is close to silent")
+	assert_gt(walking, crouched, "The same pace crouched is quieter")
+	assert_almost_eq(crouched, walking * noise.crouch_multiplier, 0.001, "by half, not to nothing")
+	assert_gt(crouched, 0.05, "and a crouch-walk still reads on the meter")
+
+
+## The pace still tells within a crouch, which a ceiling took away.
+func test_a_crouch_walk_is_louder_than_a_crouch_creep() -> void:
+	player.is_crouching = true
+	player.velocity = Vector3(1.0, 0.0, 0.0)
+	var creeping: float = noise.moving_level()
+	player.velocity = Vector3(4.0, 0.0, 0.0)
+	var walking: float = noise.moving_level()
+
+	assert_gt(walking, creeping, "Moving faster while crouched is louder than creeping")
 
 
 func test_sprinting_is_the_loudest_way_to_move() -> void:
@@ -56,7 +70,7 @@ func test_sprinting_is_the_loudest_way_to_move() -> void:
 	var sprinting: float = noise.moving_level()
 
 	assert_gt(sprinting, walking, "Sprinting is louder than the same speed at a walk")
-	assert_almost_eq(sprinting, noise.sprinting_level, 0.05, "and at full pace it reads about the sprint ceiling")
+	assert_almost_eq(sprinting, noise.sprinting_level, 0.05, "and at full pace it reads about the sprint level")
 
 
 func test_stealth_takes_the_edge_off() -> void:

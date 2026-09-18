@@ -19,7 +19,7 @@ signal heard_by(listener: Node3D) ## [param listener] was close enough to hear a
 @export_group("Moving")
 @export var still_speed: float = 0.3 ## Below this the Player counts as standing still, and is silent.
 @export var loud_speed: float = 5.5 ## The pace at which moving is as loud as that way of moving gets.
-@export var sneaking_level: float = 0.05 ## The ceiling while crouched.
+@export var crouch_multiplier: float = 0.5 ## What crouching does to the noise. It halves it rather than capping it, so crouch-walking still reads on the meter and still carries: moving carefully is quieter, not silent.
 @export var walking_level: float = 0.55 ## The ceiling on foot at an ordinary pace.
 @export var sprinting_level: float = 0.9 ## The ceiling while sprinting.
 @export var stealth_multiplier: float = 0.35 ## What [member Player.is_stealthed] does to the moving floor.
@@ -88,12 +88,11 @@ func moving_level() -> float:
 	if speed <= still_speed:
 		return 0.0
 	var pace: float = clampf((speed - still_speed) / maxf(loud_speed - still_speed, 0.001), 0.0, 1.0)
-	var ceiling: float = walking_level
+	var out: float = (sprinting_level if player.is_sprinting else walking_level) * pace
+	# Each of these halves or softens what is already there, rather than capping it. A ceiling would mean a
+	# crouched Player reads the same flat line whether they are still or moving as fast as a crouch allows.
 	if player.is_crouching:
-		ceiling = sneaking_level
-	elif player.is_sprinting:
-		ceiling = sprinting_level
-	var out: float = ceiling * pace
+		out *= crouch_multiplier
 	if player.is_stealthed:
 		out *= stealth_multiplier
 	if player.is_swimming:
