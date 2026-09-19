@@ -7,7 +7,7 @@ extends Node3D
 ## [method build_autopilot]; the base does the rest.
 
 @export var player: Player ## The demo's Player; found by the group when left empty.
-@export var control_scheme: PlayerControls.ControlScheme = PlayerControls.ControlScheme.ZELDA
+@export var control_scheme: ControlScheme = PlayerControls.DEFAULT_SCHEME ## The pad layout this style is played with.
 @export var show_whole_hud: bool = true ## Every button on screen, whatever the player saved.
 
 const NAVIGATION_BAKE_FRAMES: int = 8 ## Physics frames a demo waits before baking its navigation mesh.

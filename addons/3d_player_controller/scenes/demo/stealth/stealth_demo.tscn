@@ -1,4 +1,4 @@
-[gd_scene load_steps=27 format=3 uid="uid://c7stealthdemo01"]
+[gd_scene load_steps=28 format=3 uid="uid://c7stealthdemo01"]
 
 [ext_resource type="Script" path="res://addons/3d_player_controller/scenes/demo/stealth/stealth_demo.gd" id="script"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/player.tscn" id="player"]
@@ -19,6 +19,7 @@
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/stylized_nature/Bush_Common.gltf" id="bush"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/nature/commontree_1.tscn" id="tree"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/nature/rock_medium_2.tscn" id="rock"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/control_schemes/zelda.tres" id="control_scheme_res"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
 sky_top_color = Color(0.08, 0.1, 0.22, 1)
@@ -61,7 +62,7 @@ size = Vector3(5, 3, 3)
 
 [node name="StealthDemo" type="Node3D" node_paths=PackedStringArray("guards", "exit", "navigation_region")]
 script = ExtResource("script")
-control_scheme = 0
+control_scheme = ExtResource("control_scheme_res")
 guards = NodePath("Guards")
 exit = NodePath("Exit/ExitTrigger")
 navigation_region = NodePath("NavigationRegion3D")

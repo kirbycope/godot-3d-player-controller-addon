@@ -39,8 +39,11 @@ enum HudMode { AUTO, SHOWN, HIDDEN } ## Auto shows the on-screen controls on tou
 @export var hud_mode: int = HudMode.AUTO ## Whether the Player's on-screen controls ([member Player.controls]) are drawn; a [enum HudMode].
 
 # Controls Settings
-enum SchemeSetting { GAME_DEFAULT, ZELDA, GTA, PLATFORMER } ## Game Default keeps [member Player.control_scheme] as the scene set it; the rest are [enum PlayerControls.ControlScheme] plus one.
-@export var control_scheme_index: int = SchemeSetting.GAME_DEFAULT ## Which pad layout and aiming the player picked; a [enum SchemeSetting].
+## The menu's first entry, which keeps [member Player.control_scheme] as the scene set it. Every entry after it
+## is [constant PlayerControls.BUILT_IN_SCHEMES] in order, offset by this one, so the saved number keeps meaning
+## the same layout when a scheme is added after it.
+const GAME_DEFAULT: int = 0
+@export var control_scheme_index: int = GAME_DEFAULT ## Which pad layout the player picked; see [constant GAME_DEFAULT].
 
 var _scaled_window: Window ## The window Auto follows on resize, connected once.
 
@@ -150,10 +153,19 @@ static func hud_shown_for(mode: int, input_type: int, touchscreen: bool) -> bool
 	return input_type == Controls.InputType.TOUCH and touchscreen
 
 
+## The [ControlScheme] a menu entry stands for, or null for Game Default and anything out of range.
+static func scheme_for_index(index: int) -> ControlScheme:
+	var at: int = index - 1
+	if at < 0 or at >= PlayerControls.BUILT_IN_SCHEMES.size():
+		return null
+	return PlayerControls.BUILT_IN_SCHEMES[at]
+
+
 ## Puts the picked control scheme on [param player]; Game Default leaves the scene's choice alone.
 func apply_control_scheme(player: Player) -> void:
-	if player and control_scheme_index > SchemeSetting.GAME_DEFAULT:
-		player.control_scheme = (control_scheme_index - 1) as PlayerControls.ControlScheme
+	var scheme: ControlScheme = scheme_for_index(control_scheme_index)
+	if player and scheme:
+		player.control_scheme = scheme
 
 
 func apply_all(viewport: Viewport, player: Player = null) -> void:

@@ -27,7 +27,7 @@ func before_each() -> void:
 
 
 func test_the_demo_sets_the_player_up_for_gta() -> void:
-	assert_eq(player.control_scheme, PlayerControls.ControlScheme.GTA)
+	assert_eq(player.control_scheme, preload("res://addons/3d_player_controller/resources/control_schemes/gta.tres"))
 	assert_false(player.lock_on_enabled(), "Focus aims freely over the shoulder")
 	assert_false(player.controls.contextual_only, "The whole HUD is on screen in a demo")
 	assert_eq(player.controls.joypad_button_0_label.text, "Sprint", "A is Sprint on a GTA pad")

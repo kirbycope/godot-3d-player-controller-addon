@@ -1,4 +1,4 @@
-[gd_scene load_steps=29 format=3 uid="uid://c7soulsdemo0001"]
+[gd_scene load_steps=30 format=3 uid="uid://c7soulsdemo0001"]
 
 [ext_resource type="Script" path="res://addons/3d_player_controller/scenes/demo/souls/souls_demo.gd" id="script"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/player.tscn" id="player"]
@@ -20,6 +20,7 @@
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/fantasy_props/Chain_Coil.gltf" id="chain"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/nature/pine_2.tscn" id="pine"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/nature/rock_medium_3.tscn" id="rock"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/control_schemes/zelda.tres" id="control_scheme_res"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
 sky_top_color = Color(0.07, 0.08, 0.12, 1)
@@ -67,7 +68,7 @@ size = Vector3(4.4, 4, 1.2)
 
 [node name="SoulsDemo" type="Node3D" node_paths=PackedStringArray("bonfire", "hollows", "boss", "fog_gate")]
 script = ExtResource("script")
-control_scheme = 0
+control_scheme = ExtResource("control_scheme_res")
 bonfire = NodePath("Bonfire")
 hollows = NodePath("Enemies/Hollows")
 boss = NodePath("Enemies/Gravelord")

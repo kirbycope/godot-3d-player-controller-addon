@@ -1,4 +1,4 @@
-[gd_scene load_steps=38 format=3 uid="uid://c7gtademo00001"]
+[gd_scene load_steps=39 format=3 uid="uid://c7gtademo00001"]
 
 [ext_resource type="Script" path="res://addons/3d_player_controller/scenes/demo/gta/gta_demo.gd" id="script"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/player.tscn" id="player"]
@@ -30,6 +30,7 @@
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/gta/building_small.tscn" id="building_small"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/gta/crate.tscn" id="crate"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/gta/barrel.tscn" id="barrel"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/control_schemes/gta.tres" id="control_scheme_res"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
 sky_top_color = Color(0.36, 0.5, 0.7, 1)
@@ -68,7 +69,7 @@ size = Vector3(120, 1, 120)
 
 [node name="GtaDemo" type="Node3D" node_paths=PackedStringArray("wanted", "lot_gunmen", "lot_trigger")]
 script = ExtResource("script")
-control_scheme = 1
+control_scheme = ExtResource("control_scheme_res")
 wanted = NodePath("WantedLevel")
 lot_gunmen = NodePath("Lot/Gunmen")
 lot_trigger = NodePath("Lot/LotTrigger")

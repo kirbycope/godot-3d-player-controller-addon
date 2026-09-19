@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://c7flightdemo001"]
+[gd_scene load_steps=21 format=3 uid="uid://c7flightdemo001"]
 
 [ext_resource type="Script" path="res://addons/3d_player_controller/scenes/demo/flight/flight_demo.gd" id="script"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/player.tscn" id="player"]
@@ -12,6 +12,7 @@
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/gta/building_small.tscn" id="building_small"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/downtown_city/Street_4WayIntersection.gltf" id="intersection"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/downtown_city/Street_4Lane.gltf" id="street"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/control_schemes/zelda.tres" id="control_scheme_res"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
 sky_top_color = Color(0.25, 0.45, 0.85, 1)
@@ -52,7 +53,7 @@ size = Vector3(10, 2, 10)
 
 [node name="FlightDemo" type="Node3D" node_paths=PackedStringArray("course", "landing")]
 script = ExtResource("script")
-control_scheme = 0
+control_scheme = ExtResource("control_scheme_res")
 course = NodePath("Course")
 landing = NodePath("Landing/LandingTrigger")
 

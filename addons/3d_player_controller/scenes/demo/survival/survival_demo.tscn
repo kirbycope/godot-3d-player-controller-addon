@@ -1,4 +1,4 @@
-[gd_scene load_steps=41 format=3 uid="uid://c7survivaldemo1"]
+[gd_scene load_steps=42 format=3 uid="uid://c7survivaldemo1"]
 
 [ext_resource type="Script" path="res://addons/3d_player_controller/scenes/demo/survival/survival_demo.gd" id="script"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/player.tscn" id="player"]
@@ -29,6 +29,7 @@
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/fantasy_props/FarmCrate_Apple.gltf" id="apple_crate"]
 [ext_resource type="Texture2D" path="res://addons/3d_player_controller/assets/icons/berries.svg" id="hunger_icon"]
 [ext_resource type="Texture2D" path="res://addons/3d_player_controller/assets/icons/potion.svg" id="thirst_icon"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/control_schemes/zelda.tres" id="control_scheme_res"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
 sky_top_color = Color(0.3, 0.55, 0.9, 1)
@@ -91,7 +92,7 @@ corner_radius_bottom_left = 3
 
 [node name="SurvivalDemo" type="Node3D" node_paths=PackedStringArray("vitals", "station", "stream", "shelter", "hunger_bar", "thirst_bar")]
 script = ExtResource("script")
-control_scheme = 0
+control_scheme = ExtResource("control_scheme_res")
 vitals = NodePath("Player/Vitals")
 station = NodePath("Camp/Workbench")
 stream = NodePath("Stream/Water")

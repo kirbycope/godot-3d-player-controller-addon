@@ -1,4 +1,4 @@
-[gd_scene load_steps=25 format=3 uid="uid://c7platformdemo1"]
+[gd_scene load_steps=26 format=3 uid="uid://c7platformdemo1"]
 
 [ext_resource type="Script" path="res://addons/3d_player_controller/scenes/demo/platformer/platformer_demo.gd" id="script"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/player.tscn" id="player"]
@@ -16,6 +16,7 @@
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/stylized_nature/Bush_Common.gltf" id="bush"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/nature/commontree_2.tscn" id="tree"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/nature/rock_medium_1.tscn" id="rock"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/control_schemes/platformer.tres" id="control_scheme_res"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
 sky_top_color = Color(0.25, 0.5, 0.95, 1)
@@ -59,7 +60,7 @@ size = Vector3(6, 3, 2)
 
 [node name="PlatformerDemo" type="Node3D" node_paths=PackedStringArray("goons", "goal")]
 script = ExtResource("script")
-control_scheme = 2
+control_scheme = ExtResource("control_scheme_res")
 goons = NodePath("Islands/Goons")
 goal = NodePath("Islands/Goal")
 

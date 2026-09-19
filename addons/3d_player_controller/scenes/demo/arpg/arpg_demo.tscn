@@ -1,4 +1,4 @@
-[gd_scene load_steps=27 format=3 uid="uid://c7arpgdemo00001"]
+[gd_scene load_steps=28 format=3 uid="uid://c7arpgdemo00001"]
 
 [ext_resource type="Script" path="res://addons/3d_player_controller/scenes/demo/arpg/arpg_demo.gd" id="script"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/player.tscn" id="player"]
@@ -20,6 +20,7 @@
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/fantasy_props/Banner_1.gltf" id="banner"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/fantasy_props/Cage_Small.gltf" id="cage"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/fantasy_props/Chain_Coil.gltf" id="chain"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/control_schemes/zelda.tres" id="control_scheme_res"]
 
 [sub_resource type="Environment" id="env"]
 background_mode = 1
@@ -61,7 +62,7 @@ size = Vector3(24, 3, 6)
 
 [node name="ArpgDemo" type="Node3D" node_paths=PackedStringArray("spawner", "lord", "hall_trigger", "lair_trigger", "navigation_region")]
 script = ExtResource("script")
-control_scheme = 0
+control_scheme = ExtResource("control_scheme_res")
 spawner = NodePath("WaveSpawner")
 lord = NodePath("Enemies/CryptLord")
 hall_trigger = NodePath("Triggers/Hall")

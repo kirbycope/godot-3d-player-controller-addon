@@ -37,7 +37,7 @@ func before_each() -> void:
 func after_each() -> void:
 	# The InputMap outlives the scene: put the pad back the way the other suites expect it
 	if is_instance_valid(player):
-		player.control_scheme = PlayerControls.ControlScheme.ZELDA
+		player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/zelda.tres")
 	if _had_file:
 		var file: FileAccess = FileAccess.open(PlayerSettingsResource.SAVE_PATH, FileAccess.WRITE)
 		file.store_buffer(_backup)
@@ -55,7 +55,7 @@ func _has_button(action: StringName, button: JoyButton) -> bool:
 
 
 func test_zelda_is_the_default_layout() -> void:
-	assert_eq(player.control_scheme, PlayerControls.ControlScheme.ZELDA)
+	assert_eq(player.control_scheme, preload("res://addons/3d_player_controller/resources/control_schemes/zelda.tres"))
 	assert_true(_has_button(&"action", JOY_BUTTON_A), "A is Action")
 	assert_true(_has_button(&"sprint", JOY_BUTTON_B), "B is Sprint")
 	assert_true(_has_button(&"attack", JOY_BUTTON_X), "X is Attack")
@@ -65,7 +65,7 @@ func test_zelda_is_the_default_layout() -> void:
 
 
 func test_gta_moves_the_face_buttons_and_frees_the_aim() -> void:
-	player.control_scheme = PlayerControls.ControlScheme.GTA
+	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/gta.tres")
 	assert_true(_has_button(&"sprint", JOY_BUTTON_A), "A is Sprint")
 	assert_true(_has_button(&"attack", JOY_BUTTON_B), "B is Attack")
 	assert_true(_has_button(&"jump", JOY_BUTTON_X), "X is Jump")
@@ -79,8 +79,8 @@ func test_gta_moves_the_face_buttons_and_frees_the_aim() -> void:
 
 
 func test_switching_back_restores_zelda() -> void:
-	player.control_scheme = PlayerControls.ControlScheme.GTA
-	player.control_scheme = PlayerControls.ControlScheme.ZELDA
+	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/gta.tres")
+	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/zelda.tres")
 	assert_true(_has_button(&"action", JOY_BUTTON_A))
 	assert_false(_has_button(&"sprint", JOY_BUTTON_A))
 	assert_true(_has_button(&"jump", JOY_BUTTON_Y))
@@ -96,13 +96,13 @@ func test_focus_never_locks_on_under_gta() -> void:
 	player.get_parent().add_child(target)
 	target.global_position = player.global_position + Vector3(0.0, 1.0, -2.0)
 	await wait_physics_frames(2)
-	player.control_scheme = PlayerControls.ControlScheme.GTA
+	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/gta.tres")
 	Input.action_press("focus")
 	await wait_physics_frames(3)
 	assert_null(player.current_focus_target, "Free aim acquires nobody")
 	Input.action_release("focus")
 	await wait_physics_frames(1)
-	player.control_scheme = PlayerControls.ControlScheme.ZELDA
+	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/zelda.tres")
 	Input.action_press("focus")
 	await wait_physics_frames(3)
 	assert_eq(player.current_focus_target, target, "Lock-on is back with Zelda")
@@ -112,13 +112,13 @@ func test_focus_never_locks_on_under_gta() -> void:
 
 func test_saved_setting_overrides_the_scene() -> void:
 	var settings: PlayerSettingsResource = PlayerSettingsResource.load_or_create()
-	settings.control_scheme_index = PlayerSettingsResource.SchemeSetting.GTA
+	settings.control_scheme_index = 2
 	settings.apply_control_scheme(player)
-	assert_eq(player.control_scheme, PlayerControls.ControlScheme.GTA)
-	settings.control_scheme_index = PlayerSettingsResource.SchemeSetting.GAME_DEFAULT
-	player.control_scheme = PlayerControls.ControlScheme.ZELDA
+	assert_eq(player.control_scheme, preload("res://addons/3d_player_controller/resources/control_schemes/gta.tres"))
+	settings.control_scheme_index = PlayerSettingsResource.GAME_DEFAULT
+	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/zelda.tres")
 	settings.apply_control_scheme(player)
-	assert_eq(player.control_scheme, PlayerControls.ControlScheme.ZELDA, "Game Default leaves the scene's choice")
+	assert_eq(player.control_scheme, preload("res://addons/3d_player_controller/resources/control_schemes/zelda.tres"), "Game Default leaves the scene's choice")
 
 
 func test_the_video_settings_menu_lists_the_schemes() -> void:
@@ -128,7 +128,38 @@ func test_the_video_settings_menu_lists_the_schemes() -> void:
 	assert_eq(menu.get_item_text(2), "GTA")
 	assert_eq(menu.get_item_text(3), "Platformer")
 	player.video_settings._on_control_scheme_item_selected(2)
-	assert_eq(player.control_scheme, PlayerControls.ControlScheme.GTA, "Picking GTA in the menu lays the pad out that way at once")
+	assert_eq(player.control_scheme, preload("res://addons/3d_player_controller/resources/control_schemes/gta.tres"), "Picking GTA in the menu lays the pad out that way at once")
 	player.video_settings._on_control_scheme_item_selected(3)
-	assert_eq(player.control_scheme, PlayerControls.ControlScheme.PLATFORMER)
+	assert_eq(player.control_scheme, preload("res://addons/3d_player_controller/resources/control_schemes/platformer.tres"))
 	assert_eq(player.controls.action_button_0, &"jump", "Jump is on the bottom button")
+
+
+## The point of a scheme being a resource: a game ships its own layout without editing this addon. Built here in
+## code rather than loaded from a .tres, because a game's file would not be in the addon to load.
+func test_a_game_can_ship_a_layout_of_its_own() -> void:
+	var southpaw := ControlScheme.new()
+	southpaw.scheme_name = "Southpaw"
+	southpaw.action_button_0 = &"attack"
+	southpaw.action_button_1 = &"jump"
+	southpaw.action_button_2 = &"action"
+	southpaw.action_button_3 = &"sprint"
+	southpaw.locks_on = false
+
+	player.control_scheme = southpaw
+
+	assert_true(_has_button(&"attack", JOY_BUTTON_A), "A is whatever the game's scheme says")
+	assert_true(_has_button(&"jump", JOY_BUTTON_B))
+	assert_true(_has_button(&"action", JOY_BUTTON_X))
+	assert_true(_has_button(&"sprint", JOY_BUTTON_Y))
+	assert_false(_has_button(&"action", JOY_BUTTON_A), "and A came off the action it used to carry")
+	assert_false(player.lock_on_enabled(), "The scheme decides the aim too, not a name this addon knows")
+	assert_eq(player.controls.joypad_button_0_label.text, "Attack", "The resting label follows")
+
+
+## Platformer's own resource says it locks on, which is what the layout was always documented to do; it did not
+## before, because the check was a comparison against the Zelda scheme rather than something a scheme carried.
+func test_the_scheme_carries_whether_focus_locks_on() -> void:
+	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/platformer.tres")
+	assert_true(player.lock_on_enabled(), "Platformer locks on, the way its description always said")
+	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/gta.tres")
+	assert_false(player.lock_on_enabled())

@@ -3,7 +3,7 @@ extends PlayerMenuLayer
 @onready var vsync_button: CheckButton = $Panel/VBoxContainer/VSYNC
 @onready var ui_scale_button: OptionButton = $Panel/VBoxContainer/UIScale ## Items are [constant PlayerSettingsResource.UI_SCALES] in order.
 @onready var hud_button: OptionButton = $Panel/VBoxContainer/OnScreenControls ## Items are [enum PlayerSettingsResource.HudMode] in order.
-@onready var scheme_button: OptionButton = $Panel/VBoxContainer/ControlScheme ## Items are [enum PlayerSettingsResource.SchemeSetting] in order.
+@onready var scheme_button: OptionButton = $Panel/VBoxContainer/ControlScheme ## Game Default, then [constant PlayerControls.BUILT_IN_SCHEMES] in order; filled by [method _fill_scheme_button].
 @onready var toon_button: OptionButton = $Panel/VBoxContainer/ToonShading ## Items are [enum ToonFilter.Mode] in order.
 @onready var msaa_button: OptionButton = $Panel/VBoxContainer/MSAA
 @onready var ssaa_button: OptionButton = $Panel/VBoxContainer/SSAA
@@ -27,6 +27,7 @@ func _ready() -> void:
 	vsync_button.set_pressed_no_signal(settings_res.vsync_enabled)
 	ui_scale_button.selected = clampi(settings_res.ui_scale_index, 0, ui_scale_button.item_count - 1)
 	hud_button.selected = clampi(settings_res.hud_mode, 0, hud_button.item_count - 1)
+	_fill_scheme_button()
 	scheme_button.selected = clampi(settings_res.control_scheme_index, 0, scheme_button.item_count - 1)
 	toon_button.selected = clampi(settings_res.toon_mode, 0, toon_button.item_count - 1)
 	update_cel_availability(player.toon_filter.is_cel_available() if player and is_instance_valid(player.toon_filter) else RenderingServer.get_current_rendering_method() == ToonFilter.FORWARD_PLUS)
@@ -82,6 +83,16 @@ func _on_on_screen_controls_touch_screen_button_pressed() -> void:
 
 
 ## The scheme goes straight on the Player, so the pad is laid out the new way as soon as the menu closes.
+## Names the layouts from the scheme resources themselves rather than from items typed into the scene, so a
+## game that ships another [ControlScheme] gets it listed without touching this menu.
+func _fill_scheme_button() -> void:
+	scheme_button.clear()
+	scheme_button.add_item("Default", PlayerSettingsResource.GAME_DEFAULT)
+	for at: int in PlayerControls.BUILT_IN_SCHEMES.size():
+		var scheme: ControlScheme = PlayerControls.BUILT_IN_SCHEMES[at]
+		scheme_button.add_item(scheme.scheme_name, at + 1)
+
+
 func _on_control_scheme_item_selected(index: int) -> void:
 	settings_res.control_scheme_index = index
 	settings_res.apply_control_scheme(player)

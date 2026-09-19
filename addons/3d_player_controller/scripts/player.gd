@@ -46,9 +46,11 @@ var uses_mouse: bool: ## Whether the mouse is this Player's: only a Player on th
 	get:
 		return input_device < 0
 ## Which game's controls the Player answers to: the pad's face-button layout and what Focus does. Zelda locks on
-## to a target; GTA aims freely over the shoulder. See [enum PlayerControls.ControlScheme]. The settings menu can
-## override it for the player ([member PlayerSettingsResource.control_scheme_index]).
-@export var control_scheme: PlayerControls.ControlScheme = PlayerControls.ControlScheme.ZELDA:
+## to a target; GTA aims freely over the shoulder. Any [ControlScheme] resource will do, so a game can ship a
+## layout of its own without editing this addon; the ones here are in
+## [code]resources/control_schemes/[/code]. The settings menu can override it for the player
+## ([member PlayerSettingsResource.control_scheme_index]).
+@export var control_scheme: ControlScheme = PlayerControls.DEFAULT_SCHEME:
 	set(value):
 		control_scheme = value
 		if is_node_ready() and controls and is_multiplayer_authority():
@@ -308,8 +310,9 @@ var hud_mode_override: int = -1:
 
 
 ## Whether Focus locks on to a target (the Zelda scheme) rather than aiming freely over the shoulder (GTA).
+## The scheme resource says so itself, so a layout that ships with a game decides this too.
 func lock_on_enabled() -> bool:
-	return control_scheme == PlayerControls.ControlScheme.ZELDA
+	return control_scheme != null and control_scheme.locks_on
 
 
 ## Returns the 3D focus target position (resolving Marker3D_FocusTarget on the target body if present).

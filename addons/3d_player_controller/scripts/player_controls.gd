@@ -53,24 +53,20 @@ const PLAYER_ACTIONS: Dictionary = {
 ## ([constant PLAYER_ACTIONS]), the shoulders, the triggers, the sticks and the d-pad are the same in every
 ## scheme; a scheme moves the four face buttons about and decides what Focus does (see
 ## [method Player.lock_on_enabled]). [member Player.control_scheme] picks it.
-enum ControlScheme {
-	ZELDA, ## A Action, B Sprint, X Attack, Y Jump; Focus locks on to a target, Breath of the Wild style.
-	GTA, ## A Sprint, B Attack, X Jump, Y Action; Focus aims freely over the shoulder, Grand Theft Auto style.
-	PLATFORMER, ## A Jump, B Sprint, X Attack, Y Action; Focus locks on, the way a Mario or a Sonic puts the jump on the bottom button.
-}
+##
+## The layouts that ship with the addon, in the order the settings menu lists them. Each one is a
+## [ControlScheme] resource rather than a branch in code, so a game adds a layout of its own by writing
+## another [code].tres[/code] in [code]resources/control_schemes/[/code] and assigning it to
+## [member Player.control_scheme]. Only the settings menu's list is built from this array; nothing else in
+## the addon needs to know which schemes exist.
+const BUILT_IN_SCHEMES: Array[ControlScheme] = [
+	preload("res://addons/3d_player_controller/resources/control_schemes/zelda.tres"),
+	preload("res://addons/3d_player_controller/resources/control_schemes/gta.tres"),
+	preload("res://addons/3d_player_controller/resources/control_schemes/platformer.tres"),
+]
 
-## The face-button slot each scheme fills, by the slot's export name, in [enum ControlScheme] order.
-const SCHEME_SLOTS: Dictionary[ControlScheme, Dictionary] = {
-	ControlScheme.ZELDA: {
-		"action_button_0": &"action", "action_button_1": &"sprint", "action_button_2": &"attack", "action_button_3": &"jump",
-	},
-	ControlScheme.GTA: {
-		"action_button_0": &"sprint", "action_button_1": &"attack", "action_button_2": &"jump", "action_button_3": &"action",
-	},
-	ControlScheme.PLATFORMER: {
-		"action_button_0": &"jump", "action_button_1": &"sprint", "action_button_2": &"attack", "action_button_3": &"action",
-	},
-}
+## The layout a Player falls back to when a scene leaves [member Player.control_scheme] empty.
+const DEFAULT_SCHEME: ControlScheme = preload("res://addons/3d_player_controller/resources/control_schemes/zelda.tres")
 
 ## What a face button reads when nothing contextual is showing, by the action it stands for; the scene's own
 ## label texts are for the Zelda layout, so a swapped button takes its text from here.
@@ -118,7 +114,9 @@ func _ready() -> void:
 ## one, swaps the resting labels and redraws, so the switch works from the settings menu mid-game. An action the
 ## project bound for itself is left exactly as it is, as the base leaves it.
 func apply_control_scheme(scheme: ControlScheme) -> void:
-	var slots: Dictionary = SCHEME_SLOTS[scheme]
+	if scheme == null:
+		return
+	var slots: Dictionary[String, StringName] = scheme.slots()
 	# is_node_ready() is already true inside _ready, so the base's own setup is waited for explicitly
 	if not _hud_ready:
 		for slot: String in slots:

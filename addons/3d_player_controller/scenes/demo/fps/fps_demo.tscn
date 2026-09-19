@@ -1,4 +1,4 @@
-[gd_scene load_steps=33 format=3 uid="uid://c7fpsdemo000001"]
+[gd_scene load_steps=34 format=3 uid="uid://c7fpsdemo000001"]
 
 [ext_resource type="Script" path="res://addons/3d_player_controller/scenes/demo/fps/fps_demo.gd" id="script"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/player.tscn" id="player"]
@@ -24,6 +24,7 @@
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/sci_fi_essentials/Prop_Crate_Large.gltf" id="crate_large"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/sci_fi_essentials/Prop_Barrel2_Closed.gltf" id="barrel2"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/sci_fi_essentials/Prop_Ammo.gltf" id="ammo_crate"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/control_schemes/zelda.tres" id="control_scheme_res"]
 
 [sub_resource type="Environment" id="env"]
 background_mode = 1
@@ -75,7 +76,7 @@ size = Vector3(12, 3, 3)
 
 [node name="FpsDemo" type="Node3D" node_paths=PackedStringArray("door", "spawner", "lift", "navigation_region")]
 script = ExtResource("script")
-control_scheme = 0
+control_scheme = ExtResource("control_scheme_res")
 door = NodePath("Armoury/Door")
 spawner = NodePath("WaveSpawner")
 lift = NodePath("Lift/LiftTrigger")

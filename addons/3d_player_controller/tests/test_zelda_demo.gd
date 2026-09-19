@@ -23,7 +23,7 @@ func before_each() -> void:
 
 
 func test_the_demo_sets_the_player_up_for_zelda() -> void:
-	assert_eq(player.control_scheme, PlayerControls.ControlScheme.ZELDA)
+	assert_eq(player.control_scheme, preload("res://addons/3d_player_controller/resources/control_schemes/zelda.tres"))
 	assert_true(player.enable_stamina)
 	assert_true(player.enable_paraglider)
 	assert_true(player.lock_on_enabled())

@@ -1,4 +1,4 @@
-[gd_scene load_steps=56 format=3 uid="uid://c7zeldademo001"]
+[gd_scene load_steps=57 format=3 uid="uid://c7zeldademo001"]
 
 [ext_resource type="Script" path="res://addons/3d_player_controller/scenes/demo/zelda/zelda_demo.gd" id="script"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/player.tscn" id="player"]
@@ -37,6 +37,7 @@
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/nature/rock_medium_2.tscn" id="rock_medium_2"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/nature/rock_medium_3.tscn" id="rock_medium_3"]
 [ext_resource type="Script" path="res://addons/3d_player_controller/inventory/scripts/item.gd" id="item_script"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/control_schemes/zelda.tres" id="control_scheme_res"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
 sky_top_color = Color(0.32, 0.55, 0.9, 1)
@@ -114,7 +115,7 @@ radius = 0.12
 
 [node name="ZeldaDemo" type="Node3D"]
 script = ExtResource("script")
-control_scheme = 0
+control_scheme = ExtResource("control_scheme_res")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("env")
