@@ -507,9 +507,11 @@ var display_name: String = "": ## The name over the head (the Steam persona); re
 const VOICE_FALLOFF_PER_SECOND: float = 2.5 ## How fast [member voice_loudness] falls once the talk key is let go.
 const VOICE_FULL_BYTES: float = 900.0 ## Compressed bytes in one frame's worth of voice that counts as speaking at full volume. Measured packets ran from about 186 to 8202 bytes.
 const VOICE_RISE_PER_SECOND: float = 6.0 ## How fast the reading comes up once Steam starts sending voice.
+const VOICE_ACTIVATION_LEVEL: float = 0.6 ## How loud counts as speaking while voice activation is on. It is the mark on the microphone bar, so "drag until an ordinary voice reaches the mark" and "reaching the mark transmits" are the same instruction.
 
 var voice_playback: AudioStreamGeneratorPlayback = null
 var is_broadcasting: bool = false
+var _recording: bool = false ## Whether Steam is capturing, which is not the same as transmitting: voice activation listens continuously and decides per packet.
 var voice_loudness: float = 0.0 ## How loudly this Player is speaking on push-to-talk, 0 to 1, measured from the captured voice rather than from the fact of holding the key. [PlayerNoise] treats it as noise, so talking gives you away.
 var current_water_area: Area3D = null
 
@@ -658,7 +660,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 ## Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
-	var steam: Object = _get_steam_running() if is_multiplayer_authority() and is_broadcasting else null
+	var listening: bool = is_broadcasting or voice_activation_enabled()
+	var steam: Object = _get_steam_running() if is_multiplayer_authority() and listening else null
+	_set_recording(steam, steam != null)
 	if steam:
 		var available_voice: Dictionary = steam.getAvailableVoice()
 		# GodotSteam returns "size" here, not "written". Reading the wrong key meant this was always 0, so the
@@ -671,12 +675,17 @@ func _process(delta: float) -> void:
 					# Rise rather than snap, so a burst of speech does not make the meter flicker
 					var heard: float = loudness_of(int(available_voice.get("size", 0)), voice_full_bytes())
 					voice_loudness = minf(voice_loudness + delta * VOICE_RISE_PER_SECOND, heard) if heard > voice_loudness else heard
-					if multiplayer.has_multiplayer_peer() and multiplayer.get_peers().size() > 0:
+					if is_broadcasting and multiplayer.has_multiplayer_peer() and multiplayer.get_peers().size() > 0:
 						_receive_voice_packet.rpc(buffer)
 	elif voice_loudness > 0.0:
 		# Falls away whenever no voice is arriving, which covers both letting the key go and holding it while
 		# saying nothing. Steam sends nothing during a pause, so a held key in silence reads as silence.
 		voice_loudness = maxf(voice_loudness - delta * VOICE_FALLOFF_PER_SECOND, 0.0)
+	if voice_activation_enabled():
+		# Speaking past the mark opens the channel, and falling back under it closes it
+		var speaking: bool = voice_loudness >= VOICE_ACTIVATION_LEVEL
+		if speaking != is_broadcasting:
+			_set_transmitting(speaking)
 
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
@@ -1362,34 +1371,52 @@ func _get_steam_running() -> Object:
 	return steam if steam.isSteamRunning() else null
 
 
-## Start push-to-talk voice broadcasting
-func start_broadcasting() -> void:
-	is_broadcasting = true
-	if voice_chat_indicator:
-		voice_chat_indicator.show()
-	var steam: Object = _get_steam_running()
-	if steam:
+## Whether this Player transmits by speaking rather than by holding the key. A pad player has no choice: the
+## Zelda layout binds every usable button, so there is none left for push-to-talk.
+func voice_activation_enabled() -> bool:
+	return PlayerSettingsResource.load_or_create().voice_activation
+
+
+## Turns Steam's capture on or off, which is not the same as transmitting. Voice activation has to listen the
+## whole time to know when you have started speaking, and Steam's own voice detection means listening costs
+## nothing while the room is quiet: it simply sends no packets.
+func _set_recording(steam: Object, on: bool) -> void:
+	if steam == null or on == _recording:
+		return
+	_recording = on
+	if on:
 		steam.startVoiceRecording()
-		var my_id: int = steam.getSteamID()
-		if my_id > 0:
-			steam.setInGameVoiceSpeaking(my_id, true)
-	if multiplayer.has_multiplayer_peer() and multiplayer.get_peers().size() > 0:
-		_set_voice_indicator.rpc(true)
+	else:
+		steam.stopVoiceRecording()
 
 
-## Stop push-to-talk voice broadcasting
-func stop_broadcasting() -> void:
-	is_broadcasting = false
+## Opens or closes the channel: the indicator, Steam's own speaking flag and the peers all follow this.
+func _set_transmitting(on: bool) -> void:
+	if is_broadcasting == on:
+		return
+	is_broadcasting = on
 	if voice_chat_indicator:
-		voice_chat_indicator.hide()
+		voice_chat_indicator.visible = on
 	var steam: Object = _get_steam_running()
 	if steam:
-		steam.stopVoiceRecording()
 		var my_id: int = steam.getSteamID()
 		if my_id > 0:
-			steam.setInGameVoiceSpeaking(my_id, false)
+			steam.setInGameVoiceSpeaking(my_id, on)
 	if multiplayer.has_multiplayer_peer() and multiplayer.get_peers().size() > 0:
-		_set_voice_indicator.rpc(false)
+		_set_voice_indicator.rpc(on)
+
+
+## Start push-to-talk voice broadcasting. Holding the key still works with voice activation on, so a player who
+## wants to be certain they are heard can take the decision off the meter.
+func start_broadcasting() -> void:
+	_set_recording(_get_steam_running(), true)
+	_set_transmitting(true)
+
+
+## Stop push-to-talk voice broadcasting. The capture is left alone: voice activation may still be listening,
+## and _process turns it off when nothing is.
+func stop_broadcasting() -> void:
+	_set_transmitting(false)
 
 
 

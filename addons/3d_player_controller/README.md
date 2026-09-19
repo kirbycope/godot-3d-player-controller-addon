@@ -76,7 +76,17 @@ Organized state machine architecture separating primary lower-body locomotion st
   handle until an ordinary voice fills the bar to the mark. The row names that key itself, reading it off the
   `InputMap` rather than repeating one written into a string, so rebinding push-to-talk changes the label and
   the tooltip instead of leaving them pointing at the old key. Push-to-talk is the `broadcast` action, which
-  these controls register on **V**; it sits on no controller slot, so there is no pad button for it. A quiet microphone goes right, a headset that
+  these controls register on **V**; it sits on no controller slot, so there is no pad button for it.
+
+  Which is why the row sits under a **Voice activation** toggle. The Zelda layout binds every usable button,
+  so a pad player cannot hold push-to-talk at all and speaking is the only way they can talk. With it on, the
+  capture listens continuously and Steam's own voice detection means that costs nothing while the room is
+  quiet, since it simply sends no packets; passing the mark opens the channel and dropping under it closes it
+  again. The mark is `Player.VOICE_ACTIVATION_LEVEL`, and the bar sets its own mark from that constant, so
+  "drag until an ordinary voice reaches the mark" and "reaching the mark transmits" are the same instruction
+  rather than two numbers to keep in step. Holding the key still works either way, for anyone who would rather
+  not trust the meter, and with the toggle on the row stops telling you to hold a key there is no point
+  holding. A quiet microphone goes right, a headset that
   clips goes left. The row only appears when Steam is loaded, like the rest of the voice settings.
 
   Two things had to be fixed before any of this could work, and both were broken for voice chat generally

@@ -157,3 +157,71 @@ func test_the_row_copes_with_push_to_talk_being_unbound() -> void:
 
 	for event: InputEvent in was:
 		InputMap.action_add_event(&"broadcast", event)
+
+
+## The Zelda layout binds every usable button, so a pad player cannot hold push-to-talk at all. Voice
+## activation is how they talk: speaking past the mark opens the channel and falling under it closes it.
+func test_voice_activation_transmits_by_speaking() -> void:
+	var player: Player = PLAYER_SCENE.instantiate() as Player
+	add_child_autofree(player)
+	var settings: PlayerSettingsResource = PlayerSettingsResource.load_or_create()
+	var was: bool = settings.voice_activation
+	settings.voice_activation = true
+
+	assert_true(player.voice_activation_enabled(), "The Player reads the setting")
+	player.voice_loudness = Player.VOICE_ACTIVATION_LEVEL + 0.1
+	await wait_process_frames(2)
+	assert_true(player.is_broadcasting, "Speaking past the mark opens the channel")
+
+	player.voice_loudness = 0.0
+	await wait_process_frames(3)
+	assert_false(player.is_broadcasting, "and going quiet closes it again")
+
+	settings.voice_activation = was
+	settings.save()
+
+
+## The mark on the bar and the level that counts as speaking have to be the same thing, or the instruction
+## "drag until an ordinary voice reaches the mark" sets the wrong threshold.
+func test_the_mark_is_the_level_that_transmits() -> void:
+	var menu: Node = SETTINGS_SCENE.instantiate()
+	add_child_autofree(menu)
+	await wait_process_frames(1)
+	var bar: VoiceLevelSlider = menu.mic_sensitivity
+
+	assert_almost_eq(bar.ratio_of(bar.normal_value), Player.VOICE_ACTIVATION_LEVEL, 0.001,
+		"The mark sits exactly where speaking starts transmitting")
+
+
+## Holding the key still works with voice activation on, for a player who would rather not trust the meter.
+func test_the_key_still_works_with_voice_activation_on() -> void:
+	var player: Player = PLAYER_SCENE.instantiate() as Player
+	add_child_autofree(player)
+	var settings: PlayerSettingsResource = PlayerSettingsResource.load_or_create()
+	var was: bool = settings.voice_activation
+	settings.voice_activation = true
+
+	player.start_broadcasting()
+	assert_true(player.is_broadcasting, "The key opens the channel whatever the meter says")
+	player.stop_broadcasting()
+	assert_false(player.is_broadcasting, "and closes it")
+
+	settings.voice_activation = was
+	settings.save()
+
+
+## With voice activation on there is no key to hold, so the row stops telling you to hold one.
+func test_the_row_stops_naming_a_key_when_there_is_none_to_hold() -> void:
+	var menu: Node = SETTINGS_SCENE.instantiate()
+	add_child_autofree(menu)
+	await wait_process_frames(1)
+	var was: bool = menu.settings_res.voice_activation
+
+	menu.settings_res.voice_activation = true
+	assert_false(menu.microphone_label_text().contains("hold"), "Nothing to hold, so nothing about holding")
+	assert_true(menu.microphone_hint().contains("Speaking past the mark"), "and the tip says what actually transmits")
+
+	menu.settings_res.voice_activation = false
+	assert_true(menu.microphone_hint().contains("Hold"), "Back on the key, the tip says to hold it")
+
+	menu.settings_res.voice_activation = was

@@ -7,6 +7,7 @@ extends PlayerMenuLayer
 @onready var voice_settings: VBoxContainer = $Panel/VBoxContainer/VoiceSettings ## Steam voice chat rows; shown only when Steam is loaded.
 @onready var voice_slider: HSlider = $Panel/VBoxContainer/VoiceSettings/Voice/VolumeSlider
 @onready var mute_voice: CheckButton = $Panel/VBoxContainer/VoiceSettings/MuteVoice
+@onready var voice_activation: CheckButton = $Panel/VBoxContainer/VoiceSettings/VoiceActivation ## Speak to transmit, instead of holding the key. The microphone bar below is its threshold.
 @onready var microphone_label: Label = $Panel/VBoxContainer/VoiceSettings/Microphone
 @onready var mic_sensitivity: VoiceLevelSlider = $Panel/VBoxContainer/VoiceSettings/Microphone/Sensitivity ## Both the microphone meter and the setting; one bar, after PulseAudio's.
 
@@ -24,13 +25,34 @@ func _ready() -> void:
 	voice_slider.set_value_no_signal(settings_res.voice_volume)
 	mute_voice.set_pressed_no_signal(settings_res.voice_muted)
 	mic_sensitivity.set_value_no_signal(settings_res.voice_sensitivity)
+	voice_activation.set_pressed_no_signal(settings_res.voice_activation)
+	voice_activation.toggled.connect(_on_voice_activation_toggled)
+	# The mark is the level that counts as speaking, so the instruction and the threshold are one thing
+	mic_sensitivity.normal_value = mic_sensitivity.min_value \
+			+ Player.VOICE_ACTIVATION_LEVEL * (mic_sensitivity.max_value - mic_sensitivity.min_value)
+	_refresh_microphone_text()
+	mic_sensitivity.value_changed.connect(_on_mic_sensitivity_changed)
+	voice_settings.visible = is_steam_loaded()
+	set_process(true)
+
+
+## Saved at once; a toggle has no drag to end. The capture follows on the Player's next frame.
+func _on_voice_activation_toggled(toggled_on: bool) -> void:
+	settings_res.voice_activation = toggled_on
+	settings_res.save()
+	_refresh_microphone_text()
+
+
+func _on_voice_activation_touch_screen_button_pressed() -> void:
+	voice_activation.button_pressed = not voice_activation.button_pressed # Emits toggled
+
+
+## The label and the tip say what the bar is for, which depends on how you are transmitting.
+func _refresh_microphone_text() -> void:
 	var hint: String = microphone_hint()
 	mic_sensitivity.tooltip_text = hint
 	microphone_label.tooltip_text = hint
 	microphone_label.text = microphone_label_text()
-	mic_sensitivity.value_changed.connect(_on_mic_sensitivity_changed)
-	voice_settings.visible = is_steam_loaded()
-	set_process(true)
 
 
 ## What push-to-talk is bound to, as a key name, or empty when nothing is. Read off the [InputMap] rather than
@@ -46,18 +68,23 @@ func talk_key_name() -> String:
 	return ""
 
 
-## The row's own label, naming the key so the instruction is visible without hunting for a tooltip.
+## The row's own label, so the instruction is visible without hunting for a tooltip. With voice activation on
+## there is no key to name, because there is no key to hold.
 func microphone_label_text() -> String:
+	if settings_res and settings_res.voice_activation:
+		return "Microphone"
 	var key: String = talk_key_name()
 	return "Microphone" if key.is_empty() else "Microphone (hold %s)" % key
 
 
-## The tip on the row: what the bar is, and what to do to set it.
+## The tip on the row: what the bar is, and what to do to set it. The bar is the same either way; what changes
+## is whether reaching the mark opens the channel or merely fills the meter.
 func microphone_hint() -> String:
+	var tail: String = "The bar fills with what your microphone hears; drag the handle so an ordinary voice reaches the mark."
+	if settings_res and settings_res.voice_activation:
+		return "Speaking past the mark transmits. " + tail
 	var key: String = talk_key_name()
-	var press: String = "push-to-talk" if key.is_empty() else key
-	return ("Hold %s and speak. The bar fills with what your microphone hears; drag the handle so an ordinary "
-			+ "voice reaches the mark.") % press
+	return "Hold %s and speak. " % ("push-to-talk" if key.is_empty() else key) + tail
 
 
 ## The bar shows what the microphone is hearing right now, so the handle can be set by talking rather than by

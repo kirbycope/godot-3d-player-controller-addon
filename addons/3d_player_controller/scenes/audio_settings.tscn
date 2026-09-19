@@ -286,8 +286,14 @@ shape = SubResource("RectangleShape2D_5xw05")
 [node name="VoiceSettings" type="VBoxContainer" parent="Panel/VBoxContainer" unique_id=795294055]
 layout_mode = 2
 
+[node name="VoiceActivation" type="CheckButton" parent="Panel/VBoxContainer/VoiceSettings"]
+layout_mode = 2
+tooltip_text = "Transmit whenever you speak, instead of holding the push-to-talk key. The only way to use voice chat on a controller, since every button is already bound."
+text = "Voice activation"
+
 [node name="Microphone" type="Label" parent="Panel/VBoxContainer/VoiceSettings"]
 custom_minimum_size = Vector2(0, 62)
+theme_override_constants/line_spacing = 0
 layout_mode = 2
 text = "Microphone"
 horizontal_alignment = 1

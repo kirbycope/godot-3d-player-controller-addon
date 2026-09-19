@@ -15,6 +15,7 @@ static var _cached: PlayerSettingsResource ## One shared instance so every menu 
 @export var sfx_volume: float = 50.0
 @export var voice_volume: float = 50.0 ## Steam voice chat playback; local like the other volumes.
 @export var voice_muted: bool = false ## Mutes the Voice bus on this machine only.
+@export var voice_activation: bool = false ## Transmit whenever you speak, instead of holding the push-to-talk key. The only way to use voice chat on a pad, since the Zelda layout leaves no button free for it.
 @export var voice_sensitivity: float = 100.0 ## How readily the microphone reads as speaking, as a percentage where 100 is a normal voice. Microphones differ by more than any built-in default can cover, so this is set by talking and watching the meter rather than guessed.
 
 # Video Settings
