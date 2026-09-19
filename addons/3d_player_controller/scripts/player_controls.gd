@@ -63,7 +63,6 @@ const PLAYER_ACTIONS: Dictionary = {
 ## the addon needs to know which schemes exist.
 const BUILT_IN_SCHEMES: Array[ControlScheme] = [
 	preload("res://addons/3d_player_controller/resources/control_schemes/zelda.tres"),
-	preload("res://addons/3d_player_controller/resources/control_schemes/gta.tres"),
 	preload("res://addons/3d_player_controller/resources/control_schemes/platformer.tres"),
 ]
 

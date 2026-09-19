@@ -5,5 +5,12 @@
     "ref": "main",
     "repo": "https://github.com/kirbycope/godot-controls.git",
     "subject": "Point a prompt at the action, turn it to the camera"
+  },
+  "gta": {
+    "commit": "73099b917b6deddc519dbcc600d18ab22e8e407e",
+    "pulled": "2026-09-19T19:06:33Z",
+    "ref": "main",
+    "repo": "https://github.com/kirbycope/gta.git",
+    "subject": "Pull the player controller forward for the scheme resource"
   }
 }

@@ -20,7 +20,7 @@
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/sci_fi_essentials/Prop_Ammo.gltf" id="ammo_crate"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/sci_fi_essentials/Prop_SatelliteDish.gltf" id="dish"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/downtown_city/Prop_Bollard.gltf" id="bollard"]
-[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/control_schemes/gta.tres" id="control_scheme_res"]
+[ext_resource type="Resource" path="res://addons/gta/resources/gta_controls.tres" id="control_scheme_res"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
 sky_top_color = Color(0.02, 0.03, 0.08, 1)

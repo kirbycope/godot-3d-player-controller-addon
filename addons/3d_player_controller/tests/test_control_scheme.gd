@@ -1,7 +1,8 @@
 extends GutTest
 
 ## Purpose: The Player answers to one of two pad layouts. Zelda is the scene's own: A is Action, B Sprint,
-## X Attack, Y Jump, and Focus locks on. GTA moves the face buttons about (A Sprint, B Attack, X Jump,
+## X Attack, Y Jump, and Focus locks on. GTA, which ships with the gta addon rather than here, moves the face
+## buttons about (A Sprint, B Attack, X Jump,
 ## Y Action) and makes Focus a free over-the-shoulder aim. The switch works mid-game, from the export or
 ## from the saved settings, and the buttons come off the actions they used to stand for.
 
@@ -70,7 +71,7 @@ func test_zelda_is_the_default_layout() -> void:
 
 
 func test_gta_moves_the_face_buttons_and_frees_the_aim() -> void:
-	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/gta.tres")
+	player.control_scheme = preload("res://addons/gta/resources/gta_controls.tres")
 	assert_true(_has_button(&"sprint", JOY_BUTTON_A), "A is Sprint")
 	assert_true(_has_button(&"attack", JOY_BUTTON_B), "B is Attack")
 	assert_true(_has_button(&"jump", JOY_BUTTON_X), "X is Jump")
@@ -84,7 +85,7 @@ func test_gta_moves_the_face_buttons_and_frees_the_aim() -> void:
 
 
 func test_switching_back_restores_zelda() -> void:
-	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/gta.tres")
+	player.control_scheme = preload("res://addons/gta/resources/gta_controls.tres")
 	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/zelda.tres")
 	assert_true(_has_button(&"sprint", JOY_BUTTON_A))
 	assert_false(_has_button(&"action", JOY_BUTTON_A))
@@ -101,7 +102,7 @@ func test_focus_never_locks_on_under_gta() -> void:
 	player.get_parent().add_child(target)
 	target.global_position = player.global_position + Vector3(0.0, 1.0, -2.0)
 	await wait_physics_frames(2)
-	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/gta.tres")
+	player.control_scheme = preload("res://addons/gta/resources/gta_controls.tres")
 	Input.action_press("focus")
 	await wait_physics_frames(3)
 	assert_null(player.current_focus_target, "Free aim acquires nobody")
@@ -116,10 +117,12 @@ func test_focus_never_locks_on_under_gta() -> void:
 
 
 func test_saved_setting_overrides_the_scene() -> void:
+	# GTA ships with the gta addon, so a game offers it by registering it; nothing here preloads across addons
+	PlayerControls.register_scheme(preload("res://addons/gta/resources/gta_controls.tres"))
 	var settings: PlayerSettingsResource = PlayerSettingsResource.load_or_create()
 	settings.control_scheme_name = "GTA"
 	settings.apply_control_scheme(player)
-	assert_eq(player.control_scheme, preload("res://addons/3d_player_controller/resources/control_schemes/gta.tres"))
+	assert_eq(player.control_scheme, preload("res://addons/gta/resources/gta_controls.tres"))
 	settings.control_scheme_name = ""
 	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/zelda.tres")
 	settings.apply_control_scheme(player)
@@ -128,15 +131,21 @@ func test_saved_setting_overrides_the_scene() -> void:
 
 func test_the_video_settings_menu_lists_the_schemes() -> void:
 	var menu: OptionButton = player.video_settings.get_node("Panel/VBoxContainer/ControlScheme")
-	assert_eq(menu.item_count, 4)
+	assert_eq(menu.item_count, 3, "Default and the two layouts that ship here")
 	assert_eq(menu.get_item_text(1), "Zelda")
-	assert_eq(menu.get_item_text(2), "GTA")
-	assert_eq(menu.get_item_text(3), "Platformer")
+	assert_eq(menu.get_item_text(2), "Platformer")
 	player.video_settings._on_control_scheme_item_selected(2)
-	assert_eq(player.control_scheme, preload("res://addons/3d_player_controller/resources/control_schemes/gta.tres"), "Picking GTA in the menu lays the pad out that way at once")
-	player.video_settings._on_control_scheme_item_selected(3)
-	assert_eq(player.control_scheme, preload("res://addons/3d_player_controller/resources/control_schemes/platformer.tres"))
+	assert_eq(player.control_scheme, preload("res://addons/3d_player_controller/resources/control_schemes/platformer.tres"),
+		"Picking one in the menu lays the pad out that way at once")
 	assert_eq(player.controls.action_button_0, &"jump", "Jump is on the bottom button")
+
+	# A layout another addon ships joins the list the moment it registers, without this menu knowing about it
+	PlayerControls.register_scheme(preload("res://addons/gta/resources/gta_controls.tres"))
+	player.video_settings._fill_scheme_button()
+	assert_eq(menu.item_count, 4, "and a registered layout is offered too")
+	assert_eq(menu.get_item_text(3), "GTA")
+	player.video_settings._on_control_scheme_item_selected(3)
+	assert_eq(player.control_scheme, preload("res://addons/gta/resources/gta_controls.tres"))
 
 
 ## The point of a scheme being a resource: a game ships its own layout without editing this addon. Built here in
@@ -161,12 +170,14 @@ func test_a_game_can_ship_a_layout_of_its_own() -> void:
 	assert_eq(player.controls.joypad_button_0_label.text, "Attack", "The resting label follows")
 
 
-## Platformer's own resource says it locks on, which is what the layout was always documented to do; it did not
-## before, because the check was a comparison against the Zelda scheme rather than something a scheme carried.
+## Whether Focus locks on is something a scheme carries rather than a comparison against the Zelda one, which is
+## what it used to be. Super Mario Odyssey has no lock-on, so the Platformer layout does not either.
 func test_the_scheme_carries_whether_focus_locks_on() -> void:
+	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/zelda.tres")
+	assert_true(player.lock_on_enabled(), "Zelda locks on")
 	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/platformer.tres")
-	assert_true(player.lock_on_enabled(), "Platformer locks on, the way its description always said")
-	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/gta.tres")
+	assert_false(player.lock_on_enabled(), "Odyssey has no lock-on, so neither does Platformer")
+	player.control_scheme = preload("res://addons/gta/resources/gta_controls.tres")
 	assert_false(player.lock_on_enabled())
 
 
@@ -175,13 +186,14 @@ func test_the_scheme_carries_whether_focus_locks_on() -> void:
 func test_an_old_saved_index_becomes_the_name_it_stood_for() -> void:
 	var settings: PlayerSettingsResource = PlayerSettingsResource.load_or_create()
 	settings.control_scheme_name = ""
+	PlayerControls.register_scheme(preload("res://addons/gta/resources/gta_controls.tres"))
 	settings.control_scheme_index = 2 # what "GTA" was saved as
 
 	settings.apply_control_scheme(player)
 
 	assert_eq(settings.control_scheme_name, "GTA", "The number is read as the name it stood for")
 	assert_eq(settings.control_scheme_index, PlayerSettingsResource.GAME_DEFAULT, "and cleared, so it is never read again")
-	assert_eq(player.control_scheme, preload("res://addons/3d_player_controller/resources/control_schemes/gta.tres"))
+	assert_eq(player.control_scheme, preload("res://addons/gta/resources/gta_controls.tres"))
 
 
 ## An addon ships a layout without the player controller preloading out of it, which it must not do: the

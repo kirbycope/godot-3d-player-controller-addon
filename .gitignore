@@ -20,3 +20,4 @@ test-results/
 # Fetched by tools/pull_addons.py, never committed here.
 .addon_cache/
 addons/controls/
+addons/gta/

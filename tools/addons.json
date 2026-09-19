@@ -5,6 +5,11 @@
       "name": "controls",
       "repo": "https://github.com/kirbycope/godot-controls.git",
       "ref": "main"
+    },
+    {
+      "name": "gta",
+      "repo": "https://github.com/kirbycope/gta.git",
+      "ref": "main"
     }
   ]
 }
