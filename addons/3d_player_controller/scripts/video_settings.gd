@@ -28,7 +28,6 @@ func _ready() -> void:
 	ui_scale_button.selected = clampi(settings_res.ui_scale_index, 0, ui_scale_button.item_count - 1)
 	hud_button.selected = clampi(settings_res.hud_mode, 0, hud_button.item_count - 1)
 	_fill_scheme_button()
-	scheme_button.selected = clampi(settings_res.control_scheme_index, 0, scheme_button.item_count - 1)
 	toon_button.selected = clampi(settings_res.toon_mode, 0, toon_button.item_count - 1)
 	update_cel_availability(player.toon_filter.is_cel_available() if player and is_instance_valid(player.toon_filter) else RenderingServer.get_current_rendering_method() == ToonFilter.FORWARD_PLUS)
 	msaa_button.selected = settings_res.msaa_index
@@ -84,17 +83,26 @@ func _on_on_screen_controls_touch_screen_button_pressed() -> void:
 
 ## The scheme goes straight on the Player, so the pad is laid out the new way as soon as the menu closes.
 ## Names the layouts from the scheme resources themselves rather than from items typed into the scene, so a
-## game that ships another [ControlScheme] gets it listed without touching this menu.
+## game or another addon that registers a [ControlScheme] gets it listed without touching this menu. The pick
+## is saved by name, so a layout registering late cannot change what an already saved choice means.
 func _fill_scheme_button() -> void:
+	settings_res.migrate_control_scheme() # a settings file written before the pick was saved by name
 	scheme_button.clear()
 	scheme_button.add_item("Default", PlayerSettingsResource.GAME_DEFAULT)
-	for at: int in PlayerControls.BUILT_IN_SCHEMES.size():
-		var scheme: ControlScheme = PlayerControls.BUILT_IN_SCHEMES[at]
-		scheme_button.add_item(scheme.scheme_name, at + 1)
+	var picked: int = PlayerSettingsResource.GAME_DEFAULT
+	var offered: Array[ControlScheme] = PlayerControls.schemes()
+	for at: int in offered.size():
+		scheme_button.add_item(offered[at].scheme_name, at + 1)
+		if offered[at].scheme_name == settings_res.control_scheme_name:
+			picked = at + 1
+	scheme_button.selected = picked
 
 
 func _on_control_scheme_item_selected(index: int) -> void:
-	settings_res.control_scheme_index = index
+	var offered: Array[ControlScheme] = PlayerControls.schemes()
+	var at: int = index - 1
+	settings_res.control_scheme_name = offered[at].scheme_name if at >= 0 and at < offered.size() else ""
+	settings_res.control_scheme_index = PlayerSettingsResource.GAME_DEFAULT
 	settings_res.apply_control_scheme(player)
 	settings_res.save()
 

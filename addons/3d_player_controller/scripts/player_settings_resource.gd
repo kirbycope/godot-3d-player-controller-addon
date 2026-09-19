@@ -39,11 +39,15 @@ enum HudMode { AUTO, SHOWN, HIDDEN } ## Auto shows the on-screen controls on tou
 @export var hud_mode: int = HudMode.AUTO ## Whether the Player's on-screen controls ([member Player.controls]) are drawn; a [enum HudMode].
 
 # Controls Settings
-## The menu's first entry, which keeps [member Player.control_scheme] as the scene set it. Every entry after it
-## is [constant PlayerControls.BUILT_IN_SCHEMES] in order, offset by this one, so the saved number keeps meaning
-## the same layout when a scheme is added after it.
+## The menu's first entry, which keeps [member Player.control_scheme] as the scene set it.
 const GAME_DEFAULT: int = 0
-@export var control_scheme_index: int = GAME_DEFAULT ## Which pad layout the player picked; see [constant GAME_DEFAULT].
+## What [member control_scheme_index] used to mean, kept only to read a settings file written before the pick
+## was saved by name. An addon can register a layout now, so a position in the menu is not a stable thing to
+## save: installing one would silently change what an existing file meant.
+const LEGACY_SCHEME_NAMES: Array[String] = ["Zelda", "GTA", "Platformer"]
+@export var control_scheme_index: int = GAME_DEFAULT ## Superseded by [member control_scheme_name]; read once, to migrate.
+## The [member ControlScheme.scheme_name] of the layout the player picked, or empty for Game Default.
+@export var control_scheme_name: String = ""
 
 var _scaled_window: Window ## The window Auto follows on resize, connected once.
 
@@ -153,17 +157,26 @@ static func hud_shown_for(mode: int, input_type: int, touchscreen: bool) -> bool
 	return input_type == Controls.InputType.TOUCH and touchscreen
 
 
-## The [ControlScheme] a menu entry stands for, or null for Game Default and anything out of range.
-static func scheme_for_index(index: int) -> ControlScheme:
-	var at: int = index - 1
-	if at < 0 or at >= PlayerControls.BUILT_IN_SCHEMES.size():
-		return null
-	return PlayerControls.BUILT_IN_SCHEMES[at]
+## Reads a pre-by-name settings file once: the old number becomes the name it stood for, and is then left at
+## Game Default so this never runs twice.
+func migrate_control_scheme() -> void:
+	if not control_scheme_name.is_empty() or control_scheme_index == GAME_DEFAULT:
+		return
+	var at: int = control_scheme_index - 1
+	if at >= 0 and at < LEGACY_SCHEME_NAMES.size():
+		control_scheme_name = LEGACY_SCHEME_NAMES[at]
+	control_scheme_index = GAME_DEFAULT
+
+
+## The layout the player picked, or null for Game Default and for a name nothing answers to.
+func picked_scheme() -> ControlScheme:
+	migrate_control_scheme()
+	return PlayerControls.scheme_named(control_scheme_name)
 
 
 ## Puts the picked control scheme on [param player]; Game Default leaves the scene's choice alone.
 func apply_control_scheme(player: Player) -> void:
-	var scheme: ControlScheme = scheme_for_index(control_scheme_index)
+	var scheme: ControlScheme = picked_scheme()
 	if player and scheme:
 		player.control_scheme = scheme
 

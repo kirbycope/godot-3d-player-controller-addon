@@ -35,6 +35,8 @@ func before_each() -> void:
 
 
 func after_each() -> void:
+	# Registrations are static, so they outlive the scene too and would leak into the next script
+	PlayerControls.forget_registered_schemes()
 	# The InputMap outlives the scene: put the pad back the way the other suites expect it
 	if is_instance_valid(player):
 		player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/zelda.tres")
@@ -115,10 +117,10 @@ func test_focus_never_locks_on_under_gta() -> void:
 
 func test_saved_setting_overrides_the_scene() -> void:
 	var settings: PlayerSettingsResource = PlayerSettingsResource.load_or_create()
-	settings.control_scheme_index = 2
+	settings.control_scheme_name = "GTA"
 	settings.apply_control_scheme(player)
 	assert_eq(player.control_scheme, preload("res://addons/3d_player_controller/resources/control_schemes/gta.tres"))
-	settings.control_scheme_index = PlayerSettingsResource.GAME_DEFAULT
+	settings.control_scheme_name = ""
 	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/zelda.tres")
 	settings.apply_control_scheme(player)
 	assert_eq(player.control_scheme, preload("res://addons/3d_player_controller/resources/control_schemes/zelda.tres"), "Game Default leaves the scene's choice")
@@ -166,3 +168,45 @@ func test_the_scheme_carries_whether_focus_locks_on() -> void:
 	assert_true(player.lock_on_enabled(), "Platformer locks on, the way its description always said")
 	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/gta.tres")
 	assert_false(player.lock_on_enabled())
+
+
+## A settings file written before the pick was saved by name still means the layout it meant, and is rewritten
+## as a name so it is only read once. Positions stopped being stable when an addon could register a layout.
+func test_an_old_saved_index_becomes_the_name_it_stood_for() -> void:
+	var settings: PlayerSettingsResource = PlayerSettingsResource.load_or_create()
+	settings.control_scheme_name = ""
+	settings.control_scheme_index = 2 # what "GTA" was saved as
+
+	settings.apply_control_scheme(player)
+
+	assert_eq(settings.control_scheme_name, "GTA", "The number is read as the name it stood for")
+	assert_eq(settings.control_scheme_index, PlayerSettingsResource.GAME_DEFAULT, "and cleared, so it is never read again")
+	assert_eq(player.control_scheme, preload("res://addons/3d_player_controller/resources/control_schemes/gta.tres"))
+
+
+## An addon ships a layout without the player controller preloading out of it, which it must not do: the
+## template would then depend on an addon that may not be installed.
+func test_a_registered_scheme_is_offered_and_saved_by_name() -> void:
+	var southpaw := ControlScheme.new()
+	southpaw.scheme_name = "Southpaw"
+	southpaw.action_button_0 = &"attack"
+	southpaw.action_button_1 = &"jump"
+	southpaw.action_button_2 = &"action"
+	southpaw.action_button_3 = &"sprint"
+
+	PlayerControls.register_scheme(southpaw)
+	PlayerControls.register_scheme(southpaw) # twice is once
+
+	assert_true(PlayerControls.schemes().has(southpaw), "It joins what the menu offers")
+	assert_eq(PlayerControls.schemes().count(southpaw), 1, "and only once")
+	assert_eq(PlayerControls.scheme_named("Southpaw"), southpaw, "and answers to its name")
+
+	var settings: PlayerSettingsResource = PlayerSettingsResource.load_or_create()
+	settings.control_scheme_name = "Southpaw"
+	settings.apply_control_scheme(player)
+	assert_eq(player.control_scheme, southpaw, "so a saved pick finds it")
+	assert_true(_has_button(&"attack", JOY_BUTTON_A), "and the pad is laid out its way")
+
+	PlayerControls.forget_registered_schemes()
+	settings.control_scheme_name = ""
+	assert_null(PlayerControls.scheme_named("Southpaw"), "Forgotten, nothing answers to it")

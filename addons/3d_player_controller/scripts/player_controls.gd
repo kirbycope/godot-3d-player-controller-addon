@@ -67,6 +67,46 @@ const BUILT_IN_SCHEMES: Array[ControlScheme] = [
 	preload("res://addons/3d_player_controller/resources/control_schemes/platformer.tres"),
 ]
 
+## Layouts another addon or the game itself has added to the settings menu, in the order they registered.
+static var _registered_schemes: Array[ControlScheme] = []
+
+## Adds [param scheme] to the layouts the settings menu offers, for an addon or a game that ships one of its
+## own. Registering the same scheme twice does nothing, so this is safe to call from every scene that wants it.
+##
+## The player controller must not preload out of another addon, or the template would depend on an addon that
+## may not be installed; so a layout living elsewhere is announced this way instead. The settings save the
+## player's pick by name rather than by position, so a scheme registering late does not change what an already
+## saved choice means.
+static func register_scheme(scheme: ControlScheme) -> void:
+	if scheme == null or BUILT_IN_SCHEMES.has(scheme) or _registered_schemes.has(scheme):
+		return
+	_registered_schemes.append(scheme)
+
+
+## Forgets every registered layout. For tests, which share one process and would otherwise leak a scheme from
+## one script into the next.
+static func forget_registered_schemes() -> void:
+	_registered_schemes.clear()
+
+
+## Every layout the settings menu offers: the ones that ship here, then whatever registered.
+static func schemes() -> Array[ControlScheme]:
+	var out: Array[ControlScheme] = BUILT_IN_SCHEMES.duplicate()
+	out.append_array(_registered_schemes)
+	return out
+
+
+## The layout called [param scheme_name], or null when nothing answers to it (an addon that shipped it is not
+## installed any more, so the player falls back to what the scene set).
+static func scheme_named(scheme_name: String) -> ControlScheme:
+	if scheme_name.is_empty():
+		return null
+	for scheme: ControlScheme in schemes():
+		if scheme.scheme_name == scheme_name:
+			return scheme
+	return null
+
+
 ## The layout a Player falls back to when a scene leaves [member Player.control_scheme] empty.
 const DEFAULT_SCHEME: ControlScheme = preload("res://addons/3d_player_controller/resources/control_schemes/zelda.tres")
 
