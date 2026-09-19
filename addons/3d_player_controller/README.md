@@ -56,13 +56,24 @@ Organized state machine architecture separating primary lower-body locomotion st
   a thrown object, and a gunshot, which is the loudest thing the Player has. `make_noise(amount)` is public,
   so a slamming door or a breaking pot can be just as loud.
 
-  **Talking on push-to-talk is noise too.** While `broadcast` is held, `Player` decodes its own captured Steam
-  voice packet and takes the root mean square of it into `voice_loudness`, so the reading follows how loudly
-  you are actually speaking rather than the fact that the key is down: a whisper carries less than a shout,
-  and holding the key in silence carries nothing. `Player.loudness_of(pcm)` is a static that does the
-  measuring, deliberately separate from Steam so it can be tested with no network and no microphone. Letting
-  the key go is what starts the falloff; a missing Steam is not the same as having stopped talking. The
-  consequence in play is the one you would want: saying anything over voice chat gives your position away.
+  **Talking on push-to-talk is noise too.** While `broadcast` is held, the reading follows the voice Steam is
+  actually sending, so a pause reads as silence and holding the key while saying nothing carries nothing.
+
+  It follows the *flow* of voice rather than its waveform, and that is a measurement rather than a guess.
+  Steam gates the microphone with its own voice-activity detection and normalises what it sends, so the
+  samples inside a packet say almost nothing about how loudly you spoke: on a laptop, ten seconds of talking
+  and eight of silence came back with the same peak level, 0.0233 against 0.0246. What separates them is
+  whether Steam sends anything at all, 165 packets against 10, and how much. `Player.loudness_of(bytes)` maps
+  the compressed bytes Steam reports against `VOICE_FULL_BYTES`; measured packets ran from about 186 to 8202
+  bytes. It is a static taking a plain number, so it tests with no network and no microphone.
+
+  Two things had to be fixed before any of this could work, and both were broken for voice chat generally
+  rather than for the meter. `Steamworks` never called `Steam.run_callbacks()`, so the session came up and
+  then never advanced and `getAvailableVoice` reported NoData however long the key was held; pumping it turned
+  720 frames of NoData into 543 frames of OK with real audio behind them. And the capture read
+  `getAvailableVoice()["written"]`, a key GodotSteam does not return, so the check was always zero and
+  push-to-talk had never sent a packet at all. The consequence in play is the one you would want: saying
+  anything over voice chat gives your position away.
 
   Everything within `hearing_range` scaled by the reading hears it, which is every `EnemyNpc` in the `Enemies`
   group inside that distance; they are told to `aggro` the Player, and `EnemyNpc.aggro` already refuses a dead

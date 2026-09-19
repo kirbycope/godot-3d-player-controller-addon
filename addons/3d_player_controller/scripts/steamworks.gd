@@ -18,8 +18,11 @@ var steam_id: int = 0 ## The signed-in account, 0 when Steam is not running.
 var username: String = "Player" ## The Steam persona name, unchanged when Steam is not running.
 var lobby_id: int = 0 ## The lobby currently joined; the lobby manager writes this.
 
+var _steam: Object = null ## The singleton, held once Steam is up, so the per-frame pump costs no lookup.
+
 
 func _ready() -> void:
+	set_process(false)
 	# The extension has no web library, and Steam wants a desktop renderer.
 	if OS.has_feature("web") or ProjectSettings.get_setting("rendering/renderer/rendering_method") != "forward_plus":
 		return
@@ -42,4 +45,15 @@ func initialize() -> void:
 		return
 	steam_id = steam.getSteamID()
 	username = steam.getPersonaName()
+	_steam = steam
+	set_process(true)
 	steam_ready.emit()
+
+
+## Steamworks hands its answers back through callbacks, and nothing arrives until they are run. Without this
+## the session comes up and then never advances: voice capture reports no data however long the talk key is
+## held, and anything else that waits on a callback waits forever. Measured on the Mac, pumping this turned
+## getAvailableVoice from 720 frames of NoData into 543 frames of OK with real audio behind it.
+func _process(_delta: float) -> void:
+	if _steam:
+		_steam.run_callbacks()

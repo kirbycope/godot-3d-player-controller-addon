@@ -505,7 +505,8 @@ var display_name: String = "": ## The name over the head (the Steam persona); re
 			steam_persona_name.visible = not value.is_empty()
 
 const VOICE_FALLOFF_PER_SECOND: float = 2.5 ## How fast [member voice_loudness] falls once the talk key is let go.
-const VOICE_LOUDNESS_GAIN: float = 4.0 ## Speech sits well below full scale, so the measured level is lifted to fill the range.
+const VOICE_FULL_BYTES: float = 900.0 ## Compressed bytes in one frame's worth of voice that counts as speaking at full volume. Measured packets ran from about 186 to 8202 bytes.
+const VOICE_RISE_PER_SECOND: float = 6.0 ## How fast the reading comes up once Steam starts sending voice.
 
 var voice_playback: AudioStreamGeneratorPlayback = null
 var is_broadcasting: bool = false
@@ -660,18 +661,21 @@ func _process(delta: float) -> void:
 	var steam: Object = _get_steam_running() if is_multiplayer_authority() and is_broadcasting else null
 	if steam:
 		var available_voice: Dictionary = steam.getAvailableVoice()
-		if available_voice.get("result") == STEAM_VOICE_RESULT_OK and available_voice.get("written", 0) > 0:
+		# GodotSteam returns "size" here, not "written". Reading the wrong key meant this was always 0, so the
+		# capture below never ran and push-to-talk sent nothing at all.
+		if available_voice.get("result") == STEAM_VOICE_RESULT_OK and available_voice.get("size", 0) > 0:
 			var voice_data: Dictionary = steam.getVoice()
 			if voice_data.get("result") == STEAM_VOICE_RESULT_OK:
 				var buffer: PackedByteArray = voice_data.get("buffer", PackedByteArray())
 				if not buffer.is_empty():
-					voice_loudness = _measure_voice(steam, buffer)
+					# Rise rather than snap, so a burst of speech does not make the meter flicker
+					var heard: float = loudness_of(int(available_voice.get("size", 0)))
+					voice_loudness = minf(voice_loudness + delta * VOICE_RISE_PER_SECOND, heard) if heard > voice_loudness else heard
 					if multiplayer.has_multiplayer_peer() and multiplayer.get_peers().size() > 0:
 						_receive_voice_packet.rpc(buffer)
-	elif not is_broadcasting and voice_loudness > 0.0:
-		# Let it fall away rather than cutting, so the meter settles the way the rest of the noise does. Only
-		# letting go of the key starts that: a missing Steam is not the same as having stopped talking, and
-		# draining it here would empty the reading while the key was still held.
+	elif voice_loudness > 0.0:
+		# Falls away whenever no voice is arriving, which covers both letting the key go and holding it while
+		# saying nothing. Steam sends nothing during a pause, so a held key in silence reads as silence.
 		voice_loudness = maxf(voice_loudness - delta * VOICE_FALLOFF_PER_SECOND, 0.0)
 
 
@@ -1388,33 +1392,19 @@ func stop_broadcasting() -> void:
 		_set_voice_indicator.rpc(false)
 
 
-## How loud [param buffer] is, 0 to 1, as the root mean square of the samples inside it. Steam hands over
-## compressed voice, so this decodes our own packet to look at it, which is work only done while the talk key
-## is held. The result is a level rather than a peak, so a shout reads louder than a mutter instead of both
-## pegging on the first loud syllable.
-func _measure_voice(steam: Object, buffer: PackedByteArray) -> float:
-	var sample_rate: int = steam.getVoiceOptimalSampleRate()
-	if sample_rate <= 0:
-		sample_rate = 48000
-	var decompressed: Dictionary = steam.decompressVoice(buffer, sample_rate)
-	if decompressed.get("result") != STEAM_VOICE_RESULT_OK:
-		return voice_loudness
-	var pcm: PackedByteArray = decompressed.get("uncompressed", PackedByteArray())
-	return loudness_of(pcm)
 
 
-## The root mean square of 16-bit mono samples in [param pcm], scaled so ordinary speech lands near the top of
-## the range rather than down in the noise. Separate from [method _measure_voice] so it can be tested without
-## Steam anywhere near it.
-static func loudness_of(pcm: PackedByteArray) -> float:
-	var samples: int = pcm.size() / 2
-	if samples <= 0:
+## How much voice [param available_bytes] of compressed Steam audio counts as, 0 to 1.
+##
+## Deliberately not an amplitude. Steam gates the microphone with its own voice-activity detection and
+## normalises what it sends, so the samples inside a packet say almost nothing about how loudly you spoke:
+## measured on a laptop, ten seconds of talking and eight seconds of silence came back with the same peak
+## level, 0.0233 against 0.0246. What separates them is whether Steam sends anything at all, 165 packets
+## against 10, and how much. So the reading follows the flow of voice rather than its waveform.
+static func loudness_of(available_bytes: int, full_bytes: float = VOICE_FULL_BYTES) -> float:
+	if available_bytes <= 0:
 		return 0.0
-	var sum_squares: float = 0.0
-	for i: int in samples:
-		var sample: float = float(pcm.decode_s16(i * 2)) / 32768.0
-		sum_squares += sample * sample
-	return clampf(sqrt(sum_squares / float(samples)) * VOICE_LOUDNESS_GAIN, 0.0, 1.0)
+	return clampf(float(available_bytes) / maxf(full_bytes, 1.0), 0.0, 1.0)
 
 
 ## Voice from the owning peer, decoded into this copy's 3D player; only the authority ever sends it.

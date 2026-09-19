@@ -164,32 +164,30 @@ func test_the_meter_finds_the_player_without_being_wired_to_it() -> void:
 	assert_eq(line.noise, noise, "It finds the Player's own PlayerNoise on its own")
 
 
-## Sixteen-bit mono samples at [param amplitude] of full scale, the shape Steam hands back from decompressVoice.
-func _pcm(amplitude: float, samples: int = 480) -> PackedByteArray:
-	var out: PackedByteArray = PackedByteArray()
-	out.resize(samples * 2)
-	for i: int in samples:
-		# A sine rather than a constant, so the measurement is of a waveform and not of DC
-		var value: int = int(sin(float(i) * 0.3) * amplitude * 32767.0)
-		out.encode_s16(i * 2, value)
-	return out
+## Steam gates the microphone itself and normalises what it sends, so the samples inside a packet say almost
+## nothing about how loudly somebody spoke: measured on a laptop, ten seconds of talking and eight of silence
+## came back with the same peak, 0.0233 against 0.0246. What separates them is whether Steam sends anything at
+## all, 165 packets against 10. The reading follows that flow, which is what these pin.
+func test_no_voice_from_steam_reads_as_silence() -> void:
+	assert_almost_eq(Player.loudness_of(0), 0.0, 0.001, "Nothing sent is nothing said")
+	assert_almost_eq(Player.loudness_of(-1), 0.0, 0.001, "and neither is nonsense")
 
 
-## The measurement is separated from Steam on purpose, so it can be tested without a network or a microphone.
-func test_a_shout_measures_louder_than_a_mutter() -> void:
-	var silence: float = Player.loudness_of(_pcm(0.0))
-	var mutter: float = Player.loudness_of(_pcm(0.05))
-	var talking: float = Player.loudness_of(_pcm(0.25))
-	var shout: float = Player.loudness_of(_pcm(0.9))
+func test_more_voice_reads_louder_up_to_a_ceiling() -> void:
+	var trickle: float = Player.loudness_of(186)    # the smallest packet measured
+	var talking: float = Player.loudness_of(600)
+	var full: float = Player.loudness_of(900)
+	var torrent: float = Player.loudness_of(8202)   # the largest measured
 
-	assert_almost_eq(silence, 0.0, 0.001, "Silence measures nothing")
-	assert_gt(talking, mutter, "and a raised voice more than a mutter")
-	assert_gt(shout, talking, "and a shout more than that")
-	assert_lte(shout, 1.0, "with the loudest capped rather than running away")
+	assert_gt(trickle, 0.0, "A small packet is still somebody speaking")
+	assert_gt(talking, trickle, "and more of it reads louder")
+	assert_almost_eq(full, 1.0, 0.001, "a full frame's worth fills the meter")
+	assert_almost_eq(torrent, 1.0, 0.001, "and a burst is capped rather than running past the top")
 
 
-func test_an_empty_packet_measures_nothing() -> void:
-	assert_almost_eq(Player.loudness_of(PackedByteArray()), 0.0, 0.001, "Nothing captured is nothing heard")
+func test_the_full_mark_can_be_moved_for_a_different_setup() -> void:
+	assert_gt(Player.loudness_of(400, 400.0), Player.loudness_of(400),
+		"Where the meter fills is a parameter, not something to edit the code for")
 
 
 func test_talking_is_noise_and_holding_the_key_in_silence_is_not() -> void:
@@ -204,20 +202,26 @@ func test_talking_is_noise_and_holding_the_key_in_silence_is_not() -> void:
 	assert_almost_eq(noise.voice_level(), 0.0, 0.001, "and a Player not on the key is not speaking, whatever the microphone hears")
 
 
-func test_talking_holds_the_reading_up_and_carries() -> void:
+## Arriving voice keeps the reading up, so the test feeds it the way Steam would, a frame at a time.
+func test_talking_is_loud_and_carries() -> void:
+	player.is_broadcasting = true
+	for i: int in 12:
+		player.voice_loudness = 0.9
+		await wait_physics_frames(1)
+
+	assert_gt(noise.level, 0.5, "Talking is loud")
+	assert_gt(noise.audible_distance(), 15.0, "and carries a long way")
+
+
+## Steam sends nothing while you pause, so a held key in silence is silence. The reading drains on its own
+## rather than waiting for the key to come up.
+func test_the_reading_drains_when_no_voice_arrives() -> void:
 	player.is_broadcasting = true
 	player.voice_loudness = 0.9
-	await wait_seconds(0.4)
-	var talking: float = noise.level
-	var carries: float = noise.audible_distance()
+	await wait_seconds(0.6)
 
-	player.is_broadcasting = false
-	player.voice_loudness = 0.0
-	await wait_seconds(0.4)
-
-	assert_gt(talking, 0.5, "Talking is loud")
-	assert_gt(carries, 15.0, "and carries a long way")
-	assert_lt(noise.level, talking, "and it falls away once you stop")
+	assert_lt(player.voice_loudness, 0.9, "A pause drains it even with the key still held")
+	assert_almost_eq(player.voice_loudness, 0.0, 0.05, "and a long enough pause empties it")
 
 
 func test_an_enemy_hears_you_talking() -> void:
@@ -228,7 +232,8 @@ func test_an_enemy_hears_you_talking() -> void:
 	assert_null(enemy.target, "Nobody is hunting yet")
 
 	player.is_broadcasting = true
-	player.voice_loudness = 0.9
-	await wait_seconds(0.5)
+	for i: int in 24:
+		player.voice_loudness = 0.9
+		await wait_physics_frames(1)
 
 	assert_eq(enemy.target, player, "Talking over voice chat gives your position away")
