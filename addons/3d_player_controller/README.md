@@ -78,7 +78,7 @@ Organized state machine architecture separating primary lower-body locomotion st
   the tooltip instead of leaving them pointing at the old key. Push-to-talk is the `broadcast` action, which
   these controls register on **V**; it sits on no controller slot, so there is no pad button for it.
 
-  Which is why the row sits under a **Voice activation** toggle. The Zelda layout binds every usable button,
+  Which is why the row sits under a **Voice activation** toggle, off unless it is asked for: an open microphone transmits the room, which is not something to hand somebody by default. The Zelda layout binds every usable button,
   so a pad player cannot hold push-to-talk at all and speaking is the only way they can talk. With it on, the
   capture listens continuously and Steam's own voice detection means that costs nothing while the room is
   quiet, since it simply sends no packets; passing the mark opens the channel and dropping under it closes it

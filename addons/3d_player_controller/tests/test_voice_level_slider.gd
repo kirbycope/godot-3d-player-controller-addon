@@ -225,3 +225,11 @@ func test_the_row_stops_naming_a_key_when_there_is_none_to_hold() -> void:
 	assert_true(menu.microphone_hint().contains("Hold"), "Back on the key, the tip says to hold it")
 
 	menu.settings_res.voice_activation = was
+
+
+## Push-to-talk is the default, and voice activation is opted into. An open microphone is not something to
+## hand somebody without asking: it transmits the room until they find the toggle and turn it off.
+func test_voice_activation_is_off_until_it_is_asked_for() -> void:
+	var fresh: PlayerSettingsResource = PlayerSettingsResource.new()
+
+	assert_false(fresh.voice_activation, "A profile that has never been touched holds the key to talk")
