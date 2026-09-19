@@ -24,7 +24,7 @@
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/fantasy_props/Chain_Coil.gltf" id="chain"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/fantasy_props/Vase_Rubble_Medium.gltf" id="rubble"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/fantasy_props/Lantern_Wall.gltf" id="lantern"]
-[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/control_schemes/zelda.tres" id="control_scheme_res"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/control_schemes/totk.tres" id="control_scheme_res"]
 
 [sub_resource type="Environment" id="env"]
 background_mode = 1

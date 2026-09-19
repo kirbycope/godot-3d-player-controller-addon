@@ -12,7 +12,7 @@
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/gta/building_small.tscn" id="building_small"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/downtown_city/Street_4WayIntersection.gltf" id="intersection"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/downtown_city/Street_4Lane.gltf" id="street"]
-[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/control_schemes/zelda.tres" id="control_scheme_res"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/control_schemes/totk.tres" id="control_scheme_res"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
 sky_top_color = Color(0.25, 0.45, 0.85, 1)

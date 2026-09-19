@@ -31,7 +31,7 @@ func _send(action: StringName, pressed: bool) -> void:
 
 
 func test_the_demo_sets_the_player_up_for_a_platformer() -> void:
-	assert_eq(player.control_scheme, preload("res://addons/3d_player_controller/resources/control_schemes/platformer.tres"))
+	assert_eq(player.control_scheme, preload("res://addons/3d_player_controller/resources/control_schemes/smo.tres"))
 	assert_eq(player.controls.joypad_button_0_label.text, "Jump", "A is Jump")
 	assert_true(player.enable_double_jump)
 	assert_true(player.instant_jump, "The press itself leaves the ground")

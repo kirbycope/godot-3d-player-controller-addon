@@ -33,7 +33,7 @@ func _send(action: StringName, pressed: bool) -> void:
 
 
 func test_the_demo_sets_the_player_up_for_souls() -> void:
-	assert_eq(player.control_scheme, preload("res://addons/3d_player_controller/resources/control_schemes/zelda.tres"), "Lock-on Focus")
+	assert_eq(player.control_scheme, preload("res://addons/3d_player_controller/resources/control_schemes/totk.tres"), "Lock-on Focus")
 	assert_true(player.enable_stamina)
 	assert_true(player.enable_dodge)
 	assert_gt(player.attack_stamina_cost, 0.0, "Swings cost breath")

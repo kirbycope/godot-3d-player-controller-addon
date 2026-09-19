@@ -29,7 +29,7 @@
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/fantasy_props/FarmCrate_Apple.gltf" id="apple_crate"]
 [ext_resource type="Texture2D" path="res://addons/3d_player_controller/assets/icons/berries.svg" id="hunger_icon"]
 [ext_resource type="Texture2D" path="res://addons/3d_player_controller/assets/icons/potion.svg" id="thirst_icon"]
-[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/control_schemes/zelda.tres" id="control_scheme_res"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/control_schemes/totk.tres" id="control_scheme_res"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
 sky_top_color = Color(0.3, 0.55, 0.9, 1)

@@ -19,7 +19,7 @@ func before_each() -> void:
 
 
 func test_the_demo_sets_the_player_up_for_a_shooter_over_the_shoulder() -> void:
-	assert_eq(player.control_scheme, preload("res://addons/gta/resources/gta_controls.tres"), "Free aim over the shoulder")
+	assert_eq(player.control_scheme, preload("res://addons/gta/resources/control_schemes/gta.tres"), "Free aim over the shoulder")
 	assert_false(player.lock_on_enabled())
 	assert_true(player.quest_log.is_active(QUEST))
 	assert_true(demo.get_node("Gear/Rifle") is Rifle)

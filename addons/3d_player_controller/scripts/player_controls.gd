@@ -62,8 +62,8 @@ const PLAYER_ACTIONS: Dictionary = {
 ## [member Player.control_scheme]. Only the settings menu's list is built from this array; nothing else in
 ## the addon needs to know which schemes exist.
 const BUILT_IN_SCHEMES: Array[ControlScheme] = [
-	preload("res://addons/3d_player_controller/resources/control_schemes/zelda.tres"),
-	preload("res://addons/3d_player_controller/resources/control_schemes/platformer.tres"),
+	preload("res://addons/3d_player_controller/resources/control_schemes/totk.tres"),
+	preload("res://addons/3d_player_controller/resources/control_schemes/smo.tres"),
 ]
 
 ## Layouts another addon or the game itself has added to the settings menu, in the order they registered.
@@ -107,7 +107,7 @@ static func scheme_named(scheme_name: String) -> ControlScheme:
 
 
 ## The layout a Player falls back to when a scene leaves [member Player.control_scheme] empty.
-const DEFAULT_SCHEME: ControlScheme = preload("res://addons/3d_player_controller/resources/control_schemes/zelda.tres")
+const DEFAULT_SCHEME: ControlScheme = preload("res://addons/3d_player_controller/resources/control_schemes/totk.tres")
 
 ## What a face button reads when nothing contextual is showing, by the action it stands for; the scene's own
 ## label texts are for the Zelda layout, so a swapped button takes its text from here.

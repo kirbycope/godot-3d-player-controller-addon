@@ -30,7 +30,7 @@
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/gta/building_small.tscn" id="building_small"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/gta/crate.tscn" id="crate"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/gta/barrel.tscn" id="barrel"]
-[ext_resource type="Resource" path="res://addons/gta/resources/gta_controls.tres" id="control_scheme_res"]
+[ext_resource type="Resource" path="res://addons/gta/resources/control_schemes/gta.tres" id="control_scheme_res"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
 sky_top_color = Color(0.36, 0.5, 0.7, 1)
