@@ -111,3 +111,49 @@ func test_the_ends_of_the_bar_are_the_ends_of_the_range() -> void:
 	assert_almost_eq(slider.ratio_of(slider.max_value), 1.0, 0.001, "and the top is the right edge")
 	assert_almost_eq(slider.ratio_of(-500.0), 0.0, 0.001, "with anything past the ends held there")
 	assert_almost_eq(slider.ratio_of(9999.0), 1.0, 0.001)
+
+
+## The row says which key to hold, and says it from the InputMap rather than from a string somebody typed, so
+## rebinding push-to-talk changes the instruction instead of leaving it lying about the old key.
+func test_the_row_names_the_key_push_to_talk_is_actually_bound_to() -> void:
+	var menu: Node = SETTINGS_SCENE.instantiate()
+	add_child_autofree(menu)
+	await wait_process_frames(1)
+
+	var had: bool = InputMap.has_action(&"broadcast")
+	if not had:
+		InputMap.add_action(&"broadcast")
+	var was: Array[InputEvent] = InputMap.action_get_events(&"broadcast")
+	InputMap.action_erase_events(&"broadcast")
+	var key: InputEventKey = InputEventKey.new()
+	key.physical_keycode = KEY_B
+	InputMap.action_add_event(&"broadcast", key)
+
+	assert_eq(menu.talk_key_name(), "B", "It reads the binding as it stands")
+	assert_true(menu.microphone_hint().contains("B"), "and the tip names that key")
+	assert_true(menu.microphone_label_text().contains("B"), "as does the label")
+
+	InputMap.action_erase_events(&"broadcast")
+	for event: InputEvent in was:
+		InputMap.action_add_event(&"broadcast", event)
+	if not had:
+		InputMap.erase_action(&"broadcast")
+
+
+## Voice chat is keyboard-only here, and a project could unbind it entirely. The row should still make sense.
+func test_the_row_copes_with_push_to_talk_being_unbound() -> void:
+	var menu: Node = SETTINGS_SCENE.instantiate()
+	add_child_autofree(menu)
+	await wait_process_frames(1)
+
+	var had: bool = InputMap.has_action(&"broadcast")
+	var was: Array[InputEvent] = InputMap.action_get_events(&"broadcast") if had else ([] as Array[InputEvent])
+	if had:
+		InputMap.action_erase_events(&"broadcast")
+
+	assert_eq(menu.talk_key_name(), "", "With nothing bound there is no key to name")
+	assert_true(menu.microphone_hint().contains("push-to-talk"), "so the tip says what to press in words")
+	assert_eq(menu.microphone_label_text(), "Microphone", "and the label drops the key rather than reading half a sentence")
+
+	for event: InputEvent in was:
+		InputMap.action_add_event(&"broadcast", event)

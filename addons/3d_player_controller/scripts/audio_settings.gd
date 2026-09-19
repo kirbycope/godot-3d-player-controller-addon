@@ -7,6 +7,7 @@ extends PlayerMenuLayer
 @onready var voice_settings: VBoxContainer = $Panel/VBoxContainer/VoiceSettings ## Steam voice chat rows; shown only when Steam is loaded.
 @onready var voice_slider: HSlider = $Panel/VBoxContainer/VoiceSettings/Voice/VolumeSlider
 @onready var mute_voice: CheckButton = $Panel/VBoxContainer/VoiceSettings/MuteVoice
+@onready var microphone_label: Label = $Panel/VBoxContainer/VoiceSettings/Microphone
 @onready var mic_sensitivity: VoiceLevelSlider = $Panel/VBoxContainer/VoiceSettings/Microphone/Sensitivity ## Both the microphone meter and the setting; one bar, after PulseAudio's.
 
 var settings_res: PlayerSettingsResource
@@ -23,9 +24,40 @@ func _ready() -> void:
 	voice_slider.set_value_no_signal(settings_res.voice_volume)
 	mute_voice.set_pressed_no_signal(settings_res.voice_muted)
 	mic_sensitivity.set_value_no_signal(settings_res.voice_sensitivity)
+	var hint: String = microphone_hint()
+	mic_sensitivity.tooltip_text = hint
+	microphone_label.tooltip_text = hint
+	microphone_label.text = microphone_label_text()
 	mic_sensitivity.value_changed.connect(_on_mic_sensitivity_changed)
 	voice_settings.visible = is_steam_loaded()
 	set_process(true)
+
+
+## What push-to-talk is bound to, as a key name, or empty when nothing is. Read off the [InputMap] rather than
+## written into a string, so it follows a rebind and cannot quietly go stale: the action is [code]broadcast[/code],
+## which this addon's controls register on V, and it sits on no controller slot, so there is no pad button to name.
+func talk_key_name() -> String:
+	if not InputMap.has_action(&"broadcast"):
+		return ""
+	for event: InputEvent in InputMap.action_get_events(&"broadcast"):
+		if event is InputEventKey:
+			var key: InputEventKey = event
+			return OS.get_keycode_string(key.physical_keycode if key.physical_keycode != 0 else key.keycode)
+	return ""
+
+
+## The row's own label, naming the key so the instruction is visible without hunting for a tooltip.
+func microphone_label_text() -> String:
+	var key: String = talk_key_name()
+	return "Microphone" if key.is_empty() else "Microphone (hold %s)" % key
+
+
+## The tip on the row: what the bar is, and what to do to set it.
+func microphone_hint() -> String:
+	var key: String = talk_key_name()
+	var press: String = "push-to-talk" if key.is_empty() else key
+	return ("Hold %s and speak. The bar fills with what your microphone hears; drag the handle so an ordinary "
+			+ "voice reaches the mark.") % press
 
 
 ## The bar shows what the microphone is hearing right now, so the handle can be set by talking rather than by

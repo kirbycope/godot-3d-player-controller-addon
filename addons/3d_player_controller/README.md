@@ -73,7 +73,10 @@ Organized state machine architecture separating primary lower-body locomotion st
   through yellow into red with a mark where a normal voice should land. The fill behind the handle is what the
   microphone is hearing right now, and the handle is the sensitivity, saved as
   `PlayerSettingsResource.voice_sensitivity`. Calibrating is one action: hold the talk key, speak, and drag the
-  handle until an ordinary voice fills the bar to the mark. A quiet microphone goes right, a headset that
+  handle until an ordinary voice fills the bar to the mark. The row names that key itself, reading it off the
+  `InputMap` rather than repeating one written into a string, so rebinding push-to-talk changes the label and
+  the tooltip instead of leaving them pointing at the old key. Push-to-talk is the `broadcast` action, which
+  these controls register on **V**; it sits on no controller slot, so there is no pad button for it. A quiet microphone goes right, a headset that
   clips goes left. The row only appears when Steam is loaded, like the rest of the voice settings.
 
   Two things had to be fixed before any of this could work, and both were broken for voice chat generally
