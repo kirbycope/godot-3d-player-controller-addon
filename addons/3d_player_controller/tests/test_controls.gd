@@ -98,7 +98,7 @@ class TestFlyingControls:
 		player.state_machine.travel(NodeStateMachine.States.STANDING, NodeStateMachine.States.FLYING)
 
 		assert_eq(player.controls.joypad_button_3_label.text, "Fly Up")
-		assert_eq(player.controls.joypad_button_0_label.text, "Fly Down")
+		assert_eq(player.controls.joypad_button_1_label.text, "Fly Down")
 		assert_eq(player.controls.left_joystick_label.text, "Fly")
 
 
@@ -121,7 +121,7 @@ class TestParaglidingControls:
 		player.controls.current_input_type = Controls.InputType.MICROSOFT
 		player.state_machine.travel(NodeStateMachine.States.STANDING, NodeStateMachine.States.PARAGLIDING)
 
-		assert_eq(player.controls.joypad_button_0_label.text, "Cancel")
+		assert_eq(player.controls.joypad_button_1_label.text, "Cancel")
 		assert_eq(player.controls.left_joystick_label.text, "Steer")
 
 
@@ -135,7 +135,7 @@ class TestClimbingControls:
 		player.state_machine.travel(NodeStateMachine.States.STANDING, NodeStateMachine.States.CLIMBING)
 
 		assert_eq(player.controls.joypad_button_3_label.text, "Hop")
-		assert_eq(player.controls.joypad_button_1_label.text, "Fast Climb")
+		assert_eq(player.controls.joypad_button_0_label.text, "Fast Climb")
 		assert_eq(player.controls.joypad_button_7_label.text, "Drop")
 		assert_eq(player.controls.left_joystick_label.text, "Climb")
 
@@ -145,7 +145,7 @@ class TestClimbingControls:
 		player.state_machine.travel(NodeStateMachine.States.STANDING, NodeStateMachine.States.CLIMBING)
 
 		assert_eq(player.controls.joypad_button_3_label.text, "Hop")
-		assert_eq(player.controls.joypad_button_1_label.text, "Fast Climb")
+		assert_eq(player.controls.joypad_button_0_label.text, "Fast Climb")
 		assert_eq(player.controls.joypad_button_7_label.text, "Drop")
 		assert_eq(player.controls.left_joystick_label.text, "Climb")
 
@@ -183,7 +183,7 @@ class TestSwimmingControls:
 		player.state_machine.travel(NodeStateMachine.States.STANDING, NodeStateMachine.States.SWIMMING)
 
 		assert_eq(player.controls.joypad_button_3_label.text, "Climb Out")
-		assert_eq(player.controls.joypad_button_1_label.text, "Fast Swim")
+		assert_eq(player.controls.joypad_button_0_label.text, "Fast Swim")
 		assert_eq(player.controls.left_joystick_label.text, "Swim")
 
 	func test_swimming_contextual_controls_controller():
@@ -192,7 +192,7 @@ class TestSwimmingControls:
 		player.state_machine.travel(NodeStateMachine.States.STANDING, NodeStateMachine.States.SWIMMING)
 
 		assert_eq(player.controls.joypad_button_3_label.text, "Climb Out")
-		assert_eq(player.controls.joypad_button_1_label.text, "Fast Swim")
+		assert_eq(player.controls.joypad_button_0_label.text, "Fast Swim")
 		assert_eq(player.controls.left_joystick_label.text, "Swim")
 
 
@@ -269,7 +269,7 @@ class TestInputTypeSwapping:
 
 		# Swap input type to Keyboard/Mouse -> should reset all labels to defaults
 		controls.current_input_type = controls.InputType.KEYBOARD_MOUSE
-		assert_eq(controls.joypad_button_0_label.text, "Action", "Label should reset to default upon swapping input type")
+		assert_eq(controls.joypad_button_0_label.text, "Sprint", "Label should reset to default upon swapping input type")
 		assert_eq(controls.key_s_label.text, "Move", "Key S label should reset to default Move")
 		assert_eq(controls.key_i_label.text, "Seeker", "Key I label should reset to default Seeker")
 

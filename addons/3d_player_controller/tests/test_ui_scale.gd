@@ -114,9 +114,9 @@ func test_a_hidden_hud_still_pops_contextual_hints_and_a_demo_can_force_it() -> 
 	player.apply_hud_visibility()
 	assert_true(player.controls.visible, "The node is never hidden outright")
 	assert_true(player.controls.contextual_only)
-	assert_false(player.controls.joypad_button_0.visible, "Resting, the Action button is off")
+	assert_false(player.controls.joypad_button_1.visible, "Resting, the Action button is off")
 	player.controls.claim_action_label("Pick Up", self)
-	assert_true(player.controls.joypad_button_0.visible, "A prompt's word brings its button in")
+	assert_true(player.controls.joypad_button_1.visible, "A prompt's word brings its button in")
 	player.controls.release_action_label(self)
 	player.hud_mode_override = PlayerSettingsResource.HudMode.SHOWN
 	assert_false(player.controls.contextual_only, "A demo forces the whole set")

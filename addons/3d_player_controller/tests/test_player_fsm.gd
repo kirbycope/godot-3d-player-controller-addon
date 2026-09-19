@@ -484,7 +484,7 @@ class TestRidingTransitions:
 		var riding_node: Riding = player.state_machine.get_node("Riding") as Riding
 		var kb_controls = riding_node.get_contextual_controls(0)
 		assert_eq(kb_controls.get(player.controls.key_k_label), "Dismount", "\"key_k\" lands on the Controls' key_k_label")
-		assert_eq(kb_controls.get(player.controls.joypad_button_1_label), "Fast Push")
+		assert_eq(kb_controls.get(player.controls.joypad_button_1_label), "Fast Push", "and \"joypad_button_1\" on its label, by the name the rideable gave rather than by what the button does")
 		assert_eq(kb_controls.size(), 2, "A name with no label on the Controls is dropped")
 
 	func test_riding_keeps_the_rideables_input_type_current():

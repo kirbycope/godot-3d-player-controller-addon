@@ -34,7 +34,7 @@ func test_held_object_45_degree_rotation_snapping() -> void:
 
 	held_object._pickup_rigidbody(rb)
 	assert_true(held_object.is_holding_rigidbody(), "Should be holding rigidbody")
-	assert_eq(player.controls.joypad_button_0_label.text, "Drop", "Holding pushes the held-object control labels")
+	assert_eq(player.controls.joypad_button_1_label.text, "Drop", "Holding pushes the held-object control labels")
 
 	held_object._is_held_rotation_mode = true
 	held_object.use_discrete_rotation_snap = true
@@ -50,7 +50,7 @@ func test_held_object_45_degree_rotation_snapping() -> void:
 	held_object.drop_held_rigidbody()
 	assert_false(held_object.is_holding_object(), "Dropping releases the body")
 	assert_eq(rb.get_parent(), player.get_parent(), "Dropped bodies return to the player's parent")
-	assert_ne(player.controls.joypad_button_0_label.text, "Drop", "Dropping hands the labels back to the state")
+	assert_ne(player.controls.joypad_button_1_label.text, "Drop", "Dropping hands the labels back to the state")
 
 
 func test_hit_detection_registers_once_per_swing_via_hitbox() -> void:

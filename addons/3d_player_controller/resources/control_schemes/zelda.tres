@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1_control_scheme")
 scheme_name = "Zelda"
-action_button_0 = &"action"
-action_button_1 = &"sprint"
+action_button_0 = &"sprint"
+action_button_1 = &"action"
 action_button_2 = &"attack"
 action_button_3 = &"jump"
 locks_on = true

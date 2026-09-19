@@ -58,13 +58,13 @@ func test_the_door_prompt_reads_the_lock() -> void:
 	var door: LockedDoor = demo.get_node("Armoury/Door")
 	player.warp_to(Transform3D(Basis(), door.global_position + Vector3(1.5, 0.0, 0.0)))
 	await wait_physics_frames(3)
-	assert_eq(player.controls.joypad_button_0_label.text, "Card needed")
+	assert_eq(player.controls.joypad_button_1_label.text, "Card needed")
 	player.inventory.add_item(CARD, 1)
 	player.warp_to(Transform3D(Basis(), door.global_position + Vector3(6.0, 0.0, 0.0)))
 	await wait_physics_frames(3)
 	player.warp_to(Transform3D(Basis(), door.global_position + Vector3(1.5, 0.0, 0.0)))
 	await wait_physics_frames(3)
-	assert_eq(player.controls.joypad_button_0_label.text, "Open")
+	assert_eq(player.controls.joypad_button_1_label.text, "Open")
 	var press: InputEventAction = InputEventAction.new()
 	press.action = &"action"
 	press.pressed = true

@@ -56,12 +56,15 @@ func _has_button(action: StringName, button: JoyButton) -> bool:
 
 func test_zelda_is_the_default_layout() -> void:
 	assert_eq(player.control_scheme, preload("res://addons/3d_player_controller/resources/control_schemes/zelda.tres"))
-	assert_true(_has_button(&"action", JOY_BUTTON_A), "A is Action")
-	assert_true(_has_button(&"sprint", JOY_BUTTON_B), "B is Sprint")
-	assert_true(_has_button(&"attack", JOY_BUTTON_X), "X is Attack")
-	assert_true(_has_button(&"jump", JOY_BUTTON_Y), "Y is Jump")
+	# Tears of the Kingdom's own layout. Its labels are Nintendo's, whose A is the right button and B the
+	# bottom, mirrored from the Xbox naming Godot uses: the game's "A Action" is JOY_BUTTON_B here and its
+	# "B Dash" is JOY_BUTTON_A.
+	assert_true(_has_button(&"sprint", JOY_BUTTON_A), "The bottom button dashes, as B does in the game")
+	assert_true(_has_button(&"action", JOY_BUTTON_B), "The right button is Action, as A is in the game")
+	assert_true(_has_button(&"attack", JOY_BUTTON_X), "The left button attacks, as Y does in the game")
+	assert_true(_has_button(&"jump", JOY_BUTTON_Y), "The top button jumps, as X does in the game")
 	assert_true(player.lock_on_enabled(), "Zelda locks on")
-	assert_eq(player.controls.joypad_button_0_label.text, "Action")
+	assert_eq(player.controls.joypad_button_0_label.text, "Sprint")
 
 
 func test_gta_moves_the_face_buttons_and_frees_the_aim() -> void:
@@ -81,10 +84,10 @@ func test_gta_moves_the_face_buttons_and_frees_the_aim() -> void:
 func test_switching_back_restores_zelda() -> void:
 	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/gta.tres")
 	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/zelda.tres")
-	assert_true(_has_button(&"action", JOY_BUTTON_A))
-	assert_false(_has_button(&"sprint", JOY_BUTTON_A))
+	assert_true(_has_button(&"sprint", JOY_BUTTON_A))
+	assert_false(_has_button(&"action", JOY_BUTTON_A))
 	assert_true(_has_button(&"jump", JOY_BUTTON_Y))
-	assert_eq(player.controls.joypad_button_0_label.text, "Action")
+	assert_eq(player.controls.joypad_button_0_label.text, "Sprint")
 
 
 func test_focus_never_locks_on_under_gta() -> void:

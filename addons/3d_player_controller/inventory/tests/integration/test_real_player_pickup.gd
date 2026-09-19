@@ -38,7 +38,7 @@ func after_each() -> void:
 
 
 func test_the_action_label_is_the_states_own_again_after_a_pickup() -> void:
-	var label: Label = player.controls.joypad_button_0_label
+	var label: Label = player.controls.joypad_button_1_label
 	var state_text: String = label.text
 	assert_ne(state_text, "Pick Up", "The Standing state's label is not the prompt's")
 	var pickup: ItemPickup = PICKUP_SCENE.instantiate()

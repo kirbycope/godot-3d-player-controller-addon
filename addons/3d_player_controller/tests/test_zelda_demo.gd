@@ -67,8 +67,8 @@ func test_the_chest_offers_open_and_a_coin_offers_pick_up_on_the_action_button()
 	var chest: TreasureChest = demo.get_node("Shrine/TreasureChest")
 	player.warp_to(Transform3D(Basis(), chest.global_position + Vector3(0.0, 0.0, 1.2)))
 	await wait_physics_frames(3)
-	assert_eq(player.controls.joypad_button_0_label.text, "Open", "Walking up to the chest offers Open")
-	assert_true(player.controls.is_label_contextual(player.controls.joypad_button_0_label))
+	assert_eq(player.controls.joypad_button_1_label.text, "Open", "Walking up to the chest offers Open")
+	assert_true(player.controls.is_label_contextual(player.controls.joypad_button_1_label))
 	var press: InputEventAction = InputEventAction.new()
 	press.action = &"action"
 	press.pressed = true
@@ -79,11 +79,11 @@ func test_the_chest_offers_open_and_a_coin_offers_pick_up_on_the_action_button()
 	release.pressed = false
 	Input.parse_input_event(release)
 	assert_true(chest.is_open, "Action opens it from there")
-	assert_eq(player.controls.joypad_button_0_label.text, "Action", "And the word is given back")
+	assert_eq(player.controls.joypad_button_1_label.text, "Action", "And the word is given back")
 	var coin: ItemPickup = demo.get_node("Coins/Coin1")
 	player.warp_to(Transform3D(Basis(), coin.global_position))
 	await wait_physics_frames(3)
-	assert_eq(player.controls.joypad_button_0_label.text, "Pick Up")
+	assert_eq(player.controls.joypad_button_1_label.text, "Pick Up")
 
 
 func test_a_potion_drunk_heals() -> void:
