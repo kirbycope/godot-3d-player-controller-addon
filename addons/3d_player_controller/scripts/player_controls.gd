@@ -3,8 +3,10 @@ class_name PlayerControls
 extends Controls
 
 ## The player controller's on-screen controls: the [Controls] HUD from the Controls addon, mapped to this
-## addon's action names and carrying the four readouts only a player has - the throw charge, the cast bar, the
-## boss bar and the ammo count.
+## addon's action names and carrying the throw charge, which is an input hint like the buttons around it.
+##
+## The gameplay readouts used to hang here too. They are their own scenes now, each beside the system that
+## drives it: [BossBar], [AmmoReadout] and [CastBar]. See [HudReadout].
 ##
 ## The mapping itself is in [code]player_controls.tscn[/code], on the exported action names, so the HUD's own
 ## repository knows nothing about walking, sprinting or firearms. What is here is the part that needs a
@@ -83,12 +85,6 @@ var _hud_ready: bool = false ## The base has bound the slots and cached the art;
 ## restart, a second local player) finds the first one's actions already there, and those are ours to rebind.
 static var _registered_actions: Dictionary[StringName, bool] = {}
 
-@onready var cast_bar: ProgressBar = %CastBar ## Fills while an ability with a cast time is cast.
-@onready var cast_label: Label = %CastLabel ## Names the ability being cast on the cast bar.
-@onready var boss_bar: VBoxContainer = %BossBar ## Name and health of the boss this player is fighting.
-@onready var boss_name_label: Label = %BossName
-@onready var boss_health_bar: ProgressBar = %BossHealth
-@onready var ammo_label: Label = %AmmoLabel ## Magazine / reserve of the equipped firearm; [Firearm] drives it.
 
 
 func _ready() -> void:
@@ -262,27 +258,3 @@ func refresh_seeker_label() -> void:
 func _on_locomotion_node_changed(_state_path: String) -> void:
 	refresh_seeker_label()
 
-
-## Shows the boss bar for [param boss_name] at [param ratio] (0-1) health; [Boss] drives these three.
-func show_boss(boss_name: String, ratio: float) -> void:
-	boss_name_label.text = boss_name
-	boss_health_bar.value = ratio
-	boss_bar.show()
-
-
-func update_boss(ratio: float) -> void:
-	boss_health_bar.value = ratio
-
-
-func hide_boss() -> void:
-	boss_bar.hide()
-
-
-## Shows rounds in the magazine and in reserve while a firearm is equipped.
-func set_ammo(rounds: int, reserve: int) -> void:
-	ammo_label.text = "%d / %d" % [rounds, reserve]
-	ammo_label.show()
-
-
-func hide_ammo() -> void:
-	ammo_label.hide()

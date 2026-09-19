@@ -422,6 +422,11 @@ var paraglider: Node3D
 @onready var separation_ray_shape: CollisionShape3D = $SeparationRayShape3D
 @onready var initial_separation_ray_transform: Transform3D = separation_ray_shape.transform
 @onready var controls: PlayerControls = $Controls
+## The gameplay readouts, each its own scene beside the system that drives it. Looked up rather than required,
+## because a game is free to move them, replace them or leave them out; every driver checks before writing.
+@onready var boss_bar: BossBar = get_node_or_null("BossBar")
+@onready var ammo_readout: AmmoReadout = get_node_or_null("AmmoReadout")
+@onready var cast_bar: CastBar = get_node_or_null("CastBar")
 @onready var chat: ChatWindow = get_node_or_null("Chat") as ChatWindow ## The local chat window; puppets keep a hidden copy that relays RPCs.
 @onready var crosshair: TextureRect = $Crosshair
 @onready var debug: Debug = $Debug

@@ -89,12 +89,10 @@ func cast(ability: Ability) -> void:
 	casting = ability
 	cast_timer.start(ability.cast_time)
 	set_physics_process(not ability.channel_while_moving)
-	var cast_bar: ProgressBar = player.controls.cast_bar
-	player.controls.cast_label.text = ability.display_name
-	cast_bar.value = 0.0
-	cast_bar.show()
-	_cast_tween = create_tween()
-	_cast_tween.tween_property(cast_bar, "value", cast_bar.max_value, ability.cast_time)
+	if player.cast_bar:
+		player.cast_bar.show_cast(ability.display_name)
+		_cast_tween = create_tween()
+		_cast_tween.tween_property(player.cast_bar.bar, "value", player.cast_bar.bar.max_value, ability.cast_time)
 	_play(ability, Ability.Phase.CHANNELING, _hand_position())
 	cast_started.emit(ability)
 
@@ -180,7 +178,8 @@ func _land(ability: Ability, target: Node3D, at: Vector3) -> void:
 func _hide_cast_bar() -> void:
 	if _cast_tween:
 		_cast_tween.kill()
-	player.controls.cast_bar.hide()
+	if player.cast_bar:
+		player.cast_bar.hide_cast()
 
 
 func _update_label() -> void:

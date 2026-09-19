@@ -28,11 +28,12 @@ func disengage() -> void:
 	target_peer = 0
 
 
-## The Controls of the player this peer owns, if any.
-func _local_controls() -> Node:
+## The boss bar of the player this peer owns, if they have one. A game that took the readout off its Player
+## gets null here and no boss bar, which is the point of it being a separate scene.
+func _local_boss_bar() -> Node:
 	for player: Node in get_tree().get_nodes_in_group("Player"):
-		if player.is_multiplayer_authority() and player.get("controls"):
-			return player.get("controls")
+		if player.is_multiplayer_authority() and player.get("boss_bar"):
+			return player.get("boss_bar")
 	return null
 
 
@@ -41,7 +42,7 @@ func _refresh() -> void:
 		return
 	var wanted: bool = target_peer != 0 and target_peer == multiplayer.get_unique_id() and health.health > 0.0
 	if wanted and _shown_on == null:
-		_shown_on = _local_controls()
+		_shown_on = _local_boss_bar()
 		if _shown_on:
 			_shown_on.call("show_boss", boss_name, health.health / health.max_health)
 	elif not wanted and _shown_on:

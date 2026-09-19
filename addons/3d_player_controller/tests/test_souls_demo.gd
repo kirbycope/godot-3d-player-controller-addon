@@ -124,7 +124,7 @@ func test_the_fog_gate_wakes_the_boss() -> void:
 	assert_null(boss.target)
 	demo._on_fog_gate_body_entered(player)
 	assert_eq(boss.target, player, "Through the fog, the boss is on you")
-	assert_eq(player.controls.boss_name_label.text, "Gravelord Vessel", "And its bar is up")
+	assert_eq(player.boss_bar.name_label.text, "Gravelord Vessel", "And its bar is up")
 
 
 func test_the_sword_lands_on_a_hollow_with_focus_held() -> void:

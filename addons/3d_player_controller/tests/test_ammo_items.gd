@@ -143,9 +143,9 @@ func test_a_reload_takes_one_magazine_from_the_inventory_and_refuses_without() -
 	assert_eq(gun.reserve_rounds, 2)
 	assert_eq(gun.loaded_ammo, mag)
 	assert_signal_emitted_with_parameters(gun, "ammo_changed", [2, 2])
-	assert_eq(player.controls.ammo_label.text, "2 / 2", "The HUD shows the magazine and what the inventory holds")
+	assert_eq(player.ammo_readout.label.text, "2 / 2", "The HUD shows the magazine and what the inventory holds")
 	player.inventory.remove_item(mag, 1)
-	assert_eq(player.controls.ammo_label.text, "2 / 0", "Dropping a magazine updates the HUD at once")
+	assert_eq(player.ammo_readout.label.text, "2 / 0", "Dropping a magazine updates the HUD at once")
 
 
 func test_a_reload_takes_the_selected_kind_and_its_rounds_fly() -> void:

@@ -55,7 +55,8 @@ func _ready() -> void:
 		player.inventory.equipment_changed.connect(_on_equipment_changed)
 		player.inventory.item_used.connect(_on_item_used)
 		player.inventory.items_changed.connect(_on_items_changed)
-		ammo_changed.connect(player.controls.set_ammo)
+		if player.ammo_readout:
+			ammo_changed.connect(player.ammo_readout.set_ammo)
 
 
 ## Only the equipped copy aims, fires, reloads and owns the HUD's ammo counter.
@@ -64,9 +65,11 @@ func _on_equipment_changed() -> void:
 	set_physics_process(equipped)
 	set_process_unhandled_input(equipped)
 	if equipped:
-		player.controls.set_ammo(rounds, reserve_rounds)
+		if player.ammo_readout:
+			player.ammo_readout.set_ammo(rounds, reserve_rounds)
 	elif not player.has_firearm_equipped:
-		player.controls.hide_ammo()
+		if player.ammo_readout:
+			player.ammo_readout.hide_ammo()
 	if not equipped and laser_sight:
 		laser_sight.hide()
 

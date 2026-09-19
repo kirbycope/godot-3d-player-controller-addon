@@ -178,11 +178,11 @@ func test_magazine_empties_and_reloads_from_the_inventory() -> void:
 	assert_eq(gun.reserve_rounds, 0)
 	gun.reload()
 	assert_false(gun.is_reloading, "A full magazine does not reload")
-	player.controls.set_ammo(gun.rounds, gun.reserve_rounds)
-	assert_eq(player.controls.ammo_label.text, "2 / 0")
-	assert_true(player.controls.ammo_label.visible)
-	player.controls.hide_ammo()
-	assert_false(player.controls.ammo_label.visible)
+	player.ammo_readout.set_ammo(gun.rounds, gun.reserve_rounds)
+	assert_eq(player.ammo_readout.label.text, "2 / 0")
+	assert_true(player.ammo_readout.label.visible)
+	player.ammo_readout.hide_ammo()
+	assert_false(player.ammo_readout.label.visible)
 
 
 func test_the_aim_point_sits_under_the_crosshair_with_the_shoulder_camera() -> void:

@@ -355,16 +355,26 @@ class TestActionTable:
 class TestHudLayout:
 	extends ControlsTestBase
 
-	func test_the_readouts_scale_with_the_corners() -> void:
+	func test_the_throw_charge_scales_with_the_corners() -> void:
 		var controls: PlayerControls = player_instance.controls
 		var bottom_center: Control = controls.get_node("BottomCenter")
-		assert_eq(controls.ammo_label.get_parent(), bottom_center, "The ammo count sits in the bottom-centre cluster")
-		assert_eq(controls.cast_bar.get_parent(), bottom_center)
-		assert_eq(controls.get_node("%ThrowChargeBar").get_parent(), bottom_center)
-		assert_eq(controls.boss_bar.get_parent(), controls.get_node("TopCenter"), "The boss bar sits in the top-centre cluster, where it was drawn")
+		assert_eq(controls.get_node("%ThrowChargeBar").get_parent(), bottom_center,
+			"The throw charge is an input hint, so it stays in the bottom-centre cluster")
 		controls.hud_scale = 2.0
 		assert_eq(bottom_center.scale, controls.get_node("BottomLeft").scale, "and the new cluster follows hud_scale like the corners")
 		assert_ne(bottom_center.scale, Vector2.ONE)
+		controls.hud_scale = 1.0
+
+	## The gameplay readouts are their own scenes beside the systems that drive them, so they are in no cluster
+	## at all. They draw themselves at the size the HUD is drawn at instead, which keeps the whole screen one size.
+	func test_the_readouts_match_the_huds_size() -> void:
+		var controls: PlayerControls = player_instance.controls
+		controls.hud_scale = 2.0
+		for readout: HudReadout in [player_instance.boss_bar, player_instance.ammo_readout, player_instance.cast_bar]:
+			assert_not_null(readout, "The Player carries the readout")
+			readout.match_hud_scale()
+			assert_almost_eq(readout.content.scale.x, controls.get_effective_scale(), 0.001,
+				"%s draws at the size the HUD is drawn at" % readout.name)
 		controls.hud_scale = 1.0
 
 	func test_player_controls_previews_in_the_editor_like_the_hud_it_extends() -> void:

@@ -90,7 +90,7 @@ func test_the_sigil_wakes_the_lord_and_his_death_ends_the_run() -> void:
 	var lord: EnemyNpc = demo.lord
 	demo._on_lair_body_entered(player)
 	assert_eq(lord.target, player, "Awake")
-	assert_eq(player.controls.boss_name_label.text, "Crypt Lord")
+	assert_eq(player.boss_bar.name_label.text, "Crypt Lord")
 	for i: int in 3:
 		player.quest_log.progress(&"clear_wave")
 	lord.take_hit(5000.0, player.global_position)

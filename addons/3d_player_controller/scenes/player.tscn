@@ -262,6 +262,9 @@
 [ext_resource type="AudioStream" path="res://addons/3d_player_controller/resources/audio/sword_attack.tres" id="231_sword_attack"]
 [ext_resource type="AudioStream" path="res://addons/3d_player_controller/resources/audio/sword_impact.tres" id="232_sword_impact"]
 [ext_resource type="Script" uid="uid://dyyg6cvd72gkw" path="res://addons/3d_player_controller/scripts/player_noise.gd" id="noise_script"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/boss_bar.tscn" id="boss_bar_scene"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/ammo_readout.tscn" id="ammo_readout_scene"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/cast_bar.tscn" id="cast_bar_scene"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_ym3ug"]
 radius = 0.009999072
@@ -4250,6 +4253,15 @@ autostart = true
 
 [node name="Controls" parent="." unique_id=1181235604 instance=ExtResource("13_fjdng")]
 editor_description = "The on-screen input hints and the button mapping, from the controls addon. Player.controls is this node, and a world prompt names its bottom-action button."
+
+[node name="BossBar" parent="." instance=ExtResource("boss_bar_scene")]
+editor_description = "The name and health of the boss this player is fighting, across the top of the screen. Boss drives it. It is its own scene rather than part of the Controls HUD because a boss's health is a readout of an NPC, not a hint about what a button does; remove it and nothing breaks."
+
+[node name="AmmoReadout" parent="." instance=ExtResource("ammo_readout_scene")]
+editor_description = "The equipped firearm's magazine and reserve, under the crosshair. Firearm drives it, so the count ships with the guns; remove it and nothing breaks."
+
+[node name="CastBar" parent="." instance=ExtResource("cast_bar_scene")]
+editor_description = "The ability being cast and how far through it is, under the crosshair. Abilities drives it; remove it and nothing breaks."
 
 [node name="Chat" parent="." node_paths=PackedStringArray("player") instance=ExtResource("226_chat")]
 editor_description = "The text chat window. Copes with no Steamworks autoload, so a project without Steam and a web export still run."

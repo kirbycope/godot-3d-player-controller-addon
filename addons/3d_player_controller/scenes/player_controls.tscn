@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="PackedScene" uid="uid://carag3s40qlej" path="res://addons/controls/controls.tscn" id="1_base"]
 [ext_resource type="Script" path="res://addons/3d_player_controller/scripts/player_controls.gd" id="2_script"]
@@ -16,63 +16,6 @@ corner_radius_top_left = 6
 corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_boss_bg"]
-bg_color = Color(0.05, 0.04, 0.04, 0.85)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.85, 0.75, 0.55, 0.8)
-corner_radius_top_left = 3
-corner_radius_top_right = 3
-corner_radius_bottom_right = 3
-corner_radius_bottom_left = 3
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_boss_fill"]
-bg_color = Color(0.8, 0.12, 0.1, 1)
-corner_radius_top_left = 3
-corner_radius_top_right = 3
-corner_radius_bottom_right = 3
-corner_radius_bottom_left = 3
-
-[sub_resource type="LabelSettings" id="LabelSettings_boss"]
-font_size = 18
-outline_size = 6
-outline_color = Color(0, 0, 0, 1)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cast_bg"]
-bg_color = Color(0.09, 0.07, 0.02, 0.85)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(1, 0.85, 0.35, 0.7)
-corner_radius_top_left = 5
-corner_radius_top_right = 5
-corner_radius_bottom_right = 5
-corner_radius_bottom_left = 5
-shadow_color = Color(1, 0.8, 0.2, 0.35)
-shadow_size = 8
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cast_fill"]
-bg_color = Color(1, 0.86, 0.25, 1)
-corner_radius_top_left = 5
-corner_radius_top_right = 5
-corner_radius_bottom_right = 5
-corner_radius_bottom_left = 5
-shadow_color = Color(1, 0.9, 0.45, 0.7)
-shadow_size = 5
-
-[sub_resource type="LabelSettings" id="LabelSettings_cast"]
-font_size = 14
-outline_size = 6
-outline_color = Color(0.15, 0.1, 0, 1)
-
-[sub_resource type="LabelSettings" id="LabelSettings_ammo"]
-font_size = 24
-outline_size = 6
-outline_color = Color(0, 0, 0, 1)
 
 [node name="PlayerControls" instance=ExtResource("1_base")]
 script = ExtResource("2_script")
@@ -223,71 +166,3 @@ offset_right = 340.0
 offset_bottom = 124.0
 theme_override_styles/background = SubResource("StyleBoxFlat_throw_bg")
 theme_override_styles/fill = SubResource("StyleBoxFlat_throw_fill")
-
-[node name="CastBar" type="ProgressBar" parent="BottomCenter"]
-unique_name_in_owner = true
-visible = false
-custom_minimum_size = Vector2(240, 18)
-layout_mode = 0
-offset_left = 120.0
-offset_top = 128.0
-offset_right = 360.0
-offset_bottom = 146.0
-theme_override_styles/background = SubResource("StyleBoxFlat_cast_bg")
-theme_override_styles/fill = SubResource("StyleBoxFlat_cast_fill")
-show_percentage = false
-
-[node name="CastLabel" type="Label" parent="BottomCenter/CastBar"]
-unique_name_in_owner = true
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-label_settings = SubResource("LabelSettings_cast")
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="BossBar" type="VBoxContainer" parent="TopCenter"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 0
-offset_left = -124.0
-offset_top = 76.0
-offset_right = 316.0
-offset_bottom = 120.0
-mouse_filter = 2
-theme_override_constants/separation = 2
-
-[node name="BossName" type="Label" parent="TopCenter/BossBar"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Boss"
-label_settings = SubResource("LabelSettings_boss")
-horizontal_alignment = 1
-
-[node name="BossHealth" type="ProgressBar" parent="TopCenter/BossBar"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(440, 14)
-layout_mode = 2
-theme_override_styles/background = SubResource("StyleBoxFlat_boss_bg")
-theme_override_styles/fill = SubResource("StyleBoxFlat_boss_fill")
-max_value = 1.0
-step = 0.001
-value = 1.0
-show_percentage = false
-
-[node name="AmmoLabel" type="Label" parent="BottomCenter"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 0
-offset_left = 160.0
-offset_top = 180.0
-offset_right = 320.0
-offset_bottom = 212.0
-mouse_filter = 2
-text = "12 / 48"
-label_settings = SubResource("LabelSettings_ammo")
-horizontal_alignment = 1
-vertical_alignment = 1

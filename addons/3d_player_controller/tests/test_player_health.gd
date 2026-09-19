@@ -51,15 +51,15 @@ func test_death_ragdolls_and_respawns_full_at_the_spawn_point() -> void:
 
 func test_boss_bar_shows_name_and_health() -> void:
 	var controls: Node = player.controls
-	assert_false(controls.boss_bar.visible)
-	controls.show_boss("Giant Duck", 0.75)
-	assert_true(controls.boss_bar.visible)
-	assert_eq(controls.boss_name_label.text, "Giant Duck")
-	assert_almost_eq(controls.boss_health_bar.value, 0.75, 0.001)
-	controls.update_boss(0.25)
-	assert_almost_eq(controls.boss_health_bar.value, 0.25, 0.001)
-	controls.hide_boss()
-	assert_false(controls.boss_bar.visible)
+	assert_false(player.boss_bar.bar.visible)
+	player.boss_bar.show_boss("Giant Duck", 0.75)
+	assert_true(player.boss_bar.bar.visible)
+	assert_eq(player.boss_bar.name_label.text, "Giant Duck")
+	assert_almost_eq(player.boss_bar.health_bar.value, 0.75, 0.001)
+	player.boss_bar.update_boss(0.25)
+	assert_almost_eq(player.boss_bar.health_bar.value, 0.25, 0.001)
+	player.boss_bar.hide_boss()
+	assert_false(player.boss_bar.bar.visible)
 
 
 func test_mana_only_regenerates_out_of_combat() -> void:

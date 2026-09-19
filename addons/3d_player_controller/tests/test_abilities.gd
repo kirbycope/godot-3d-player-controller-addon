@@ -117,13 +117,13 @@ func test_heal_casts_over_time_and_restores_health() -> void:
 	heal.cast_time = 0.3
 	abilities.cast(heal)
 	assert_eq(abilities.casting, heal)
-	assert_true(player.controls.cast_bar.visible, "A timed cast shows the cast bar")
-	assert_eq(player.controls.cast_label.text, "Heal", "The cast bar names the spell")
+	assert_true(player.cast_bar.bar.visible, "A timed cast shows the cast bar")
+	assert_eq(player.cast_bar.label.text, "Heal", "The cast bar names the spell")
 	assert_signal_emitted(abilities, "cast_started")
 	assert_almost_eq(player.health.health, 20.0, 0.01, "Nothing lands until the cast finishes")
 	await wait_seconds(0.5)
 	assert_null(abilities.casting)
-	assert_false(player.controls.cast_bar.visible)
+	assert_false(player.cast_bar.bar.visible)
 	assert_almost_eq(player.health.health, 70.0, 0.01, "The heal restores health once the cast lands")
 	assert_signal_emitted_with_parameters(abilities, "ability_activated", [heal])
 
@@ -156,7 +156,7 @@ func test_moving_interrupts_a_cast() -> void:
 	player.locomotion_node_changed.emit("Walking")
 	assert_null(abilities.casting)
 	assert_signal_emitted_with_parameters(abilities, "cast_interrupted", [heal])
-	assert_false(player.controls.cast_bar.visible)
+	assert_false(player.cast_bar.bar.visible)
 	assert_true(abilities.cast_timer.is_stopped())
 	assert_almost_eq(player.health.health, 20.0, 0.01, "An interrupted heal lands nothing")
 
