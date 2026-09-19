@@ -131,10 +131,12 @@ func test_saved_setting_overrides_the_scene() -> void:
 
 func test_the_video_settings_menu_lists_the_schemes() -> void:
 	var menu: OptionButton = player.video_settings.get_node("Panel/VBoxContainer/ControlScheme")
-	assert_eq(menu.item_count, 3, "Default and the two layouts that ship here")
-	assert_eq(menu.get_item_text(1), "Zelda")
-	assert_eq(menu.get_item_text(2), "Platformer")
-	player.video_settings._on_control_scheme_item_selected(2)
+	assert_eq(menu.item_count, 2, "The two layouts that ship here, and no redundant Default beside Zelda")
+	assert_eq(menu.get_item_text(0), "Zelda")
+	assert_eq(menu.get_item_text(1), "Platformer")
+	assert_eq(menu.selected, 0, "Nothing saved, so it shows the layout the Player is actually using")
+
+	player.video_settings._on_control_scheme_item_selected(1)
 	assert_eq(player.control_scheme, preload("res://addons/3d_player_controller/resources/control_schemes/platformer.tres"),
 		"Picking one in the menu lays the pad out that way at once")
 	assert_eq(player.controls.action_button_0, &"jump", "Jump is on the bottom button")
@@ -142,9 +144,9 @@ func test_the_video_settings_menu_lists_the_schemes() -> void:
 	# A layout another addon ships joins the list the moment it registers, without this menu knowing about it
 	PlayerControls.register_scheme(preload("res://addons/gta/resources/gta_controls.tres"))
 	player.video_settings._fill_scheme_button()
-	assert_eq(menu.item_count, 4, "and a registered layout is offered too")
-	assert_eq(menu.get_item_text(3), "GTA")
-	player.video_settings._on_control_scheme_item_selected(3)
+	assert_eq(menu.item_count, 3, "and a registered layout is offered too")
+	assert_eq(menu.get_item_text(2), "GTA")
+	player.video_settings._on_control_scheme_item_selected(2)
 	assert_eq(player.control_scheme, preload("res://addons/gta/resources/gta_controls.tres"))
 
 

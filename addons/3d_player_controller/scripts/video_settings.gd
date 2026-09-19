@@ -85,23 +85,28 @@ func _on_on_screen_controls_touch_screen_button_pressed() -> void:
 ## Names the layouts from the scheme resources themselves rather than from items typed into the scene, so a
 ## game or another addon that registers a [ControlScheme] gets it listed without touching this menu. The pick
 ## is saved by name, so a layout registering late cannot change what an already saved choice means.
+##
+## There is no "Default" entry. It said the same thing as Zelda for anyone who had not changed it, which only
+## made the menu harder to read; the layout a Player starts with is [constant PlayerControls.DEFAULT_SCHEME],
+## and the menu simply shows whichever layout is on.
 func _fill_scheme_button() -> void:
 	settings_res.migrate_control_scheme() # a settings file written before the pick was saved by name
 	scheme_button.clear()
-	scheme_button.add_item("Default", PlayerSettingsResource.GAME_DEFAULT)
-	var picked: int = PlayerSettingsResource.GAME_DEFAULT
+	var wanted: String = settings_res.control_scheme_name
+	if wanted.is_empty() and player and player.control_scheme:
+		wanted = player.control_scheme.scheme_name # nothing saved: show what the Player is actually using
+	var picked: int = 0
 	var offered: Array[ControlScheme] = PlayerControls.schemes()
 	for at: int in offered.size():
-		scheme_button.add_item(offered[at].scheme_name, at + 1)
-		if offered[at].scheme_name == settings_res.control_scheme_name:
-			picked = at + 1
+		scheme_button.add_item(offered[at].scheme_name, at)
+		if offered[at].scheme_name == wanted:
+			picked = at
 	scheme_button.selected = picked
 
 
 func _on_control_scheme_item_selected(index: int) -> void:
 	var offered: Array[ControlScheme] = PlayerControls.schemes()
-	var at: int = index - 1
-	settings_res.control_scheme_name = offered[at].scheme_name if at >= 0 and at < offered.size() else ""
+	settings_res.control_scheme_name = offered[index].scheme_name if index >= 0 and index < offered.size() else ""
 	settings_res.control_scheme_index = PlayerSettingsResource.GAME_DEFAULT
 	settings_res.apply_control_scheme(player)
 	settings_res.save()
