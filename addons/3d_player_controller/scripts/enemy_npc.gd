@@ -481,8 +481,15 @@ func _apply_death() -> void:
 	extinguish()
 	caster.interrupt()
 	boss.disengage()
-	if is_instance_valid(target) and is_multiplayer_authority():
-		target.hunted_by(get_path(), false)
+	if is_instance_valid(target):
+		# Let go of the Player's died signal, not just the reference to them. Clearing target on its own left
+		# the callable connected, so an enemy that died and was revived connected it a second time the next
+		# time it hunted the same Player, and Godot refused the second connect. Guarded rather than
+		# unconditional because this runs on every peer while only the authority ever aggroes.
+		if target.health.died.is_connected(_on_target_died):
+			target.health.died.disconnect(_on_target_died)
+		if is_multiplayer_authority():
+			target.hunted_by(get_path(), false)
 	target = null
 	player = null
 	animation_tree.active = false

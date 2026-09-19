@@ -100,3 +100,27 @@ func test_a_saved_corpse_stays_dead() -> void:
 	other.load_state(state)
 	await wait_physics_frames(2)
 	assert_true(other.is_dead)
+
+
+## Death used to clear the target reference and leave the Player's died signal connected, which only showed
+## itself one hunt later: a revived enemy turning on the same Player connected the same callable twice and
+## Godot refused it. The noise sweep made it easy to hit, because hearing re-aggroes far more often than
+## sight does.
+func test_a_revived_enemy_can_hunt_the_same_player_again() -> void:
+	enemy.register_weapon_hit(player, null)
+	assert_eq(enemy.target, player, "It hunts whoever struck it")
+
+	enemy.take_hit(enemy.health.max_health, player.global_position)
+	await wait_physics_frames(2)
+	assert_true(enemy.is_dead, "and dies")
+	assert_false(
+		player.health.died.is_connected(enemy._on_target_died),
+		"Dying lets go of the Player's died signal as well as the hunt"
+	)
+
+	enemy.revive()
+	await wait_physics_frames(2)
+	enemy.aggro(player)
+
+	assert_eq(enemy.target, player, "Back up, it hunts the same Player again")
+	assert_true(player.health.died.is_connected(enemy._on_target_died), "and listens for them dying once more")
