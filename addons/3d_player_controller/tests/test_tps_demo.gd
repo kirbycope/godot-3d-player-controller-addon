@@ -18,6 +18,13 @@ func before_each() -> void:
 	player = demo.player
 
 
+func after_each() -> void:
+	# The InputMap outlives the scene, so put the pad back or this demo's layout is still on in the next
+	# script: Dark Souls has no jump on a face button at all.
+	if is_instance_valid(player):
+		player.control_scheme = PlayerControls.DEFAULT_SCHEME
+
+
 func test_the_demo_sets_the_player_up_for_a_shooter_over_the_shoulder() -> void:
 	assert_eq(player.control_scheme, preload("res://addons/gta/resources/control_schemes/gta.tres"), "Free aim over the shoulder")
 	assert_false(player.lock_on_enabled())

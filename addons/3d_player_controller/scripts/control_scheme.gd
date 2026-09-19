@@ -22,6 +22,16 @@ extends Resource
 ## The action the top face button carries: Y on an Xbox pad, Triangle on a PlayStation one.
 @export var action_button_3: StringName = &""
 
+@export_group("Beyond the face buttons")
+## Any other pad slot this layout moves, by the slot's name on the HUD ("button_9" is the left shoulder,
+## "button_10" the right, "axis_4_plus" the left trigger, "axis_5_plus" the right, "button_7" and "button_8"
+## the stick clicks, "button_11" to "button_14" the d-pad). Most games put verbs out here that this addon
+## keeps on the faces: Dark Souls attacks on the right shoulder, Half-Life 2 sprints on the left one.
+##
+## A slot left out keeps whatever the scene gave it, and a slot this layout moves is handed back when another
+## layout that does not mention it comes on, so schemes do not leak into each other.
+@export var extra_slots: Dictionary[String, StringName] = {}
+
 @export_group("Focus")
 ## Focus locks on to a target, Breath of the Wild style. Off, Focus is a free over-the-shoulder aim, Grand
 ## Theft Auto style. [method Player.lock_on_enabled] is this flag, and [Camera] and [Focus] follow it.

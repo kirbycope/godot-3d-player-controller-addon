@@ -64,10 +64,18 @@ const PLAYER_ACTIONS: Dictionary = {
 const BUILT_IN_SCHEMES: Array[ControlScheme] = [
 	preload("res://addons/3d_player_controller/resources/control_schemes/totk.tres"),
 	preload("res://addons/3d_player_controller/resources/control_schemes/smo.tres"),
+	preload("res://addons/3d_player_controller/resources/control_schemes/dark_souls.tres"),
+	preload("res://addons/3d_player_controller/resources/control_schemes/half_life.tres"),
+	preload("res://addons/3d_player_controller/resources/control_schemes/metal_gear.tres"),
+	preload("res://addons/3d_player_controller/resources/control_schemes/resident_evil.tres"),
 ]
 
 ## Layouts another addon or the game itself has added to the settings menu, in the order they registered.
 static var _registered_schemes: Array[ControlScheme] = []
+
+## What each slot outside the four faces carried before a scheme moved it, so the next scheme that does not
+## mention that slot can hand it back rather than leaving the last layout's binding behind.
+var _slots_before_scheme: Dictionary[String, StringName] = {}
 
 ## Adds [param scheme] to the layouts the settings menu offers, for an addon or a game that ships one of its
 ## own. Registering the same scheme twice does nothing, so this is safe to call from every scene that wants it.
@@ -154,8 +162,14 @@ func apply_control_scheme(scheme: ControlScheme) -> void:
 	var slots: Dictionary[String, StringName] = scheme.slots()
 	# is_node_ready() is already true inside _ready, so the base's own setup is waited for explicitly
 	if not _hud_ready:
+		# Before the base has registered anything there is nothing to rebind, so the exports are simply filled
+		# and the base picks them up; the same goes for the slots beyond the four faces.
 		for slot: String in slots:
 			set(slot, slots[slot])
+		for slot: String in scheme.extra_slots:
+			if SLOT_EVENTS.has(slot):
+				_slots_before_scheme[slot] = get("action_" + slot)
+				set("action_" + slot, scheme.extra_slots[slot])
 		return
 	for slot: String in slots:
 		var previous: StringName = get(slot)
@@ -181,10 +195,27 @@ func apply_control_scheme(scheme: ControlScheme) -> void:
 		var label: Label = get("joypad_%s_label" % slot.trim_prefix("action_"))
 		if label:
 			_label_texts[label] = ACTION_LABELS.get(slots[slot], String(slots[slot]).capitalize())
+	_apply_extra_slots(scheme.extra_slots)
 	update_input_ui()
 	reset_labels()
 	if player:
 		player.refresh_contextual_controls()
+
+
+## Moves the shoulders, triggers, stick clicks and d-pad a layout asks for, and hands back any slot the last
+## layout moved that this one does not mention, so one scheme's reach does not survive into the next.
+func _apply_extra_slots(wanted: Dictionary[String, StringName]) -> void:
+	for slot: String in _slots_before_scheme.keys():
+		if not wanted.has(slot):
+			bind_slot(slot, _slots_before_scheme[slot])
+			_slots_before_scheme.erase(slot)
+	for slot: String in wanted:
+		if not SLOT_EVENTS.has(slot):
+			push_warning("ControlScheme asks for a slot the HUD does not have: %s" % slot)
+			continue
+		if not _slots_before_scheme.has(slot):
+			_slots_before_scheme[slot] = get("action_" + slot)
+		bind_slot(slot, wanted[slot], ACTION_LABELS.get(wanted[slot], String(wanted[slot]).capitalize()))
 
 
 ## Puts [param action] on one face, shoulder or d-pad [param slot] ("button_12" for d-pad down) live, the way a

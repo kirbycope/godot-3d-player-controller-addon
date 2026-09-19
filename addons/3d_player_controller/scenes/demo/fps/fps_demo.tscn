@@ -24,7 +24,7 @@
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/sci_fi_essentials/Prop_Crate_Large.gltf" id="crate_large"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/sci_fi_essentials/Prop_Barrel2_Closed.gltf" id="barrel2"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/sci_fi_essentials/Prop_Ammo.gltf" id="ammo_crate"]
-[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/control_schemes/totk.tres" id="control_scheme_res"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/control_schemes/half_life.tres" id="control_scheme_res"]
 
 [sub_resource type="Environment" id="env"]
 background_mode = 1

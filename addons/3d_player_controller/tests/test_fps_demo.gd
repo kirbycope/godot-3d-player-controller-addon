@@ -19,6 +19,13 @@ func before_each() -> void:
 	player = demo.player
 
 
+func after_each() -> void:
+	# The InputMap outlives the scene, so put the pad back or this demo's layout is still on in the next
+	# script: Dark Souls has no jump on a face button at all.
+	if is_instance_valid(player):
+		player.control_scheme = PlayerControls.DEFAULT_SCHEME
+
+
 func test_the_demo_starts_in_first_person_with_the_run_on() -> void:
 	assert_eq((player.camera as Camera).perspective, Camera.Perspective.FIRST_PERSON)
 	assert_true(player.quest_log.is_active(QUEST))
@@ -58,13 +65,13 @@ func test_the_door_prompt_reads_the_lock() -> void:
 	var door: LockedDoor = demo.get_node("Armoury/Door")
 	player.warp_to(Transform3D(Basis(), door.global_position + Vector3(1.5, 0.0, 0.0)))
 	await wait_physics_frames(3)
-	assert_eq(player.controls.joypad_button_1_label.text, "Card needed")
+	assert_eq(player.controls.joypad_button_2_label.text, "Card needed")
 	player.inventory.add_item(CARD, 1)
 	player.warp_to(Transform3D(Basis(), door.global_position + Vector3(6.0, 0.0, 0.0)))
 	await wait_physics_frames(3)
 	player.warp_to(Transform3D(Basis(), door.global_position + Vector3(1.5, 0.0, 0.0)))
 	await wait_physics_frames(3)
-	assert_eq(player.controls.joypad_button_1_label.text, "Open")
+	assert_eq(player.controls.joypad_button_2_label.text, "Open")
 	var press: InputEventAction = InputEventAction.new()
 	press.action = &"action"
 	press.pressed = true

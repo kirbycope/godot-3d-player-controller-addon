@@ -131,7 +131,7 @@ func test_saved_setting_overrides_the_scene() -> void:
 
 func test_the_video_settings_menu_lists_the_schemes() -> void:
 	var menu: OptionButton = player.video_settings.get_node("Panel/VBoxContainer/ControlScheme")
-	assert_eq(menu.item_count, 2, "The two layouts that ship here, and no redundant Default beside Zelda")
+	assert_eq(menu.item_count, PlayerControls.BUILT_IN_SCHEMES.size(), "The layouts that ship here, and no redundant Default beside them")
 	assert_eq(menu.get_item_text(0), "TotK")
 	assert_eq(menu.get_item_text(1), "SMO")
 	assert_eq(menu.selected, 0, "Nothing saved, so it shows the layout the Player is actually using")
@@ -144,9 +144,10 @@ func test_the_video_settings_menu_lists_the_schemes() -> void:
 	# A layout another addon ships joins the list the moment it registers, without this menu knowing about it
 	PlayerControls.register_scheme(preload("res://addons/gta/resources/control_schemes/gta.tres"))
 	player.video_settings._fill_scheme_button()
-	assert_eq(menu.item_count, 3, "and a registered layout is offered too")
-	assert_eq(menu.get_item_text(2), "GTA")
-	player.video_settings._on_control_scheme_item_selected(2)
+	assert_eq(menu.item_count, PlayerControls.BUILT_IN_SCHEMES.size() + 1, "and a registered layout is offered too")
+	var last: int = menu.item_count - 1
+	assert_eq(menu.get_item_text(last), "GTA", "at the end, after the built-in ones")
+	player.video_settings._on_control_scheme_item_selected(last)
 	assert_eq(player.control_scheme, preload("res://addons/gta/resources/control_schemes/gta.tres"))
 
 
@@ -222,3 +223,35 @@ func test_a_registered_scheme_is_offered_and_saved_by_name() -> void:
 	PlayerControls.forget_registered_schemes()
 	settings.control_scheme_name = ""
 	assert_null(PlayerControls.scheme_named("Southpaw"), "Forgotten, nothing answers to it")
+
+
+## Most games put verbs on the shoulders and triggers that this addon keeps on the faces, so a layout can move
+## any slot, not just the four. Dark Souls is the case that needed it: it attacks on the right trigger.
+func test_a_layout_can_move_the_shoulders_and_triggers() -> void:
+	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/dark_souls.tres")
+
+	assert_true(_has_trigger(&"attack", JOY_AXIS_TRIGGER_RIGHT), "Dark Souls attacks on the right trigger")
+	assert_false(_has_button(&"attack", JOY_BUTTON_X), "and not on the face button this addon usually uses")
+	assert_true(_has_button(&"scope", JOY_BUTTON_LEFT_SHOULDER), "Its guard button is the left shoulder")
+	assert_true(_has_button(&"focus", JOY_BUTTON_RIGHT_STICK), "and lock-on is the right stick, as the game has it")
+
+
+## A slot one layout moved is handed back when a layout that says nothing about it comes on, or the last
+## layout's reach would survive into the next one.
+func test_a_moved_slot_is_handed_back() -> void:
+	var before: StringName = player.controls.action_axis_5_plus
+
+	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/dark_souls.tres")
+	assert_eq(player.controls.action_axis_5_plus, &"attack", "Dark Souls takes the right trigger")
+
+	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/totk.tres")
+	assert_eq(player.controls.action_axis_5_plus, before, "and Tears of the Kingdom, which says nothing about it, gives it back")
+	assert_true(_has_button(&"attack", JOY_BUTTON_X), "with attack back on the face button it belongs to")
+
+
+## Whether [param action] answers to a trigger, which is an axis rather than a button.
+func _has_trigger(action: StringName, axis: JoyAxis) -> bool:
+	for event: InputEvent in InputMap.action_get_events(action):
+		if event is InputEventJoypadMotion and (event as InputEventJoypadMotion).axis == axis:
+			return true
+	return false

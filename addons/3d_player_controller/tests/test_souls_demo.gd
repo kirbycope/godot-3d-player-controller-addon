@@ -21,6 +21,10 @@ func before_each() -> void:
 
 
 func after_each() -> void:
+	# The InputMap outlives the scene, so put the pad back or this demo's layout is still on in the next
+	# script: Dark Souls has no jump on a face button at all.
+	if is_instance_valid(player):
+		player.control_scheme = PlayerControls.DEFAULT_SCHEME
 	_send(&"sprint", false)
 	_send(&"focus", false)
 
@@ -33,7 +37,7 @@ func _send(action: StringName, pressed: bool) -> void:
 
 
 func test_the_demo_sets_the_player_up_for_souls() -> void:
-	assert_eq(player.control_scheme, preload("res://addons/3d_player_controller/resources/control_schemes/totk.tres"), "Lock-on Focus")
+	assert_eq(player.control_scheme, preload("res://addons/3d_player_controller/resources/control_schemes/dark_souls.tres"), "Dark Souls' own layout, which does lock on")
 	assert_true(player.enable_stamina)
 	assert_true(player.enable_dodge)
 	assert_gt(player.attack_stamina_cost, 0.0, "Swings cost breath")

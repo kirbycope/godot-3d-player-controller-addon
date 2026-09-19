@@ -19,7 +19,7 @@
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/stylized_nature/Bush_Common.gltf" id="bush"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/nature/commontree_1.tscn" id="tree"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/nature/rock_medium_2.tscn" id="rock"]
-[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/control_schemes/totk.tres" id="control_scheme_res"]
+[ext_resource type="Resource" path="res://addons/3d_player_controller/resources/control_schemes/metal_gear.tres" id="control_scheme_res"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
 sky_top_color = Color(0.08, 0.1, 0.22, 1)

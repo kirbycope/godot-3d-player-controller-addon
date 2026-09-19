@@ -19,6 +19,13 @@ func before_each() -> void:
 	player = demo.player
 
 
+func after_each() -> void:
+	# The InputMap outlives the scene, so put the pad back or this demo's layout is still on in the next
+	# script: Dark Souls has no jump on a face button at all.
+	if is_instance_valid(player):
+		player.control_scheme = PlayerControls.DEFAULT_SCHEME
+
+
 func test_guards_patrol_their_routes() -> void:
 	var guard: EnemyNpc = demo.get_node("Guards/Guard3")
 	assert_not_null(guard.patrol_points)
