@@ -42,6 +42,11 @@ func _children_of(branch: String) -> Array[Node]:
 	for child: Node in node.get_children():
 		if child is PhysicalBone3D or FROM_THE_MODEL.has(String(child.name)):
 			continue
+		# Only what the scene itself declares. A scene-authored node carries an owner; one attached at run time
+		# does not, and those belong to whoever attached them: a project with the weather addon installed gets
+		# an UpdraftAuraVFX hung on the Player, which is not this scene's to describe.
+		if child.owner == null:
+			continue
 		out.append(child)
 	return out
 

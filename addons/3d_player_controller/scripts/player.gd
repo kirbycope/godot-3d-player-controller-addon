@@ -663,6 +663,7 @@ func _process(delta: float) -> void:
 	var listening: bool = is_broadcasting or voice_activation_enabled()
 	var steam: Object = _get_steam_running() if is_multiplayer_authority() and listening else null
 	_set_recording(steam, steam != null)
+	var packet_arrived: bool = false
 	if steam:
 		var available_voice: Dictionary = steam.getAvailableVoice()
 		# GodotSteam returns "size" here, not "written". Reading the wrong key meant this was always 0, so the
@@ -672,14 +673,17 @@ func _process(delta: float) -> void:
 			if voice_data.get("result") == STEAM_VOICE_RESULT_OK:
 				var buffer: PackedByteArray = voice_data.get("buffer", PackedByteArray())
 				if not buffer.is_empty():
+					packet_arrived = true
 					# Rise rather than snap, so a burst of speech does not make the meter flicker
 					var heard: float = loudness_of(int(available_voice.get("size", 0)), voice_full_bytes())
 					voice_loudness = minf(voice_loudness + delta * VOICE_RISE_PER_SECOND, heard) if heard > voice_loudness else heard
 					if is_broadcasting and multiplayer.has_multiplayer_peer() and multiplayer.get_peers().size() > 0:
 						_receive_voice_packet.rpc(buffer)
-	elif voice_loudness > 0.0:
-		# Falls away whenever no voice is arriving, which covers both letting the key go and holding it while
-		# saying nothing. Steam sends nothing during a pause, so a held key in silence reads as silence.
+	if not packet_arrived and voice_loudness > 0.0:
+		# Falls away whenever no voice arrived this frame, which covers letting the key go, holding it while
+		# saying nothing, and Steam being there but sending nothing. Steam goes quiet during a pause, so a held
+		# key in silence reads as silence. Keyed off the packet rather than off Steam being absent: as an elif
+		# on the branch above, a running Steam client with nothing to say held the last reading forever.
 		voice_loudness = maxf(voice_loudness - delta * VOICE_FALLOFF_PER_SECOND, 0.0)
 	if voice_activation_enabled():
 		# Speaking past the mark opens the channel, and falling back under it closes it
