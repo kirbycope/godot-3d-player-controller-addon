@@ -17,9 +17,10 @@ func show_cast(display_name: String) -> void:
 	bar.visible = true
 
 
-## How far through the cast is, 0 to 1.
+## How far through the cast is, 0 to 1. Scaled onto the bar's own range, which is the ProgressBar default of
+## 0 to 100 rather than 0 to 1, so a caller passing a ratio gets the fill it asked for.
 func set_progress(ratio: float) -> void:
-	bar.value = ratio
+	bar.value = clampf(ratio, 0.0, 1.0) * bar.max_value
 
 
 ## The cast finished or was interrupted.

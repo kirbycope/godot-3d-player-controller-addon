@@ -749,3 +749,21 @@ func test_an_npc_needs_a_target_before_it_can_cast_a_bolt() -> void:
 
 	assert_false(bolt.can_cast(npc), "Nothing to send it at")
 	assert_true(bolt.can_cast(player), "The Player aims it with the crosshair")
+
+
+## set_progress takes a ratio, but a ProgressBar's own range is 0 to 100 by default, so passing the ratio
+## straight through left the bar looking empty through a whole cast. Caught on screen rather than by a test,
+## which is why there is one now.
+func test_the_cast_bar_fills_by_the_ratio_it_is_given() -> void:
+	var bar: ProgressBar = player.cast_bar.bar
+	player.cast_bar.show_cast("Heal")
+	assert_eq(bar.value, 0.0, "It starts empty")
+
+	player.cast_bar.set_progress(0.5)
+	assert_almost_eq(bar.value / bar.max_value, 0.5, 0.001, "Half way through the cast is a half-full bar")
+
+	player.cast_bar.set_progress(1.0)
+	assert_almost_eq(bar.value, bar.max_value, 0.001, "and the end of the cast fills it")
+
+	player.cast_bar.hide_cast()
+	assert_false(bar.visible, "The cast over, the bar goes")
