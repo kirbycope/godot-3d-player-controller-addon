@@ -34,7 +34,8 @@ extends Range
 @export var focus_color: Color = Color(1.0, 1.0, 1.0, 0.85)
 
 @export_group("Level")
-@export var level_color: Color = Color(1.0, 1.0, 1.0, 0.35) ## Drawn over the track, so the colour beneath still reads.
+@export var unlit_color: Color = Color(0.0, 0.0, 0.0, 0.55) ## Dims the part of the bar the voice has not reached, so the lit part reads as a level rather than washing the colour out.
+@export var edge_color: Color = Color(1.0, 1.0, 1.0, 0.7) ## The leading edge of the level.
 @export var level_follow_speed: float = 10.0
 
 var _drawn_level: float = 0.0
@@ -49,10 +50,16 @@ func _ready() -> void:
 	set_process(true)
 
 
+## Where [param at] sits across the bar, 0 to 1. The handle, the mark and the colours all have to agree, and
+## they only do if every one of them measures from min_value rather than from zero.
+func ratio_of(at: float) -> float:
+	return clampf((at - min_value) / maxf(max_value - min_value, 0.001), 0.0, 1.0)
+
+
 ## A texture rather than a column of rectangles, so the shading is actually smooth.
 func _build_gradient() -> void:
 	var gradient: Gradient = Gradient.new()
-	var turn: float = clampf(normal_value / maxf(max_value, 0.001), 0.05, 0.95)
+	var turn: float = clampf(ratio_of(normal_value), 0.05, 0.95)
 	gradient.offsets = PackedFloat32Array([0.0, turn * 0.75, turn, 1.0])
 	gradient.colors = PackedColorArray([quiet_color, quiet_color, loud_color, hot_color])
 	_gradient = GradientTexture2D.new()
@@ -80,13 +87,17 @@ func _draw() -> void:
 	# The bar itself, shaded across its whole width whatever the handle is doing
 	draw_texture_rect(_gradient, track, false)
 
-	# How loud you are right now, over the top, so the colour underneath still shows through
+	# How loud you are right now: the bar is lit up to the level and dimmed past it, so it fills like a meter
+	# instead of the colour being washed out wherever the voice has reached.
+	var lit: float = width * _drawn_level
+	if _drawn_level < 0.999:
+		draw_rect(Rect2(Vector2(lit, top), Vector2(width - lit, track_height)), unlit_color)
 	if _drawn_level > 0.001:
-		draw_rect(Rect2(track.position, Vector2(width * _drawn_level, track_height)), level_color)
+		draw_line(Vector2(lit, top), Vector2(lit, top + track_height), edge_color, 2.0)
 
-	# Where a normal voice should land
-	var mark: float = width * clampf(normal_value / maxf(max_value, 0.001), 0.0, 1.0)
-	draw_line(Vector2(mark, top - 2.0), Vector2(mark, top + track_height + 2.0), Color(0.0, 0.0, 0.0, 0.55), 2.0)
+	# Where a normal voice should land, measured the same way the handle is
+	var mark: float = width * ratio_of(normal_value)
+	draw_line(Vector2(mark, top - 2.0), Vector2(mark, top + track_height + 2.0), Color(0.0, 0.0, 0.0, 0.7), 2.0)
 
 	# The handle, pointing down at the setting, the way the sketch has it
 	var at: float = width * clampf(ratio, 0.0, 1.0)

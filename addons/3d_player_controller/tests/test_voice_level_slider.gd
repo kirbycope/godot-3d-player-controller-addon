@@ -89,3 +89,25 @@ func test_the_menu_shows_the_row_and_keeps_what_was_set() -> void:
 	assert_not_null(menu.mic_sensitivity, "Audio settings carries the microphone row")
 	assert_almost_eq(menu.mic_sensitivity.value, PlayerSettingsResource.load_or_create().voice_sensitivity, 0.001,
 		"and opens on the sensitivity already saved")
+
+
+## The handle, the mark and where the colours turn all have to agree. They only do if each measures from
+## min_value rather than from zero, which they did not at first: with a minimum of 10 the mark sat at 100/150
+## while the handle sat at (100-10)/140, and the two drifted apart.
+func test_the_mark_and_the_handle_measure_the_same_way() -> void:
+	var slider: VoiceLevelSlider = _slider()
+	slider.normal_value = 100.0
+
+	slider.value = 100.0
+
+	assert_almost_eq(slider.ratio_of(slider.normal_value), slider.ratio, 0.001,
+		"The handle set to the normal value lands exactly on the mark")
+
+
+func test_the_ends_of_the_bar_are_the_ends_of_the_range() -> void:
+	var slider: VoiceLevelSlider = _slider()
+
+	assert_almost_eq(slider.ratio_of(slider.min_value), 0.0, 0.001, "The bottom of the range is the left edge")
+	assert_almost_eq(slider.ratio_of(slider.max_value), 1.0, 0.001, "and the top is the right edge")
+	assert_almost_eq(slider.ratio_of(-500.0), 0.0, 0.001, "with anything past the ends held there")
+	assert_almost_eq(slider.ratio_of(9999.0), 1.0, 0.001)
