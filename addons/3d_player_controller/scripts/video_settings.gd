@@ -90,7 +90,6 @@ func _on_on_screen_controls_touch_screen_button_pressed() -> void:
 ## made the menu harder to read; the layout a Player starts with is [constant PlayerControls.DEFAULT_SCHEME],
 ## and the menu simply shows whichever layout is on.
 func _fill_scheme_button() -> void:
-	settings_res.migrate_control_scheme() # a settings file written before the pick was saved by name
 	scheme_button.clear()
 	var wanted: String = settings_res.control_scheme_name
 	if wanted.is_empty() and player and player.control_scheme:
@@ -107,7 +106,6 @@ func _fill_scheme_button() -> void:
 func _on_control_scheme_item_selected(index: int) -> void:
 	var offered: Array[ControlScheme] = PlayerControls.schemes()
 	settings_res.control_scheme_name = offered[index].scheme_name if index >= 0 and index < offered.size() else ""
-	settings_res.control_scheme_index = PlayerSettingsResource.GAME_DEFAULT
 	settings_res.apply_control_scheme(player)
 	settings_res.save()
 

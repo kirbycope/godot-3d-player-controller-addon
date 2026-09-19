@@ -39,14 +39,9 @@ enum HudMode { AUTO, SHOWN, HIDDEN } ## Auto shows the on-screen controls on tou
 @export var hud_mode: int = HudMode.AUTO ## Whether the Player's on-screen controls ([member Player.controls]) are drawn; a [enum HudMode].
 
 # Controls Settings
-## The menu's first entry, which keeps [member Player.control_scheme] as the scene set it.
-const GAME_DEFAULT: int = 0
-## What [member control_scheme_index] used to mean, kept only to read a settings file written before the pick
-## was saved by name. An addon can register a layout now, so a position in the menu is not a stable thing to
-## save: installing one would silently change what an existing file meant.
-const LEGACY_SCHEME_NAMES: Array[String] = ["Zelda", "GTA", "Platformer"]
-@export var control_scheme_index: int = GAME_DEFAULT ## Superseded by [member control_scheme_name]; read once, to migrate.
-## The [member ControlScheme.scheme_name] of the layout the player picked, or empty for Game Default.
+## The [member ControlScheme.scheme_name] of the layout the player picked, or empty to keep whatever the scene
+## set on [member Player.control_scheme]. A name nothing answers to falls back the same way, which is what a
+## settings file written before a layout was renamed or uninstalled does.
 @export var control_scheme_name: String = ""
 
 var _scaled_window: Window ## The window Auto follows on resize, connected once.
@@ -157,20 +152,8 @@ static func hud_shown_for(mode: int, input_type: int, touchscreen: bool) -> bool
 	return input_type == Controls.InputType.TOUCH and touchscreen
 
 
-## Reads a pre-by-name settings file once: the old number becomes the name it stood for, and is then left at
-## Game Default so this never runs twice.
-func migrate_control_scheme() -> void:
-	if not control_scheme_name.is_empty() or control_scheme_index == GAME_DEFAULT:
-		return
-	var at: int = control_scheme_index - 1
-	if at >= 0 and at < LEGACY_SCHEME_NAMES.size():
-		control_scheme_name = LEGACY_SCHEME_NAMES[at]
-	control_scheme_index = GAME_DEFAULT
-
-
-## The layout the player picked, or null for Game Default and for a name nothing answers to.
+## The layout the player picked, or null when nothing is saved and for a name nothing answers to.
 func picked_scheme() -> ControlScheme:
-	migrate_control_scheme()
 	return PlayerControls.scheme_named(control_scheme_name)
 
 

@@ -49,7 +49,7 @@ var uses_mouse: bool: ## Whether the mouse is this Player's: only a Player on th
 ## to a target; GTA aims freely over the shoulder. Any [ControlScheme] resource will do, so a game can ship a
 ## layout of its own without editing this addon; the ones here are in
 ## [code]resources/control_schemes/[/code]. The settings menu can override it for the player
-## ([member PlayerSettingsResource.control_scheme_index]).
+## ([member PlayerSettingsResource.control_scheme_name]).
 @export var control_scheme: ControlScheme = PlayerControls.DEFAULT_SCHEME:
 	set(value):
 		control_scheme = value

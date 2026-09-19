@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_control_scheme")
-scheme_name = "Platformer"
+scheme_name = "SMO"
 action_button_0 = &"jump"
 action_button_1 = &"action"
 action_button_2 = &"attack"

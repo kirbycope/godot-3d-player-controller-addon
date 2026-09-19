@@ -132,8 +132,8 @@ func test_saved_setting_overrides_the_scene() -> void:
 func test_the_video_settings_menu_lists_the_schemes() -> void:
 	var menu: OptionButton = player.video_settings.get_node("Panel/VBoxContainer/ControlScheme")
 	assert_eq(menu.item_count, 2, "The two layouts that ship here, and no redundant Default beside Zelda")
-	assert_eq(menu.get_item_text(0), "Zelda")
-	assert_eq(menu.get_item_text(1), "Platformer")
+	assert_eq(menu.get_item_text(0), "TotK")
+	assert_eq(menu.get_item_text(1), "SMO")
 	assert_eq(menu.selected, 0, "Nothing saved, so it shows the layout the Player is actually using")
 
 	player.video_settings._on_control_scheme_item_selected(1)
@@ -183,19 +183,17 @@ func test_the_scheme_carries_whether_focus_locks_on() -> void:
 	assert_false(player.lock_on_enabled())
 
 
-## A settings file written before the pick was saved by name still means the layout it meant, and is rewritten
-## as a name so it is only read once. Positions stopped being stable when an addon could register a layout.
-func test_an_old_saved_index_becomes_the_name_it_stood_for() -> void:
+## A name nothing answers to is not an error: the layout was renamed or its addon was uninstalled, so the
+## Player keeps whatever its scene set. There is no migration of older settings files; the format moved on.
+func test_a_name_nothing_answers_to_leaves_the_scene_alone() -> void:
 	var settings: PlayerSettingsResource = PlayerSettingsResource.load_or_create()
-	settings.control_scheme_name = ""
-	PlayerControls.register_scheme(preload("res://addons/gta/resources/control_schemes/gta.tres"))
-	settings.control_scheme_index = 2 # what "GTA" was saved as
+	settings.control_scheme_name = "Platformer" # what SMO used to be called
+	var scene_set: ControlScheme = player.control_scheme
 
 	settings.apply_control_scheme(player)
 
-	assert_eq(settings.control_scheme_name, "GTA", "The number is read as the name it stood for")
-	assert_eq(settings.control_scheme_index, PlayerSettingsResource.GAME_DEFAULT, "and cleared, so it is never read again")
-	assert_eq(player.control_scheme, preload("res://addons/gta/resources/control_schemes/gta.tres"))
+	assert_null(settings.picked_scheme(), "Nothing answers to it")
+	assert_eq(player.control_scheme, scene_set, "so the scene's own layout stands")
 
 
 ## An addon ships a layout without the player controller preloading out of it, which it must not do: the
