@@ -64,8 +64,17 @@ Organized state machine architecture separating primary lower-body locomotion st
   samples inside a packet say almost nothing about how loudly you spoke: on a laptop, ten seconds of talking
   and eight of silence came back with the same peak level, 0.0233 against 0.0246. What separates them is
   whether Steam sends anything at all, 165 packets against 10, and how much. `Player.loudness_of(bytes)` maps
-  the compressed bytes Steam reports against `VOICE_FULL_BYTES`; measured packets ran from about 186 to 8202
-  bytes. It is a static taking a plain number, so it tests with no network and no microphone.
+  the compressed bytes Steam reports against `Player.voice_full_bytes()`; measured packets ran from about 186
+  to 8202 bytes. It is a static taking a plain number, so it tests with no network and no microphone.
+
+  Where the bar sits is a **setting rather than a guess**, because microphones differ by more than any default
+  can cover. Audio settings carries a **Microphone** row (`VoiceLevelSlider`, `scripts/voice_level_slider.gd`)
+  built after PulseAudio's volume control: one bar that is both the meter and the setting, shading green
+  through yellow into red with a mark where a normal voice should land. The fill behind the handle is what the
+  microphone is hearing right now, and the handle is the sensitivity, saved as
+  `PlayerSettingsResource.voice_sensitivity`. Calibrating is one action: hold the talk key, speak, and drag the
+  handle until an ordinary voice fills the bar to the mark. A quiet microphone goes right, a headset that
+  clips goes left. The row only appears when Steam is loaded, like the rest of the voice settings.
 
   Two things had to be fixed before any of this could work, and both were broken for voice chat generally
   rather than for the meter. `Steamworks` never called `Steam.run_callbacks()`, so the session came up and

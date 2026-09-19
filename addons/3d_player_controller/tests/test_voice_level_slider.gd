@@ -1,0 +1,91 @@
+extends GutTest
+
+## Purpose: the microphone row in Audio settings. One bar that is both the meter and the setting: the handle is
+## the sensitivity, the fill behind it is what the microphone is hearing, and the sensitivity it saves is what
+## the Player measures voice against.
+
+const SETTINGS_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/audio_settings.tscn")
+const PLAYER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player.tscn")
+
+
+func _slider() -> VoiceLevelSlider:
+	var slider: VoiceLevelSlider = VoiceLevelSlider.new()
+	slider.min_value = 10.0
+	slider.max_value = 150.0
+	slider.value = 100.0
+	slider.size = Vector2(200.0, 40.0)
+	add_child_autofree(slider)
+	return slider
+
+
+func test_the_handle_spans_the_whole_range() -> void:
+	var slider: VoiceLevelSlider = _slider()
+
+	slider.value = slider.min_value
+	assert_almost_eq(slider.ratio, 0.0, 0.001, "At the bottom the handle is hard left")
+	slider.value = slider.max_value
+	assert_almost_eq(slider.ratio, 1.0, 0.001, "and at the top hard right")
+
+
+func test_the_level_is_held_between_nothing_and_full() -> void:
+	var slider: VoiceLevelSlider = _slider()
+
+	slider.level = 2.5
+	assert_almost_eq(slider.level, 1.0, 0.001, "A reading past the top fills the bar and no more")
+	slider.level = -1.0
+	assert_almost_eq(slider.level, 0.0, 0.001, "and one below the bottom empties it")
+
+
+func test_the_level_is_separate_from_the_setting() -> void:
+	var slider: VoiceLevelSlider = _slider()
+	slider.value = 60.0
+
+	slider.level = 0.9
+
+	assert_almost_eq(slider.value, 60.0, 0.001, "Talking does not move the handle; the bar is the meter, the handle is the choice")
+
+
+func test_dragging_the_bar_sets_the_sensitivity() -> void:
+	var slider: VoiceLevelSlider = _slider()
+	await wait_process_frames(1)
+
+	var press: InputEventMouseButton = InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.position = Vector2(slider.size.x * 0.5, 20.0)
+	slider._gui_input(press)
+
+	assert_almost_eq(slider.ratio, 0.5, 0.02, "Clicking halfway along puts the handle halfway along")
+
+
+## A quieter microphone needs fewer bytes to mean the same thing, so turning the sensitivity up lowers the bar
+## the Player measures against. That is the whole point of the row: the number stops being a guess.
+func test_the_sensitivity_moves_what_counts_as_a_full_voice() -> void:
+	var player: Player = PLAYER_SCENE.instantiate() as Player
+	add_child_autofree(player)
+	var settings: PlayerSettingsResource = PlayerSettingsResource.load_or_create()
+	var was: float = settings.voice_sensitivity
+
+	settings.voice_sensitivity = 100.0
+	var normal: float = player.voice_full_bytes()
+	settings.voice_sensitivity = 150.0
+	var sensitive: float = player.voice_full_bytes()
+	settings.voice_sensitivity = 50.0
+	var deaf: float = player.voice_full_bytes()
+
+	assert_lt(sensitive, normal, "More sensitive means less voice is needed to read as talking")
+	assert_gt(deaf, normal, "and less sensitive means more")
+	assert_gt(Player.loudness_of(500, sensitive), Player.loudness_of(500, deaf),
+		"so the same packet reads louder on the sensitive setting")
+	settings.voice_sensitivity = was
+	settings.save()
+
+
+func test_the_menu_shows_the_row_and_keeps_what_was_set() -> void:
+	var menu: Node = SETTINGS_SCENE.instantiate()
+	add_child_autofree(menu)
+	await wait_process_frames(1)
+
+	assert_not_null(menu.mic_sensitivity, "Audio settings carries the microphone row")
+	assert_almost_eq(menu.mic_sensitivity.value, PlayerSettingsResource.load_or_create().voice_sensitivity, 0.001,
+		"and opens on the sensitivity already saved")

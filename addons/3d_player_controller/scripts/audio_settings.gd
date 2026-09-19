@@ -7,6 +7,7 @@ extends PlayerMenuLayer
 @onready var voice_settings: VBoxContainer = $Panel/VBoxContainer/VoiceSettings ## Steam voice chat rows; shown only when Steam is loaded.
 @onready var voice_slider: HSlider = $Panel/VBoxContainer/VoiceSettings/Voice/VolumeSlider
 @onready var mute_voice: CheckButton = $Panel/VBoxContainer/VoiceSettings/MuteVoice
+@onready var mic_sensitivity: VoiceLevelSlider = $Panel/VBoxContainer/VoiceSettings/Microphone/Sensitivity ## Both the microphone meter and the setting; one bar, after PulseAudio's.
 
 var settings_res: PlayerSettingsResource
 
@@ -21,7 +22,24 @@ func _ready() -> void:
 	sfx_slider.set_value_no_signal(settings_res.sfx_volume)
 	voice_slider.set_value_no_signal(settings_res.voice_volume)
 	mute_voice.set_pressed_no_signal(settings_res.voice_muted)
+	mic_sensitivity.set_value_no_signal(settings_res.voice_sensitivity)
+	mic_sensitivity.value_changed.connect(_on_mic_sensitivity_changed)
 	voice_settings.visible = is_steam_loaded()
+	set_process(true)
+
+
+## The bar shows what the microphone is hearing right now, so the handle can be set by talking rather than by
+## guessing. Only while the menu is open, and only for the Player whose settings these are.
+func _process(_delta: float) -> void:
+	if not visible or player == null:
+		return
+	mic_sensitivity.level = player.voice_loudness
+
+
+## Saved as it moves; a drag ends wherever the player lets go and there is no separate confirm.
+func _on_mic_sensitivity_changed(value: float) -> void:
+	settings_res.voice_sensitivity = value
+	settings_res.save()
 
 
 ## Voice chat runs on Steam only, so its rows show only with the Steam singleton; a test overrides this to see both layouts.

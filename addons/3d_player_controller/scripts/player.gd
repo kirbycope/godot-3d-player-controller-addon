@@ -669,7 +669,7 @@ func _process(delta: float) -> void:
 				var buffer: PackedByteArray = voice_data.get("buffer", PackedByteArray())
 				if not buffer.is_empty():
 					# Rise rather than snap, so a burst of speech does not make the meter flicker
-					var heard: float = loudness_of(int(available_voice.get("size", 0)))
+					var heard: float = loudness_of(int(available_voice.get("size", 0)), voice_full_bytes())
 					voice_loudness = minf(voice_loudness + delta * VOICE_RISE_PER_SECOND, heard) if heard > voice_loudness else heard
 					if multiplayer.has_multiplayer_peer() and multiplayer.get_peers().size() > 0:
 						_receive_voice_packet.rpc(buffer)
@@ -1401,6 +1401,15 @@ func stop_broadcasting() -> void:
 ## measured on a laptop, ten seconds of talking and eight seconds of silence came back with the same peak
 ## level, 0.0233 against 0.0246. What separates them is whether Steam sends anything at all, 165 packets
 ## against 10, and how much. So the reading follows the flow of voice rather than its waveform.
+## The bytes that count as a full-voice frame on this machine, from the microphone sensitivity set in Audio
+## settings. A quieter microphone needs fewer bytes to mean the same thing, so a higher sensitivity lowers the
+## bar. Microphones differ by more than any built-in default can cover, which is why this is a setting the
+## player calibrates by talking rather than a number guessed here.
+func voice_full_bytes() -> float:
+	var sensitivity: float = PlayerSettingsResource.load_or_create().voice_sensitivity
+	return VOICE_FULL_BYTES * (100.0 / maxf(sensitivity, 1.0))
+
+
 static func loudness_of(available_bytes: int, full_bytes: float = VOICE_FULL_BYTES) -> float:
 	if available_bytes <= 0:
 		return 0.0

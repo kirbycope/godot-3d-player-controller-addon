@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://2ci8veitkhtr" path="res://addons/3d_player_controller/scripts/audio_settings.gd" id="1_kygss"]
 [ext_resource type="Texture2D" uid="uid://50q2mf64emfu" path="res://addons/3d_player_controller/assets/kenney_nl/2D assets/Game Icons/Vector/vector_whiteIcons.svg" id="1_prya7"]
+[ext_resource type="Script" uid="uid://fm5bguyy27kv" path="res://addons/3d_player_controller/scripts/voice_level_slider.gd" id="mic_slider"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_menu"]
 content_margin_left = 12.0
@@ -284,6 +285,29 @@ shape = SubResource("RectangleShape2D_5xw05")
 
 [node name="VoiceSettings" type="VBoxContainer" parent="Panel/VBoxContainer" unique_id=795294055]
 layout_mode = 2
+
+[node name="Microphone" type="Label" parent="Panel/VBoxContainer/VoiceSettings"]
+custom_minimum_size = Vector2(0, 62)
+layout_mode = 2
+text = "Microphone"
+horizontal_alignment = 1
+
+[node name="Sensitivity" type="Range" parent="Panel/VBoxContainer/VoiceSettings/Microphone"]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -36.0
+grow_horizontal = 2
+grow_vertical = 0
+min_value = 10.0
+max_value = 150.0
+step = 1.0
+value = 100.0
+script = ExtResource("mic_slider")
+tooltip_text = "Hold the talk key and speak. Drag the handle so an ordinary voice fills the bar to the mark."
 
 [node name="Voice" type="Label" parent="Panel/VBoxContainer/VoiceSettings" unique_id=1427057411]
 custom_minimum_size = Vector2(0, 54)
