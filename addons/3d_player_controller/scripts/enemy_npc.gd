@@ -103,7 +103,7 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	if not is_multiplayer_authority() or is_dead:
+	if not is_multiplayer_authority() or is_dead or delta <= 0.0: # root motion is divided by delta
 		return
 	if caster.casting:
 		# Stand and face the target through the cast

@@ -703,6 +703,9 @@ func _process(delta: float) -> void:
 
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(delta: float) -> void:
+	# A frozen clock (a menu holding Engine.time_scale at zero) moves nothing, and root motion is divided by delta
+	if delta <= 0.0:
+		return
 	# Track which weapon group has finished its draw so re-entering it skips the redraw.
 	var root_locomotion_node: String = String(locomotion_state.get_current_node())
 	if root_locomotion_node in LOCOMOTION_GROUPS:

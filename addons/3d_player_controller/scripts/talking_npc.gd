@@ -36,7 +36,7 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	if not is_multiplayer_authority():
+	if not is_multiplayer_authority() or delta <= 0.0: # root motion is divided by delta
 		return
 	var attending: Player = talker if talker else _attention
 	if attending and is_instance_valid(attending) and faces_talker:

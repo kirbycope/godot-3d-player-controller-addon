@@ -140,3 +140,14 @@ func test_unstuck_warps_the_player_back_to_where_it_started() -> void:
 	pause._on_unstuck_pressed()
 	assert_true(player.global_transform.is_equal_approx(home), "Back at the start")
 	assert_eq(player.velocity, Vector3.ZERO, "and still")
+
+
+## While a menu holds the engine clock at zero, a Player that still gets a physics frame (a client's, or one under an
+## always-processing parent) must neither move nor divide its root motion by the zero delta.
+func test_a_frozen_frame_moves_nothing_and_raises_no_error() -> void:
+	await wait_physics_frames(2)
+	var before: Transform3D = player.global_transform
+	player._physics_process(0.0)
+	assert_true(player.global_transform.is_finite(), "No NaN from dividing by a zero delta")
+	assert_true(player.global_transform.is_equal_approx(before), "and nothing moved")
+
