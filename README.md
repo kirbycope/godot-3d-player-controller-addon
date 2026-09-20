@@ -30,5 +30,14 @@ anywhere first. Installing through the Asset Library takes `addons/` and skips t
 
 ## Installing it in a game
 
+This repository does not commit the addons it depends on: `addons/controls/` and `addons/gta/` are
+fetched, not checked in, so after cloning run
+
+```bash
+python tools/pull_addons.py
+```
+
+before opening the project, or nothing loads.
+
 Copy `addons/3d_player_controller/` into your project's `addons/`. See the
 [addon's README](addons/3d_player_controller/README.md) for what it needs and how to use it.
