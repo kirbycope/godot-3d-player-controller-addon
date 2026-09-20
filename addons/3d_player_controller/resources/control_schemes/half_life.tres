@@ -14,4 +14,13 @@ extra_slots = {
 "button_7": &"crouch",
 "button_9": &"sprint"
 }
+slot_labels = {
+"axis_5_plus": "Attack",
+"button_0": "Jump",
+"button_1": "Reload",
+"button_2": "Use",
+"button_3": "Flashlight",
+"button_7": "Duck",
+"button_9": "Sprint"
+}
 locks_on = false

@@ -67,7 +67,7 @@ func test_zelda_is_the_default_layout() -> void:
 	assert_true(_has_button(&"attack", JOY_BUTTON_X), "The left button attacks, as Y does in the game")
 	assert_true(_has_button(&"jump", JOY_BUTTON_Y), "The top button jumps, as X does in the game")
 	assert_true(player.lock_on_enabled(), "Zelda locks on")
-	assert_eq(player.controls.joypad_button_0_label.text, "Sprint")
+	assert_eq(player.controls.joypad_button_0_label.text, "Dash", "Tears of the Kingdom calls it Dash, not Sprint")
 
 
 func test_gta_moves_the_face_buttons_and_frees_the_aim() -> void:
@@ -79,8 +79,8 @@ func test_gta_moves_the_face_buttons_and_frees_the_aim() -> void:
 	assert_false(_has_button(&"action", JOY_BUTTON_A), "A no longer does Action")
 	assert_false(_has_button(&"sprint", JOY_BUTTON_B), "B no longer sprints")
 	assert_false(player.lock_on_enabled(), "GTA aims freely")
-	assert_eq(player.controls.joypad_button_0_label.text, "Sprint", "The resting label follows the button")
-	assert_eq(player.controls.joypad_button_3_label.text, "Action")
+	assert_eq(player.controls.joypad_button_0_label.text, "Sprint", "The resting label follows the button, in GTA's own word")
+	assert_eq(player.controls.joypad_button_3_label.text, "Enter", "GTA puts Enter Vehicle on the top button")
 	assert_true(InputMap.action_get_events(&"sprint").any(func(e: InputEvent) -> bool: return e is InputEventKey), "The keyboard key stays on the action")
 
 
@@ -90,7 +90,7 @@ func test_switching_back_restores_zelda() -> void:
 	assert_true(_has_button(&"sprint", JOY_BUTTON_A))
 	assert_false(_has_button(&"action", JOY_BUTTON_A))
 	assert_true(_has_button(&"jump", JOY_BUTTON_Y))
-	assert_eq(player.controls.joypad_button_0_label.text, "Sprint")
+	assert_eq(player.controls.joypad_button_0_label.text, "Dash")
 
 
 func test_focus_never_locks_on_under_gta() -> void:
@@ -255,3 +255,61 @@ func _has_trigger(action: StringName, axis: JoyAxis) -> bool:
 		if event is InputEventJoypadMotion and (event as InputEventJoypadMotion).axis == axis:
 			return true
 	return false
+
+
+## A layout is the whole pad of the game it is named after, not a patch on top of the scene's. Metal Gear had
+## nothing on the stick clicks and nobody to whistle at, so those buttons come off the screen with their labels
+## empty rather than quietly keeping Tears of the Kingdom's binding.
+func test_a_layout_clears_the_slots_its_game_never_had() -> void:
+	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/metal_gear.tres")
+
+	assert_eq(player.controls.action_button_12, &"", "The d-pad has no Whistle on it")
+	assert_eq(player.controls.joypad_button_12_label.text, "", "and the label it used to carry is empty")
+	assert_false(_has_button(&"whistle", JOY_BUTTON_DPAD_DOWN), "so the pad no longer whistles")
+	assert_eq(player.controls.action_button_7, &"", "The PlayStation pad Metal Gear shipped on clicked no sticks")
+	assert_eq(player.controls.action_button_9, &"last_weapon", "What the game did have is still bound")
+
+
+## The sticks, Start, Screenshot and Perspective are this addon's own rather than any game's verbs, so no layout
+## takes them away; a game that never had a first-person toggle still has one here.
+func test_the_addons_own_slots_survive_every_layout() -> void:
+	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/metal_gear.tres")
+
+	assert_eq(player.controls.action_button_6, &"start", "Pause stays")
+	assert_eq(player.controls.action_button_15, &"share", "Screenshot stays")
+	assert_eq(player.controls.action_button_4, &"perspective", "Perspective stays")
+	assert_eq(player.controls.action_move_up, &"move_up", "and both sticks stay")
+	assert_eq(player.controls.action_look_left, &"look_left")
+
+
+## Clearing is not one-way: the next layout that has the slot puts it back, button, binding and label.
+func test_a_cleared_slot_comes_back_with_a_layout_that_has_it() -> void:
+	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/metal_gear.tres")
+	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/totk.tres")
+
+	assert_eq(player.controls.action_button_12, &"whistle")
+	assert_true(_has_button(&"whistle", JOY_BUTTON_DPAD_DOWN))
+	assert_eq(player.controls.joypad_button_12_label.text, "Whistle")
+
+
+## A button says what it does in the words of the game the layout is named after, not this addon's name for
+## the action underneath. Metal Gear's manual calls the left shoulder Change Item, so it does not read Last
+## Weapon, and the action it fires is still last_weapon.
+func test_a_layout_names_its_buttons_in_the_games_own_words() -> void:
+	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/metal_gear.tres")
+
+	assert_eq(player.controls.joypad_button_9_label.text, "Item", "The left shoulder changes items, as the manual puts it")
+	assert_eq(player.controls.action_button_9, &"last_weapon", "and the action underneath is untouched")
+	assert_eq(player.controls.joypad_button_0_label.text, "Duck", "Cross ducks down")
+	assert_eq(player.controls.joypad_button_2_label.text, "Fire", "Square fires the weapon")
+
+
+## Most of Tears of the Kingdom's pad is where the scene already put it, so the renaming has to happen even
+## when the binding does not change: the left stick is Stealth, not Crouch, though both fire crouch.
+func test_a_slot_is_renamed_even_where_its_binding_is_unchanged() -> void:
+	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/totk.tres")
+
+	assert_eq(player.controls.action_button_7, &"crouch")
+	assert_eq(player.controls.joypad_button_7_label.text, "Stealth")
+	assert_eq(player.controls.joypad_button_8_label.text, "Telescope")
+	assert_eq(player.controls.joypad_button_12_label.text, "Whistle")

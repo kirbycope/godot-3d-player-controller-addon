@@ -51,9 +51,10 @@ const PLAYER_ACTIONS: Dictionary = {
 	"ui_down": {"deadzone": 0.5, "buttons": [JOY_BUTTON_DPAD_DOWN]},
 }
 
-## Which game's pad the face buttons are laid out like. The keyboard keys behind them
-## ([constant PLAYER_ACTIONS]), the shoulders, the triggers, the sticks and the d-pad are the same in every
-## scheme; a scheme moves the four face buttons about and decides what Focus does (see
+## Which game's pad the Player is laid out like. The keyboard keys behind the buttons
+## ([constant PLAYER_ACTIONS]) are the same in every scheme; the four faces, the shoulders, the triggers, the
+## stick clicks and the d-pad are the layout's own, and a slot the game never had is cleared rather than left
+## on the scene's binding (see [method pad_slots]). A scheme also decides what Focus does (see
 ## [method Player.lock_on_enabled]). [member Player.control_scheme] picks it.
 ##
 ## The layouts that ship with the addon, in the order the settings menu lists them. Each one is a
@@ -123,6 +124,19 @@ const ACTION_LABELS: Dictionary[StringName, String] = {
 	&"action": "Action", &"sprint": "Sprint", &"attack": "Attack", &"jump": "Jump",
 }
 
+## The slots no layout governs: the two sticks, Start, Screenshot, and Perspective, which are this addon's own
+## rather than any game's verbs. They keep what the scene gave them whatever layout is on, so a game that
+## never had a first-person toggle still has one here.
+const SYSTEM_SLOTS: PackedStringArray = [
+	"button_4", "button_6", "button_15",
+	"move_up", "move_down", "move_left", "move_right",
+	"look_up", "look_down", "look_left", "look_right",
+]
+
+## The four face buttons, which a layout names through its own exports rather than through
+## [member ControlScheme.extra_slots].
+const FACE_SLOTS: PackedStringArray = ["button_0", "button_1", "button_2", "button_3"]
+
 @export var player: Player
 
 var _seeker_shown: String = "" ## What [method seeker_label_text] said when the labels were last applied.
@@ -150,6 +164,10 @@ func _ready() -> void:
 		if not _foreign_actions.has(String(action_name)):
 			_registered_actions[action_name] = true
 	contextual_labels_requested.connect(_on_contextual_labels_requested)
+	# The first pass ran before the base had cached the scene's label texts, so the layout's own words for its
+	# buttons had nothing to overwrite. Now they do: the bindings are already right, so this only renames.
+	if player and _hud_ready:
+		apply_control_scheme(player.control_scheme)
 
 
 ## Lays the face buttons out for [param scheme]. Before the HUD is ready it only fills the slot exports, and the
@@ -160,16 +178,16 @@ func apply_control_scheme(scheme: ControlScheme) -> void:
 	if scheme == null:
 		return
 	var slots: Dictionary[String, StringName] = scheme.slots()
+	var pad: Dictionary[String, StringName] = pad_slots(scheme)
 	# is_node_ready() is already true inside _ready, so the base's own setup is waited for explicitly
 	if not _hud_ready:
 		# Before the base has registered anything there is nothing to rebind, so the exports are simply filled
 		# and the base picks them up; the same goes for the slots beyond the four faces.
 		for slot: String in slots:
 			set(slot, slots[slot])
-		for slot: String in scheme.extra_slots:
-			if SLOT_EVENTS.has(slot):
-				_slots_before_scheme[slot] = get("action_" + slot)
-				set("action_" + slot, scheme.extra_slots[slot])
+		for slot: String in pad:
+			_slots_before_scheme[slot] = get("action_" + slot)
+			set("action_" + slot, pad[slot])
 		return
 	for slot: String in slots:
 		var previous: StringName = get(slot)
@@ -194,28 +212,57 @@ func apply_control_scheme(scheme: ControlScheme) -> void:
 	for slot: String in slots:
 		var label: Label = get("joypad_%s_label" % slot.trim_prefix("action_"))
 		if label:
-			_label_texts[label] = ACTION_LABELS.get(slots[slot], String(slots[slot]).capitalize())
-	_apply_extra_slots(scheme.extra_slots)
+			_label_texts[label] = label_for(scheme, slot.trim_prefix("action_"), slots[slot])
+	_apply_extra_slots(pad, scheme)
 	update_input_ui()
 	reset_labels()
 	if player:
 		player.refresh_contextual_controls()
 
 
-## Moves the shoulders, triggers, stick clicks and d-pad a layout asks for, and hands back any slot the last
-## layout moved that this one does not mention, so one scheme's reach does not survive into the next.
-func _apply_extra_slots(wanted: Dictionary[String, StringName]) -> void:
+## Every slot a layout governs, resolved: the shoulders, triggers, stick clicks and d-pad, each carrying the
+## action [param scheme] puts there or nothing at all.
+##
+## A layout is the whole pad of the game it is named after, not a patch on top of the scene's. A slot the game
+## had is in [member ControlScheme.extra_slots]; a slot it did not have is left out and comes back empty here,
+## which hides the button and empties its label, because Metal Gear had no Whistle and Resident Evil no Throw.
+## [constant SYSTEM_SLOTS] is the exception: the sticks, Start, Screenshot and Perspective belong to the addon
+## rather than to any game, so no layout clears them.
+func pad_slots(scheme: ControlScheme) -> Dictionary[String, StringName]:
+	var out: Dictionary[String, StringName] = {}
+	for slot: String in SLOT_EVENTS:
+		if SYSTEM_SLOTS.has(slot) or FACE_SLOTS.has(slot):
+			continue
+		out[slot] = scheme.extra_slots.get(slot, &"")
+	for slot: String in scheme.extra_slots:
+		if not out.has(slot):
+			push_warning("ControlScheme asks for a slot no layout governs: %s" % slot)
+	return out
+
+
+## Writes every slot a layout governs, from [method pad_slots]: the ones the game had go on to their actions,
+## the ones it did not go empty, and a slot outside the layout's reach is handed back to what the scene gave it.
+func _apply_extra_slots(wanted: Dictionary[String, StringName], scheme: ControlScheme) -> void:
 	for slot: String in _slots_before_scheme.keys():
 		if not wanted.has(slot):
 			bind_slot(slot, _slots_before_scheme[slot])
 			_slots_before_scheme.erase(slot)
 	for slot: String in wanted:
-		if not SLOT_EVENTS.has(slot):
-			push_warning("ControlScheme asks for a slot the HUD does not have: %s" % slot)
-			continue
 		if not _slots_before_scheme.has(slot):
 			_slots_before_scheme[slot] = get("action_" + slot)
-		bind_slot(slot, wanted[slot], ACTION_LABELS.get(wanted[slot], String(wanted[slot]).capitalize()))
+		bind_slot(slot, wanted[slot], label_for(scheme, slot, wanted[slot]))
+
+
+## What [param slot] reads under [param scheme]: the game's own word for it where the layout gives one, else
+## this addon's name for the action. A button says what it does in the game it is laid out like, so Metal
+## Gear's left shoulder is Change Item and a skateboarding game's right trigger is Revert, whatever the action
+## underneath is called.
+func label_for(scheme: ControlScheme, slot: String, action: StringName) -> String:
+	if scheme != null and scheme.slot_labels.has(slot):
+		return scheme.slot_labels[slot]
+	if action.is_empty():
+		return ""
+	return ACTION_LABELS.get(action, String(action).capitalize())
 
 
 ## Puts [param action] on one face, shoulder or d-pad [param slot] ("button_12" for d-pad down) live, the way a
@@ -226,6 +273,10 @@ func bind_slot(slot: String, action: StringName, label: String = "") -> void:
 	var property: String = "action_" + slot
 	var previous: StringName = get(property)
 	if previous == action:
+		# The binding is already right, but the word on it may not be: a layout renames a slot it leaves
+		# where the scene put it, which is most of Tears of the Kingdom's pad
+		_write_slot_label(slot, action, label)
+		reset_labels()
 		return
 	var events: Array[InputEvent] = _events_for(SLOT_EVENTS[slot])
 	if not previous.is_empty() and _owns_action(previous):
@@ -242,13 +293,19 @@ func bind_slot(slot: String, action: StringName, label: String = "") -> void:
 				if not InputMap.action_has_event(action, event):
 					InputMap.action_add_event(action, event)
 	_apply_slot_actions()
-	var label_node: Label = get("joypad_%s_label" % slot) as Label
-	if label_node:
-		_label_texts[label_node] = label if not label.is_empty() else String(action).capitalize()
+	_write_slot_label(slot, action, label)
 	update_input_ui()
 	reset_labels()
 	if player:
 		player.refresh_contextual_controls()
+
+
+## The resting word on [param slot]: what the layout asked for, else the action's own name. Kept apart from
+## [method bind_slot] because a slot whose action does not change still has its label renamed.
+func _write_slot_label(slot: String, action: StringName, label: String) -> void:
+	var label_node: Label = get("joypad_%s_label" % slot) as Label
+	if label_node:
+		_label_texts[label_node] = label if not label.is_empty() else String(action).capitalize()
 
 
 ## The gameplay actions this HUD registered for its Player: the slots and the extra keys, ui_* aside.
@@ -283,14 +340,21 @@ func _input(event: InputEvent) -> void:
 func _apply_contextual_labels() -> void:
 	if player == null:
 		return
-	if player.has_firearm_equipped:
-		joypad_axis_4_plus_label.text = "Aim"
+	# Each word goes on the button that carries the action, and a layout whose game had no such button carries
+	# no slot for it, so there is nothing to write on
+	var aim: Label = action_label(&"focus")
+	if player.has_firearm_equipped and aim != null:
+		aim.text = "Aim"
 	var seeker: String = seeker_label_text()
 	if seeker != "":
-		joypad_button_11_label.text = seeker
+		var wheel: Label = action_label(&"seeker")
+		if wheel != null:
+			wheel.text = seeker
 		key_i_label.text = seeker
 	if player.abilities != null and player.abilities.active_ability:
-		joypad_button_9_label.text = player.abilities.active_ability.display_name
+		var cast: Label = action_label(&"ability")
+		if cast != null:
+			cast.text = player.abilities.active_ability.display_name
 	_seeker_shown = seeker
 
 

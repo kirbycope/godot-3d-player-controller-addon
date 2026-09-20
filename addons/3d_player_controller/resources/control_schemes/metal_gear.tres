@@ -13,4 +13,12 @@ extra_slots = {
 "button_10": &"next_weapon",
 "button_9": &"last_weapon"
 }
+slot_labels = {
+"button_0": "Duck",
+"button_1": "Action",
+"button_10": "Weapon",
+"button_2": "Fire",
+"button_3": "View",
+"button_9": "Item"
+}
 locks_on = false

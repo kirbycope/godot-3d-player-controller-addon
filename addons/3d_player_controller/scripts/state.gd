@@ -147,8 +147,9 @@ func _on_input_type_changed(input_type: int) -> void:
 			player.controls.joypad_button_6_label: "Pause Menu",
 		})
 		var seeker: String = player.controls.seeker_label_text()
-		if seeker != "" and not labels.has(player.controls.joypad_button_11_label) and not labels.has(player.controls.key_i_label):
-			labels[player.controls.joypad_button_11_label] = seeker
+		var wheel: Label = player.controls.action_label(&"seeker")
+		if seeker != "" and wheel != null and not labels.has(wheel) and not labels.has(player.controls.key_i_label):
+			labels[wheel] = seeker
 		player.controls.set_labels(labels)
 
 

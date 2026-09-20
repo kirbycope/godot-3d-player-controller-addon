@@ -269,7 +269,7 @@ class TestInputTypeSwapping:
 
 		# Swap input type to Keyboard/Mouse -> should reset all labels to defaults
 		controls.current_input_type = controls.InputType.KEYBOARD_MOUSE
-		assert_eq(controls.joypad_button_0_label.text, "Sprint", "Label should reset to default upon swapping input type")
+		assert_eq(controls.joypad_button_0_label.text, "Dash", "Label should reset to the layout's own word upon swapping input type")
 		assert_eq(controls.key_s_label.text, "Move", "Key S label should reset to default Move")
 		assert_eq(controls.key_i_label.text, "Seeker", "Key I label should reset to default Seeker")
 

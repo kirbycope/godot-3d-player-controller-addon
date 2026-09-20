@@ -222,7 +222,7 @@ func get_contextual_controls(_input_type: int) -> Dictionary:
 	return {
 		player.controls.action_label(&"jump", player.controls.joypad_button_3_label): "Hop",
 		player.controls.action_label(&"sprint", player.controls.joypad_button_1_label): "Fast Climb",
-		player.controls.joypad_button_7_label: "Drop",
+		player.controls.action_label(&"crouch", player.controls.joypad_button_7_label): "Drop",
 		player.controls.left_joystick_label: "Climb",
 		player.controls.right_joystick_label: "Camera",
 	}

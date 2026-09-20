@@ -1,16 +1,16 @@
 {
   "controls": {
-    "commit": "581a7bba972397c10547406cec93833dd70903ec",
-    "pulled": "2026-09-15T04:58:35Z",
+    "commit": "3681c4c8e029540341d7191378dbd5d71c1c0450",
+    "pulled": "2026-09-20T02:31:59Z",
     "ref": "main",
     "repo": "https://github.com/kirbycope/godot-controls.git",
-    "subject": "Point a prompt at the action, turn it to the camera"
+    "subject": "Record Godot 4.8's new mipmap import keys"
   },
   "gta": {
-    "commit": "8f89d2f2e93d7ced404b8b397aa9528d4502ef41",
-    "pulled": "2026-09-19T22:26:19Z",
+    "commit": "5c517758f41203c3be30959ac26a48ea4efd546f",
+    "pulled": "2026-09-20T02:32:03Z",
     "ref": "main",
     "repo": "https://github.com/kirbycope/gta.git",
-    "subject": "Put the GTA layout in a control_schemes folder"
+    "subject": "Pull the renamed scheme names and the dropped settings migration"
   }
 }

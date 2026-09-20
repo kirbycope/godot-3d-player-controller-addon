@@ -182,8 +182,13 @@ func _hide_cast_bar() -> void:
 		player.cast_bar.hide_cast()
 
 
+## The picked ability names whichever button casts it, wherever the layout put the action. A layout whose game
+## had no such button carries no [code]ability[/code] slot at all, and then there is nothing to name.
 func _update_label() -> void:
-	player.controls.joypad_button_9_label.text = active_ability.display_name if active_ability else ""
+	var label: Label = player.controls.action_label(&"ability")
+	if label == null:
+		return
+	label.text = active_ability.display_name if active_ability else ""
 
 
 ## Only runs during a cast that movement may break.

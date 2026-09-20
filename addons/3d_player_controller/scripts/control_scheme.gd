@@ -23,14 +23,28 @@ extends Resource
 @export var action_button_3: StringName = &""
 
 @export_group("Beyond the face buttons")
-## Any other pad slot this layout moves, by the slot's name on the HUD ("button_9" is the left shoulder,
-## "button_10" the right, "axis_4_plus" the left trigger, "axis_5_plus" the right, "button_7" and "button_8"
-## the stick clicks, "button_11" to "button_14" the d-pad). Most games put verbs out here that this addon
-## keeps on the faces: Dark Souls attacks on the right shoulder, Half-Life 2 sprints on the left one.
+## Every pad slot beyond the four faces that the game this layout is named after actually had, by the slot's
+## name on the HUD ("button_9" is the left shoulder, "button_10" the right, "axis_4_plus" the left trigger,
+## "axis_5_plus" the right, "button_7" and "button_8" the stick clicks, "button_11" to "button_14" the d-pad).
+## Most games put verbs out here that this addon keeps on the faces: Dark Souls attacks on the right trigger,
+## Half-Life 2 sprints on the left shoulder.
 ##
-## A slot left out keeps whatever the scene gave it, and a slot this layout moves is handed back when another
-## layout that does not mention it comes on, so schemes do not leak into each other.
+## This is the whole of that game's pad, not a patch on top of the scene's, so [b]a slot left out is cleared[/b]:
+## the button comes off screen and its label empties. Metal Gear had nothing on the stick clicks and Resident
+## Evil nothing to throw, and neither should be left showing Tears of the Kingdom's binding because no layout
+## said otherwise. [constant PlayerControls.SYSTEM_SLOTS] is what no layout reaches - the sticks, Start,
+## Screenshot and Perspective are this addon's, not the game's.
 @export var extra_slots: Dictionary[String, StringName] = {}
+
+## What each slot reads on the HUD, by the slot's name, in the words the game itself uses: Metal Gear's left
+## shoulder says Change Item rather than Last Weapon, Dark Souls' says Guard rather than Scope, and a
+## skateboarding game's right trigger says Revert rather than Shoot. The four faces are named here too
+## ("button_0" to "button_3").
+##
+## The action underneath keeps whatever this addon calls it, because that is what the scripts read; only the
+## word on the button changes. A slot left out falls back to [constant PlayerControls.ACTION_LABELS] and then
+## to the action's own name, which is how every layout used to read before it was given its own words.
+@export var slot_labels: Dictionary[String, String] = {}
 
 @export_group("Focus")
 ## Focus locks on to a target, Breath of the Wild style. Off, Focus is a free over-the-shoulder aim, Grand

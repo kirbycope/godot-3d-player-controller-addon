@@ -260,9 +260,9 @@ func get_contextual_controls(_input_type: int) -> Dictionary:
 		player.controls.action_label(&"jump", player.controls.joypad_button_3_label): "Surface" if player.is_diving else "Climb Out",
 	}
 	if player.is_diving:
-		controls[player.controls.joypad_button_7_label] = "Dive Deeper"
+		controls[player.controls.action_label(&"crouch", player.controls.joypad_button_7_label)] = "Dive Deeper"
 	elif enable_diving:
-		controls[player.controls.joypad_button_7_label] = "Dive"
+		controls[player.controls.action_label(&"crouch", player.controls.joypad_button_7_label)] = "Dive"
 	return controls
 
 
