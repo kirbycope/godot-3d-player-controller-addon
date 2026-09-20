@@ -50,6 +50,13 @@ static func _fit_touch_button(touch: TouchScreenButton, host: Control) -> void:
 	touch.position = host.size * 0.5
 
 
+## The tree can be resumed behind the menu's back (a test, a scene change setting `paused` itself): the clock
+## must never stay frozen while the tree runs, so a menu that held it lets go the moment it sees that.
+func _process(_delta: float) -> void:
+	if _paused_world and is_inside_tree() and not get_tree().paused:
+		resume_world()
+
+
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("start") and visible:

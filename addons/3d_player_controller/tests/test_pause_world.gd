@@ -151,3 +151,12 @@ func test_a_frozen_frame_moves_nothing_and_raises_no_error() -> void:
 	assert_true(player.global_transform.is_finite(), "No NaN from dividing by a zero delta")
 	assert_true(player.global_transform.is_equal_approx(before), "and nothing moved")
 
+
+func test_a_tree_resumed_behind_the_menus_back_thaws_the_clock_next_frame() -> void:
+	player.pause.show_menu()
+	assert_eq(Engine.time_scale, 0.0)
+	get_tree().paused = false # not through the menu
+	await wait_process_frames(2)
+	assert_eq(Engine.time_scale, 1.0, "A running tree never keeps a frozen clock")
+	player.pause.hide_menu()
+
