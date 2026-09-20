@@ -7,6 +7,7 @@ extends GutTest
 
 const PLAYER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player.tscn")
 const SPLIT_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/split_screen.tscn")
+const DEMO_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/demo/split_screen_demo.tscn")
 
 var root: Node3D
 var split: SplitScreen
@@ -129,3 +130,14 @@ func test_a_lone_player_reads_the_whole_input() -> void:
 	assert_true(lone.is_action_pressed(&"jump"), "Any pad")
 	_pad_button(1, JOY_BUTTON_Y, false)
 	await wait_until(func() -> bool: return not lone.is_action_pressed(&"jump"), 1.0)
+
+
+func test_the_demo_arena_keeps_each_view_to_the_contextual_hints() -> void:
+	var demo: Node3D = DEMO_SCENE.instantiate()
+	add_child_autofree(demo)
+	await wait_physics_frames(2)
+	var split: SplitScreen = demo.get_node("SplitScreen")
+	assert_eq(split.players.size(), 2, "Two players in the arena")
+	for player: Player in split.players:
+		assert_eq(player.hud_mode_override, PlayerSettingsResource.HudMode.AUTO, "Half a screen has no room for the whole button set, whatever the saved setting says")
+

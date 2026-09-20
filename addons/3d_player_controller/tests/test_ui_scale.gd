@@ -14,6 +14,9 @@ func before_each() -> void:
 	_had_file = FileAccess.file_exists(PlayerSettingsResource.SAVE_PATH)
 	if _had_file:
 		_backup = FileAccess.get_file_as_bytes(PlayerSettingsResource.SAVE_PATH)
+		# Out of the way, not just backed up: a machine whose player picked Shown would otherwise fail the
+		# tests that read the default rule
+		DirAccess.remove_absolute(PlayerSettingsResource.SAVE_PATH)
 	PlayerSettingsResource._cached = null
 	_factor_before = get_tree().root.content_scale_factor
 

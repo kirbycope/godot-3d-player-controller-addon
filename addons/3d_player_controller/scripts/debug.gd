@@ -4,6 +4,8 @@ extends CanvasLayer
 
 @export var player: Player
 
+var _mouse_mode_before: int = -1 ## The mouse mode the HUD found on opening, put back on closing; -1 when it changed nothing.
+
 @onready var refresh_timer: Timer = $RefreshTimer
 @onready var navigation_marker: MeshInstance3D = $NavigationMarker ## Green sphere marking the click-to-move target.
 @onready var fps: Label = $FPS
@@ -85,9 +87,16 @@ func _on_visibility_changed() -> void:
 	if visible:
 		_on_refresh_timer_timeout()
 		refresh_timer.start()
+		# The toggles want a pointer; a captured mouse is let go for as long as the HUD is up
+		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+			_mouse_mode_before = Input.mouse_mode
+			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	else:
 		refresh_timer.stop()
 		navigation_marker.hide()
+		if _mouse_mode_before >= 0:
+			Input.mouse_mode = _mouse_mode_before as Input.MouseMode
+			_mouse_mode_before = -1
 
 
 ## Copies the player's flags into the HUD controls.

@@ -44,8 +44,3 @@ func _on_teleport_pressed(marker_path: NodePath) -> void:
 	player.navigation_agent.target_position = marker.global_position
 	player.global_position = marker.global_position
 	player.velocity = Vector3.ZERO
-
-
-## Opens one of the gameplay-style demos bound in the scene's button connection.
-func _on_demo_pressed(scene_path: String) -> void:
-	get_tree().change_scene_to_file(scene_path)

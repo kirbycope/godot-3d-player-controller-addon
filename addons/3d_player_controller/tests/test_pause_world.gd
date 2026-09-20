@@ -22,6 +22,8 @@ func before_each() -> void:
 
 func after_each() -> void:
 	get_tree().paused = false
+	Engine.time_scale = 1.0
+	PlayerMenuLayer._time_scale_before_freeze = -1.0
 	if is_instance_valid(root):
 		root.free()
 		root = null
@@ -34,9 +36,21 @@ func test_offline_the_pause_menu_pauses_the_world_and_resume_runs_it_again() -> 
 	player.pause.show_menu()
 	assert_true(get_tree().paused, "The world stands still")
 	assert_true(player.is_paused)
+	assert_eq(Engine.time_scale, 0.0, "and so does the engine clock, which stops shaders, particles and tweens")
 	player.pause.hide_menu()
 	assert_false(get_tree().paused, "Resume runs it again")
 	assert_false(player.is_paused)
+	assert_eq(Engine.time_scale, 1.0, "with the clock back")
+
+
+func test_freezing_time_remembers_the_scale_it_found() -> void:
+	Engine.time_scale = 0.5
+	player.pause.show_menu()
+	assert_eq(Engine.time_scale, 0.0)
+	player.pause.hide_menu()
+	assert_eq(Engine.time_scale, 0.5, "A slow-motion effect in force comes back as it was")
+	PlayerMenuLayer.thaw_time()
+	assert_eq(Engine.time_scale, 0.5, "A thaw with nothing frozen changes nothing")
 
 
 func test_a_sub_menu_opened_from_pause_keeps_the_world_paused_until_it_closes() -> void:
@@ -45,9 +59,11 @@ func test_a_sub_menu_opened_from_pause_keeps_the_world_paused_until_it_closes() 
 	assert_false(player.pause.visible)
 	assert_true(player.settings.visible)
 	assert_true(get_tree().paused, "Settings opened from Pause keeps the pause")
+	assert_eq(Engine.time_scale, 0.0, "and the frozen clock")
 	assert_false(player.settings.pauses_world, "though Settings on its own would not pause")
 	player.settings.hide_menu()
 	assert_false(get_tree().paused, "Closing the sub-menu resumes")
+	assert_eq(Engine.time_scale, 1.0, "clock included")
 
 
 func test_a_menu_freed_while_paused_lets_the_world_go() -> void:
@@ -56,6 +72,7 @@ func test_a_menu_freed_while_paused_lets_the_world_go() -> void:
 	root.free()
 	root = null
 	assert_false(get_tree().paused, "The Player despawning (a scene change) never leaves the tree paused")
+	assert_eq(Engine.time_scale, 1.0, "nor the clock frozen")
 
 
 func test_only_a_connected_host_alone_pauses_and_a_joining_peer_resumes() -> void:
@@ -90,6 +107,7 @@ func test_only_a_connected_host_alone_pauses_and_a_joining_peer_resumes() -> voi
 			break
 	assert_gt(server_api.get_peers().size(), 0, "The client joins")
 	assert_false(get_tree().paused, "A peer joining resumes the world")
+	assert_eq(Engine.time_scale, 1.0, "clock and all")
 	assert_true(host.pause.visible, "with the menu still up")
 	assert_false(host.pause.is_single_player(), "and the host is no longer alone")
 	host.pause.hide_menu()

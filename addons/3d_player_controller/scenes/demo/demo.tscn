@@ -290,83 +290,6 @@ size_flags_horizontal = 3
 focus_mode = 0
 text = "Climbing Wall"
 
-[node name="DemosTitle" type="Label" parent="HUD/TeleportPanel/VBox"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 14
-text = "Gameplay Styles"
-
-[node name="Demos" type="GridContainer" parent="HUD/TeleportPanel/VBox"]
-layout_mode = 2
-theme_override_constants/h_separation = 6
-theme_override_constants/v_separation = 6
-columns = 2
-
-[node name="DemoZelda" type="Button" parent="HUD/TeleportPanel/VBox/Demos"]
-layout_mode = 2
-size_flags_horizontal = 3
-focus_mode = 0
-text = "Zelda"
-
-[node name="DemoGta" type="Button" parent="HUD/TeleportPanel/VBox/Demos"]
-layout_mode = 2
-size_flags_horizontal = 3
-focus_mode = 0
-text = "GTA"
-
-[node name="DemoSouls" type="Button" parent="HUD/TeleportPanel/VBox/Demos"]
-layout_mode = 2
-size_flags_horizontal = 3
-focus_mode = 0
-text = "Souls"
-
-[node name="DemoPlatformer" type="Button" parent="HUD/TeleportPanel/VBox/Demos"]
-layout_mode = 2
-size_flags_horizontal = 3
-focus_mode = 0
-text = "Platformer"
-
-[node name="DemoFps" type="Button" parent="HUD/TeleportPanel/VBox/Demos"]
-layout_mode = 2
-size_flags_horizontal = 3
-focus_mode = 0
-text = "FPS"
-
-[node name="DemoTps" type="Button" parent="HUD/TeleportPanel/VBox/Demos"]
-layout_mode = 2
-size_flags_horizontal = 3
-focus_mode = 0
-text = "TPS"
-
-[node name="DemoStealth" type="Button" parent="HUD/TeleportPanel/VBox/Demos"]
-layout_mode = 2
-size_flags_horizontal = 3
-focus_mode = 0
-text = "Stealth"
-
-[node name="DemoHorror" type="Button" parent="HUD/TeleportPanel/VBox/Demos"]
-layout_mode = 2
-size_flags_horizontal = 3
-focus_mode = 0
-text = "Horror"
-
-[node name="DemoSurvival" type="Button" parent="HUD/TeleportPanel/VBox/Demos"]
-layout_mode = 2
-size_flags_horizontal = 3
-focus_mode = 0
-text = "Survival"
-
-[node name="DemoArpg" type="Button" parent="HUD/TeleportPanel/VBox/Demos"]
-layout_mode = 2
-size_flags_horizontal = 3
-focus_mode = 0
-text = "Action RPG"
-
-[node name="DemoFlight" type="Button" parent="HUD/TeleportPanel/VBox/Demos"]
-layout_mode = 2
-size_flags_horizontal = 3
-focus_mode = 0
-text = "Flight"
-
 [node name="DebugHint" type="Label" parent="HUD/TeleportPanel/VBox" unique_id=1951632907]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.65, 0.7, 0.75, 1)
@@ -379,14 +302,3 @@ text = "Press [F3] for full Debug HUD"
 [connection signal="pressed" from="HUD/TeleportPanel/VBox/Grid/TeleportTower" to="." method="_on_teleport_pressed" binds= [NodePath("Markers/Tower")]]
 [connection signal="pressed" from="HUD/TeleportPanel/VBox/Grid/TeleportPool" to="." method="_on_teleport_pressed" binds= [NodePath("Markers/Pool")]]
 [connection signal="pressed" from="HUD/TeleportPanel/VBox/Grid/TeleportWall" to="." method="_on_teleport_pressed" binds= [NodePath("Markers/ClimbingWall")]]
-[connection signal="pressed" from="HUD/TeleportPanel/VBox/Demos/DemoZelda" to="." method="_on_demo_pressed" binds= ["res://addons/3d_player_controller/scenes/demo/zelda/zelda_demo.tscn"]]
-[connection signal="pressed" from="HUD/TeleportPanel/VBox/Demos/DemoGta" to="." method="_on_demo_pressed" binds= ["res://addons/3d_player_controller/scenes/demo/gta/gta_demo.tscn"]]
-[connection signal="pressed" from="HUD/TeleportPanel/VBox/Demos/DemoSouls" to="." method="_on_demo_pressed" binds= ["res://addons/3d_player_controller/scenes/demo/souls/souls_demo.tscn"]]
-[connection signal="pressed" from="HUD/TeleportPanel/VBox/Demos/DemoPlatformer" to="." method="_on_demo_pressed" binds= ["res://addons/3d_player_controller/scenes/demo/platformer/platformer_demo.tscn"]]
-[connection signal="pressed" from="HUD/TeleportPanel/VBox/Demos/DemoFps" to="." method="_on_demo_pressed" binds= ["res://addons/3d_player_controller/scenes/demo/fps/fps_demo.tscn"]]
-[connection signal="pressed" from="HUD/TeleportPanel/VBox/Demos/DemoTps" to="." method="_on_demo_pressed" binds= ["res://addons/3d_player_controller/scenes/demo/tps/tps_demo.tscn"]]
-[connection signal="pressed" from="HUD/TeleportPanel/VBox/Demos/DemoStealth" to="." method="_on_demo_pressed" binds= ["res://addons/3d_player_controller/scenes/demo/stealth/stealth_demo.tscn"]]
-[connection signal="pressed" from="HUD/TeleportPanel/VBox/Demos/DemoHorror" to="." method="_on_demo_pressed" binds= ["res://addons/3d_player_controller/scenes/demo/horror/horror_demo.tscn"]]
-[connection signal="pressed" from="HUD/TeleportPanel/VBox/Demos/DemoSurvival" to="." method="_on_demo_pressed" binds= ["res://addons/3d_player_controller/scenes/demo/survival/survival_demo.tscn"]]
-[connection signal="pressed" from="HUD/TeleportPanel/VBox/Demos/DemoArpg" to="." method="_on_demo_pressed" binds= ["res://addons/3d_player_controller/scenes/demo/arpg/arpg_demo.tscn"]]
-[connection signal="pressed" from="HUD/TeleportPanel/VBox/Demos/DemoFlight" to="." method="_on_demo_pressed" binds= ["res://addons/3d_player_controller/scenes/demo/flight/flight_demo.tscn"]]

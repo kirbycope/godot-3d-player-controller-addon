@@ -404,6 +404,8 @@ class TestRidingTransitions:
 		var mounted_by: Player
 		var dismounted: bool = false
 		var rides: int = 0
+		var labels: Dictionary = {"key_k": "Dismount", "joypad_button_1": "Fast Push", "no_such": "Dropped"}
+		var input_type_at_ride_input: int = -1 ## What input_type read when ride_input last ran.
 
 		func _ready() -> void:
 			camera = Camera3D.new()
@@ -420,11 +422,12 @@ class TestRidingTransitions:
 			rides += 1
 
 		func ride_input(p: Player, event: InputEvent) -> void:
+			input_type_at_ride_input = input_type
 			if event.is_action_pressed("whistle"):
 				p.dismount()
 
 		func get_contextual_controls(_input_type: int) -> Dictionary:
-			return {"key_k": "Dismount", "joypad_button_1": "Fast Push", "no_such": "Dropped"}
+			return labels
 
 	var rideable: MockRideable
 
@@ -486,6 +489,50 @@ class TestRidingTransitions:
 		assert_eq(kb_controls.get(player.controls.key_k_label), "Dismount", "\"key_k\" lands on the Controls' key_k_label")
 		assert_eq(kb_controls.get(player.controls.joypad_button_1_label), "Fast Push", "and \"joypad_button_1\" on its label, by the name the rideable gave rather than by what the button does")
 		assert_eq(kb_controls.size(), 2, "A name with no label on the Controls is dropped")
+
+	func test_riding_contextual_controls_can_name_an_action_instead_of_a_label():
+		rideable.labels = {&"sprint": "Gallop", &"no_such_action": "Dropped"}
+		player.mount(rideable)
+		await wait_physics_frames(2)
+		var riding_node: Riding = player.state_machine.get_node("Riding") as Riding
+		var resolved: Dictionary = riding_node.get_contextual_controls(0)
+		assert_eq(resolved.get(player.controls.action_label(&"sprint")), "Gallop", "An action name lands on the label of whichever button carries that action")
+		assert_eq(resolved.size(), 1, "and an action no button carries is dropped")
+
+	func test_riding_hides_the_buttons_the_rideable_does_not_name_even_with_the_whole_hud_on():
+		player.controls.contextual_only = false
+		player.controls.current_input_type = Controls.InputType.MICROSOFT
+		assert_true(player.controls.joypad_button_2.visible, "On foot every mapped button is drawn")
+		assert_true(player.controls.joypad_button_9.visible)
+		player.mount(rideable)
+		await wait_physics_frames(2)
+		assert_true(player.controls.joypad_button_1.visible, "The button the rideable named stays")
+		assert_eq(player.controls.joypad_button_1_label.text, "Fast Push")
+		assert_true(player.controls.joypad_button_12.visible, "and the d-pad button its key mirrors onto")
+		assert_true(player.controls.dpad_base.visible)
+		assert_false(player.controls.joypad_button_2.visible, "A button it did not name is a glyph with nothing to say, so it goes")
+		assert_false(player.controls.joypad_button_9.visible)
+		assert_true(player.controls.joypad_button_6.visible, "The pause button is the addon's own and stays")
+		assert_true(player.controls.left_joystick.visible, "and so does the stick")
+		player.dismount()
+		await wait_physics_frames(2)
+		assert_true(player.controls.joypad_button_2.visible, "Back on foot the whole set is back")
+		assert_true(player.controls.joypad_button_9.visible)
+
+	## The first key after a pad session is read as a key: the rideable is told the event's own device before it
+	## reads the event, since the HUD that tracks the device may get the event after the state does.
+	func test_the_rideable_reads_an_event_for_the_device_it_came_from():
+		player.controls.current_input_type = Controls.InputType.SONY
+		player.mount(rideable)
+		await wait_physics_frames(2)
+		assert_eq(rideable.input_type, Controls.InputType.SONY, "On the pad to start")
+		var key := InputEventKey.new()
+		key.keycode = KEY_F
+		key.pressed = true
+		Input.parse_input_event(key)
+		await wait_physics_frames(1)
+		assert_eq(rideable.input_type_at_ride_input, Controls.InputType.KEYBOARD_MOUSE, "A key press reaches ride_input already read as the keyboard")
+		assert_eq(player.controls.current_input_type, Controls.InputType.KEYBOARD_MOUSE, "and the HUD follows")
 
 	func test_riding_keeps_the_rideables_input_type_current():
 		player.controls.current_input_type = Controls.InputType.SONY

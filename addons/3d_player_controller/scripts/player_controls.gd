@@ -137,10 +137,33 @@ const SYSTEM_SLOTS: PackedStringArray = [
 ## [member ControlScheme.extra_slots].
 const FACE_SLOTS: PackedStringArray = ["button_0", "button_1", "button_2", "button_3"]
 
+## Where the controls addon keeps Kenney's key faces, which [constant KEY_ART] names.
+const KEY_ART_DIR: String = "res://addons/controls/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector"
+
+## The key face for each action this HUD binds a key or a mouse button to ([constant PLAYER_ACTIONS]), by the
+## glyph's name in [constant KEY_ART_DIR] (the outline is the resting face, the filled one the pressed). A layout
+## moves actions between the face buttons, the shoulders and the triggers, and on the keyboard set each of those
+## buttons is drawn as a key; so the key has to move with the action, or the Zelda layout, which sprints on the
+## bottom button, would show [E] there while [E] is what interacts. [method _apply_key_art] draws every slot as
+## the key behind whatever it carries now, and an action with no entry here leaves the slot the art the scene
+## gave it.
+const KEY_ART: Dictionary[StringName, String] = {
+	&"action": "keyboard_e", &"sprint": "keyboard_shift_icon", &"attack": "keyboard_alt", &"jump": "keyboard_space_icon",
+	&"crouch": "keyboard_ctrl", &"scope": "mouse_scroll", &"focus": "mouse_right", &"shoot": "mouse_left",
+	&"ability": "keyboard_q", &"throw": "keyboard_t", &"perspective": "keyboard_f5", &"share": "keyboard_printscreen",
+	&"start": "keyboard_escape", &"seeker": "keyboard_i", &"whistle": "keyboard_k", &"last_weapon": "keyboard_j",
+	&"next_weapon": "keyboard_l", &"reload": "keyboard_r", &"flashlight": "keyboard_f", &"broadcast": "keyboard_v",
+}
+
 @export var player: Player
 
 var _seeker_shown: String = "" ## What [method seeker_label_text] said when the labels were last applied.
 var _hud_ready: bool = false ## The base has bound the slots and cached the art; a scheme change from here on rebinds live.
+## The keys behind the sticks, whose showing follows the stick rather than their own label: a state names the
+## stick once and the base mirrors the word onto one of the four.
+@onready var _stick_keys: Array[TouchScreenButton] = [key_w, key_a, key_s, key_d, key_up, key_down, key_left, key_right]
+var _scene_key_art: Dictionary[String, Array] = {} ## The keyboard art each swappable slot had from the scene, kept for a slot whose action has no key face in [constant KEY_ART].
+static var _key_art_cache: Dictionary[String, Array] = {} ## The glyph pairs loaded so far, by name, shared by every HUD.
 ## The actions a PlayerControls registered itself, across every instance there has been. The base takes any
 ## action that exists before it registers its own for the project's, and leaves it alone; but a second Player (a
 ## restart, a second local player) finds the first one's actions already there, and those are ours to rebind.
@@ -188,6 +211,7 @@ func apply_control_scheme(scheme: ControlScheme) -> void:
 		for slot: String in pad:
 			_slots_before_scheme[slot] = get("action_" + slot)
 			set("action_" + slot, pad[slot])
+		_apply_key_art()
 		return
 	for slot: String in slots:
 		var previous: StringName = get(slot)
@@ -214,6 +238,7 @@ func apply_control_scheme(scheme: ControlScheme) -> void:
 		if label:
 			_label_texts[label] = label_for(scheme, slot.trim_prefix("action_"), slots[slot])
 	_apply_extra_slots(pad, scheme)
+	_apply_key_art()
 	update_input_ui()
 	reset_labels()
 	if player:
@@ -293,11 +318,39 @@ func bind_slot(slot: String, action: StringName, label: String = "") -> void:
 				if not InputMap.action_has_event(action, event):
 					InputMap.action_add_event(action, event)
 	_apply_slot_actions()
+	_apply_key_art()
 	_write_slot_label(slot, action, label)
 	update_input_ui()
 	reset_labels()
 	if player:
 		player.refresh_contextual_controls()
+
+
+## Draws every swappable slot of the keyboard set as the key behind the action it carries now, from
+## [constant KEY_ART]; a slot carrying an action with no key face there, or nothing, keeps the scene's art.
+## Before the base has cached the art this only fills the exports, which is what its [method Node._ready] reads.
+func _apply_key_art() -> void:
+	for slot: String in SWAPPABLE_SLOTS:
+		if not _scene_key_art.has(slot):
+			_scene_key_art[slot] = slot_art(InputType.KEYBOARD_MOUSE, slot)
+		var art: Array = key_art(get("action_" + slot))
+		if art.is_empty():
+			art = _scene_key_art[slot]
+		if art.size() == 2:
+			set_slot_art(InputType.KEYBOARD_MOUSE, slot, art[0], art[1])
+
+
+## The key face for [param action_name], resting then pressed, or empty when [constant KEY_ART] has none for it.
+static func key_art(action_name: StringName) -> Array:
+	if not KEY_ART.has(action_name):
+		return []
+	var glyph: String = KEY_ART[action_name]
+	if not _key_art_cache.has(glyph):
+		_key_art_cache[glyph] = [
+			load(KEY_ART_DIR.path_join(glyph + "_outline.svg")) as Texture2D,
+			load(KEY_ART_DIR.path_join(glyph + ".svg")) as Texture2D,
+		]
+	return _key_art_cache[glyph]
 
 
 ## The resting word on [param slot]: what the layout asked for, else the action's own name. Kept apart from
@@ -324,6 +377,28 @@ func _own_action_names() -> Array[StringName]:
 ## project declared in its own input map.
 func _owns_action(action_name: StringName) -> bool:
 	return _registered_actions.has(action_name) or not _foreign_actions.has(String(action_name))
+
+
+## With the whole HUD on, the base draws every mapped button of the device in hand, blank or not. On this HUD
+## every mapped slot has a resting word, so a label a state has cleared is a button that state does not read:
+## the road car has nothing on the left face button and the horse nothing on the whistle key, and a glyph with
+## nothing to say only clutters the screen. Those go too, and come back with the next state's labels. The keys
+## behind the sticks follow the stick, whose word sits on one of them, and the d-pad cross goes with its buttons.
+func _apply_contextual_visibility() -> void:
+	super()
+	if contextual_only:
+		return
+	var dpad_shown: bool = false
+	for i: int in all_buttons.size():
+		var button: TouchScreenButton = all_buttons[i]
+		if not button.visible or _stick_keys.has(button):
+			continue
+		if all_labels[i].text == "":
+			button.visible = false
+		elif button == joypad_button_11 or button == joypad_button_12 or button == joypad_button_13 or button == joypad_button_14:
+			dpad_shown = true
+	if dpad_base.visible and not dpad_shown:
+		dpad_base.visible = false
 
 
 ## The seeker label follows the aim, so holding or releasing focus has to be seen here too.

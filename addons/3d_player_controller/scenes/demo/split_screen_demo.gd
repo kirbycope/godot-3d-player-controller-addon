@@ -20,3 +20,6 @@ func _ready() -> void:
 		split_screen.players[i].global_position = Vector3(-2.0 + 4.0 * i, 0.5, 4.0)
 		split_screen.players[i].enable_paraglider = true
 		split_screen.players[i].enable_stamina = true
+		# Half a screen each is too little for the whole button set: only the contextual hints, whatever the
+		# saved On-Screen setting says (this is a pads-only arena, so the buttons are known anyway)
+		split_screen.players[i].hud_mode_override = PlayerSettingsResource.HudMode.AUTO

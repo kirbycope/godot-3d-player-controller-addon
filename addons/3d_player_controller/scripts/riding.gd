@@ -10,7 +10,9 @@ extends NodeStateMachine
 ## [code]ride(player, delta)[/code] every physics frame; optional [code]ride_input(player, event)[/code],
 ## [code]locomotion_node_changed(player, state_path)[/code], and
 ## [code]get_contextual_controls(input_type)[/code] returning label names to text ([code]{"key_k": "Dismount"}[/code]
-## for [member Controls.key_k_label]).
+## for [member Controls.key_k_label]; a key that is a [StringName] names an action instead, and its word goes on
+## whichever button carries that action under the rider's layout, so [code]{&"sprint": "Gallop"}[/code] lands on
+## the button that sprints wherever that is; a key may also be the [Label] itself).
 ## Optional properties: [code]blocks_hands[/code] (weapons and items stay holstered, the crosshair hides),
 ## [code]disables_collision[/code] (the Player's collision shape is off while ridden, for a seat inside a body),
 ## [code]seat[/code] (a [Node3D] the Player is pinned to every physics frame after the ride, transform and all, so
@@ -46,6 +48,13 @@ func _input(event: InputEvent) -> void:
 	if player.is_mounting or player.is_dismounting: return
 	if player.held_object and player.held_object.is_holding_object(): return
 	if player.riding.has_method("ride_input"):
+		# The HUD is a sibling and may not have seen this event yet, so the rideable is told the device the
+		# event itself came from before it reads it: the first E after a pad session gets out of the car,
+		# rather than being read as the pad's exit button
+		if player.controls and "input_type" in player.riding:
+			var device: int = player.controls.input_type_of(event)
+			if device >= 0:
+				player.riding.set("input_type", device)
 		player.riding.call("ride_input", player, event)
 
 
@@ -198,16 +207,25 @@ func stop() -> void:
 	player.ride_ended.emit(rideable)
 
 
-## The rideable's labels, named after the [Controls] label they go on, resolved to the label nodes.
+## The rideable's labels resolved to the label nodes. A key is a [String] naming the [Controls] label it goes on
+## ("key_k"), a [StringName] naming an action, put on whichever button carries that action under the rider's
+## layout ([method Controls.action_label], so the word follows the action and the keyboard set draws that
+## button as the action's key), or the [Label] itself. A name nothing answers to is dropped.
 func get_contextual_controls(input_type: int) -> Dictionary:
 	if not player or not player.controls or player.riding == null or not player.riding.has_method("get_contextual_controls"):
 		return {}
 	var named: Dictionary = player.riding.call("get_contextual_controls", input_type)
 	var controls: Dictionary = {}
-	for label_name: String in named:
-		var label: Variant = player.controls.get(label_name + "_label")
+	for key: Variant in named:
+		var label: Variant = null
+		if key is Label:
+			label = key
+		elif key is StringName:
+			label = player.controls.action_label(key)
+		else:
+			label = player.controls.get(str(key) + "_label")
 		if label is Label:
-			controls[label] = named[label_name]
+			controls[label] = named[key]
 	return controls
 
 

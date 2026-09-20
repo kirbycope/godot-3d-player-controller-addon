@@ -4,9 +4,9 @@
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/checkpoint.tscn" id="2_checkpoint"]
 [ext_resource type="PackedScene" uid="uid://dokp6v1sufknx" path="res://addons/controls/action_prompt.tscn" id="3_prompt"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/assets/quaternius/fantasy_props/Sword_Bronze.gltf" id="4_sword"]
-[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/nature/rock_medium_1.tscn" id="5_rock1"]
-[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/nature/rock_medium_2.tscn" id="6_rock2"]
-[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/demo/nature/rock_medium_3.tscn" id="7_rock3"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/rock_medium_1.tscn" id="5_rock1"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/rock_medium_2.tscn" id="6_rock2"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/rock_medium_3.tscn" id="7_rock3"]
 [ext_resource type="Script" uid="uid://c4myfm4eswcy7" path="res://addons/3d_player_controller/scripts/interaction_reach.gd" id="reach_script"]
 
 [sub_resource type="SphereShape3D" id="shape_near"]

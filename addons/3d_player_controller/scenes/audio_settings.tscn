@@ -15,14 +15,14 @@ bg_color = Color(0.1, 0.1, 0.1, 0.6)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_kygss"]
 atlas = ExtResource("1_prya7")
-region = Rect2(205, 31, 32, 32)
+region = Rect2(305, 52, 32, 32)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_5xw05"]
 size = Vector2(32, 32)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_5xw05"]
 atlas = ExtResource("1_prya7")
-region = Rect2(240, 31, 32, 32)
+region = Rect2(355, 52, 32, 32)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_nh3kh"]
 size = Vector2(193, 24)
@@ -286,34 +286,110 @@ shape = SubResource("RectangleShape2D_5xw05")
 [node name="VoiceSettings" type="VBoxContainer" parent="Panel/VBoxContainer" unique_id=795294055]
 layout_mode = 2
 
-[node name="VoiceActivation" type="CheckButton" parent="Panel/VBoxContainer/VoiceSettings"]
+[node name="VoiceActivation" type="CheckButton" parent="Panel/VBoxContainer/VoiceSettings" unique_id=1056074037]
 layout_mode = 2
 tooltip_text = "Transmit whenever you speak, instead of holding the push-to-talk key. The only way to use voice chat on a controller, since every button is already bound."
 text = "Voice activation"
 
-[node name="Microphone" type="Label" parent="Panel/VBoxContainer/VoiceSettings"]
+[node name="Microphone" type="Label" parent="Panel/VBoxContainer/VoiceSettings" unique_id=1629634033]
 custom_minimum_size = Vector2(0, 62)
-theme_override_constants/line_spacing = 0
 layout_mode = 2
+theme_override_constants/line_spacing = 0
 text = "Microphone"
 horizontal_alignment = 1
 
-[node name="Sensitivity" type="Range" parent="Panel/VBoxContainer/VoiceSettings/Microphone"]
-custom_minimum_size = Vector2(0, 36)
+[node name="Sensitivity" type="Range" parent="Panel/VBoxContainer/VoiceSettings/Microphone" unique_id=177375706]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 2
+auto_translate_mode = 0
+editor_description = ""
+visible = true
+modulate = Color(1, 1, 1, 1)
+self_modulate = Color(1, 1, 1, 1)
+show_behind_parent = false
+top_level = false
+clip_children = 0
+oversampling_with_scale = 0
+light_mask = 1
+visibility_layer = 1
+z_index = 0
+z_as_relative = true
+y_sort_enabled = false
+texture_filter = 0
+texture_repeat = 0
+material = null
+use_parent_material = false
+custom_minimum_size = Vector2(0, 39)
+custom_maximum_size = Vector2(-1, -1)
+propagate_maximum_size = false
+clip_contents = false
 layout_mode = 1
 anchors_preset = 12
+anchor_left = 0.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 0.0
 offset_top = -36.0
+offset_right = 0.0
+offset_bottom = 0.0
 grow_horizontal = 2
 grow_vertical = 0
+rotation = 0.0
+scale = Vector2(1, 1)
+pivot_offset = Vector2(0, 0)
+pivot_offset_ratio = Vector2(0, 0)
+size_flags_horizontal = 1
+size_flags_vertical = 1
+size_flags_stretch_ratio = 1.0
+offset_transform_enabled = false
+offset_transform_position = Vector2(0, 0)
+offset_transform_position_ratio = Vector2(0, 0)
+offset_transform_scale = Vector2(1, 1)
+offset_transform_rotation = 0.0
+offset_transform_pivot = Vector2(0, 0)
+offset_transform_pivot_ratio = Vector2(0.5, 0.5)
+offset_transform_visual_only = true
+localize_numeral_system = true
+layout_direction = 0
+translation_context = &""
+tooltip_text = "Hold the talk key and speak. Drag the handle so an ordinary voice fills the bar to the mark."
+tooltip_auto_translate_mode = 0
+focus_neighbor_left = NodePath("")
+focus_neighbor_top = NodePath("")
+focus_neighbor_right = NodePath("")
+focus_neighbor_bottom = NodePath("")
+focus_next = NodePath("")
+focus_previous = NodePath("")
+focus_mode = 2
+focus_behavior_recursive = 0
+mouse_filter = 0
+mouse_behavior_recursive = 0
+mouse_force_pass_scroll_events = true
+mouse_default_cursor_shape = 0
+accessibility_name = ""
+accessibility_description = ""
+accessibility_live = 0
+accessibility_controls_nodes = Array[NodePath]([])
+accessibility_described_by_nodes = Array[NodePath]([])
+accessibility_labeled_by_nodes = Array[NodePath]([])
+accessibility_flow_to_nodes = Array[NodePath]([])
+theme = null
+theme_type_variation = &""
 min_value = 10.0
 max_value = 150.0
 step = 1.0
+page = 0.0
 value = 100.0
+exp_edit = false
+rounded = false
+allow_greater = false
+allow_lesser = false
 script = ExtResource("mic_slider")
-tooltip_text = "Hold the talk key and speak. Drag the handle so an ordinary voice fills the bar to the mark."
 
 [node name="Voice" type="Label" parent="Panel/VBoxContainer/VoiceSettings" unique_id=1427057411]
 custom_minimum_size = Vector2(0, 54)

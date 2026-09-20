@@ -309,6 +309,35 @@ func test_a_cleared_slot_comes_back_with_a_layout_that_has_it() -> void:
 ## A button says what it does in the words of the game the layout is named after, not this addon's name for
 ## the action underneath. Metal Gear's manual calls the left shoulder Change Item, so it does not read Last
 ## Weapon, and the action it fires is still last_weapon.
+## The key face a slot of the keyboard set is drawn with, by file name.
+func _key_face(slot: String) -> String:
+	var button: TouchScreenButton = player.controls.get("joypad_" + slot)
+	return button.texture_normal.resource_path.get_file()
+
+
+## The keyboard set draws each button as the key behind the action it carries, so a layout that moves an action
+## moves its key with it: Zelda sprints on the bottom button, so that button is [Shift] there, and Dark Souls
+## interacts on it, so there it is [E]. The shoulders, triggers and stick clicks follow the same way.
+func test_the_keyboard_set_draws_the_key_behind_each_button() -> void:
+	player.controls.current_input_type = Controls.InputType.KEYBOARD_MOUSE
+	assert_eq(_key_face("button_0"), "keyboard_shift_icon_outline.svg", "Zelda sprints on the bottom button")
+	assert_eq(_key_face("button_1"), "keyboard_e_outline.svg", "and interacts on the right one")
+	assert_eq(_key_face("axis_5_plus"), "mouse_left_outline.svg", "Its right trigger shoots")
+
+	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/dark_souls.tres")
+	assert_eq(_key_face("button_0"), "keyboard_e_outline.svg", "Dark Souls interacts on the bottom button")
+	assert_eq(_key_face("button_1"), "keyboard_shift_icon_outline.svg", "and sprints on the right one")
+	assert_eq(_key_face("axis_5_plus"), "keyboard_alt_outline.svg", "Its right trigger attacks, which is Alt on the keyboard")
+	assert_eq(_key_face("button_8"), "mouse_right_outline.svg", "and its right stick locks on, the right mouse button")
+	assert_eq(_key_face("button_9"), "mouse_scroll_outline.svg", "Its left shoulder guards, the scope's wheel")
+
+	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/totk.tres")
+	assert_eq(_key_face("button_0"), "keyboard_shift_icon_outline.svg", "Back on Zelda the bottom button is [Shift] again")
+	assert_eq(_key_face("button_1"), "keyboard_e_outline.svg")
+	assert_eq(_key_face("axis_5_plus"), "mouse_left_outline.svg")
+	assert_eq(_key_face("button_8"), "mouse_scroll_outline.svg", "and the right stick is the scope's wheel")
+
+
 func test_a_layout_names_its_buttons_in_the_games_own_words() -> void:
 	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/metal_gear.tres")
 

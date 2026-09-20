@@ -8,12 +8,20 @@ extends CanvasLayer
 ## connecting (the Steam lobby being created) never pauses; a client never pauses the world. A menu opened from a
 ## paused one (the inventory from Pause) keeps the pause until it closes: [method hide_menu] always resumes the tree,
 ## and so does the menu leaving it. Menus keep processing while the tree is paused.
+##
+## Pausing the tree stops nodes, not the engine clock: a shader's [code]TIME[/code], GPU particles and tweens all run
+## on [member Engine.time_scale], so fire, water and wind would keep moving behind the menu. A menu that pauses the
+## tree therefore also sets the time scale to zero ([method freeze_time]) and puts it back on resume
+## ([method thaw_time]); while it is frozen every [code]delta[/code] is zero, so a menu that animates itself (the catch
+## screen's turning fish) keeps its own wall clock.
 
 @export var player: Player
 @export var focus_on_show: Control ## Control that receives focus when the menu opens.
 @export var pauses_world: bool = false ## Pause the scene tree while this menu is up, in single player.
 
 var _paused_world: bool = false ## This menu paused the tree and has not resumed it yet.
+
+static var _time_scale_before_freeze: float = -1.0 ## [member Engine.time_scale] before a menu froze it, or -1 while none has.
 
 
 ## Called when the node enters the scene tree for the first time.
@@ -56,6 +64,7 @@ func show_menu() -> void:
 	if pauses_world and is_single_player():
 		get_tree().paused = true
 		_paused_world = true
+		freeze_time()
 	if player == null or player.uses_mouse:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if focus_on_show:
@@ -76,6 +85,22 @@ func resume_world() -> void:
 	_paused_world = false
 	if is_inside_tree():
 		get_tree().paused = false
+	thaw_time()
+
+
+## Stops the engine clock, so shaders, particles and tweens stand as still as the paused tree. The first freeze
+## remembers the scale in force (a slow-motion effect, say) and nothing changes until [method thaw_time].
+static func freeze_time() -> void:
+	if _time_scale_before_freeze < 0.0:
+		_time_scale_before_freeze = Engine.time_scale
+		Engine.time_scale = 0.0
+
+
+## Puts the engine clock back to what it was before [method freeze_time]; does nothing when it is not frozen.
+static func thaw_time() -> void:
+	if _time_scale_before_freeze >= 0.0:
+		Engine.time_scale = _time_scale_before_freeze
+		_time_scale_before_freeze = -1.0
 
 
 ## A menu freed while it holds the world still (the Player despawning, a scene change) lets it go.
