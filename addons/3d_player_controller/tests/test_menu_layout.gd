@@ -1,11 +1,12 @@
 extends GutTest
 
-## Purpose: the pause and settings menus size themselves to their buttons, the buttons fill the panel's width so a
+## Purpose: the pause, settings and controls menus size themselves to their buttons, the buttons fill the panel's width so a
 ## new one fits in like the rest, and every touch target keeps the size and place of the button it sits on.
 
 const MENU_SCENES: Array[String] = [
 	"res://addons/3d_player_controller/scenes/pause.tscn",
 	"res://addons/3d_player_controller/scenes/settings.tscn",
+	"res://addons/3d_player_controller/scenes/controls_settings.tscn",
 ]
 
 

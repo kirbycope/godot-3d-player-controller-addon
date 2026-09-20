@@ -222,6 +222,7 @@
 [ext_resource type="PackedScene" uid="uid://dgslo5b1yxrd0" path="res://addons/3d_player_controller/scenes/pause.tscn" id="173_errws"]
 [ext_resource type="Texture2D" uid="uid://dsy7pc3ak6vqf" path="res://addons/3d_player_controller/assets/kenney_nl/2D assets/Game Icons/PNG/White/2x/down.png" id="174_07say"]
 [ext_resource type="PackedScene" uid="uid://caww8bymbfsli" path="res://addons/3d_player_controller/scenes/audio_settings.tscn" id="174_audio"]
+[ext_resource type="PackedScene" uid="uid://0f7ibqfdtbhv" path="res://addons/3d_player_controller/scenes/controls_settings.tscn" id="174_controls"]
 [ext_resource type="PackedScene" uid="uid://df238kae0f5ab" path="res://addons/3d_player_controller/scenes/audio.tscn" id="174_audio_comp"]
 [ext_resource type="PackedScene" uid="uid://c7k68q6a3mvdg" path="res://addons/3d_player_controller/scenes/lobby_manager.tscn" id="174_lobbymgr"]
 [ext_resource type="PackedScene" uid="uid://bsmatt41d3g3p" path="res://addons/3d_player_controller/scenes/video_settings.tscn" id="174_video"]
@@ -4310,7 +4311,7 @@ spells_screen_scene = "res://addons/3d_player_controller/inventory/scenes/spells
 player = NodePath("..")
 
 [node name="Settings" parent="." unique_id=955686872 node_paths=PackedStringArray("player") instance=ExtResource("174_xwibx")]
-editor_description = "The settings menu the pause menu opens, and the way through to Audio and Video."
+editor_description = "The settings menu the pause menu opens, and the way through to Audio, Controls and Video."
 visible = false
 player = NodePath("..")
 
@@ -4319,8 +4320,13 @@ editor_description = "The volume sliders, saved to PlayerSettingsResource on thi
 visible = false
 player = NodePath("..")
 
+[node name="ControlsSettings" parent="." node_paths=PackedStringArray("player") instance=ExtResource("174_controls")]
+editor_description = "The on-screen controls mode and the pad layout, saved to PlayerSettingsResource on this machine."
+visible = false
+player = NodePath("..")
+
 [node name="VideoSettings" parent="." unique_id=1733087111 node_paths=PackedStringArray("player") instance=ExtResource("174_video")]
-editor_description = "VSync, UI scale, HUD mode, control scheme, toon shading and the anti-aliasing options, applied through PlayerSettingsResource.apply_video_settings."
+editor_description = "VSync, UI scale, toon shading and the anti-aliasing options, applied through PlayerSettingsResource.apply_video_settings."
 visible = false
 player = NodePath("..")
 

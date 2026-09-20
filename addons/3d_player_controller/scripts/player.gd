@@ -438,6 +438,7 @@ var paraglider: Node3D
 @onready var pause: PlayerMenuLayer = $Pause
 @onready var settings: PlayerMenuLayer = $Settings
 @onready var audio_settings: PlayerMenuLayer = $AudioSettings
+@onready var controls_settings: PlayerMenuLayer = $ControlsSettings
 @onready var video_settings: PlayerMenuLayer = $VideoSettings
 @onready var lobby_manager: PlayerMenuLayer = get_node_or_null("LobbyManager") as PlayerMenuLayer
 @onready var stamina: TextureProgressBar = $Stamina

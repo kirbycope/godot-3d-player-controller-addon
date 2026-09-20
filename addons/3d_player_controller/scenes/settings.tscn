@@ -59,6 +59,16 @@ text = "Audio"
 position = Vector2(100, 16)
 shape = SubResource("RectangleShape2D_p63df")
 
+[node name="Controls" type="Button" parent="Panel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Controls"
+
+[node name="ControlsTouchScreenButton" type="TouchScreenButton" parent="Panel/VBoxContainer/Controls"]
+position = Vector2(100, 16)
+shape = SubResource("RectangleShape2D_p63df")
+
 [node name="Video" type="Button" parent="Panel/VBoxContainer" unique_id=694630801]
 custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
@@ -81,6 +91,8 @@ shape = SubResource("RectangleShape2D_p63df")
 
 [connection signal="pressed" from="Panel/VBoxContainer/Audio" to="." method="_on_audio_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/Audio/AudioTouchScreenButton" to="." method="_on_audio_touch_screen_button_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Controls" to="." method="_on_controls_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Controls/ControlsTouchScreenButton" to="." method="_on_controls_touch_screen_button_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/Video" to="." method="_on_video_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/Video/VideoTouchScreenButton" to="." method="_on_video_touch_screen_button_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/BACK" to="." method="_on_back_pressed"]

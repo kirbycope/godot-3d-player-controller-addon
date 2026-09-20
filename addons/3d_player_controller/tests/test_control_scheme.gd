@@ -129,26 +129,40 @@ func test_saved_setting_overrides_the_scene() -> void:
 	assert_eq(player.control_scheme, preload("res://addons/3d_player_controller/resources/control_schemes/totk.tres"), "Game Default leaves the scene's choice")
 
 
-func test_the_video_settings_menu_lists_the_schemes() -> void:
-	var menu: OptionButton = player.video_settings.get_node("Panel/VBoxContainer/ControlScheme")
+func test_the_controls_settings_menu_lists_the_schemes() -> void:
+	var menu: OptionButton = player.controls_settings.get_node("Panel/VBoxContainer/ControlScheme")
 	assert_eq(menu.item_count, PlayerControls.BUILT_IN_SCHEMES.size(), "The layouts that ship here, and no redundant Default beside them")
 	assert_eq(menu.get_item_text(0), "TotK")
 	assert_eq(menu.get_item_text(1), "SMO")
 	assert_eq(menu.selected, 0, "Nothing saved, so it shows the layout the Player is actually using")
 
-	player.video_settings._on_control_scheme_item_selected(1)
+	player.controls_settings._on_control_scheme_item_selected(1)
 	assert_eq(player.control_scheme, preload("res://addons/3d_player_controller/resources/control_schemes/smo.tres"),
 		"Picking one in the menu lays the pad out that way at once")
 	assert_eq(player.controls.action_button_0, &"jump", "Jump is on the bottom button")
 
 	# A layout another addon ships joins the list the moment it registers, without this menu knowing about it
 	PlayerControls.register_scheme(preload("res://addons/gta/resources/control_schemes/gta.tres"))
-	player.video_settings._fill_scheme_button()
+	player.controls_settings._fill_scheme_button()
 	assert_eq(menu.item_count, PlayerControls.BUILT_IN_SCHEMES.size() + 1, "and a registered layout is offered too")
 	var last: int = menu.item_count - 1
 	assert_eq(menu.get_item_text(last), "GTA", "at the end, after the built-in ones")
-	player.video_settings._on_control_scheme_item_selected(last)
+	player.controls_settings._on_control_scheme_item_selected(last)
 	assert_eq(player.control_scheme, preload("res://addons/gta/resources/control_schemes/gta.tres"))
+
+
+## The layout lives under Settings > Controls, beside the on-screen controls, not among the video options.
+func test_the_settings_menu_reaches_the_controls_page_and_back() -> void:
+	player.settings.show_menu()
+	player.settings._on_controls_pressed()
+	assert_false(player.settings.visible, "The hub gives way to the page")
+	assert_true(player.controls_settings.visible, "The Controls page is up")
+	assert_null(player.video_settings.get_node_or_null("Panel/VBoxContainer/ControlScheme"), "The Video page no longer carries the layout")
+	assert_null(player.video_settings.get_node_or_null("Panel/VBoxContainer/OnScreenControls"), "nor the on-screen controls")
+	player.controls_settings._on_back_pressed()
+	assert_false(player.controls_settings.visible, "BACK closes the page")
+	assert_true(player.settings.visible, "and returns to the hub")
+	player.settings.hide_menu()
 
 
 ## The point of a scheme being a resource: a game ships its own layout without editing this addon. Built here in

@@ -5,6 +5,7 @@ extends GutTest
 
 const AUDIO_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/audio.tscn")
 const AUDIO_SETTINGS_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/audio_settings.tscn")
+const CONTROLS_SETTINGS_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/controls_settings.tscn")
 const VIDEO_SETTINGS_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/video_settings.tscn")
 
 var _backup: PackedByteArray
@@ -104,6 +105,22 @@ func test_fsr_and_ssaa_are_mutually_exclusive_and_round_trip() -> void:
 	assert_eq(video_settings.settings_res.fsr_index, 0, "Selecting SSAA should reset FSR")
 	assert_eq(video_settings.fsr_button.selected, 0, "Selecting SSAA should reset the FSR control")
 	video_settings._on_ssaa_item_selected(0)
+
+
+func test_the_on_screen_controls_mode_saves_from_the_controls_menu() -> void:
+	var controls_settings: PlayerMenuLayer = CONTROLS_SETTINGS_SCENE.instantiate() as PlayerMenuLayer
+	add_child_autofree(controls_settings)
+	assert_eq(controls_settings.hud_button.selected, controls_settings.settings_res.hud_mode, "The row opens on what is saved")
+
+	controls_settings.hud_button.selected = PlayerSettingsResource.HudMode.HIDDEN # as the signal path does
+	controls_settings._on_on_screen_controls_item_selected(PlayerSettingsResource.HudMode.HIDDEN)
+	var loaded: PlayerSettingsResource = ResourceLoader.load(PlayerSettingsResource.SAVE_PATH, "", ResourceLoader.CACHE_MODE_IGNORE)
+	assert_eq(loaded.hud_mode, PlayerSettingsResource.HudMode.HIDDEN, "The pick is written to disk at once")
+
+	controls_settings._on_on_screen_controls_touch_screen_button_pressed()
+	assert_eq(controls_settings.hud_button.selected, PlayerSettingsResource.HudMode.AUTO, "The touch button steps round to the start")
+	loaded = ResourceLoader.load(PlayerSettingsResource.SAVE_PATH, "", ResourceLoader.CACHE_MODE_IGNORE)
+	assert_eq(loaded.hud_mode, PlayerSettingsResource.HudMode.AUTO, "and that is saved too")
 
 
 func test_voice_volume_and_mute_persist_and_apply() -> void:
