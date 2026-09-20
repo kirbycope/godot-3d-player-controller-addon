@@ -500,7 +500,7 @@ class TestRidingTransitions:
 		assert_eq(resolved.size(), 1, "and an action no button carries is dropped")
 
 	func test_riding_hides_the_buttons_the_rideable_does_not_name_even_with_the_whole_hud_on():
-		player.controls.contextual_only = false
+		player.hud_mode_override = PlayerSettingsResource.HudMode.SHOWN # the whole set, whatever this machine's saved setting says
 		player.controls.current_input_type = Controls.InputType.MICROSOFT
 		assert_true(player.controls.joypad_button_2.visible, "On foot every mapped button is drawn")
 		assert_true(player.controls.joypad_button_9.visible)
