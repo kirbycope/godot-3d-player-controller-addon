@@ -1412,12 +1412,13 @@ func update_music_volume(value: float) -> void:
 const STEAM_VOICE_RESULT_OK: int = 0 ## Mirrors Steam.VOICE_RESULT_OK (Steam class is absent on web exports).
 
 
-## Returns the Steam singleton when present and running, otherwise null.
+## Returns the Steam singleton while the Steamworks session is up, otherwise null. The client running is not
+## enough: the session only initialises on a desktop Forward+ build, and the voice calls error before it has.
 func _get_steam_running() -> Object:
-	if not Engine.has_singleton("Steam"):
+	var steamworks: Node = get_node_or_null("/root/Steamworks")
+	if steamworks == null or steamworks.get("steam_id") == 0 or not Engine.has_singleton("Steam"):
 		return null
-	var steam: Object = Engine.get_singleton("Steam")
-	return steam if steam.isSteamRunning() else null
+	return Engine.get_singleton("Steam")
 
 
 ## Whether this Player transmits by speaking rather than by holding the key. A pad player has no choice: the

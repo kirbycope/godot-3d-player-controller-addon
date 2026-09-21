@@ -66,3 +66,21 @@ func test_the_entry_reads_nothing_from_steam_until_the_session_is_up() -> void:
 	assert_eq(entry.name_label.text, "Lobby 5", "so the entry shows the id and asks Steam nothing")
 	if steamworks:
 		steamworks.set("steam_id", signed_in)
+
+
+func test_the_explorer_asks_steam_for_nothing_until_the_session_is_up() -> void:
+	# The client running is not the session: headless and CI load the extension with Steamworks never initialised
+	var steamworks: Node = get_node_or_null("/root/Steamworks")
+	var signed_in: int = steamworks.get("steam_id") if steamworks else 0
+	if steamworks:
+		steamworks.set("steam_id", 0)
+	var explorer = LOBBY_EXPLORER_SCENE.instantiate()
+	add_child_autofree(explorer)
+	assert_null(explorer._steam_session())
+	assert_true(explorer.host_button.disabled, "Hosting is off")
+	assert_true(explorer.refresh_button.disabled, "and so is the list")
+	assert_eq(explorer.status_label.text, "Steam is not running. Lobby features disabled.")
+	explorer.refresh_lobbies()
+	assert_eq(explorer.status_label.text, "Steam is not running. Lobby features disabled.", "A refresh asks nothing either")
+	if steamworks:
+		steamworks.set("steam_id", signed_in)

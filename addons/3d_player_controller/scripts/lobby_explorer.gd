@@ -7,7 +7,7 @@ extends CanvasLayer
 @export_file("*.tscn") var title_scene: String = "" ## Loaded by BACK.
 @export var footer_text: String = "" ## Shown bottom-right with the current year appended, e.g. a copyright line.
 
-## Steam singleton when the GodotSteam extension is present, otherwise null.
+## Steam singleton when the GodotSteam extension is present, otherwise null; read through [method _steam_session].
 var _steam: Object = Engine.get_singleton("Steam") if Engine.has_singleton("Steam") else null
 
 @onready var loading: Loading = $Loading
@@ -27,25 +27,27 @@ func _ready() -> void:
 	label_version.text = version if version.begins_with("v") else "v" + version
 	label_copyright.text = "%s %d" % [footer_text, Time.get_date_dict_from_system().year] if not footer_text.is_empty() else ""
 
-	if _steam == null or not _steam.isSteamRunning():
+	var steam: Object = _steam_session()
+	if steam == null:
 		status_label.text = "Steam is not running. Lobby features disabled."
 		host_button.disabled = true
 		refresh_button.disabled = true
 		return
-	_steam.connect("lobby_match_list", _on_lobby_match_list)
-	_steam.connect("lobby_joined", _on_lobby_joined)
+	steam.connect("lobby_match_list", _on_lobby_match_list)
+	steam.connect("lobby_joined", _on_lobby_joined)
 	refresh_lobbies()
 
 
 func refresh_lobbies() -> void:
-	if _steam == null or not _steam.isSteamRunning():
+	var steam: Object = _steam_session()
+	if steam == null:
 		return
 	_clear_lobby_list()
 	status_label.text = "Searching for lobbies..."
-	_steam.addRequestLobbyListDistanceFilter(distance_option.selected)
-	_steam.addRequestLobbyListFilterSlotsAvailable(1)
-	_steam.addRequestLobbyListResultCountFilter(50)
-	_steam.requestLobbyList()
+	steam.addRequestLobbyListDistanceFilter(distance_option.selected)
+	steam.addRequestLobbyListFilterSlotsAvailable(1)
+	steam.addRequestLobbyListResultCountFilter(50)
+	steam.requestLobbyList()
 
 
 func _clear_lobby_list() -> void:
@@ -81,8 +83,9 @@ func _on_touch_back_pressed() -> void:
 
 func _on_join_lobby_requested(lobby_id: int) -> void:
 	status_label.text = "Joining lobby %d..." % lobby_id
-	if _steam != null:
-		_steam.joinLobby(lobby_id)
+	var steam: Object = _steam_session()
+	if steam != null:
+		steam.joinLobby(lobby_id)
 
 
 #region Steam Callbacks
@@ -113,3 +116,13 @@ func _on_lobby_joined(lobby_id: int, _permissions: int, _locked: int, response: 
 	if not world_scene.is_empty():
 		loading.load_scene(world_scene)
 #endregion
+
+
+## The Steam singleton while the Steamworks session is up, else null. The client running is not enough: the
+## session only initialises on a desktop Forward+ build, and every lobby call errors before it has, so the
+## reads wait for [code]/root/Steamworks[/code] to report a signed-in [code]steam_id[/code].
+func _steam_session() -> Object:
+	var steamworks: Node = get_node_or_null("/root/Steamworks")
+	if steamworks == null or steamworks.get("steam_id") == 0:
+		return null
+	return _steam

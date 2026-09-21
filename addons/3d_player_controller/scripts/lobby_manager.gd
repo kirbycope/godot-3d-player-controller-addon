@@ -2,7 +2,7 @@ extends PlayerMenuLayer
 
 @export var lobby_player_item_scene: PackedScene ## Assigned in the scene so it ships as a scene dependency.
 
-## Steam singleton when the GodotSteam extension is present, otherwise null.
+## Steam singleton when the GodotSteam extension is present, otherwise null; read through [method _steam_session].
 var _steam: Object = Engine.get_singleton("Steam") if Engine.has_singleton("Steam") else null
 
 @onready var panel: Panel = $Panel
@@ -40,20 +40,21 @@ func _update_lobby_ui() -> void:
 		child.queue_free()
 
 	var active_lobby_id: int = _active_lobby_id()
-	var has_lobby: bool = _steam != null and _steam.isSteamRunning() and active_lobby_id > 0
+	var steam: Object = _steam_session()
+	var has_lobby: bool = steam != null and active_lobby_id > 0
 	invite_button.disabled = not has_lobby
 	leave_button.disabled = not has_lobby
-	if _steam == null or not _steam.isSteamRunning():
+	if steam == null:
 		info_label.text = "Steam unavailable"
 		return
 	if not has_lobby:
 		info_label.text = "No active lobby"
 		return
 
-	var owner_id: int = _steam.getLobbyOwner(active_lobby_id)
-	var member_count: int = _steam.getNumLobbyMembers(active_lobby_id)
-	var max_members: int = _steam.getLobbyMemberLimit(active_lobby_id)
-	info_label.text = "Host: %s (%d/%d)" % [_steam.getFriendPersonaName(owner_id), member_count, max_members if max_members > 0 else 4]
+	var owner_id: int = steam.getLobbyOwner(active_lobby_id)
+	var member_count: int = steam.getNumLobbyMembers(active_lobby_id)
+	var max_members: int = steam.getLobbyMemberLimit(active_lobby_id)
+	info_label.text = "Host: %s (%d/%d)" % [steam.getFriendPersonaName(owner_id), member_count, max_members if max_members > 0 else 4]
 
 	if lobby_player_item_scene == null:
 		return
@@ -61,7 +62,7 @@ func _update_lobby_ui() -> void:
 		var item: LobbyPlayerItem = lobby_player_item_scene.instantiate() as LobbyPlayerItem
 		player_list.add_child(item)
 		item.lobby_id = active_lobby_id
-		item.steam_id = _steam.getLobbyMemberByIndex(active_lobby_id, i)
+		item.steam_id = steam.getLobbyMemberByIndex(active_lobby_id, i)
 		item.player_promoted.connect(_on_player_promoted)
 
 
@@ -82,17 +83,19 @@ func _on_lobby_data_update(_success: int, lobby_id: int, _member_id: int) -> voi
 
 ## Leaves the lobby when the owner sends "/kick <our steam id>".
 func _on_lobby_message(lobby_id: int, sender: int, message: String, _chat_type: int) -> void:
-	if lobby_id != _active_lobby_id() or not message.begins_with("/kick ") or sender != _steam.getLobbyOwner(lobby_id):
+	var steam: Object = _steam_session()
+	if steam == null or lobby_id != _active_lobby_id() or not message.begins_with("/kick ") or sender != steam.getLobbyOwner(lobby_id):
 		return
-	if int(message.get_slice(" ", 1)) == _steam.getSteamID():
+	if int(message.get_slice(" ", 1)) == steam.getSteamID():
 		_on_leave_pressed()
 #endregion
 
 
 func _on_invite_pressed() -> void:
 	var active_lobby_id: int = _active_lobby_id()
-	if _steam != null and active_lobby_id > 0:
-		_steam.activateGameOverlayInviteDialog(active_lobby_id)
+	var steam: Object = _steam_session()
+	if steam != null and active_lobby_id > 0:
+		steam.activateGameOverlayInviteDialog(active_lobby_id)
 
 
 func _on_invite_touch_screen_button_pressed() -> void:
@@ -101,9 +104,10 @@ func _on_invite_touch_screen_button_pressed() -> void:
 
 func _on_leave_pressed() -> void:
 	var active_lobby_id: int = _active_lobby_id()
-	if _steam == null or active_lobby_id <= 0:
+	var steam: Object = _steam_session()
+	if steam == null or active_lobby_id <= 0:
 		return
-	_steam.leaveLobby(active_lobby_id)
+	steam.leaveLobby(active_lobby_id)
 	get_node("/root/Steamworks").set("lobby_id", 0)
 	_update_lobby_ui()
 
@@ -122,3 +126,13 @@ func _on_back_pressed() -> void:
 
 func _on_back_touch_screen_button_pressed() -> void:
 	_on_back_pressed()
+
+
+## The Steam singleton while the Steamworks session is up, else null. The client running is not enough: the
+## session only initialises on a desktop Forward+ build, and every lobby call errors before it has, so the
+## reads wait for [code]/root/Steamworks[/code] to report a signed-in [code]steam_id[/code].
+func _steam_session() -> Object:
+	var steamworks: Node = get_node_or_null("/root/Steamworks")
+	if steamworks == null or steamworks.get("steam_id") == 0:
+		return null
+	return _steam

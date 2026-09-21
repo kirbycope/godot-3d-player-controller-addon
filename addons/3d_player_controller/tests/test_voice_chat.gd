@@ -76,3 +76,16 @@ func test_voice_rpcs_are_sent_by_the_authority_alone() -> void:
 	assert_eq(config["_receive_voice_packet"]["transfer_mode"], MultiplayerPeer.TRANSFER_MODE_UNRELIABLE_ORDERED, "The other flags are as they were")
 	assert_eq(config["_set_voice_indicator"]["rpc_mode"], MultiplayerAPI.RPC_MODE_AUTHORITY)
 	assert_false(config["_set_voice_indicator"]["call_local"])
+
+
+func test_voice_reaches_steam_only_while_the_session_is_up() -> void:
+	# The client running is not the session: getVoiceOptimalSampleRate errors until Steamworks has initialised
+	var steamworks: Node = get_node_or_null("/root/Steamworks")
+	var signed_in: int = steamworks.get("steam_id") if steamworks else 0
+	if steamworks:
+		steamworks.set("steam_id", 0)
+	var player: Player = preload("res://addons/3d_player_controller/scenes/player.tscn").instantiate()
+	add_child_autofree(player)
+	assert_null(player._get_steam_running(), "No session, no Steam for the voice code")
+	if steamworks:
+		steamworks.set("steam_id", signed_in)

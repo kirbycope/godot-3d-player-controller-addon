@@ -18,10 +18,13 @@ func _ready() -> void:
 		connect_to_lobby(lobby_id)
 
 
-## True when Steam is running and this build ships the Steam multiplayer peer.
+## True when the Steamworks session is up and this build ships the Steam multiplayer peer. The extension
+## loaded is not enough: the lobby calls error until the session has initialised, which it only does on a
+## desktop Forward+ build with the client running.
 func is_available() -> bool:
+	var steamworks: Node = get_node_or_null("/root/Steamworks")
 	return Engine.has_singleton("Steam") and ClassDB.class_exists(&"SteamMultiplayerPeer") \
-			and get_node_or_null("/root/Steamworks") != null
+			and steamworks != null and steamworks.get("steam_id") != 0
 
 
 ## Whether a session is already up. Godot gives every tree an [OfflineMultiplayerPeer] from the start, so

@@ -78,3 +78,21 @@ func test_the_item_reads_nothing_from_steam_until_the_session_is_up() -> void:
 	assert_false(item.promote_button.visible, "and there is nobody to moderate")
 	if steamworks:
 		steamworks.set("steam_id", signed_in)
+
+
+func test_the_manager_asks_steam_for_nothing_until_the_session_is_up() -> void:
+	var steamworks: Node = get_node_or_null("/root/Steamworks")
+	var signed_in: int = steamworks.get("steam_id") if steamworks else 0
+	if steamworks:
+		steamworks.set("steam_id", 0)
+	var lobby_manager = LOBBY_MANAGER_SCENE.instantiate()
+	add_child_autofree(lobby_manager)
+	lobby_manager.show_menu()
+	assert_null(lobby_manager._steam_session())
+	assert_eq(lobby_manager.info_label.text, "Steam unavailable")
+	assert_true(lobby_manager.invite_button.disabled)
+	assert_true(lobby_manager.leave_button.disabled)
+	lobby_manager._on_lobby_message(1, 1, "/kick 0", 0) # a callback with no session behind it is ignored, not an error
+	lobby_manager.hide_menu()
+	if steamworks:
+		steamworks.set("steam_id", signed_in)
