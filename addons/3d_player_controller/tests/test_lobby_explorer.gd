@@ -51,3 +51,18 @@ func test_lobby_explorer_entry_initial_state_and_signal() -> void:
 
 	entry.join_button.pressed.emit()
 	assert_signal_emitted_with_parameters(entry, "join_requested", [123456789], 0)
+
+
+func test_the_entry_reads_nothing_from_steam_until_the_session_is_up() -> void:
+	# CI loads the GodotSteam extension with no client behind it, and every lobby call errors there
+	var steamworks: Node = get_node_or_null("/root/Steamworks")
+	var signed_in: int = steamworks.get("steam_id") if steamworks else 0
+	if steamworks:
+		steamworks.set("steam_id", 0)
+	var entry = LOBBY_EXPLORER_ENTRY_SCENE.instantiate()
+	add_child_autofree(entry)
+	entry.set_lobby_id(5)
+	assert_null(entry._steam_session(), "The extension being loaded is not a session")
+	assert_eq(entry.name_label.text, "Lobby 5", "so the entry shows the id and asks Steam nothing")
+	if steamworks:
+		steamworks.set("steam_id", signed_in)

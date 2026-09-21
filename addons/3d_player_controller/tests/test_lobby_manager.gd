@@ -62,3 +62,19 @@ func test_lobby_player_item_options_toggle() -> void:
 	item.options_button.button_pressed = false
 	assert_false(item.actions_container.visible, "ActionsContainer should hide when untoggled")
 	assert_true(item.username_label.visible, "Username should become visible when options are untoggled")
+
+
+func test_the_item_reads_nothing_from_steam_until_the_session_is_up() -> void:
+	var steamworks: Node = get_node_or_null("/root/Steamworks")
+	var signed_in: int = steamworks.get("steam_id") if steamworks else 0
+	if steamworks:
+		steamworks.set("steam_id", 0)
+	var item: LobbyPlayerItem = LOBBY_PLAYER_ITEM_SCENE.instantiate()
+	add_child_autofree(item)
+	item.lobby_id = 7
+	item.steam_id = 123
+	assert_null(item._steam_session(), "The extension being loaded is not a session")
+	assert_false(item.host_icon.visible, "so nobody is host")
+	assert_false(item.promote_button.visible, "and there is nobody to moderate")
+	if steamworks:
+		steamworks.set("steam_id", signed_in)
