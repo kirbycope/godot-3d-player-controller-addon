@@ -530,9 +530,14 @@ class TestRidingTransitions:
 		key.keycode = KEY_F
 		key.pressed = true
 		Input.parse_input_event(key)
-		await wait_physics_frames(1)
+		Input.flush_buffered_events() # buffered until the next frame otherwise, which on CI is after this test ends
+		await wait_process_frames(1)
 		assert_eq(rideable.input_type_at_ride_input, Controls.InputType.KEYBOARD_MOUSE, "A key press reaches ride_input already read as the keyboard")
 		assert_eq(player.controls.current_input_type, Controls.InputType.KEYBOARD_MOUSE, "and the HUD follows")
+		var release: InputEventKey = key.duplicate()
+		release.pressed = false
+		Input.parse_input_event(release) # never leave a key held into the next test
+		Input.flush_buffered_events()
 
 	func test_riding_keeps_the_rideables_input_type_current():
 		player.controls.current_input_type = Controls.InputType.SONY
