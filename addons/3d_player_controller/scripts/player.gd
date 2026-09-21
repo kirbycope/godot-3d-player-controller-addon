@@ -611,7 +611,9 @@ func _ready() -> void:
 		var lobby_update_callback: Callable = _on_steam_lobby_chat_update
 		if not steam_singleton.is_connected("lobby_chat_update", lobby_update_callback):
 			steam_singleton.connect("lobby_chat_update", lobby_update_callback)
-		_update_steam_persona_name()
+		# A name given before ready (a spawner's, a test's) stands; only an unnamed Player asks Steam for one
+		if display_name.is_empty():
+			_update_steam_persona_name()
 
 	# Initialize voice audio player playback
 	if voice_audio_player:
