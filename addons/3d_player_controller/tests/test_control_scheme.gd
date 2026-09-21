@@ -40,7 +40,7 @@ func after_each() -> void:
 	PlayerControls.forget_registered_schemes()
 	# The InputMap outlives the scene: put the pad back the way the other suites expect it
 	if is_instance_valid(player):
-		player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/totk.tres")
+		player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/tears_of_the_kingdom.tres")
 	if _had_file:
 		var file: FileAccess = FileAccess.open(PlayerSettingsResource.SAVE_PATH, FileAccess.WRITE)
 		file.store_buffer(_backup)
@@ -58,7 +58,7 @@ func _has_button(action: StringName, button: JoyButton) -> bool:
 
 
 func test_zelda_is_the_default_layout() -> void:
-	assert_eq(player.control_scheme, preload("res://addons/3d_player_controller/resources/control_schemes/totk.tres"))
+	assert_eq(player.control_scheme, preload("res://addons/3d_player_controller/resources/control_schemes/tears_of_the_kingdom.tres"))
 	# Tears of the Kingdom's own layout. Its labels are Nintendo's, whose A is the right button and B the
 	# bottom, mirrored from the Xbox naming Godot uses: the game's "A Action" is JOY_BUTTON_B here and its
 	# "B Dash" is JOY_BUTTON_A.
@@ -86,7 +86,7 @@ func test_gta_moves_the_face_buttons_and_frees_the_aim() -> void:
 
 func test_switching_back_restores_zelda() -> void:
 	player.control_scheme = preload("res://addons/gta/resources/control_schemes/gta.tres")
-	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/totk.tres")
+	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/tears_of_the_kingdom.tres")
 	assert_true(_has_button(&"sprint", JOY_BUTTON_A))
 	assert_false(_has_button(&"action", JOY_BUTTON_A))
 	assert_true(_has_button(&"jump", JOY_BUTTON_Y))
@@ -108,7 +108,7 @@ func test_focus_never_locks_on_under_gta() -> void:
 	assert_null(player.current_focus_target, "Free aim acquires nobody")
 	Input.action_release("focus")
 	await wait_physics_frames(1)
-	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/totk.tres")
+	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/tears_of_the_kingdom.tres")
 	Input.action_press("focus")
 	await wait_physics_frames(3)
 	assert_eq(player.current_focus_target, target, "Lock-on is back with Zelda")
@@ -124,9 +124,9 @@ func test_saved_setting_overrides_the_scene() -> void:
 	settings.apply_control_scheme(player)
 	assert_eq(player.control_scheme, preload("res://addons/gta/resources/control_schemes/gta.tres"))
 	settings.control_scheme_name = ""
-	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/totk.tres")
+	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/tears_of_the_kingdom.tres")
 	settings.apply_control_scheme(player)
-	assert_eq(player.control_scheme, preload("res://addons/3d_player_controller/resources/control_schemes/totk.tres"), "Game Default leaves the scene's choice")
+	assert_eq(player.control_scheme, preload("res://addons/3d_player_controller/resources/control_schemes/tears_of_the_kingdom.tres"), "Game Default leaves the scene's choice")
 
 
 func test_the_controls_settings_menu_lists_the_schemes() -> void:
@@ -137,7 +137,7 @@ func test_the_controls_settings_menu_lists_the_schemes() -> void:
 	assert_eq(menu.selected, 0, "Nothing saved, so it shows the layout the Player is actually using")
 
 	player.controls_settings._on_control_scheme_item_selected(1)
-	assert_eq(player.control_scheme, preload("res://addons/3d_player_controller/resources/control_schemes/smo.tres"),
+	assert_eq(player.control_scheme, preload("res://addons/3d_player_controller/resources/control_schemes/super_mario_odyssey.tres"),
 		"Picking one in the menu lays the pad out that way at once")
 	assert_eq(player.controls.action_button_0, &"jump", "Jump is on the bottom button")
 
@@ -190,9 +190,9 @@ func test_a_game_can_ship_a_layout_of_its_own() -> void:
 ## Whether Focus locks on is something a scheme carries rather than a comparison against the Zelda one, which is
 ## what it used to be. Super Mario Odyssey has no lock-on, so the Platformer layout does not either.
 func test_the_scheme_carries_whether_focus_locks_on() -> void:
-	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/totk.tres")
+	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/tears_of_the_kingdom.tres")
 	assert_true(player.lock_on_enabled(), "Zelda locks on")
-	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/smo.tres")
+	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/super_mario_odyssey.tres")
 	assert_false(player.lock_on_enabled(), "Odyssey has no lock-on, so neither does Platformer")
 	player.control_scheme = preload("res://addons/gta/resources/control_schemes/gta.tres")
 	assert_false(player.lock_on_enabled())
@@ -258,7 +258,7 @@ func test_a_moved_slot_is_handed_back() -> void:
 	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/dark_souls.tres")
 	assert_eq(player.controls.action_axis_5_plus, &"attack", "Dark Souls takes the right trigger")
 
-	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/totk.tres")
+	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/tears_of_the_kingdom.tres")
 	assert_eq(player.controls.action_axis_5_plus, before, "and Tears of the Kingdom, which says nothing about it, gives it back")
 	assert_true(_has_button(&"attack", JOY_BUTTON_X), "with attack back on the face button it belongs to")
 
@@ -299,7 +299,7 @@ func test_the_addons_own_slots_survive_every_layout() -> void:
 ## Clearing is not one-way: the next layout that has the slot puts it back, button, binding and label.
 func test_a_cleared_slot_comes_back_with_a_layout_that_has_it() -> void:
 	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/metal_gear.tres")
-	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/totk.tres")
+	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/tears_of_the_kingdom.tres")
 
 	assert_eq(player.controls.action_button_12, &"whistle")
 	assert_true(_has_button(&"whistle", JOY_BUTTON_DPAD_DOWN))
@@ -331,7 +331,7 @@ func test_the_keyboard_set_draws_the_key_behind_each_button() -> void:
 	assert_eq(_key_face("button_8"), "mouse_right_outline.svg", "and its right stick locks on, the right mouse button")
 	assert_eq(_key_face("button_9"), "mouse_scroll_outline.svg", "Its left shoulder guards, the scope's wheel")
 
-	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/totk.tres")
+	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/tears_of_the_kingdom.tres")
 	assert_eq(_key_face("button_0"), "keyboard_shift_icon_outline.svg", "Back on Zelda the bottom button is [Shift] again")
 	assert_eq(_key_face("button_1"), "keyboard_e_outline.svg")
 	assert_eq(_key_face("axis_5_plus"), "mouse_left_outline.svg")
@@ -350,7 +350,7 @@ func test_a_layout_names_its_buttons_in_the_games_own_words() -> void:
 ## Most of Tears of the Kingdom's pad is where the scene already put it, so the renaming has to happen even
 ## when the binding does not change: the left stick is Stealth, not Crouch, though both fire crouch.
 func test_a_slot_is_renamed_even_where_its_binding_is_unchanged() -> void:
-	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/totk.tres")
+	player.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/tears_of_the_kingdom.tres")
 
 	assert_eq(player.controls.action_button_7, &"crouch")
 	assert_eq(player.controls.joypad_button_7_label.text, "Stealth")
