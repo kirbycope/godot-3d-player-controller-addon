@@ -5,7 +5,7 @@ extends GutTest
 ## along the Player's projectile ray while showing the laser sight.
 
 const BULLET_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/projectile/bullet.tscn")
-const LASER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/laser_sight.tscn")
+const LASER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/vfx/laser_sight.tscn")
 const PLAYER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player.tscn")
 const FIREARM_SCRIPT: Script = preload("res://addons/3d_player_controller/scripts/firearm.gd")
 

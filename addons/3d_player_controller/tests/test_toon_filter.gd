@@ -6,7 +6,7 @@ extends IntegrationTestBase
 ## restores them, the Video settings option and the key stay in step, the choice is saved in
 ## user://settings.tres (backed up and restored here), and the CelCompositorEffect stays inert without a RenderingDevice.
 
-const TOON_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/toon_filter.tscn")
+const TOON_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/vfx/toon_filter.tscn")
 const PLAYER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player.tscn")
 const VIDEO_SETTINGS_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/ui/video_settings.tscn")
 

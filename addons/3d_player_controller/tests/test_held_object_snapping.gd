@@ -4,7 +4,7 @@ extends GutTest
 
 const PLAYER_SCENE = preload("res://addons/3d_player_controller/scenes/player.tscn")
 const CONTROLS_SCENE = preload("res://addons/3d_player_controller/scenes/ui/player_controls.tscn")
-const SPLASH_SCENE = preload("res://addons/3d_player_controller/scenes/water_splash.tscn")
+const SPLASH_SCENE = preload("res://addons/3d_player_controller/scenes/vfx/water_splash.tscn")
 
 
 class HitTarget extends StaticBody3D:
