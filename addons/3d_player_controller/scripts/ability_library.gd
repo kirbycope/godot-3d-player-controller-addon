@@ -1,3 +1,5 @@
+@tool
+@icon("res://addons/3d_player_controller/assets/game_icons/wizard-staff.svg")
 class_name AbilityLibrary
 extends Node3D
 ## Every ability a game has, loaded once and kept warm, so any Player, puppet or NPC can cast any of them without
@@ -6,22 +8,44 @@ extends Node3D
 ## At ready every phase VFX is instanced once for a frame, which is what compiles its shaders and particles, then
 ## freed. Casters find the library through [method find] and take their abilities from it by id
 ## ([method Ability.get_id]), so all of them share the one loaded copy; without a library they use their own.
+##
+## In the editor the entries are laid out in a row, [member gallery_spacing] apart, each showing its ability's icon,
+## name and effects, so the scene reads as a gallery of every spell the game has. In a test scene with a Player and
+## an enemy, [member test_caster] and [member test_target] name the two, and every entry's inspector buttons fire its
+## ability from one to the other, in the editor ([method AbilityEntry.preview_cast]).
 
 signal warmed ## Every VFX has been instanced once and freed again.
 
 const GROUP: StringName = &"AbilityLibrary"
 
 @export var warm_on_ready: bool = true ## Instance every phase VFX once at ready, for a frame, so its shaders compile before a cast needs them.
+@export var gallery_spacing: float = 3.0: ## Metres between entries in the editor's row; 0 leaves them where they are put.
+	set(value):
+		gallery_spacing = value
+		if Engine.is_editor_hint():
+			_lay_out()
+
+@export_group("Editor test rig", "test_")
+@export var test_caster: Node3D ## Who the entries' "Cast from caster" button casts from in this scene: a Player, say.
+@export var test_target: Node3D ## Who it casts at: an EnemyNpc, say. The other button goes the other way.
 
 var is_warm: bool = false ## [signal warmed] has fired.
 var _by_id: Dictionary[StringName, Ability] = {}
 
 
 func _ready() -> void:
+	if Engine.is_editor_hint():
+		_lay_out()
+		return
 	add_to_group(GROUP)
 	_collect()
 	if warm_on_ready:
 		warm()
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_CHILD_ORDER_CHANGED and Engine.is_editor_hint() and is_inside_tree():
+		_lay_out()
 
 
 ## The library in [param node]'s tree, or null when the scene has none.
@@ -89,3 +113,14 @@ func _collect() -> void:
 			push_warning("AbilityLibrary: two entries are called %s; %s keeps the first" % [id, name])
 			continue
 		_by_id[id] = entry.ability
+
+
+## Editor only: the entries in a row along X, [member gallery_spacing] apart.
+func _lay_out() -> void:
+	if gallery_spacing <= 0.0:
+		return
+	var i: int = 0
+	for child: Node in get_children():
+		if child is AbilityEntry:
+			(child as AbilityEntry).position = Vector3(i * gallery_spacing, 0.0, 0.0)
+			i += 1
