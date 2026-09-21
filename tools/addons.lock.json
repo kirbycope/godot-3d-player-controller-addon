@@ -1,21 +1,21 @@
 {
   "controls": {
-    "commit": "16569a90fb5cc706460c8df7806ee9ab34fea8af",
-    "pulled": "2026-09-21T00:08:51Z",
+    "commit": "6d64ddea0bf423d2e3fe4dcdb36acb89810c7486",
+    "pulled": "2026-09-21T04:18:31Z",
     "ref": "main",
     "repo": "https://github.com/kirbycope/godot-controls.git",
-    "subject": "Let a slot's key art change live and expose the device an event names"
+    "subject": "Reconfigure the console streams after the imports, not before"
   },
   "gta": {
-    "commit": "0f6b23df7b315af529dbef0e9743a2a7a4d3bb6f",
-    "pulled": "2026-09-21T00:08:52Z",
+    "commit": "4b0cbaf27dc2b878fc4e98a972ada0812763d172",
+    "pulled": "2026-09-21T04:18:32Z",
     "ref": "main",
     "repo": "https://github.com/kirbycope/gta.git",
-    "subject": "Keep the walk-up prompt off a driver's Action button"
+    "subject": "Take the vendored addons at their latest"
   },
   "gut": {
     "commit": "aeb5d4f3f7f0a6c9b5e178876d6c99b791fda605",
-    "pulled": "2026-09-21T02:39:22Z",
+    "pulled": "2026-09-21T04:18:33Z",
     "ref": "v9.7.1",
     "repo": "https://github.com/bitwes/Gut.git",
     "subject": "Version bump, documentation for 9.7.1 release (#847)"
