@@ -169,12 +169,14 @@ func test_voice_activation_transmits_by_speaking() -> void:
 	settings.voice_activation = true
 
 	assert_true(player.voice_activation_enabled(), "The Player reads the setting")
+	# The frame is driven by hand with no time passing: with no voice packet arriving the reading falls away at
+	# VOICE_FALLOFF_PER_SECOND, and a slow CI frame would drop it under the mark before the check
 	player.voice_loudness = Player.VOICE_ACTIVATION_LEVEL + 0.1
-	await wait_process_frames(2)
+	player._process(0.0)
 	assert_true(player.is_broadcasting, "Speaking past the mark opens the channel")
 
 	player.voice_loudness = 0.0
-	await wait_process_frames(3)
+	player._process(0.0)
 	assert_false(player.is_broadcasting, "and going quiet closes it again")
 
 	settings.voice_activation = was
