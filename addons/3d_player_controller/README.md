@@ -226,7 +226,7 @@ its readout is missing.
 - **Multiplayer Animation Sync**: `PlayerSynchronizer` replicates `sync_locomotion_node` (the full `Group/Node` locomotion path) and `sync_blend_position`; puppets travel their AnimationTree to that path and write the blend position into whichever blend space is current.
 
 ### 8. Audio Component System (`Audio`)
-- Modular 3D audio subsystem (`audio.tscn` paired with `audio.gd`) encapsulating surface-aware footstep audio streams (`Grass`/`Dirt`, `Stone`, `Wood`, `Water`, `Slide`).
+- Modular 3D audio subsystem (`player_audio.tscn` paired with `player_audio.gd`, the `PlayerAudio` node under the Player) encapsulating surface-aware footstep audio streams (`Grass`/`Dirt`, `Stone`, `Wood`, `Water`, `Slide`).
 - Dynamic surface detection via physics collider group tagging and raycasting.
 - Centralized volume scaling: `set_sfx_volume` covers the footstep players and every `vehicles` group member with a `set_sfx_volume(value)` method; `set_music_volume` covers every node in the **`radio`** group with a `set_volume(linear: float)` method. Add your radios (e.g. `RadiOtPlayer3D`) to the `radio` group for the music slider to reach them.
 - Creates the `Dialog`, `Menu`, `Music`, and `SFX` audio buses at runtime when your project's bus layout lacks them, so the audio settings menu works without editing `default_bus_layout.tres`. Footstep players play on `SFX`.
