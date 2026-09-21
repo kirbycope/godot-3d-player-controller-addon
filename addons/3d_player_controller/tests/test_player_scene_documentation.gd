@@ -10,7 +10,7 @@ const PLAYER_SCENE: PackedScene = preload("res://addons/3d_player_controller/sce
 ## every time the model reimports.
 const FROM_THE_MODEL: Array[String] = ["Armature", "Alpha_Joints", "Alpha_Surface"]
 
-## The parts of the scene a reader meets first. The ragdoll's PhysicalBone3D children are left out: there are
+## The parts of the scene a reader meets first, the Hud's children among them (they are the screen, in scenes/ui/player_hud.tscn). The ragdoll's PhysicalBone3D children are left out: there are
 ## 52 of them, one per bone, and the bone name says all there is to say.
 const DOCUMENTED_BRANCHES: Array[String] = [
 	".",
@@ -23,6 +23,7 @@ const DOCUMENTED_BRANCHES: Array[String] = [
 	"NodeStateMachine",
 	"WeaponAudio",
 	"AbilityFx",
+	"Hud",
 ]
 
 var player: Player

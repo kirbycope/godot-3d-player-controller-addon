@@ -11,6 +11,11 @@ extends HudReadout
 @onready var health_bar: ProgressBar = %BossHealth
 
 
+func _ready() -> void:
+	super()
+	bar.visible = false # nothing to show until a boss is engaged; the scene keeps it visible so it can be edited
+
+
 ## Puts [param boss_name] on screen with its health at [param ratio], 0 to 1.
 func show_boss(boss_name: String, ratio: float) -> void:
 	name_label.text = boss_name

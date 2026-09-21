@@ -2346,18 +2346,22 @@ one_shot = true
 autostart = true
 
 [node name="EquipAudio" type="AudioStreamPlayer3D" parent="WeaponAudio" unique_id=1474428060]
+bus = &"SFX"
 editor_description = "Plays as a weapon comes out, spaced from the stow sound by SettleTimer."
 stream = ExtResource("263_w2lnx")
 
 [node name="StowAudio" type="AudioStreamPlayer3D" parent="WeaponAudio" unique_id=31616183]
+bus = &"SFX"
 editor_description = "Plays as a weapon goes back, spaced from the draw sound by SettleTimer."
 stream = ExtResource("264_odb2g")
 
 [node name="AttackAudio" type="AudioStreamPlayer3D" parent="WeaponAudio" unique_id=1264007301]
+bus = &"SFX"
 editor_description = "The swing itself, fired by the attack animation rather than by the button."
 stream = ExtResource("265_t5nng")
 
 [node name="HitAudio" type="AudioStreamPlayer3D" parent="WeaponAudio" unique_id=1002459399]
+bus = &"SFX"
 editor_description = "The swing connecting, fired by HitDetection once it resolves what was hit."
 stream = ExtResource("266_l6fg8")
 

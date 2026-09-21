@@ -14,6 +14,7 @@ one_shot = true
 one_shot = true
 
 [node name="RadialMenu" parent="." unique_id=128634465 instance=ExtResource("2_wheel")]
+visible = false
 hold_actions = Array[StringName]([&"ability"])
 
 [connection signal="timeout" from="HoldTimer" to="RadialMenu" method="_on_hold_timer_timeout"]

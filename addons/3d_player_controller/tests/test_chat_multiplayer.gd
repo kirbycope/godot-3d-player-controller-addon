@@ -66,13 +66,13 @@ func after_each() -> void:
 func test_a_host_message_arrives_in_the_clients_chat_and_back() -> void:
 	await wait_process_frames(30)
 	var client_id: String = str(client_api.get_unique_id()) # ENet hands clients a random id
-	var host_chat: ChatWindow = server_root.get_node("Players/1/Chat")
-	var client_chat: ChatWindow = client_root.get_node("Players/" + client_id + "/Chat")
-	var host_copy_on_client: ChatWindow = client_root.get_node("Players/1/Chat")
+	var host_chat: ChatWindow = server_root.get_node("Players/1/Hud/Chat")
+	var client_chat: ChatWindow = client_root.get_node("Players/" + client_id + "/Hud/Chat")
+	var host_copy_on_client: ChatWindow = client_root.get_node("Players/1/Hud/Chat")
 	assert_true(host_chat.visible, "The host sees its own chat")
 	assert_true(client_chat.visible, "The client sees its own chat")
 	assert_false(host_copy_on_client.visible, "The host's copy on the client stays hidden")
-	assert_false(server_root.get_node("Players/" + client_id + "/Chat").visible, "as does the client's copy on the host")
+	assert_false(server_root.get_node("Players/" + client_id + "/Hud/Chat").visible, "as does the client's copy on the host")
 
 	var host_name: String = host_chat.get_display_name() # The Steam persona when Steam runs, else "Player 1"
 	var client_name: String = client_chat.get_display_name()

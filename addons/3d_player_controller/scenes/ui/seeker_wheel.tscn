@@ -11,6 +11,7 @@ wait_time = 0.2
 one_shot = true
 
 [node name="RadialMenu" parent="." instance=ExtResource("2_wheel")]
+visible = false
 hold_actions = Array[StringName]([&"seeker"])
 
 [connection signal="timeout" from="HoldTimer" to="." method="_on_hold_timer_timeout"]

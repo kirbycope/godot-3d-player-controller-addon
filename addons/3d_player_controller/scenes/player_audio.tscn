@@ -58,16 +58,21 @@ stream_4/stream = ExtResource("21_kn5up")
 script = ExtResource("1_vwng5")
 
 [node name="SFX_Footsteps_Grass" type="AudioStreamPlayer3D" parent="." unique_id=734951217]
+bus = &"SFX"
 stream = SubResource("AudioStreamRandomizer_grass")
 
 [node name="SFX_Footsteps_Slide" type="AudioStreamPlayer3D" parent="." unique_id=422765804]
+bus = &"SFX"
 stream = SubResource("AudioStreamRandomizer_stone")
 
 [node name="SFX_Footsteps_Stone" type="AudioStreamPlayer3D" parent="." unique_id=2001684523]
+bus = &"SFX"
 stream = SubResource("AudioStreamRandomizer_stone")
 
 [node name="SFX_Footsteps_Water" type="AudioStreamPlayer3D" parent="." unique_id=519547480]
+bus = &"SFX"
 stream = SubResource("AudioStreamRandomizer_water")
 
 [node name="SFX_Footsteps_Wood" type="AudioStreamPlayer3D" parent="." unique_id=1143168822]
+bus = &"SFX"
 stream = SubResource("AudioStreamRandomizer_wood")
