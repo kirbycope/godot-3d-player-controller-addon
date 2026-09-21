@@ -21,7 +21,7 @@ extends Ability
 
 
 func _init() -> void:
-	target_mode = Target.FOCUS
+	target_kinds = Kind.NEUTRAL | Kind.HOSTILE
 
 
 ## A Player always has somewhere to send it: the crosshair finds a target or the bolt goes where it is aimed.
@@ -38,6 +38,7 @@ func impact(caster: Node3D, target: Node3D) -> void:
 	var from: Vector3 = caster.global_position if is_instance_valid(caster) else Vector3.ZERO
 	if is_instance_valid(target) and target.has_method("take_hit"):
 		target.call("take_hit", damage, from)
+		_add_threat(target, caster)
 		_apply_after_effects(target)
 	if splash_radius <= 0.0 or not is_instance_valid(target):
 		return
@@ -47,7 +48,14 @@ func impact(caster: Node3D, target: Node3D) -> void:
 			continue
 		if (other as Node3D).global_position.distance_to(at) <= splash_radius:
 			other.call("take_hit", damage, from)
+			_add_threat(other as Node3D, caster)
 			_apply_after_effects(other as Node3D)
+
+
+## A hit is a provocation: an enemy keeping a threat table learns who to hunt from it.
+func _add_threat(target: Node3D, caster: Node3D) -> void:
+	if is_instance_valid(caster) and target.has_method("add_threat"):
+		target.call("add_threat", caster, damage)
 
 
 ## The slow and the burn, on whatever the hit landed on. A target with no `slow` of its own simply is not

@@ -57,8 +57,12 @@ func _ready() -> void:
 	for category: Item.Category in ITEM_TABS:
 		_tabs[category] = _empty_tab()
 	if not is_multiplayer_authority():
+		# A puppet's pieces come through synced_equipment, which the spawn sync sets before the skeleton is ready
+		if player and not player.is_node_ready():
+			player.ready.connect(_apply_synced_equipment, CONNECT_ONE_SHOT)
+		else:
+			_apply_synced_equipment()
 		return
-	multiplayer.peer_connected.connect(_send_equipment)
 	if persist and persistence_enabled:
 		# The Player's skeleton and abilities are @onready, so a save applied before its ready has nowhere to go
 		if player and not player.is_node_ready():
@@ -263,7 +267,7 @@ func forget_equipment(item: Equipment) -> String:
 		gone.get_parent().remove_child(gone) # out of the backpack now, freed at the end of the frame
 	gone.queue_free()
 	_items_changed()
-	_send_equipment()
+	_publish_equipment()
 	return scene_path
 
 
@@ -381,7 +385,7 @@ func apply_save(data: InventorySave) -> void:
 		spellbook.read_save(data)
 	_loading = false
 	_items_changed()
-	_send_equipment()
+	_publish_equipment()
 
 
 ## Replaces every piece of equipment with fresh instances of [param scene_paths], equipping those flagged in
@@ -474,7 +478,7 @@ func rebuild_equipment_cache() -> void:
 		player.controls.reset_labels()
 	equipment_changed.emit()
 	_autosave()
-	_send_equipment()
+	_publish_equipment()
 
 
 func set_equipment_visibility(is_visible: bool) -> void:
@@ -718,28 +722,39 @@ func _spawn_dropped(scene_path: String, at: Transform3D, node_name: String, item
 		detection.body_exited.connect(_on_dropped_equipment_body_exited.bind(pickup))
 
 
-## The authority tells [param peer] (0 is everyone) what it carries; wired to peer_connected for late joiners and
-## called after every change. A puppet has no save to draw on, so this is how its skeleton gets the same pieces.
-func _send_equipment(peer: int = 0) -> void:
-	if _loading or not is_inside_tree() or not is_multiplayer_authority() or multiplayer.get_peers().is_empty():
+## What the authority carries, for the Player's synchronizer to carry to every peer's copy
+## ([code]Hud/Inventory:synced_equipment[/code] in player.tscn, sent at spawn and on change): the scene path of each
+## weapon, true while it is equipped. The authority writes it after every change ([method _publish_equipment]); a
+## puppet's copy rebuilds the pieces on its skeleton from it, visual only, registering no actions and writing no save.
+var synced_equipment: Dictionary = {} :
+	set(value):
+		synced_equipment = value
+		if is_inside_tree() and not is_multiplayer_authority() and player and player.is_node_ready():
+			_apply_synced_equipment()
+
+
+## The authority writes what it carries into [member synced_equipment]. A piece placed inline in a level and never a
+## pickup has no scene path, so a peer could not re-create it, and it is left out.
+func _publish_equipment() -> void:
+	if _loading or not is_inside_tree() or not is_multiplayer_authority():
+		return
+	var carried: Dictionary = {}
+	for item: Equipment in get_all_weapons():
+		var origin: String = origin_of(item)
+		if not origin.is_empty():
+			carried[origin] = equipment.has(item)
+	synced_equipment = carried
+
+
+## A puppet's copy rebuilds the authority's pieces from [member synced_equipment].
+func _apply_synced_equipment() -> void:
+	if is_multiplayer_authority():
 		return
 	var scene_paths: PackedStringArray = []
 	var equipped: PackedByteArray = []
-	for item: Equipment in get_all_weapons():
-		var origin: String = origin_of(item)
-		if origin.is_empty():
-			continue # placed inline in a level and never a pickup; a peer cannot re-create it
+	for origin: String in synced_equipment:
 		scene_paths.append(origin)
-		equipped.append(1 if equipment.has(item) else 0)
-	_sync_equipment.rpc_id(peer, scene_paths, equipped)
-
-
-## A peer's copy of the Player rebuilds the authority's equipment from its scene paths: visual only, it registers
-## no actions and writes no save ([method _autosave] is the authority's alone).
-@rpc("authority", "call_local", "reliable")
-func _sync_equipment(scene_paths: PackedStringArray, equipped: PackedByteArray) -> void:
-	if is_multiplayer_authority():
-		return
+		equipped.append(1 if synced_equipment[origin] else 0)
 	_loading = true
 	_rebuild_equipment(scene_paths, equipped)
 	_loading = false

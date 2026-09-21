@@ -57,11 +57,22 @@ func try_cast(target: Node3D) -> bool:
 			continue
 		if ability is HealAbility and health and health.health > health.max_health * 0.5:
 			continue
-		if ability.target_mode == Ability.Target.FOCUS and not has_line_of_sight(target):
+		if not (ability.target_kinds & Ability.Kind.SELF) and not has_line_of_sight(target):
 			continue
 		_begin(ability)
 		return true
 	return false
+
+
+## Starts [param ability] now, whatever its range, cooldown, cost or the heal rule: a test range's way of making an
+## NPC run a spell on demand, at [param at] when given ([method Ability.aim_at]), else at the NPC's own target. The
+## AI casts through [method try_cast]. False while another cast is running.
+func cast(ability: Ability, at: Node3D = null) -> bool:
+	if casting or ability == null:
+		return false
+	Ability.aim_at(caster, at)
+	_begin(ability)
+	return true
 
 
 func interrupt() -> void:
@@ -70,6 +81,7 @@ func interrupt() -> void:
 	casting = null
 	cast_timer.stop()
 	_stop_channeling.rpc()
+	Ability.aim_at(caster, null)
 
 
 func _begin(ability: Ability) -> void:
@@ -102,6 +114,7 @@ func _activate(ability: Ability) -> void:
 	else:
 		_play(ability, Ability.Phase.CASTING, caster.global_position)
 		_land(ability, target, ability.get_impact_position(caster))
+	Ability.aim_at(caster, null)
 	ability_activated.emit(ability)
 
 

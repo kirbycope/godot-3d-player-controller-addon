@@ -7,7 +7,13 @@ extends MultiplayerSpawner
 ## so each peer simulates an identical round and resolves its hits locally. Only the round's authority
 ## (the server's copy) decides what a hit leaves in the world: [method place] spawns a scene at a point on
 ## every peer (an ice block), [method ignite] lights the grass on every peer. Add the node to the
-## [code]ProjectileSpawner[/code] group so weapons can find it; without one, weapons fire locally.
+## [code]ProjectileSpawner[/code] group so weapons can find it; without one, weapons fire locally. Rounds land
+## under [member MultiplayerSpawner.spawn_path], the spawner itself unless the scene points it elsewhere.
+
+
+func _init() -> void:
+	if spawn_path.is_empty():
+		spawn_path = ^"."
 
 
 func _ready() -> void:

@@ -7,18 +7,12 @@ extends Node3D
 ## At ready every phase VFX is instanced once for a frame, which is what compiles its shaders and particles, then
 ## freed. Casters find the library through [method find] and take their abilities from it by id
 ## ([method Ability.get_id]), so all of them share the one loaded copy; without a library they use their own.
-##
-## In a test scene with a Player and an enemy, [member test_caster] and [member test_target] name the two, and every
-## entry's inspector buttons fire its ability from one to the other, in the editor ([method AbilityEntry.preview_cast]).
 
 signal warmed ## Every VFX has been instanced once and freed again.
 
 const GROUP: StringName = &"AbilityLibrary"
 
 @export var warm_on_ready: bool = true ## Instance every phase VFX once at ready, for a frame, so its shaders compile before a cast needs them.
-@export_group("Editor test rig", "test_")
-@export var test_caster: Node3D ## Who the entries' "Cast from caster" button casts from in this scene: a Player, say.
-@export var test_target: Node3D ## Who it casts at: an EnemyNpc, say. The other button goes the other way.
 
 var is_warm: bool = false ## [signal warmed] has fired.
 var _by_id: Dictionary[StringName, Ability] = {}

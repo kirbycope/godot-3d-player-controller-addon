@@ -5,6 +5,7 @@ extends CharacterBody3D
 signal collided(impact_speed: float) ## Emitted when the NPC starts pressing against something (not while it stays in contact).
 signal swimming_changed(is_swimming: bool) ## Emitted when the NPC enters or leaves the water.
 
+@export var disposition: Focus.Disposition = Focus.Disposition.FRIENDLY ## How it stands to a Player ([method Focus.disposition_toward]): a follower is friendly, so a heal reaches it and a hostile spell passes it by; an [EnemyNpc] is hostile, hunting whoever enters its aggro area, or neutral, leaving everyone alone until attacked and hostile from then until it dies or is revived.
 @export var player: Player: ## The Player to follow.
 	set(value):
 		if player:
@@ -55,6 +56,7 @@ static func get_water_surface_along_up(water_area: Area3D, up: Vector3) -> float
 
 
 func _ready() -> void:
+	add_to_group("Focusable") # a friend can be targeted, for a heal or a word
 	navigation_agent_3d.target_desired_distance = follow_distance
 
 

@@ -1,16 +1,14 @@
 class_name HealAbility
 extends Ability
-## Heals through the target's `heal(amount) -> bool` method. A Player heals the fellow Player they have locked
-## on to, otherwise themselves; an NPC always heals itself. The cast is refused when the target is already full.
+## Heals through the target's `heal(amount) -> bool` method. Self and Friendly by default: a Player heals the
+## friend they have targeted, otherwise themselves; an NPC always heals itself. The cast is refused when the
+## target is already full.
 
 @export var amount: float = 50.0
 
 
-## A locked-on Player is the patient; anyone else heals themselves.
-func get_target(caster: Node3D) -> Node3D:
-	if caster is Player and (caster as Player).current_focus_target is Player:
-		return (caster as Player).current_focus_target
-	return caster
+func _init() -> void:
+	target_kinds = Kind.SELF | Kind.FRIENDLY
 
 
 ## Refused when the patient has no health to restore.
@@ -30,6 +28,6 @@ func impact(_caster: Node3D, target: Node3D) -> void:
 		target.call("heal", amount)
 
 
-## Heals land on the caster itself or a locked-on Player, never at the aim point.
+## Heals land on the caster itself or the targeted friend, never at the aim point.
 func get_impact_position(caster: Node3D) -> Vector3:
 	return get_target(caster).global_position

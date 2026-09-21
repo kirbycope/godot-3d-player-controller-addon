@@ -125,4 +125,3 @@ text = "Throw"
 
 [node name="Label" parent="TopRight/JoypadAxis5Plus" parent_id_path=PackedInt32Array(1548286525) index="0" unique_id=806977869]
 text = "Shoot"
-

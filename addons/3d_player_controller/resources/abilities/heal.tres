@@ -6,6 +6,7 @@
 [ext_resource type="AudioStream" uid="uid://cy3vp1g1d2uk5" path="res://addons/3d_player_controller/assets/tommusic/fantasy_sfx/Spells/Wave Attack 1.ogg" id="4_cast"]
 
 [resource]
+target_kinds = 3
 script = ExtResource("1_heal")
 display_name = "Heal"
 icon = ExtResource("2_icon")

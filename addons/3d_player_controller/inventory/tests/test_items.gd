@@ -385,8 +385,17 @@ func test_drops_are_named_per_peer_and_travel_by_rpc() -> void:
 	var config: Dictionary = (inventory.get_script() as Script).get_rpc_config()
 	assert_eq(config["_spawn_dropped"]["rpc_mode"], MultiplayerAPI.RPC_MODE_ANY_PEER, "Any peer's drop lands in every world")
 	assert_true(config["_spawn_dropped"]["call_local"])
-	assert_eq(config["_sync_equipment"]["rpc_mode"], MultiplayerAPI.RPC_MODE_AUTHORITY, "Equipment is the authority's word")
-	assert_true(config["_sync_equipment"]["call_local"])
+	assert_false(config.has("_sync_equipment"), "Equipment is no RPC: it rides the PlayerSynchronizer as synced_equipment")
+	var player_state: SceneState = (load("res://addons/3d_player_controller/scenes/player.tscn") as PackedScene).get_state()
+	var synced: bool = false
+	for i: int in player_state.get_node_count():
+		if player_state.get_node_name(i) != "PlayerSynchronizer":
+			continue
+		for j: int in player_state.get_node_property_count(i):
+			if player_state.get_node_property_name(i, j) == "replication_config":
+				var config_resource: SceneReplicationConfig = player_state.get_node_property_value(i, j)
+				synced = config_resource.get_properties().has(NodePath("Hud/Inventory:synced_equipment"))
+	assert_true(synced, "and player.tscn's PlayerSynchronizer carries it")
 
 
 ## A peer re-creates equipment from any scene the loader knows, not only a .tscn: the sword in a game is often

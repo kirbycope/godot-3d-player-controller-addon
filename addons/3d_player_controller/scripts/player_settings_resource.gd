@@ -56,6 +56,14 @@ func _set(property: StringName, value: Variant) -> bool:
 
 
 ## Returns the shared settings instance, loading it from disk the first time.
+## Puts the controls back to the defaults a new game starts on: the scene's own layout (Tears of the Kingdom in
+## the addon) and the on-screen controls on Auto. A game calls it on New Game, so a layout or HUD mode picked in
+## an earlier game does not carry in; Continue keeps them.
+func reset_controls() -> void:
+	control_scheme_name = ""
+	hud_mode = HudMode.AUTO
+
+
 static func load_or_create() -> PlayerSettingsResource:
 	if _cached == null:
 		if ResourceLoader.exists(SAVE_PATH):

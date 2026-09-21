@@ -1,6 +1,8 @@
 class_name Player
 extends CharacterBody3D
 
+const CLICK_MARKER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/vfx/click_marker.tscn") ## Dropped where a click-to-move click lands: the marker from the Guild Wars Heroes Island project.
+
 signal state_changed(from_state: int, to_state: int) ## Emitted when [member current_state] changes.
 signal ride_started(rideable: Node3D) ## Emitted when the Player gets on a rideable.
 signal ride_ended(rideable: Node3D) ## Emitted when the Player gets off it.
@@ -53,8 +55,10 @@ var uses_mouse: bool: ## Whether the mouse is this Player's: only a Player on th
 @export var control_scheme: ControlScheme = PlayerControls.DEFAULT_SCHEME:
 	set(value):
 		control_scheme = value
-		if is_node_ready() and controls and is_multiplayer_authority():
+		# The HUD readies before the Player, so a scheme set from the Player's own _ready (the saved one) reaches it too
+		if controls and controls.is_node_ready() and is_multiplayer_authority():
 			controls.apply_control_scheme(value)
+			_apply_cursor_mode()
 @export_category("Enable Settings")
 @export var enable_flying: bool = false
 @export var enable_paraglider: bool = false
@@ -262,6 +266,21 @@ var held_rigidbody: RigidBody3D: ## The [RigidBody3D] currently carried, if any.
 var current_focus_target: Node3D: ## The body currently locked on to, if any. (Delegates to [Focus].)
 	get:
 		return focus.current_focus_target if focus else null
+var selected_target: Node3D: ## The Target: what abilities land on and the target frame shows. (Delegates to [Focus].)
+	get:
+		return focus.selected_target if focus else null
+
+
+## The cursor the control scheme wants: visible when it frees the cursor ([member ControlScheme.frees_cursor]),
+## captured otherwise. Menus and wheels that borrow the cursor put it back to this.
+func cursor_mode() -> Input.MouseMode:
+	return Input.MOUSE_MODE_VISIBLE if control_scheme and control_scheme.frees_cursor else Input.MOUSE_MODE_CAPTURED
+
+
+func _apply_cursor_mode() -> void:
+	# A menu owns the cursor while it is up (a scheme picked in the settings changes nothing until it closes)
+	if is_multiplayer_authority() and DisplayServer.get_name() != "headless" and not is_paused:
+		Input.mouse_mode = cursor_mode()
 
 
 ## [method Input.is_action_pressed] for this Player: the whole input on a single player, this Player's pad alone
@@ -487,7 +506,8 @@ var _ragdoll_was_enabled: bool = true ## enable_ragdoll before death forced it o
 		if value == sync_locomotion_node:
 			return
 		sync_locomotion_node = value
-		if not is_multiplayer_authority() and animation_tree and is_node_ready():
+		# is_node_ready first: a copy made by duplicate() gets this set before it is in the tree, where authority is unknown
+		if is_node_ready() and not is_multiplayer_authority() and animation_tree:
 			_apply_synced_locomotion_node(value)
 		locomotion_node_changed.emit(value)
 
@@ -503,7 +523,7 @@ var _ragdoll_was_enabled: bool = true ## enable_ragdoll before death forced it o
 @export var sync_blend_position: Vector2 = Vector2.ZERO:
 	set(value):
 		sync_blend_position = value
-		if not is_multiplayer_authority() and animation_tree and is_node_ready():
+		if is_node_ready() and not is_multiplayer_authority() and animation_tree:
 			_apply_synced_blend_position(value)
 
 var display_name: String = "": ## The name over the head (the Steam persona); replicated, so every peer reads it. Empty hides the label.
@@ -537,6 +557,7 @@ func _ready() -> void:
 	if animation_tree:
 		animation_tree.active = true
 		animation_tree.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_PHYSICS
+	_apply_cursor_mode()
 
 	# Spawn state lands before the skeleton and the label exist, so a late joiner applies it here
 	if is_stealthed:
@@ -641,22 +662,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 
-	# [Left Mouse Button] pressed while the cursor is visible -> Start "navigating"
+	# [Left Mouse Button] pressed while the cursor is visible -> Start "navigating", unless the click is on a body,
+	# which is a Target being picked (Focus), not a place to walk to
 	if event is InputEventMouse \
 			and uses_mouse \
 			and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) \
-			and Input.mouse_mode == Input.MOUSE_MODE_VISIBLE:
-		# Find out where the click lands on the player's movement plane
-		var mouse_event: InputEventMouse = event
-		var from: Vector3 = camera.project_ray_origin(mouse_event.position)
-		var to: Vector3 = from + camera.project_ray_normal(mouse_event.position) * 10000.0
-		var movement_plane := Plane(up_direction, global_position.dot(up_direction))
-		var cursor_position: Variant = movement_plane.intersects_ray(from, to)
-		if cursor_position != null:
-			navigation_agent.target_position = cursor_position
-			is_navigating = true
-			if debug.visible:
-				debug.draw_navigation_marker(cursor_position)
+			and Input.mouse_mode == Input.MOUSE_MODE_VISIBLE \
+			and not (focus and focus.body_under((event as InputEventMouse).position)):
+		click_to_move_at((event as InputEventMouse).position)
 
 	# Whistle (action="whistle", key="K", D-Pad Down): the horse and whoever else listens answer; a rideable takes it first
 	if event.is_action_pressed(&"whistle") and not event.is_echo() and not is_riding:
@@ -667,6 +680,24 @@ func _unhandled_input(event: InputEvent) -> void:
 		start_broadcasting()
 	elif event.is_action_released(&"broadcast"):
 		stop_broadcasting()
+
+
+## Walks to where [param screen_position] lands on the Player's movement plane, over the navigation mesh, and drops
+## a [constant CLICK_MARKER_SCENE] there. Nothing happens when the click leaves the plane (the sky).
+func click_to_move_at(screen_position: Vector2) -> void:
+	var from: Vector3 = camera.project_ray_origin(screen_position)
+	var to: Vector3 = from + camera.project_ray_normal(screen_position) * 10000.0
+	var movement_plane := Plane(up_direction, global_position.dot(up_direction))
+	var cursor_position: Variant = movement_plane.intersects_ray(from, to)
+	if cursor_position == null:
+		return
+	navigation_agent.target_position = cursor_position
+	is_navigating = true
+	var marker: Node3D = CLICK_MARKER_SCENE.instantiate()
+	get_parent().add_child(marker)
+	marker.global_position = cursor_position
+	if debug.visible:
+		debug.draw_navigation_marker(cursor_position)
 
 
 ## Called every frame. 'delta' is the elapsed time since the previous frame.

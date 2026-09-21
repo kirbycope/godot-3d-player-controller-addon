@@ -119,8 +119,10 @@ func cast_id(id: StringName) -> void:
 		cast(library.get_ability(id))
 
 
-## Casts [param ability] now, starts its cast bar, or ends it when it is an active toggle.
-func cast(ability: Ability) -> void:
+## Casts [param ability] now, starts its cast bar, or ends it when it is an active toggle. [param at] names what
+## it lands on in place of the focus and the aim ([method Ability.aim_at]), a test range's choice; a game cast leaves
+## it empty and the ability's own targeting decides.
+func cast(ability: Ability, at: Node3D = null) -> void:
 	if ability == null:
 		return
 	if active_toggles.has(ability):
@@ -128,7 +130,9 @@ func cast(ability: Ability) -> void:
 		return
 	if casting or not is_ready(ability):
 		return
+	Ability.aim_at(player, at)
 	if player.health.energy < ability.energy_cost or not ability.can_cast(player):
+		Ability.aim_at(player, null) # refused: the chosen body is forgotten with it
 		return
 	if ability.cast_time <= 0.0:
 		_activate(ability)
@@ -162,6 +166,7 @@ func interrupt_cast() -> void:
 	cast_timer.stop()
 	_hide_cast_bar()
 	_stop_channeling.rpc()
+	Ability.aim_at(player, null)
 	cast_interrupted.emit(ability)
 
 
@@ -199,6 +204,7 @@ func _activate(ability: Ability) -> bool:
 	else:
 		_play(ability, Ability.Phase.CASTING, player.global_position)
 		_land(ability, target, ability.get_impact_position(player))
+	Ability.aim_at(player, null)
 	ability_activated.emit(ability)
 	return true
 
@@ -235,7 +241,10 @@ func _update_label() -> void:
 	var label: Label = player.controls.action_label(&"ability")
 	if label == null:
 		return
-	label.text = active_ability.display_name if active_ability else ""
+	if active_ability:
+		label.text = active_ability.display_name
+	else:
+		player.controls.reset_labels() # nothing in hand: the button keeps the layout's own word for it (Ability, Cast)
 
 
 ## Only runs during a cast that movement may break.

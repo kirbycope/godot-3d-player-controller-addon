@@ -69,6 +69,7 @@ const BUILT_IN_SCHEMES: Array[ControlScheme] = [
 	preload("res://addons/3d_player_controller/resources/control_schemes/half_life.tres"),
 	preload("res://addons/3d_player_controller/resources/control_schemes/metal_gear.tres"),
 	preload("res://addons/3d_player_controller/resources/control_schemes/resident_evil.tres"),
+	preload("res://addons/3d_player_controller/resources/control_schemes/world_of_warcraft.tres"),
 ]
 
 ## Layouts another addon or the game itself has added to the settings menu, in the order they registered.
@@ -139,6 +140,7 @@ const FACE_SLOTS: PackedStringArray = ["button_0", "button_1", "button_2", "butt
 
 ## Where the controls addon keeps Kenney's key faces, which [constant KEY_ART] names.
 const KEY_ART_DIR: String = "res://addons/controls/assets/kenney_nl/Icons/Input Prompts/Keyboard & Mouse/Vector"
+const FREE_CURSOR_FOCUS_GLYPH: String = "keyboard_tab_icon" ## What the Focus slot is drawn as on the keyboard set while a scheme frees the cursor: Tab, the World of Warcraft target key, since the right button is the camera there.
 
 ## The key face for each action this HUD binds a key or a mouse button to ([constant PLAYER_ACTIONS]), by the
 ## glyph's name in [constant KEY_ART_DIR] (the outline is the resting face, the filled one the pressed). A layout
@@ -329,10 +331,13 @@ func bind_slot(slot: String, action: StringName, label: String = "") -> void:
 ## [constant KEY_ART]; a slot carrying an action with no key face there, or nothing, keeps the scene's art.
 ## Before the base has cached the art this only fills the exports, which is what its [method Node._ready] reads.
 func _apply_key_art() -> void:
+	var cursor_free: bool = player != null and player.control_scheme != null and player.control_scheme.frees_cursor
 	for slot: String in SWAPPABLE_SLOTS:
 		if not _scene_key_art.has(slot):
 			_scene_key_art[slot] = slot_art(InputType.KEYBOARD_MOUSE, slot)
-		var art: Array = key_art(get("action_" + slot))
+		var action: StringName = get("action_" + slot)
+		# With the cursor free the right button is the camera drag, and Tab is what taps Focus (see Focus)
+		var art: Array = glyph_art(FREE_CURSOR_FOCUS_GLYPH) if cursor_free and action == &"focus" else key_art(action)
 		if art.is_empty():
 			art = _scene_key_art[slot]
 		if art.size() == 2:
@@ -343,7 +348,11 @@ func _apply_key_art() -> void:
 static func key_art(action_name: StringName) -> Array:
 	if not KEY_ART.has(action_name):
 		return []
-	var glyph: String = KEY_ART[action_name]
+	return glyph_art(KEY_ART[action_name])
+
+
+## The resting and pressed faces of [param glyph], a name in [constant KEY_ART_DIR].
+static func glyph_art(glyph: String) -> Array:
 	if not _key_art_cache.has(glyph):
 		_key_art_cache[glyph] = [
 			load(KEY_ART_DIR.path_join(glyph + "_outline.svg")) as Texture2D,

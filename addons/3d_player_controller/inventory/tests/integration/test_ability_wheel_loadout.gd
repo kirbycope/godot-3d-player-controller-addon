@@ -54,4 +54,4 @@ func test_the_ability_wheel_and_label_follow_the_loadout() -> void:
 	spellbook.clear_active(0)
 	assert_eq(_wheel_names(), [] as Array[String], "An empty loadout empties the wheel")
 	assert_null(player.abilities.active_ability)
-	assert_eq(label.text, "", "Nothing picked, nothing on the label")
+	assert_eq(label.text, "Ability", "Nothing picked: the button keeps the layout's own word for it")

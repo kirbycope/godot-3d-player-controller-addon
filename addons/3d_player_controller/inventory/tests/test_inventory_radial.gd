@@ -140,20 +140,22 @@ class TestPuppetEquipment:
 		puppet.set_multiplayer_authority(2)
 		root.add_child(puppet)
 		await wait_physics_frames(1)
-		puppet.inventory._sync_equipment(PackedStringArray([SWORD_SCENE]), PackedByteArray([1]))
+		puppet.inventory.synced_equipment = {SWORD_SCENE: true} # as the PlayerSynchronizer sets it
 		assert_true(puppet.inventory.has_equipment(Equipment.EquipmentType.SWORD_1H), "The sword is on the puppet's skeleton")
 		assert_true(puppet.equipped_sword_1h, "so the AnimationTree's equipped_* edges hold the stance")
 		var sword: Equipment = puppet.inventory.get_equipment_by_type(Equipment.EquipmentType.SWORD_1H)
 		assert_eq(sword.get_parent().get_parent(), puppet.skeleton)
-		puppet.inventory._sync_equipment(PackedStringArray([SWORD_SCENE]), PackedByteArray([0]))
+		puppet.inventory.synced_equipment = {SWORD_SCENE: false}
 		assert_false(puppet.inventory.has_equipment(Equipment.EquipmentType.SWORD_1H), "Stowed on the authority, stowed here")
 		assert_eq(puppet.inventory.get_all_weapons().size(), 1, "but still carried")
-		puppet.inventory._sync_equipment(PackedStringArray(), PackedByteArray())
+		puppet.inventory.synced_equipment = {}
 		assert_eq(puppet.inventory.get_all_weapons().size(), 0, "Dropped there, gone here")
 
 	func test_the_authority_keeps_its_own_equipment() -> void:
-		player_instance.inventory._sync_equipment(PackedStringArray([SWORD_SCENE]), PackedByteArray([1]))
+		player_instance.inventory.synced_equipment = {SWORD_SCENE: true}
 		assert_false(player_instance.inventory.has_equipment(Equipment.EquipmentType.SWORD_1H), "A sync is for puppets; the authority's list is its own")
+		player_instance.inventory._publish_equipment()
+		assert_eq(player_instance.inventory.synced_equipment, {}, "and what it publishes is what it actually carries")
 
 
 class TestCyclingGuards:

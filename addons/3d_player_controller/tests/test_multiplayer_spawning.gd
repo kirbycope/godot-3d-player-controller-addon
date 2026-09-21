@@ -27,7 +27,7 @@ func _build_branch(root: Node3D) -> void:
 	var player_spawner: PlayerSpawner = PLAYER_SPAWNER.new()
 	player_spawner.name = "PlayerSpawner"
 	player_spawner.spawn_path = NodePath("../Players")
-	player_spawner.player_scene = PLAYER_SCENE
+	player_spawner.add_child(PLAYER_SCENE.instantiate()) # the template every peer's player is a copy of
 	root.add_child(player_spawner)
 	var projectile_spawner: ProjectileSpawner = PROJECTILE_SPAWNER.new()
 	projectile_spawner.name = "ProjectileSpawner"

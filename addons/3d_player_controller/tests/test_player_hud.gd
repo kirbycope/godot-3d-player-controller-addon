@@ -7,7 +7,7 @@ extends GutTest
 const PLAYER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player.tscn")
 const HUD_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/ui/player_hud.tscn")
 const ANIMATION_TREE: AnimationNodeBlendTree = preload("res://addons/3d_player_controller/resources/animation/player_animation_tree.tres")
-const CHILDREN: Array[String] = ["Controls", "Crosshair", "Stamina", "Health", "BossBar", "AmmoReadout", "CastBar", "ThrowChargeBar", "SeekerWheel", "Chat", "Debug", "Inventory", "Abilities", "QuestTracker", "UnderwaterOverlay", "DeathScreen", "Pause", "Settings", "AudioSettings", "ControlsSettings", "VideoSettings", "LobbyManager"]
+const CHILDREN: Array[String] = ["Controls", "Crosshair", "Stamina", "Health", "BossBar", "TargetFrame", "AmmoReadout", "CastBar", "ThrowChargeBar", "SeekerWheel", "Chat", "Debug", "Inventory", "Abilities", "QuestTracker", "UnderwaterOverlay", "DeathScreen", "Pause", "Settings", "AudioSettings", "ControlsSettings", "VideoSettings", "LobbyManager"]
 
 var player: Player
 

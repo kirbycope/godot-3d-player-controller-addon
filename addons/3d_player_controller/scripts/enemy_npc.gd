@@ -14,6 +14,7 @@ extends FollowerNpc
 ## the server; hits from clients relay.
 
 signal aggroed(target: Node3D)
+signal provoked ## A neutral enemy was attacked and turned hostile.
 signal attacked(target: Node3D) ## A melee swing or a shot was started.
 signal struck(body: Node3D) ## The weapon hitbox connected.
 signal headshot(projectile: Projectile) ## A round landed on the head: an outright kill.
@@ -23,6 +24,7 @@ signal returned_home ## Back at the spawn point after the hunted Player died.
 
 const LOCOMOTION_STATE: String = "Locomotion" ## The blend space state; attacks and hit reactions return to it.
 const LOCOMOTION_BLEND_PATH: String = "parameters/Locomotion/blend_position"
+const AGGRO_AREA_THREAT: float = 1.0 ## What walking into the aggro area is worth on the threat table: enough to be hunted, less than any hit.
 
 @export var is_boss: bool = false ## Puts the name and health on the hunted player's HUD boss bar.
 @export var attack_range: float = 1.6 ## Distance the attack lands from: melee reach, or firing range for projectiles.
@@ -42,7 +44,9 @@ const LOCOMOTION_BLEND_PATH: String = "parameters/Locomotion/blend_position"
 @export var sneak_attack_multiplier: float = 1.0 ## A melee hit from a Player this enemy is not hunting lands this many times harder: a takedown from behind.
 @export var footstep_sfx: AudioStream ## Played by the walk and run animations' method tracks.
 
-var target: Node3D ## The Player being hunted; abilities read it through [method Ability.get_target].
+var target: Node3D ## The Player being hunted, the top of the [member threat] table; abilities read it through [method Ability.get_target].
+var threat: Dictionary[Node, float] = {} ## Threat per attacker, the World of Warcraft way: who has hurt or provoked it and by how much. The highest is [member target].
+var _provoked: bool = false ## A neutral that was attacked and turned hostile; revived, it is neutral again.
 var is_returning_home: bool = false ## Walking back to the spawn point with nobody to hunt.
 var patrol_index: int = 0 ## The patrol point walked to next.
 var _patrol_pause: float = 0.0
@@ -89,6 +93,11 @@ var _burn_tick_damage: float = 0.0
 @onready var physical_bone_simulator: PhysicalBoneSimulator3D = $Mannequin_M/Armature/GeneralSkeleton/PhysicalBoneSimulator3D
 @onready var burn_vfx: Node3D = $BurnVFX ## The flame shown while [member is_burning].
 @onready var burn_tick_timer: Timer = $BurnTickTimer ## Ticks the burn damage; its timeout is wired in the scene.
+
+
+## An enemy is hostile unless its scene says neutral; the export is [member FollowerNpc.disposition].
+func _init() -> void:
+	disposition = Focus.Disposition.HOSTILE
 
 
 func _ready() -> void:
@@ -142,6 +151,8 @@ func _physics_process(delta: float) -> void:
 func aggro(who: Node) -> void:
 	if is_dead or not who is Player or target == who or not (who as Player).health.is_alive():
 		return
+	if not threat.has(who):
+		threat[who] = AGGRO_AREA_THREAT # on the table, so the next hit from somebody else is weighed against it
 	if is_instance_valid(target):
 		target.health.died.disconnect(_on_target_died)
 		target.hunted_by(get_path(), false)
@@ -159,6 +170,7 @@ func aggro(who: Node) -> void:
 func lose_target() -> void:
 	if target == null:
 		return
+	threat.clear()
 	_drop_target()
 	is_returning_home = true
 
@@ -206,9 +218,14 @@ func _drop_target() -> void:
 	boss.disengage()
 
 
-## The hunted Player died: turn on another living Player still inside the aggro area, or head home.
+## The hunted Player died: turn on the next on the threat table, else another living Player still inside the
+## aggro area, or head home.
 func _on_target_died() -> void:
+	threat.erase(target)
 	_drop_target()
+	_hunt_top_threat()
+	if target:
+		return
 	for body: Node3D in aggro_area.get_overlapping_bodies():
 		if body is Player and (body as Player).health.is_alive() and not (body as Player).is_stealthed:
 			aggro(body)
@@ -241,9 +258,38 @@ func _return_home(delta: float) -> void:
 
 ## Wired to the AggroArea's body_entered: a Player on foot, or the driver of a vehicle passing through.
 func _on_aggro_area_body_entered(body: Node3D) -> void:
+	if disposition != Focus.Disposition.HOSTILE:
+		return # a neutral waits to be attacked
 	var who: Node = body if body is Player else body.get("player")
 	if who is Player and not (who as Player).is_stealthed and (who == body or (who as Player).riding == body):
-		aggro(who)
+		add_threat(who, AGGRO_AREA_THREAT)
+
+
+## [param who] hurt or provoked this enemy by [param amount]: it goes on the threat table, a neutral turns hostile,
+## and whoever now tops the table is hunted. Called by weapon and projectile hits, abilities and the aggro area.
+func add_threat(who: Node, amount: float) -> void:
+	if is_dead or not who is Player or not (who as Player).health.is_alive():
+		return
+	threat[who] = threat.get(who, 0.0) + amount
+	if disposition == Focus.Disposition.NEUTRAL:
+		disposition = Focus.Disposition.HOSTILE
+		_provoked = true
+		provoked.emit()
+	_hunt_top_threat()
+
+
+## Hunts whoever holds the most threat, dropping the dead from the table on the way.
+func _hunt_top_threat() -> void:
+	var top: Node = null
+	var most: float = -1.0
+	for who: Node in threat.keys():
+		if not is_instance_valid(who) or not (who as Player).health.is_alive():
+			threat.erase(who)
+		elif threat[who] > most:
+			top = who
+			most = threat[who]
+	if top and top != target:
+		aggro(top)
 
 
 ## Called by [HitDetection]; unarmed swings pass the Player itself as the equipment.
@@ -253,7 +299,7 @@ func register_weapon_hit(equipment: Node = null, _hit_node: Node = null) -> void
 	# Caught unaware (not hunting the one who struck): the sneak attack lands harder
 	var damage: float = melee_hit_damage * (sneak_attack_multiplier if target != attacker and sneak_attack_multiplier > 1.0 else 1.0)
 	take_hit(damage, from)
-	aggro(attacker)
+	add_threat(attacker, damage)
 
 
 ## Called by a landing [Projectile]; one on the Head hurtbox kills outright.
@@ -263,7 +309,7 @@ func register_projectile_hit(projectile: Projectile, point: Vector3, _normal: Ve
 		damage = health.max_health
 		headshot.emit(projectile)
 	take_hit(damage, point)
-	aggro(projectile.shooter)
+	add_threat(projectile.shooter, damage)
 
 
 ## Damage counts on the server; clients relay theirs. The hit reaction faces where it came from.
@@ -457,6 +503,9 @@ func load_state(state: Dictionary) -> void:
 ## Undoes [method _apply_death]: the animation drives the body again, it collides, it can be focused and hunts.
 ## Only the authority revives; the flag replicates the rest.
 func revive(at_post: bool = false) -> void:
+	if _provoked:
+		disposition = Focus.Disposition.NEUTRAL
+		_provoked = false
 	if not is_dead or not is_multiplayer_authority():
 		return
 	is_dead = false
@@ -478,6 +527,7 @@ func revive(at_post: bool = false) -> void:
 
 ## The ragdoll takes over and the enemy stops being a threat or a target.
 func _apply_death() -> void:
+	threat.clear()
 	extinguish()
 	caster.interrupt()
 	boss.disengage()

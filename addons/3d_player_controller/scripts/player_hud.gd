@@ -18,6 +18,7 @@ extends Node
 @onready var stamina: TextureProgressBar = $Stamina
 @onready var health: Health = $Health
 @onready var boss_bar: BossBar = $BossBar
+@onready var target_frame: TargetFrame = $TargetFrame
 @onready var ammo_readout: AmmoReadout = $AmmoReadout
 @onready var cast_bar: CastBar = $CastBar
 @onready var throw_charge_bar: ProgressBar = $ThrowChargeBar

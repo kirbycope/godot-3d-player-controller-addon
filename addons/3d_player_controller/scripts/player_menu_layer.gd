@@ -84,7 +84,7 @@ func hide_menu() -> void:
 		player.is_paused = false
 	resume_world()
 	if player == null or player.uses_mouse:
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		Input.mouse_mode = player.cursor_mode() if player else Input.MOUSE_MODE_CAPTURED # captured, or visible under a scheme that frees it
 
 
 ## Runs the scene tree again, whichever menu paused it.

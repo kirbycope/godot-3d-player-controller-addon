@@ -50,6 +50,10 @@ extends Resource
 ## Focus locks on to a target, Breath of the Wild style. Off, Focus is a free over-the-shoulder aim, Grand
 ## Theft Auto style. [method Player.lock_on_enabled] is this flag, and [Camera] and [Focus] follow it.
 @export var locks_on: bool = true
+## The cursor stays visible, World of Warcraft style: a click on a body makes it the Target, a Focus tap selects the
+## nearest and then cycles, the cancel action or a click on nothing clears it, and right-drag turns the camera. Off,
+## the cursor is captured and Focus is held ([Focus]). [method Player.cursor_mode] is this flag.
+@export var frees_cursor: bool = false
 
 
 ## The slot-to-action mapping [method PlayerControls.apply_control_scheme] applies, keyed by the slot's export

@@ -670,6 +670,9 @@ properties/39/replication_mode = 2
 properties/40/path = NodePath(".:emote_spine_blend")
 properties/40/spawn = true
 properties/40/replication_mode = 2
+properties/41/path = NodePath("Hud/Inventory:synced_equipment")
+properties/41/spawn = true
+properties/41/replication_mode = 2
 
 [node name="Player" type="CharacterBody3D" unique_id=548622605 node_paths=PackedStringArray("animation_tree") groups=["Focusable", "Player", "Saveable"]]
 script = ExtResource("1_2qx4v")

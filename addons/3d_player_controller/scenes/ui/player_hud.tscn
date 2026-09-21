@@ -27,6 +27,7 @@
 [ext_resource type="Texture2D" uid="uid://ckmfjtaa1iw2p" path="res://addons/controls/assets/kenney_nl/Icons/Input Prompts/PlayStation Series/Vector/playstation_button_circle_filled.svg" id="235_8qiiu"]
 [ext_resource type="Script" uid="uid://ck08322tms20v" path="res://addons/3d_player_controller/scripts/stamina.gd" id="236_12agc"]
 [ext_resource type="Shader" uid="uid://dqf0e65tkjhcf" path="res://addons/3d_player_controller/assets/shaders/underwater_overlay.gdshader" id="261_dd4mk"]
+[ext_resource type="PackedScene" uid="uid://dlx4dimavq18t" path="res://addons/3d_player_controller/scenes/ui/target_frame.tscn" id="target_frame"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_fk680"]
 atlas = ExtResource("228_5acoi")
@@ -157,6 +158,10 @@ script = ExtResource("236_12agc")
 
 [node name="Timer" type="Timer" parent="Stamina" unique_id=204047444]
 one_shot = true
+
+[node name="TargetFrame" parent="." instance=ExtResource("target_frame")]
+editor_description = "The Player's Target: its name, its health tinted by disposition, and who it is hunting. Shown while the Player has a Target (Focus.target_changed), hidden otherwise."
+visible = false
 
 [node name="UnderwaterOverlay" type="CanvasLayer" parent="." unique_id=556784208]
 editor_description = "The full-screen tint while the head is under water; the Swimming state shows and hides it."

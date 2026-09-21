@@ -1,35 +1,43 @@
 @tool
 class_name PlayerSpawner
 extends MultiplayerSpawner
-## Spawns one [member player_scene] per peer under [member MultiplayerSpawner.spawn_path], named by peer id.
+## Spawns one copy of its Player child per peer, named by peer id, under [member MultiplayerSpawner.spawn_path],
+## which is the spawner itself unless the scene points it elsewhere, so a world carries no empty container for them.
 ##
-## The server (also the case offline, where the local id is 1) spawns itself on ready and every peer
-## that connects; the scene replicates to clients through the spawner. [Player] reads its authority from
-## its node name in [code]_enter_tree[/code], so each copy runs input only on the peer that owns it.
-##
-## In the editor it shows the Player's model where they will spawn (an internal child of the spawn point
-## or container, never saved and never present in the game), so a map can be built around them.
+## The Player child is the template: an instance of [code]player.tscn[/code] placed in the world scene, so in the
+## editor it is a real node. Select it, override its properties, add children to it, drag it to where players should
+## appear; its transform is the spawn point. In the game the spawner takes it out of the tree before it readies (no
+## camera, no HUD, no physics from the template itself) and every peer gets a duplicate of it, overrides and added
+## children included. The server (also the case offline, where the local id is 1) spawns itself on ready and every
+## peer that connects; each copy reaches the other peers through the spawner's custom spawn, so a client duplicates
+## its own template. [Player] reads its authority from its node name in [code]_enter_tree[/code], so each copy runs
+## input only on the peer that owns it.
 
 signal local_player_spawned(player: Player) ## The player this peer controls has entered the tree.
 
-@export var player_scene: PackedScene: ## Must be the Player scene (or one inheriting it).
-	set(value):
-		player_scene = value
-		refresh_preview()
-@export var spawn_point: Node3D: ## Optional; players appear here instead of at the container origin.
-	set(value):
-		spawn_point = value
-		refresh_preview()
+var template: Player ## The Player child this spawner copies; out of the tree once the game runs.
 
-var _preview: Node3D
+
+func _init() -> void:
+	if spawn_path.is_empty():
+		spawn_path = ^"."
+
+
+func _enter_tree() -> void:
+	if Engine.is_editor_hint() or template:
+		return
+	# The children are built but not yet in the tree, so the template leaves before its _ready ever runs
+	for child: Node in get_children():
+		if child is Player:
+			template = child
+			remove_child(child)
+			break
 
 
 func _ready() -> void:
 	if Engine.is_editor_hint():
-		refresh_preview()
 		return
-	if player_scene:
-		add_spawnable_scene(player_scene.resource_path)
+	spawn_function = _spawn_copy
 	spawned.connect(_on_spawned)
 	multiplayer.peer_connected.connect(spawn_player)
 	multiplayer.peer_disconnected.connect(despawn_player)
@@ -37,19 +45,28 @@ func _ready() -> void:
 		spawn_player(multiplayer.get_unique_id())
 
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_PREDELETE and is_instance_valid(template) and not template.is_inside_tree():
+		template.free()
+
+
+func _get_configuration_warnings() -> PackedStringArray:
+	for child: Node in get_children():
+		if child is Player:
+			return []
+	return ["No Player child: add an instance of player.tscn under this spawner. It is the template every peer's player is a copy of, and where it stands is the spawn point."]
+
+
 ## Server only: adds the player node for [param peer_id]; the spawner replicates it.
 func spawn_player(peer_id: int) -> void:
-	if not multiplayer.is_server() or player_scene == null:
+	if not multiplayer.is_server() or template == null:
 		return
 	var container: Node = get_node(spawn_path)
 	if container.has_node(str(peer_id)):
 		return
-	var player: Player = player_scene.instantiate()
-	player.name = str(peer_id)
-	if spawn_point:
-		player.position = spawn_point.global_position
-	container.add_child(player)
-	_on_spawned(player)
+	var player: Player = spawn(peer_id) as Player
+	if player:
+		_on_spawned(player)
 
 
 func despawn_player(peer_id: int) -> void:
@@ -63,34 +80,21 @@ func get_local_player() -> Player:
 	return get_node(spawn_path).get_node_or_null(str(multiplayer.get_unique_id())) as Player
 
 
+## A copy of the template named for [param peer_id], the same on every peer (this is the spawner's spawn_function).
+func _spawn_copy(peer_id: Variant) -> Node:
+	# duplicate() copies every SubViewport's size onto the copy after its stretching container already owns that
+	# size, which the engine warns about. Stretching pauses on the template around the copy and resumes on both.
+	var stretching: Array[Node] = template.find_children("*", "SubViewportContainer", true, false).filter(func(c: Node) -> bool: return (c as SubViewportContainer).stretch)
+	for container: Node in stretching:
+		(container as SubViewportContainer).stretch = false
+	var player: Player = template.duplicate() as Player
+	for container: Node in stretching:
+		(container as SubViewportContainer).stretch = true
+		(player.get_node(template.get_path_to(container)) as SubViewportContainer).stretch = true
+	player.name = str(peer_id)
+	return player
+
+
 func _on_spawned(node: Node) -> void:
 	if node is Player and node.is_multiplayer_authority():
 		local_player_spawned.emit(node)
-
-
-## Editor only: rebuilds the model shown at the spawn point.
-func refresh_preview() -> void:
-	if is_instance_valid(_preview):
-		_preview.get_parent().remove_child(_preview)
-		_preview.free()
-	_preview = null
-	if not Engine.is_editor_hint() or not is_inside_tree() or player_scene == null:
-		return
-	var parent: Node = spawn_point if spawn_point else get_node_or_null(spawn_path)
-	if parent == null:
-		return
-	_preview = make_preview()
-	if _preview:
-		parent.add_child(_preview, false, Node.INTERNAL_MODE_FRONT)
-
-
-## The Player's visual model on its own (no script, camera, HUD or physics) for the editor preview;
-## null when [member player_scene] has no PlayerModel child.
-func make_preview() -> Node3D:
-	var player: Node = player_scene.instantiate()
-	var model: Node3D = player.get_node_or_null("PlayerModel") as Node3D
-	if model:
-		player.remove_child(model)
-		model.name = "PlayerPreview"
-	player.free()
-	return model

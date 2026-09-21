@@ -84,7 +84,7 @@ func _on_hold_timer_timeout() -> void:
 func _close() -> void:
 	hide()
 	if player.uses_mouse:
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		Input.mouse_mode = player.cursor_mode()
 	player.crosshair.show()
 	if hovered_index != -1:
 		equip_item(hovered_index)

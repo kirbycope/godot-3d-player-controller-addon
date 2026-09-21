@@ -1,3 +1,4 @@
+@tool # so an ability answers in the editor too, where an AbilityEntry names itself by get_id; a script inheriting this is a tool script as well
 class_name Ability
 extends Resource
 ## A World of Warcraft style ability: the Player casts it from the ability wheel, NPCs through an NPC caster.
@@ -7,7 +8,9 @@ extends Resource
 ## applies the effect and says what to play. [method spawn_phase] is the one place phase VFX/SFX and bolts come from.
 
 enum Phase { CHANNELING, CASTING, IMPACT } ## Channeling runs for the cast time, casting fires on the caster when the effect lands, impact lands at [method get_impact_position].
-enum Target { SELF, FOCUS } ## SELF lands on the caster; FOCUS lands on the Player's locked-on target (an NPC's `target`), else on whatever the crosshair points at, else where the Player aims.
+## What an ability may land on, as bits of [member target_kinds]: the caster, or a body that is friendly, neutral or
+## hostile to it ([method Focus.disposition_toward]). A heal is Self and Friendly; a bolt Neutral and Hostile.
+enum Kind { SELF = 1, FRIENDLY = 2, NEUTRAL = 4, HOSTILE = 8 }
 enum CastStyle { NONE, FORWARD, UPWARD, SWEEPING_SIDEWAYS, SWEEPING_UPWARD, POWER_UP } ## The cast clip played when the effect lands; NONE plays no animation.
 enum Element { FIRE = 1, WATER = 2 } ## Bits of [member elements]: what the impact does to the world around it.
 
@@ -15,6 +18,7 @@ const BURN_SECONDS: float = 3.0 ## Fire sets what stands in it ablaze for this l
 const BURN_DAMAGE_PER_SECOND: float = 5.0 ## What burning costs per second, in ticks, over [constant BURN_SECONDS].
 
 const SPELL_PROJECTILE_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/projectile/spell.tscn")
+const CAST_TARGET_META: StringName = &"cast_target" ## Where [method aim_at] keeps the body a caster was told to cast at.
 const SPELL_CLIP_GROUPS: Array[String] = ["Shield", "GreatSword"] ## Locomotion groups with their own spell clips: a Spell Casting channel, a Spell Cast and a Power Up.
 ## The standing one-handed clip for each style; unarmed has no power up clip, so the upward cast stands in.
 const STANDING_CAST_STATES: Dictionary = {
@@ -36,7 +40,8 @@ const STANDING_CAST_STATES: Dictionary = {
 @export var is_toggle: bool = false ## Stays active until cast again or [method deactivate] is called.
 @export var ends_on_attack: bool = false ## Active toggles end when the Player attacks or fires a weapon.
 @export var fx_lifetime: float = 3.0 ## Seconds a one-shot casting or impact VFX instance stays before it is freed.
-@export var target_mode: Target = Target.SELF
+@export_flags("Self", "Friendly", "Neutral", "Hostile") var target_kinds: int = Kind.SELF ## Who it may land on; see [enum Kind].
+@export var auto_target: bool = false ## With nothing fitting selected, a Player's cast takes the nearest fitting body within [member cast_range]; off, it goes where the Player aims, so a fire spell can burn the grass ahead.
 @export var cast_range: float = 12.0 ## NPC casters use it only with their target this close.
 @export var cast_style: CastStyle = CastStyle.NONE ## The cast clip played when the effect lands, picked per weapon group by [method get_cast_state]; a timed cast holds the group's Spell Casting channel first.
 @export_group("Environment", "element")
@@ -155,17 +160,66 @@ static func burn_around(tree: SceneTree, at: Vector3, radius: float) -> void:
 			body.call(&"burn", BURN_SECONDS, BURN_DAMAGE_PER_SECOND)
 
 
-## The node the impact lands on: the caster itself, the Player's focus target (or, with nothing locked on, whatever
-## the crosshair ray points at that can take a hit, so a spell fires forward like a projectile), or an NPC's `target`.
+## Tells [param caster] what its next cast lands on, in place of its focus, its aim or an NPC's target; null lets
+## those decide again. A test range's way of casting at a chosen body ([method Abilities.cast] and
+## [method NpcCaster.cast] take it as their second argument), and the casters clear it once the effect has landed.
+static func aim_at(caster: Node3D, target: Node3D) -> void:
+	if target:
+		caster.set_meta(CAST_TARGET_META, target)
+	elif caster.has_meta(CAST_TARGET_META):
+		caster.remove_meta(CAST_TARGET_META)
+
+
+## The body [method aim_at] named for [param caster], or null when it names none.
+static func chosen_target(caster: Node3D) -> Node3D:
+	if caster == null or not caster.has_meta(CAST_TARGET_META):
+		return null
+	var chosen: Variant = caster.get_meta(CAST_TARGET_META)
+	return chosen if chosen is Node3D and is_instance_valid(chosen) else null
+
+
+## True when [param body] is one of the [member target_kinds] for [param caster]: the caster itself, or a body of a
+## fitting disposition toward it.
+func accepts(body: Node3D, caster: Node3D) -> bool:
+	if not is_instance_valid(body):
+		return false
+	if body == caster:
+		return target_kinds & Kind.SELF != 0
+	match Focus.disposition_toward(body, caster):
+		Focus.Disposition.HOSTILE:
+			return target_kinds & Kind.HOSTILE != 0
+		Focus.Disposition.NEUTRAL:
+			return target_kinds & Kind.NEUTRAL != 0
+		_:
+			return target_kinds & Kind.FRIENDLY != 0
+
+
+## The node the impact lands on. The body the caster was told to cast at ([method aim_at]) wins. For a Player it
+## is then their Target when it fits ([member target_kinds]), else themselves when Self fits (a heal with an enemy
+## selected lands on the healer), else with [member auto_target] the nearest fitting body within [member cast_range],
+## else whatever the crosshair ray points at when that fits, and null for the aim point. An NPC lands on its own
+## `target` when that fits, else on itself when Self fits, else nothing.
 func get_target(caster: Node3D) -> Node3D:
-	if target_mode == Target.SELF:
-		return caster
+	var chosen: Node3D = chosen_target(caster)
+	if chosen:
+		return chosen
 	if caster is Player:
 		var player: Player = caster as Player
-		if is_instance_valid(player.current_focus_target):
-			return player.current_focus_target
-		return get_aimed_target(player)
-	return caster.get("target") as Node3D
+		var selected: Node3D = player.selected_target
+		if accepts(selected, player):
+			return selected
+		if target_kinds & Kind.SELF:
+			return player
+		if auto_target and player.focus:
+			var nearest: Node3D = player.focus.nearest(cast_range, func(body: Node3D) -> bool: return accepts(body, player))
+			if nearest:
+				return nearest
+		var aimed: Node3D = get_aimed_target(player)
+		return aimed if accepts(aimed, player) else null
+	var own: Node3D = caster.get("target") as Node3D
+	if accepts(own, caster):
+		return own
+	return caster if target_kinds & Kind.SELF else null
 
 
 ## Whatever the Player's crosshair ray points at that has `take_hit`, walking up from the collider; null otherwise.

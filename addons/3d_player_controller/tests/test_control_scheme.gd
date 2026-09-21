@@ -356,3 +356,29 @@ func test_a_slot_is_renamed_even_where_its_binding_is_unchanged() -> void:
 	assert_eq(player.controls.joypad_button_7_label.text, "Stealth")
 	assert_eq(player.controls.joypad_button_8_label.text, "Telescope")
 	assert_eq(player.controls.joypad_button_12_label.text, "Whistle")
+
+
+func test_the_saved_scheme_is_on_the_hud_from_the_first_frame() -> void:
+	var saved: PlayerSettingsResource = PlayerSettingsResource.new()
+	saved.control_scheme_name = "WoW"
+	saved.save()
+	PlayerSettingsResource._cached = null
+	var fresh: Player = PLAYER_SCENE.instantiate()
+	player.get_parent().add_child(fresh)
+	await wait_physics_frames(1)
+	assert_eq(fresh.control_scheme.scheme_name, "WoW", "The Player takes the saved layout in its own _ready")
+	assert_eq(fresh.controls.label_for(fresh.control_scheme, "axis_4_plus", &"focus"), "Target")
+	assert_eq(fresh.controls.action_axis_5_plus, &"", "and the HUD is laid out for it from the start: nothing to shoot")
+	assert_eq(fresh.controls.action_button_3, &"ability", "Cast on the top face")
+	fresh.control_scheme = preload("res://addons/3d_player_controller/resources/control_schemes/tears_of_the_kingdom.tres")
+	fresh.queue_free()
+
+
+func test_reset_controls_is_the_new_game_default() -> void:
+	var settings: PlayerSettingsResource = PlayerSettingsResource.new()
+	settings.control_scheme_name = "WoW"
+	settings.hud_mode = PlayerSettingsResource.HudMode.SHOWN
+	settings.reset_controls()
+	assert_eq(settings.control_scheme_name, "", "No layout picked: the scene's own")
+	assert_null(settings.picked_scheme())
+	assert_eq(settings.hud_mode, PlayerSettingsResource.HudMode.AUTO, "and the on-screen controls on Auto")

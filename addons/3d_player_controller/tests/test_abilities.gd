@@ -135,9 +135,10 @@ func test_heal_lands_on_a_locked_on_player_instead_of_the_caster() -> void:
 	await wait_physics_frames(2)
 	friend.health.health = 30.0
 	player.focus.current_focus_target = friend
+	assert_eq(player.selected_target, friend, "Held Focus is the Target")
 	heal.cast_time = 0.0
 	abilities.cast(heal)
-	assert_almost_eq(friend.health.health, 80.0, 0.01, "The locked-on player is healed")
+	assert_almost_eq(friend.health.health, 80.0, 0.01, "The targeted player is healed")
 	assert_eq(player.health.health, player.health.max_health, "The caster is untouched")
 	assert_true(player.is_in_group("Focusable"), "Players can be locked on to, so they can be healed")
 
@@ -287,7 +288,7 @@ class BoltAbility extends Ability:
 class FocusBolt extends Ability:
 	var damage: float = 20.0
 	func _init() -> void:
-		target_mode = Target.FOCUS
+		target_kinds = Kind.NEUTRAL | Kind.HOSTILE
 	func impact(caster: Node3D, target: Node3D) -> void:
 		if is_instance_valid(target) and target.has_method("take_hit"):
 			target.take_hit(damage, caster.global_position)
@@ -334,9 +335,9 @@ func test_non_homing_bolt_flies_to_where_the_target_was() -> void:
 	assert_lt(abilities.fx_root.get_child(3).global_position.distance_to(Vector3(4.0, 0.0, 0.0)), 1.5, "Impact lands at the original aim point")
 
 
-func test_focus_mode_falls_back_to_the_aim_point_without_a_lock() -> void:
+func test_a_hostile_spell_falls_back_to_the_aim_point_without_a_target() -> void:
 	var aimed := Ability.new()
-	aimed.target_mode = Ability.Target.FOCUS
+	aimed.target_kinds = Ability.Kind.HOSTILE
 	assert_null(aimed.get_target(player))
 	var at: Vector3 = aimed.get_impact_position(player)
 	assert_gt(at.distance_to(player.global_position), 5.0, "With nothing locked on the impact lands along the aim ray")
