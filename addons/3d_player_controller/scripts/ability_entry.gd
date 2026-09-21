@@ -5,38 +5,28 @@ extends Node3D
 ## One ability in an [AbilityLibrary]: a node carrying the [Ability] resource, so the library's contents are nodes a
 ## project can see and add to in the editor (instance the library scene, make its children editable, add an entry).
 ##
-## In the editor the entry shows what it holds: it takes the ability's name, and under itself it puts the ability's
-## icon, its name and a live instance of its casting and impact VFX, so the library scene is a gallery of every spell.
-## Those previews are never saved (they carry no owner) and never made in the running game; there the entry is only
-## the resource it names.
+## In the editor it takes the ability's name when it still has a default one, and the inspector shows the ability
+## resource in place.
 ##
 ## It can also fire the ability in the editor, between the two nodes the library's [member AbilityLibrary.test_caster]
 ## and [member AbilityLibrary.test_target] name in a test scene (a Player and an EnemyNpc, say): the two buttons in the
 ## inspector play the channeling, casting and impact phases from one to the other, a bolt flying between them when
 ## the ability has one. It is the look and sound of the cast, not the gameplay: nothing takes damage.
 
-const PREVIEW: StringName = &"Preview" ## The editor-only children are named from this, so they can be told from anything saved.
-const ICON_HEIGHT: float = 2.4
-const ICON_SIZE: float = 0.005
-const LABEL_HEIGHT: float = 1.9
+const PREVIEW: StringName = &"Preview" ## What a cast's VFX and audio are named under this node, so they can be told from anything saved.
 const HAND_HEIGHT: float = 1.3 ## Where a cast leaves a caster with no hand anchor, above its origin.
 const CHEST_HEIGHT: float = 1.0 ## Where a bolt lands on a target, above its origin.
 
 @export var ability: Ability: ## The ability this entry puts in the library; its [method Ability.get_id] is its name there.
 	set(value):
 		ability = value
-		if Engine.is_editor_hint():
-			_refresh_preview()
+		if Engine.is_editor_hint() and ability and (String(name).begins_with("AbilityEntry") or String(name).begins_with("Node3D")):
+			name = _entry_name(ability)
 
 @export_tool_button("Cast from caster to target", "Play") var cast_forward: Callable = _cast_forward
 @export_tool_button("Cast from target to caster", "PlayBackwards") var cast_back: Callable = _cast_back
 
 var _casting: bool = false
-
-
-func _ready() -> void:
-	if Engine.is_editor_hint():
-		_refresh_preview()
 
 
 func _get_configuration_warnings() -> PackedStringArray:
@@ -121,41 +111,6 @@ func _cast_back() -> void:
 		push_warning("AbilityEntry: set test_caster and test_target on the AbilityLibrary above this entry first.")
 		return
 	preview_cast(library.test_target, library.test_caster)
-
-
-## Rebuilds the editor-only children: the icon and name over the spot, the casting and impact VFX on it.
-func _refresh_preview() -> void:
-	for child: Node in get_children():
-		if String(child.name).begins_with(String(PREVIEW)):
-			child.free()
-	if ability == null:
-		return
-	if String(name).begins_with("AbilityEntry") or String(name).begins_with("Node3D") or name.is_empty():
-		name = _entry_name(ability)
-	var label: Label3D = Label3D.new()
-	label.name = PREVIEW + "Name"
-	label.text = ability.display_name if not ability.display_name.is_empty() else String(ability.get_id())
-	label.position.y = LABEL_HEIGHT
-	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	label.font_size = 48
-	label.pixel_size = 0.005
-	add_child(label)
-	if ability.icon:
-		var icon: Sprite3D = Sprite3D.new()
-		icon.name = PREVIEW + "Icon"
-		icon.texture = ability.icon
-		icon.modulate = ability.icon_color
-		icon.position.y = ICON_HEIGHT
-		icon.pixel_size = ICON_SIZE
-		icon.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		add_child(icon)
-	for phase: Ability.Phase in [Ability.Phase.CASTING, Ability.Phase.IMPACT]:
-		var scene: PackedScene = ability.get_vfx(phase)
-		if scene == null:
-			continue
-		var vfx: Node = scene.instantiate()
-		vfx.name = PREVIEW + Ability.Phase.keys()[phase].capitalize()
-		add_child(vfx)
 
 
 ## The node name for [param of]: its display name in PascalCase, or its id.
