@@ -44,11 +44,11 @@ func after_each() -> void:
 ## A Player whose starting spells are cleared, with the demo tree and some points.
 func _spawn_player(points: int = 3) -> Player:
 	var spawned: Player = PLAYER_SCENE.instantiate()
-	spawned.get_node("Inventory").save_path = TEST_SAVE
+	spawned.get_node("Hud/Inventory").save_path = TEST_SAVE
 	var none: Array[Ability] = []
-	spawned.get_node("Abilities").abilities = none
-	spawned.get_node("Abilities").active_ability = null
-	var book: Spellbook = spawned.get_node("Inventory/Spellbook")
+	spawned.get_node("Hud/Abilities").abilities = none
+	spawned.get_node("Hud/Abilities").active_ability = null
+	var book: Spellbook = spawned.get_node("Hud/Inventory/Spellbook")
 	book.tree = DEMO_TREE
 	book.skill_points = points
 	root.add_child(spawned)
@@ -71,7 +71,7 @@ func _big_tree() -> SpellTree:
 
 func test_starting_spells_are_unlocked_and_on_the_wheel() -> void:
 	var stock: Player = PLAYER_SCENE.instantiate()
-	stock.get_node("Inventory").save_path = TEST_SAVE
+	stock.get_node("Hud/Inventory").save_path = TEST_SAVE
 	root.add_child(stock)
 	await wait_physics_frames(2)
 	var book: Spellbook = stock.inventory.spellbook

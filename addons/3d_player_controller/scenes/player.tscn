@@ -659,10 +659,10 @@ properties/35/replication_mode = 2
 properties/36/path = NodePath(".:is_stealthed")
 properties/36/spawn = true
 properties/36/replication_mode = 2
-properties/37/path = NodePath("Health:health")
+properties/37/path = NodePath("Hud/Health:health")
 properties/37/spawn = true
 properties/37/replication_mode = 2
-properties/38/path = NodePath("Health:energy")
+properties/38/path = NodePath("Hud/Health:energy")
 properties/38/spawn = true
 properties/38/replication_mode = 2
 properties/39/path = NodePath(".:display_name")
@@ -2093,6 +2093,53 @@ autostart = true
 [node name="Hud" parent="." node_paths=PackedStringArray("player") instance=ExtResource("hud_scene")]
 editor_description = "The screen: every 2D thing the Player draws, in scenes/ui/player_hud.tscn. The Player reaches each child through its own properties."
 player = NodePath("..")
+
+[node name="Stamina" parent="Hud" node_paths=PackedStringArray("player")]
+player = NodePath("../..")
+
+[node name="Controls" parent="Hud" node_paths=PackedStringArray("player")]
+player = NodePath("../..")
+
+[node name="Chat" parent="Hud" node_paths=PackedStringArray("player")]
+player = NodePath("../..")
+
+[node name="Debug" parent="Hud" node_paths=PackedStringArray("player")]
+player = NodePath("../..")
+
+[node name="Inventory" parent="Hud" node_paths=PackedStringArray("player")]
+player = NodePath("../..")
+
+[node name="Abilities" parent="Hud" node_paths=PackedStringArray("player", "fx_root", "hand_anchor", "channeling_audio", "casting_audio", "impact_audio")]
+player = NodePath("../..")
+fx_root = NodePath("../../AbilityFx")
+hand_anchor = NodePath("../../PlayerModel/Armature/GeneralSkeleton/SpellHand")
+channeling_audio = NodePath("../../AbilityFx/ChannelingAudio")
+casting_audio = NodePath("../../AbilityFx/CastingAudio")
+impact_audio = NodePath("../../AbilityFx/ImpactAudio")
+
+[node name="SeekerWheel" parent="Hud" node_paths=PackedStringArray("player")]
+player = NodePath("../..")
+
+[node name="Pause" parent="Hud" node_paths=PackedStringArray("player")]
+player = NodePath("../..")
+
+[node name="Settings" parent="Hud" node_paths=PackedStringArray("player")]
+player = NodePath("../..")
+
+[node name="AudioSettings" parent="Hud" node_paths=PackedStringArray("player")]
+player = NodePath("../..")
+
+[node name="ControlsSettings" parent="Hud" node_paths=PackedStringArray("player")]
+player = NodePath("../..")
+
+[node name="VideoSettings" parent="Hud" node_paths=PackedStringArray("player")]
+player = NodePath("../..")
+
+[node name="LobbyManager" parent="Hud" node_paths=PackedStringArray("player")]
+player = NodePath("../..")
+
+[node name="DeathScreen" parent="Hud" node_paths=PackedStringArray("player")]
+player = NodePath("../..")
 
 [node name="AbilityFx" type="Node3D" parent="." unique_id=164144031]
 editor_description = "Where the spell audio lives: channelling, casting and impact, kept together so Abilities can fire them by name."

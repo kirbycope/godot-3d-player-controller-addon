@@ -56,9 +56,11 @@ func test_the_animation_graph_is_the_shared_resource() -> void:
 	assert_true(player.animation_tree.active)
 
 
-func test_the_hud_scene_opens_on_its_own() -> void:
+func test_the_hud_scene_holds_the_whole_screen_and_nothing_else() -> void:
+	# Built on its own the HUD has no Player above it, so it is looked at rather than run: its panels only work under a Player.
 	var hud: PlayerHud = HUD_SCENE.instantiate()
-	add_child_autofree(hud)
-	await wait_process_frames(1)
 	assert_null(hud.player, "Nothing above it: no Player")
 	assert_eq(hud.get_child_count(), CHILDREN.size())
+	for child: String in CHILDREN:
+		assert_not_null(hud.get_node_or_null(child), child + " is in the HUD scene")
+	hud.free()

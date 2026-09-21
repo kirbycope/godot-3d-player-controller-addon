@@ -1,4 +1,4 @@
-[gd_scene load_steps=30 format=3 uid="uid://z9l35k7cy8z3q"]
+[gd_scene format=3 uid="uid://c25vl8otl1rj5"]
 
 [ext_resource type="Script" path="res://addons/3d_player_controller/scripts/player_hud.gd" id="1_hud"]
 [ext_resource type="PackedScene" uid="uid://5n75g14s56d" path="res://addons/3d_player_controller/scenes/ui/player_controls.tscn" id="210_hshj8"]
@@ -43,9 +43,8 @@ shader_parameter/vignette_strength = 0.35
 editor_description = "Everything the Player draws on the screen: the on-screen controls, the readouts and bars, the chat and debug panels, the inventory, the abilities, and every menu and screen. Each child's player export points two levels up, at the Player this hangs under."
 script = ExtResource("1_hud")
 
-[node name="Controls" parent="." unique_id=1181235604 node_paths=PackedStringArray("player") instance=ExtResource("210_hshj8")]
+[node name="Controls" parent="." unique_id=1181235604 instance=ExtResource("210_hshj8")]
 editor_description = "The on-screen input hints and the button mapping, from the controls addon. Player.controls is this node, and a world prompt names its bottom-action button."
-player = NodePath("../..")
 
 [node name="BossBar" parent="." unique_id=544394449 instance=ExtResource("211_aioe1")]
 editor_description = "The name and health of the boss this player is fighting, across the top of the screen. Boss drives it. It is its own scene rather than part of the Controls HUD because a boss's health is a readout of an NPC, not a hint about what a button does; remove it and nothing breaks."
@@ -62,65 +61,49 @@ editor_description = "The ability being cast and how far through it is, under th
 editor_description = "How far the held object's throw has charged, under the crosshair. HeldObject drives it and hides it; remove it and nothing breaks."
 visible = false
 
-[node name="Chat" parent="." unique_id=1421766685 node_paths=PackedStringArray("player") instance=ExtResource("214_2wrkp")]
+[node name="Chat" parent="." unique_id=1421766685 instance=ExtResource("214_2wrkp")]
 editor_description = "The text chat window. Copes with no Steamworks autoload, so a project without Steam and a web export still run."
 visible = false
-player = NodePath("../..")
 
-[node name="Debug" parent="." unique_id=2032410064 node_paths=PackedStringArray("player") instance=ExtResource("215_xpqqc")]
+[node name="Debug" parent="." unique_id=2032410064 instance=ExtResource("215_xpqqc")]
 editor_description = "The debug overlay: state, speed, position and the rest, for a build that wants to see them."
 visible = false
-player = NodePath("../..")
 
-[node name="Inventory" parent="." unique_id=509190037 node_paths=PackedStringArray("player") instance=ExtResource("216_aptty")]
+[node name="Inventory" parent="." unique_id=509190037 instance=ExtResource("216_aptty")]
 editor_description = "The bag and what is worn. Owns items, equipment, the crafting side and the pause menu's pages."
-player = NodePath("../..")
 
-[node name="Abilities" parent="." unique_id=1423797243 node_paths=PackedStringArray("player", "fx_root", "hand_anchor", "channeling_audio", "casting_audio", "impact_audio") instance=ExtResource("217_xwswm")]
+[node name="Abilities" parent="." unique_id=1423797243 instance=ExtResource("217_xwswm")]
 editor_description = "The spell and skill set, and the cooldowns behind it."
-player = NodePath("../..")
-fx_root = NodePath("../../AbilityFx")
-hand_anchor = NodePath("../../PlayerModel/Armature/GeneralSkeleton/SpellHand")
-channeling_audio = NodePath("../../AbilityFx/ChannelingAudio")
-casting_audio = NodePath("../../AbilityFx/CastingAudio")
-impact_audio = NodePath("../../AbilityFx/ImpactAudio")
 abilities = Array[ExtResource("218_c4oi1")]([ExtResource("219_lgcvn"), ExtResource("220_p3m8d")])
 
-[node name="SeekerWheel" parent="." unique_id=1372493209 node_paths=PackedStringArray("player") instance=ExtResource("221_8xbw4")]
+[node name="SeekerWheel" parent="." unique_id=1372493209 instance=ExtResource("221_8xbw4")]
 editor_description = "The second radial menu on the Seeker button: ammunition kinds while aiming, throwables otherwise."
-player = NodePath("../..")
 
-[node name="Pause" parent="." unique_id=498429169 node_paths=PackedStringArray("player") instance=ExtResource("222_n6coi")]
+[node name="Pause" parent="." unique_id=498429169 instance=ExtResource("222_n6coi")]
 editor_description = "The pause menu and the layer every other menu sits under."
 visible = false
 inventory_screen_scene = "res://addons/3d_player_controller/inventory/scenes/inventory_screen.tscn"
 spells_screen_scene = "res://addons/3d_player_controller/inventory/scenes/spells_screen.tscn"
-player = NodePath("../..")
 
-[node name="Settings" parent="." unique_id=955686872 node_paths=PackedStringArray("player") instance=ExtResource("223_70l8d")]
+[node name="Settings" parent="." unique_id=955686872 instance=ExtResource("223_70l8d")]
 editor_description = "The settings menu the pause menu opens, and the way through to Audio, Controls and Video."
 visible = false
-player = NodePath("../..")
 
-[node name="AudioSettings" parent="." unique_id=1733087110 node_paths=PackedStringArray("player") instance=ExtResource("224_itfik")]
+[node name="AudioSettings" parent="." unique_id=1733087110 instance=ExtResource("224_itfik")]
 editor_description = "The volume sliders, saved to PlayerSettingsResource on this machine."
 visible = false
-player = NodePath("../..")
 
-[node name="ControlsSettings" parent="." unique_id=1813716657 node_paths=PackedStringArray("player") instance=ExtResource("225_ehxtl")]
+[node name="ControlsSettings" parent="." unique_id=1813716657 instance=ExtResource("225_ehxtl")]
 editor_description = "The on-screen controls mode and the pad layout, saved to PlayerSettingsResource on this machine."
 visible = false
-player = NodePath("../..")
 
-[node name="VideoSettings" parent="." unique_id=1733087111 node_paths=PackedStringArray("player") instance=ExtResource("226_dcnid")]
+[node name="VideoSettings" parent="." unique_id=1733087111 instance=ExtResource("226_dcnid")]
 editor_description = "VSync, UI scale, toon shading and the anti-aliasing options, applied through PlayerSettingsResource.apply_video_settings."
 visible = false
-player = NodePath("../..")
 
-[node name="LobbyManager" parent="." unique_id=1733087115 node_paths=PackedStringArray("player") instance=ExtResource("227_7355m")]
+[node name="LobbyManager" parent="." unique_id=1733087115 instance=ExtResource("227_7355m")]
 editor_description = "The Steam lobby: creating one, joining one, and keeping the member list."
 visible = false
-player = NodePath("../..")
 
 [node name="Crosshair" type="TextureRect" parent="." unique_id=1819190414]
 editor_description = "The aiming reticle, shown while a firearm or bow is up and hidden while the hands are blocked."
@@ -143,16 +126,15 @@ texture = SubResource("AtlasTexture_fk680")
 editor_description = "Hit points, damage and death. Its died signal starts the RespawnTimer through the death screen."
 max_energy = 100.0
 
-[node name="DeathScreen" parent="." unique_id=31608180 node_paths=PackedStringArray("player") instance=ExtResource("231_eaeif")]
+[node name="DeathScreen" parent="." unique_id=31608180 instance=ExtResource("231_eaeif")]
 editor_description = "The screen shown on death, counting the RespawnTimer down. Wired to Health.died and Player.respawned."
 visible = false
-player = NodePath("../..")
 
 [node name="QuestTracker" parent="." unique_id=1940954794 instance=ExtResource("234_231h3")]
 editor_description = "The objectives list in the corner, following the QuestLog."
 visible = false
 
-[node name="Stamina" type="TextureProgressBar" parent="." unique_id=1209274681 node_paths=PackedStringArray("player")]
+[node name="Stamina" type="TextureProgressBar" parent="." unique_id=1209274681]
 editor_description = "The stamina bar and the pool behind it, spent by sprinting, climbing and gliding."
 visible = false
 anchors_preset = 8
@@ -172,7 +154,6 @@ rounded = true
 fill_mode = 4
 texture_progress = ExtResource("235_8qiiu")
 script = ExtResource("236_12agc")
-player = NodePath("../..")
 
 [node name="Timer" type="Timer" parent="Stamina" unique_id=204047444]
 one_shot = true

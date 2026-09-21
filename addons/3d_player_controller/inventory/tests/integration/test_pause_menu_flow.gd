@@ -120,7 +120,7 @@ func test_the_start_action_closes_the_inventory_and_unpauses() -> void:
 
 func test_the_spells_button_hides_without_a_spellbook() -> void:
 	var bare: Player = PLAYER_SCENE.instantiate()
-	bare.get_node("Inventory/Spellbook").free()
+	bare.get_node("Hud/Inventory/Spellbook").free()
 	root.add_child(bare)
 	await wait_physics_frames(3)
 	var bare_pause: Node = bare.pause

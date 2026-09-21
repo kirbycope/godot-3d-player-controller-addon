@@ -53,7 +53,7 @@ func after_each() -> void:
 
 func _spawn_player() -> Player:
 	var spawned: Player = PLAYER_SCENE.instantiate()
-	spawned.get_node("Inventory").save_path = TEST_SAVE
+	spawned.get_node("Hud/Inventory").save_path = TEST_SAVE
 	root.add_child(spawned)
 	return spawned
 
@@ -220,8 +220,8 @@ func test_persist_writes_the_file_on_every_change_and_reads_it_on_ready() -> voi
 	await wait_process_frames(1) # the write is deferred to the end of the frame
 	assert_true(FileAccess.file_exists(TEST_SAVE), "Adding saved")
 	var reloaded: Player = PLAYER_SCENE.instantiate()
-	reloaded.get_node("Inventory").save_path = TEST_SAVE
-	reloaded.get_node("Inventory").persist = true
+	reloaded.get_node("Hud/Inventory").save_path = TEST_SAVE
+	reloaded.get_node("Hud/Inventory").persist = true
 	root.add_child(reloaded)
 	await wait_physics_frames(2)
 	assert_eq(reloaded.inventory.count_of(APPLE), 2, "Loaded on ready")
@@ -318,8 +318,8 @@ func test_a_persisted_save_is_applied_once_the_player_is_ready() -> void:
 	inventory.spellbook.set_active(3, HEAL)
 	await wait_process_frames(1)
 	var reloaded: Player = PLAYER_SCENE.instantiate()
-	reloaded.get_node("Inventory").save_path = TEST_SAVE
-	reloaded.get_node("Inventory").persist = true
+	reloaded.get_node("Hud/Inventory").save_path = TEST_SAVE
+	reloaded.get_node("Hud/Inventory").persist = true
 	root.add_child(reloaded)
 	await wait_physics_frames(2)
 	assert_true(reloaded.inventory.has_equipment(Equipment.EquipmentType.SWORD_1H), "The sword is back on a skeleton that did not exist when the Inventory was ready")

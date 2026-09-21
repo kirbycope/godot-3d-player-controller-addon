@@ -277,7 +277,7 @@ func test_a_refresh_keeps_the_focus_on_the_unlocked_list_for_pad_players() -> vo
 
 func test_binding_a_player_without_a_spellbook_is_harmless() -> void:
 	var bare: Player = PLAYER_SCENE.instantiate()
-	bare.get_node("Inventory/Spellbook").free()
+	bare.get_node("Hud/Inventory/Spellbook").free()
 	root.add_child(bare)
 	var other: SpellsScreen = SCREEN_SCENE.instantiate()
 	other.player = bare
