@@ -1,16 +1,16 @@
 {
   "controls": {
-    "commit": "3681c4c8e029540341d7191378dbd5d71c1c0450",
-    "pulled": "2026-09-20T02:31:59Z",
+    "commit": "16569a90fb5cc706460c8df7806ee9ab34fea8af",
+    "pulled": "2026-09-21T00:08:51Z",
     "ref": "main",
     "repo": "https://github.com/kirbycope/godot-controls.git",
-    "subject": "Record Godot 4.8's new mipmap import keys"
+    "subject": "Let a slot's key art change live and expose the device an event names"
   },
   "gta": {
-    "commit": "5c517758f41203c3be30959ac26a48ea4efd546f",
-    "pulled": "2026-09-20T02:32:03Z",
+    "commit": "0f6b23df7b315af529dbef0e9743a2a7a4d3bb6f",
+    "pulled": "2026-09-21T00:08:52Z",
     "ref": "main",
     "repo": "https://github.com/kirbycope/gta.git",
-    "subject": "Pull the renamed scheme names and the dropped settings migration"
+    "subject": "Keep the walk-up prompt off a driver's Action button"
   }
 }
