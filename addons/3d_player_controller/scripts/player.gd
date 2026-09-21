@@ -433,7 +433,7 @@ var paraglider: Node3D
 @onready var debug: Debug = $Hud/Debug
 @onready var inventory: Inventory = $Hud/Inventory
 @onready var abilities: Abilities = $Hud/Abilities
-@onready var weapon_audio: WeaponAudio = get_node_or_null("WeaponAudio") as WeaponAudio ## The weapon one-shots (draw, stow, swing, hit); optional.
+@onready var weapon_audio: WeaponAudio = get_node_or_null("SFX_Weapons") as WeaponAudio ## The weapon one-shots (draw, stow, swing, hit); optional.
 @onready var radial_menu: RadialMenu = $Hud/Inventory/RadialMenu
 @onready var navigation_agent: NavigationAgent3D = $NavigationAgent3D
 @onready var pause: PlayerMenuLayer = $Hud/Pause
@@ -476,7 +476,7 @@ var _ragdoll_was_enabled: bool = true ## enable_ragdoll before death forced it o
 @onready var camera: Camera3D = $CameraMount/CameraSpringArm/Camera3D
 @onready var toon_filter: ToonFilter = $CameraMount/CameraSpringArm/Camera3D/ToonFilter ## Screen-space toon shading; a local video setting.
 @onready var state_machine: NodeStateMachine = $NodeStateMachine ## Enables/Disables the scripts that run when various States are entered/exited.
-@onready var audio: Audio = $PlayerAudio
+@onready var audio: Audio = $SFX_Footsteps
 @onready var steam_persona_name: Label3D = $SteamPersonaName
 @onready var voice_chat_indicator: MeshInstance3D = get_node_or_null("VoiceChatIndicator") as MeshInstance3D
 @onready var voice_audio_player: AudioStreamPlayer3D = get_node_or_null("VoiceAudioPlayer") as AudioStreamPlayer3D

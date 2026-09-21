@@ -1,4 +1,4 @@
-[gd_resource type="AnimationNodeBlendTree" load_steps=424 format=3 uid="uid://c8uh3alyfnbd9"]
+[gd_resource type="AnimationNodeBlendTree" format=3 uid="uid://c8uh3alyfnbea"]
 
 [sub_resource type="AnimationNodeBlend2" id="AnimationNodeBlend2_jmy3t"]
 filter_enabled = true
@@ -2141,4 +2141,3 @@ nodes/EmoteStateMachine/position = Vector2(-226.66667, 333.33334)
 nodes/EmoteSpineBlend2/node = SubResource("AnimationNodeBlend2_jmy3t")
 nodes/EmoteSpineBlend2/position = Vector2(66.666664, 186.66667)
 node_connections = [&"output", 0, &"LocomotionTimeScale", &"LocomotionTimeScale", 0, &"EmoteSpineBlend2", &"EmoteSpineBlend2", 0, &"LocomotionStateMachine", &"EmoteSpineBlend2", 1, &"EmoteStateMachine"]
-

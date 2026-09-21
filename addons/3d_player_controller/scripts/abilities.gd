@@ -25,6 +25,27 @@ const PROJECTILE_HEIGHT: float = 1.2 ## Bolts leave the caster at chest height.
 @export var channeling_audio: AudioStreamPlayer3D
 @export var casting_audio: AudioStreamPlayer3D
 @export var impact_audio: AudioStreamPlayer3D
+
+const FX_ROOT_PATH: NodePath = ^"SFX_Ability" ## Where [member fx_root] and the three audio players are looked for under the Player when not wired.
+const HAND_ANCHOR_PATH: NodePath = ^"PlayerModel/Armature/GeneralSkeleton/SpellHand"
+
+
+## Fills whichever of [member fx_root], [member hand_anchor] and the audio players is not wired from the Player's
+## own nodes: SFX_Ability with its ChannelingAudio, CastingAudio and ImpactAudio, and the SpellHand attachment.
+func _wire_from_player() -> void:
+	if player == null:
+		return
+	if fx_root == null:
+		fx_root = player.get_node_or_null(FX_ROOT_PATH) as Node3D
+	if hand_anchor == null:
+		hand_anchor = player.get_node_or_null(HAND_ANCHOR_PATH) as Node3D
+	if fx_root:
+		if channeling_audio == null:
+			channeling_audio = fx_root.get_node_or_null(^"ChannelingAudio") as AudioStreamPlayer3D
+		if casting_audio == null:
+			casting_audio = fx_root.get_node_or_null(^"CastingAudio") as AudioStreamPlayer3D
+		if impact_audio == null:
+			impact_audio = fx_root.get_node_or_null(^"ImpactAudio") as AudioStreamPlayer3D
 @export var abilities: Array[Ability] = [] ## Abilities on the wheel; the first is picked at start.
 @export var active_ability: Ability: ## The ability a tap of "ability" casts; the wheel changes it.
 	set(value):
@@ -44,6 +65,7 @@ var _channeling_vfx: Node3D
 
 
 func _ready() -> void:
+	_wire_from_player()
 	set_physics_process(false)
 	set_process_unhandled_input(is_multiplayer_authority())
 	if not is_multiplayer_authority():

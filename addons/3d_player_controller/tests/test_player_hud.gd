@@ -47,7 +47,7 @@ func test_the_player_still_reaches_every_panel_through_its_properties() -> void:
 func test_each_panel_still_knows_its_player() -> void:
 	for child: String in ["Controls", "Chat", "Debug", "Inventory", "Abilities", "SeekerWheel", "Pause", "Settings", "AudioSettings", "ControlsSettings", "VideoSettings", "LobbyManager", "DeathScreen", "Stamina"]:
 		assert_eq(player.hud.get_node(child).get("player"), player, child + " points two levels up, at the Player")
-	assert_eq(player.abilities.fx_root, player.get_node("AbilityFx"), "The abilities' effects root is still the Player's")
+	assert_eq(player.abilities.fx_root, player.get_node("SFX_Ability"), "The abilities' effects root is still the Player's")
 	assert_eq(player.held_object.throw_charge_bar, player.hud.throw_charge_bar, "The held object's charge bar is the one on the Hud")
 
 

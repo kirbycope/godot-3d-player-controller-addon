@@ -21,8 +21,8 @@ const DOCUMENTED_BRANCHES: Array[String] = [
 	"PlayerModel",
 	"PlayerModel/Armature/GeneralSkeleton",
 	"NodeStateMachine",
-	"WeaponAudio",
-	"AbilityFx",
+	"SFX_Weapons",
+	"SFX_Ability",
 	"Hud",
 ]
 

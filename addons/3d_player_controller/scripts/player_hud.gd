@@ -4,9 +4,14 @@ extends Node
 ## logic. The on-screen controls, the readouts and bars, the chat and debug panels, the inventory and the
 ## abilities, and every menu and screen live here as children; the Player still reaches each of them through
 ## its own properties ([member Player.pause], [member Player.inventory] and the rest), which resolve into this
-## node. Each child keeps its [code]player[/code] export pointed two levels up, at the Player this hangs under.
+## node. player.tscn wires the children (each one's [code]player[/code], the abilities' effects root and audio) as
+## overrides on this instance, which is marked editable so the editor keeps them and the connections from these
+## children; setting [member player] hands it down as well, for a HUD built by hand.
 
-@export var player: Player ## The Player this HUD belongs to.
+@export var player: Player: ## The Player this HUD belongs to; every child with a player of its own is handed it.
+	set(value):
+		player = value
+		_hand_player_down()
 
 @onready var controls: PlayerControls = $Controls
 @onready var crosshair: TextureRect = $Crosshair
@@ -30,3 +35,15 @@ extends Node
 @onready var controls_settings: PlayerMenuLayer = $ControlsSettings
 @onready var video_settings: PlayerMenuLayer = $VideoSettings
 @onready var lobby_manager: PlayerMenuLayer = $LobbyManager
+
+
+func _ready() -> void:
+	_hand_player_down()
+
+
+## Gives [member player] to every child that carries a [code]player[/code] property. Done when the property is set,
+## which player.tscn does before anything is ready, and again at ready for a HUD built by hand.
+func _hand_player_down() -> void:
+	for child: Node in get_children():
+		if &"player" in child:
+			child.set(&"player", player)
