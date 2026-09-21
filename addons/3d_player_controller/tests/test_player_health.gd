@@ -77,7 +77,7 @@ func test_mana_only_regenerates_out_of_combat() -> void:
 
 
 func test_a_round_on_the_head_kills_the_player_outright() -> void:
-	var bullet: Projectile = preload("res://addons/3d_player_controller/scenes/bullet.tscn").instantiate()
+	var bullet: Projectile = preload("res://addons/3d_player_controller/scenes/projectile/bullet.tscn").instantiate()
 	add_child_autofree(bullet)
 	bullet.shooter = null
 	player.register_projectile_hit(bullet, player.global_position + Vector3(0.0, 1.0, 0.3), Vector3.FORWARD)

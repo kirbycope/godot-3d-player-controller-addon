@@ -2,7 +2,7 @@ extends PlayerMenuLayer
 
 @export_file("*.tscn") var inventory_screen_scene: String = "" ## An InventoryScreen scene; when set, the Inventory button shows and opens it.
 @export_file("*.tscn") var spells_screen_scene: String = "" ## A SpellsScreen scene; when set, the Spells button shows and opens it.
-@export_file("*.tscn") var quests_screen_scene: String = "res://addons/3d_player_controller/scenes/quest_screen.tscn" ## A QuestScreen scene; when set, the Quests button shows and opens it.
+@export_file("*.tscn") var quests_screen_scene: String = "res://addons/3d_player_controller/scenes/ui/quest_screen.tscn" ## A QuestScreen scene; when set, the Quests button shows and opens it.
 @export_file("*.tscn") var extra_screen_scene: String = "" ## Any PlayerMenuLayer scene of the game's (a journal, a fish index); when set, the Extra button shows and opens it.
 @export var extra_screen_label: String = "Journal" ## What the Extra button says.
 
@@ -47,6 +47,7 @@ func _instance_screen(scene_path: String, button: Button) -> PlayerMenuLayer:
 		button.hide()
 		return null
 	screen.player = player
+	screen.hide() # a screen's own scene saves visible, so it can be seen in the editor; whoever adds it hides it
 	player.add_child.call_deferred(screen)
 	return screen
 

@@ -8,7 +8,7 @@ extends IntegrationTestBase
 
 const TOON_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/toon_filter.tscn")
 const PLAYER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player.tscn")
-const VIDEO_SETTINGS_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/video_settings.tscn")
+const VIDEO_SETTINGS_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/ui/video_settings.tscn")
 
 var _backup: PackedByteArray
 var _had_file: bool

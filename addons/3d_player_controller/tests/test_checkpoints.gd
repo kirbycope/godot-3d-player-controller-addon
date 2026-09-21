@@ -5,8 +5,8 @@ extends GutTest
 ## a lethal KillZone kills through the same flow and a harmless one only puts the Player back.
 
 const PLAYER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player.tscn")
-const CHECKPOINT_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/checkpoint.tscn")
-const KILL_ZONE_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/kill_zone.tscn")
+const CHECKPOINT_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/prop/checkpoint.tscn")
+const KILL_ZONE_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/prop/kill_zone.tscn")
 
 var root: Node3D
 var player: Player
@@ -117,7 +117,7 @@ func test_a_kill_zone_kills_anything_with_health() -> void:
 	var shape := CollisionShape3D.new()
 	shape.shape = CapsuleShape3D.new()
 	body.add_child(shape)
-	var health: Health = preload("res://addons/3d_player_controller/scenes/health.tscn").instantiate()
+	var health: Health = preload("res://addons/3d_player_controller/scenes/ui/health.tscn").instantiate()
 	body.add_child(health)
 	body.health = health
 	root.add_child(body)

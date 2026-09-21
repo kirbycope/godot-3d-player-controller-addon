@@ -5,7 +5,7 @@ extends GutTest
 ## health it had, a saved corpse stays dead.
 
 const PLAYER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player.tscn")
-const ENEMY_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/enemy_npc.tscn")
+const ENEMY_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/npc/enemy_npc.tscn")
 
 var root: Node3D
 var player: Player

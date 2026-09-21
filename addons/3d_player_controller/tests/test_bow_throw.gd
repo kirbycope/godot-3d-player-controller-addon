@@ -3,7 +3,7 @@ extends GutTest
 ## Purpose: To test bow firing, and that throwing a held object while a bow is equipped does not trigger the bow.
 
 const PLAYER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player.tscn")
-const ARROW_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/arrow.tscn")
+const ARROW_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/projectile/arrow.tscn")
 const BOW_SCRIPT: Script = preload("res://addons/3d_player_controller/scripts/bow.gd")
 const ARROW_SCRIPT: Script = preload("res://addons/3d_player_controller/scripts/arrow.gd")
 

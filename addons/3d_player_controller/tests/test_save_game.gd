@@ -6,8 +6,8 @@ extends GutTest
 ## screen's Continue request loads once the Player is in.
 
 const PLAYER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player.tscn")
-const SAVE_GAME_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/save_game.tscn")
-const CHECKPOINT_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/checkpoint.tscn")
+const SAVE_GAME_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/ui/save_game.tscn")
+const CHECKPOINT_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/prop/checkpoint.tscn")
 const APPLE: Item = preload("res://addons/3d_player_controller/inventory/resources/items/apple.tres")
 const TEST_PATH: String = "user://test_savegame.tres"
 

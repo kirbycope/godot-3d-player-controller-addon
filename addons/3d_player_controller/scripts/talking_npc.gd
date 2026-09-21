@@ -1,17 +1,19 @@
 class_name TalkingNpc
 extends FollowerNpc
-## Somebody to talk to. Walk up to them (or look at them) and the prompt offers Talk; Action opens their [member dialogue] in the
-## Player's [DialogueScreen], and they turn to face whoever is talking to them until it ends. Left with no
-## [member FollowerNpc.player] they stand where they are; given one they follow, as any FollowerNpc does. The
-## walk and run blend replicates like the enemy's. [signal talked_to] is for a game that wants to know.
+## Somebody to talk to. Walk up to them (or look at them) and the prompt offers Talk; Action calls [method talk],
+## which holds the Player still, turns the NPC to face them and emits [signal talked_to]. What is said, and how,
+## is the game's own (a dialogue addon such as Dialogic): it listens for [signal talked_to], runs its conversation
+## and calls [method end_talk] when the conversation is over. Left with no [member FollowerNpc.player] they stand
+## where they are; given one they follow, as any FollowerNpc does. The walk and run blend replicates like the enemy's.
 
-signal talked_to(player: Player) ## A conversation with [param player] began.
+signal talked_to(player: Player) ## [param player] pressed Action on this NPC: the game's cue to start a conversation.
+signal conversation_ended(player: Player) ## [method end_talk] was called: the conversation with [param player] is over.
 
 const LOCOMOTION_BLEND_PATH: String = "parameters/blend_position"
 
-@export var display_name: String = "Villager" ## Who the dialogue box says is speaking, for lines with no speaker of their own.
-@export var dialogue: Dialogue
+@export var display_name: String = "Villager" ## Who this is, for the game's dialogue box and its quest text.
 @export var prompt_label: String = "Talk" ## What the bottom-action button reads while the prompt is up.
+@export var pauses_talker: bool = true ## Holds the Player still ([member Player.is_paused]) from [method talk] to [method end_talk], as a menu does.
 @export var faces_talker: bool = true ## Turns on the spot to face whoever they are attending to, yaw only; the head modifier does the rest.
 @export var head_tracks_player: bool = true ## Turns the head alone to the Player's own head, on top of whatever the body is doing.
 
@@ -55,7 +57,7 @@ func _physics_process(delta: float) -> void:
 ## also when they notice you: they turn to face you and their head comes up, which is the clearest sign of
 ## which of a crowd is about to be talked to.
 func display_menu(looking: Player) -> void:
-	if talker or dialogue == null:
+	if talker:
 		return
 	action_prompt.show_for(looking.controls, prompt_label)
 	notice(looking)
@@ -91,28 +93,36 @@ func equip(who: Player) -> void:
 	talk(who)
 
 
-## Opens [member dialogue] with [param who]; false when there is nothing to say right now.
+## Begins a conversation with [param who]: the prompt goes, the Player stands still ([member pauses_talker]), the
+## NPC faces them and [signal talked_to] fires for the game to take it from there. False while already talking.
 func talk(who: Player) -> bool:
-	if talker or dialogue == null or who == null or who.dialogue_screen == null:
+	if talker or who == null:
 		return false
 	hide_menu()
-	if not who.dialogue_screen.start(dialogue, self, display_name):
-		return false
 	talker = who
+	if pauses_talker:
+		who.is_paused = true
 	notice(who)
-	who.dialogue_screen.dialogue_ended.connect(_on_dialogue_ended, CONNECT_ONE_SHOT)
 	talked_to.emit(who)
 	return true
 
 
-func _on_dialogue_ended(_dialogue: Dialogue) -> void:
+## The game's conversation is over: lets the Player go, emits [signal conversation_ended], and offers the prompt
+## again while the Camera still has this NPC as its target.
+func end_talk() -> void:
+	if talker == null:
+		return
 	var was: Player = talker
 	talker = null
-	# The Camera holds the target across the conversation, so the prompt comes back for whoever was talking
-	if was and is_instance_valid(was) and (was.camera as Camera) and (was.camera as Camera).interaction_target == self:
-		display_menu(was)
-	else:
-		notice(null)
+	if is_instance_valid(was):
+		if pauses_talker:
+			was.is_paused = false
+		conversation_ended.emit(was)
+		# The Camera holds the target across the conversation, so the prompt comes back for whoever was talking
+		if (was.camera as Camera) and (was.camera as Camera).interaction_target == self:
+			display_menu(was)
+			return
+	notice(null)
 
 
 func _face(target: Vector3, delta: float) -> void:

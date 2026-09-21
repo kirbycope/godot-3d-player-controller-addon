@@ -4,9 +4,9 @@ extends GutTest
 ## new one fits in like the rest, and every touch target keeps the size and place of the button it sits on.
 
 const MENU_SCENES: Array[String] = [
-	"res://addons/3d_player_controller/scenes/pause.tscn",
-	"res://addons/3d_player_controller/scenes/settings.tscn",
-	"res://addons/3d_player_controller/scenes/controls_settings.tscn",
+	"res://addons/3d_player_controller/scenes/ui/pause.tscn",
+	"res://addons/3d_player_controller/scenes/ui/settings.tscn",
+	"res://addons/3d_player_controller/scenes/ui/controls_settings.tscn",
 ]
 
 

@@ -5,7 +5,7 @@ extends GutTest
 ## and only the chosen one shows a prompt.
 
 const PLAYER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player.tscn")
-const NPC_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/talking_npc.tscn")
+const NPC_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/npc/talking_npc.tscn")
 
 var root: Node3D
 var player: Player
@@ -34,15 +34,9 @@ func before_each() -> void:
 	player.velocity = Vector3.ZERO
 
 
-## An NPC with something to say, [param offset] from the Player.
+## An NPC to talk to, [param offset] from the Player.
 func _npc(offset: Vector3) -> TalkingNpc:
 	var npc: TalkingNpc = NPC_SCENE.instantiate()
-	var line: DialogueLine = DialogueLine.new()
-	line.text = "Hello"
-	line.ends_dialogue = true
-	var dialogue: Dialogue = Dialogue.new()
-	dialogue.lines = [line]
-	npc.dialogue = dialogue
 	root.add_child(npc)
 	npc.global_position = player.global_position + offset
 	return npc

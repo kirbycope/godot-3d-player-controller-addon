@@ -4,7 +4,7 @@ extends GutTest
 ## the sensitivity, the fill behind it is what the microphone is hearing, and the sensitivity it saves is what
 ## the Player measures voice against.
 
-const SETTINGS_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/audio_settings.tscn")
+const SETTINGS_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/ui/audio_settings.tscn")
 const PLAYER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player.tscn")
 
 

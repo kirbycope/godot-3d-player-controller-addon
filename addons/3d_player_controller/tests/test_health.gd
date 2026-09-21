@@ -3,8 +3,8 @@ extends GutTest
 ## Purpose: Health clamps its pools, reports every change, dies once, refuses wasted heals and empty
 ## energy spends, regenerates energy on its timer, and the world-space bars only show while it matters.
 
-const HEALTH_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/health.tscn")
-const BARS_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/status_bars_3d.tscn")
+const HEALTH_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/ui/health.tscn")
+const BARS_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/ui/status_bars_3d.tscn")
 
 
 func test_damage_heal_and_death() -> void:

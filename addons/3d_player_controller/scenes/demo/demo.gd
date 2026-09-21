@@ -8,7 +8,10 @@ extends Node3D
 ## (Courtyard, Glider Tower, Water Pool, Climbing Wall).
 ## Detailed player telemetry and toggleable features are available via F3 (Debug HUD).
 
+const GUIDE_ERRAND: Quest = preload("res://addons/3d_player_controller/resources/quests/demo_errand.tres")
+
 @onready var player: Player = $Player
+@onready var guide: TalkingNpc = $Guide
 @onready var water_pool: Area3D = $Structures/PoolBasin/WaterPool
 
 
@@ -17,6 +20,15 @@ func _ready() -> void:
 		player.enable_paraglider = true
 		player.enable_stamina = true
 		player.state_changed.connect(_on_player_state_changed)
+
+
+## Talking to the Guide is the errand's first objective and, the first time, what starts it. The addon has no
+## dialogue of its own (a game brings its own, Dialogic say), so the talk is over as soon as it begins.
+func _on_guide_talked_to(who: Player) -> void:
+	if who.quest_log:
+		who.quest_log.start(GUIDE_ERRAND)
+		who.quest_log.progress(&"talk_guide")
+	guide.end_talk()
 
 
 ## The Guide's errand asks for a swim: entering the water reports it to the quest log.

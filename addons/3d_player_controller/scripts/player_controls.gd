@@ -172,7 +172,6 @@ static var _registered_actions: Dictionary[StringName, bool] = {}
 
 
 func _ready() -> void:
-	_clusters.append($BottomCenter) # the readouts under the crosshair scale with the corners
 	if player == null and get_parent() is Player:
 		player = get_parent() as Player
 	# The scheme's slots go on before the base registers them, so the pad is bound the way the Player asked

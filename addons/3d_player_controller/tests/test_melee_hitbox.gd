@@ -3,7 +3,7 @@ extends GutTest
 ## Purpose: A melee hitbox hurts only what it actually overlaps, only while the swing is live, once per
 ## swing, and never its own attacker.
 
-const HITBOX_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/melee_hitbox.tscn")
+const HITBOX_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/npc/melee_hitbox.tscn")
 
 
 class Dummy extends CharacterBody3D:

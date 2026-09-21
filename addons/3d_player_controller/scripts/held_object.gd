@@ -12,7 +12,7 @@ extends Node
 ## authority throws; the body reaches every peer through the [ProjectileSpawner]. Pausing mid-charge puts the
 ## item back.
 
-const THROWN_ITEM_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/thrown_item.tscn")
+const THROWN_ITEM_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/projectile/thrown_item.tscn")
 const CHARGE_START_DELAY: float = 0.2 ## Seconds "shoot" must be held before a charged throw starts.
 const CHARGE_DURATION: float = 0.6 ## Seconds from charge start to full throw power.
 const MIN_THROW_POWER: float = 0.25 ## Throw power multiplier for a quick tap.

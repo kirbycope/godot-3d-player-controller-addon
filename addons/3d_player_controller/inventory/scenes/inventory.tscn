@@ -12,6 +12,7 @@ wait_time = 0.2
 one_shot = true
 
 [node name="RadialMenu" parent="." unique_id=1536685129 instance=ExtResource("2_wheel")]
+visible = false
 
 [node name="Spellbook" type="Node" parent="."]
 script = ExtResource("3_spellbook")

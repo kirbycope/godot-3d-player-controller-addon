@@ -1,7 +1,7 @@
 extends GutTest
 
-const LOBBY_MANAGER_SCENE = preload("res://addons/3d_player_controller/scenes/lobby_manager.tscn")
-const LOBBY_PLAYER_ITEM_SCENE = preload("res://addons/3d_player_controller/scenes/lobby_player_item.tscn")
+const LOBBY_MANAGER_SCENE = preload("res://addons/3d_player_controller/scenes/ui/lobby_manager.tscn")
+const LOBBY_PLAYER_ITEM_SCENE = preload("res://addons/3d_player_controller/scenes/ui/lobby_player_item.tscn")
 
 
 func test_lobby_manager_initial_state() -> void:

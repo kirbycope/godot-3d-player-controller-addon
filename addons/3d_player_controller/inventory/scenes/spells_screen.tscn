@@ -12,7 +12,6 @@ size = Vector2(120, 30)
 size = Vector2(72, 30)
 
 [node name="SpellsScreen" type="CanvasLayer"]
-visible = false
 script = ExtResource("1_screen")
 
 [node name="Panel" type="Panel" parent="."]

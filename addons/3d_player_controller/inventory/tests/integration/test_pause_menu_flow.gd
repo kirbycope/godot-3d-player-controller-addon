@@ -7,7 +7,7 @@ extends GutTest
 ## from the buttons and Back returns to Pause, and the start action closes everything and unpauses.
 
 const PLAYER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player.tscn")
-const PAUSE_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/pause.tscn")
+const PAUSE_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/ui/pause.tscn")
 const DEMO_TREE: SpellTree = preload("res://addons/3d_player_controller/inventory/resources/spell_tree_demo.tres")
 
 var root: Node3D

@@ -8,7 +8,7 @@ extends GutTest
 
 const PLAYER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player.tscn")
 const SWORD_SCENE: PackedScene = preload("res://addons/3d_player_controller/inventory/scenes/demo/wooden_sword.tscn")
-const ARROW_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/arrow.tscn")
+const ARROW_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/projectile/arrow.tscn")
 const ARROW_SCRIPT: Script = preload("res://addons/3d_player_controller/scripts/arrow.gd")
 const AUDIO_DIR: String = "res://addons/3d_player_controller/resources/audio/"
 const BOW_DIR: String = "res://addons/3d_player_controller/assets/tommusic/fantasy_sfx/Attacks/Bow Attacks Hits and Blocks/"

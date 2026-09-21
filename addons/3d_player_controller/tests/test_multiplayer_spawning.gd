@@ -6,7 +6,7 @@ extends GutTest
 
 const PORT: int = 47391
 const PLAYER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player.tscn")
-const BULLET_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/bullet.tscn")
+const BULLET_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/projectile/bullet.tscn")
 const PLAYER_SPAWNER: Script = preload("res://addons/3d_player_controller/scripts/player_spawner.gd")
 const PROJECTILE_SPAWNER: Script = preload("res://addons/3d_player_controller/scripts/projectile_spawner.gd")
 

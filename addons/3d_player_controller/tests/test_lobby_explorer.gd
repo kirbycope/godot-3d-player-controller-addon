@@ -1,7 +1,7 @@
 extends GutTest
 
-const LOBBY_EXPLORER_SCENE = preload("res://addons/3d_player_controller/scenes/lobby_explorer.tscn")
-const LOBBY_EXPLORER_ENTRY_SCENE = preload("res://addons/3d_player_controller/scenes/lobby_explorer_entry.tscn")
+const LOBBY_EXPLORER_SCENE = preload("res://addons/3d_player_controller/scenes/ui/lobby_explorer.tscn")
+const LOBBY_EXPLORER_ENTRY_SCENE = preload("res://addons/3d_player_controller/scenes/ui/lobby_explorer_entry.tscn")
 
 
 func test_lobby_explorer_initial_nodes() -> void:

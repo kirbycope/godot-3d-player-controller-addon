@@ -5,7 +5,7 @@ extends IntegrationTestBase
 ## gameplay input while typing. Settings are backed up so the developer's user://settings.tres is left alone.
 
 const PLAYER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player.tscn")
-const CHAT_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/chat.tscn")
+const CHAT_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/ui/chat.tscn")
 
 
 ## Sits in the main viewport and records the action presses that reach it; none should while the chat has the keyboard.

@@ -1,7 +1,7 @@
-[gd_scene load_steps=15 format=3]
+[gd_scene format=3]
 
-[ext_resource type="Script" path="res://addons/3d_player_controller/inventory/scenes/demo/demo.gd" id="1_demo"]
-[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/player.tscn" id="2_player"]
+[ext_resource type="Script" uid="uid://ggshwl4dtxwf" path="res://addons/3d_player_controller/inventory/scenes/demo/demo.gd" id="1_demo"]
+[ext_resource type="PackedScene" uid="uid://ct7n8imyllhbo" path="res://addons/3d_player_controller/scenes/player.tscn" id="2_player"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/inventory/scenes/item_pickup.tscn" id="3_pickup"]
 [ext_resource type="Resource" path="res://addons/3d_player_controller/inventory/resources/items/apple.tres" id="4_apple"]
 [ext_resource type="Resource" path="res://addons/3d_player_controller/inventory/resources/items/mushroom.tres" id="5_mushroom"]

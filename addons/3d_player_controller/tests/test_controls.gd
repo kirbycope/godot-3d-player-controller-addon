@@ -355,15 +355,13 @@ class TestActionTable:
 class TestHudLayout:
 	extends ControlsTestBase
 
-	func test_the_throw_charge_scales_with_the_corners() -> void:
+	func test_the_throw_charge_is_a_readout_of_its_own_not_a_hud_button() -> void:
 		var controls: PlayerControls = player_instance.controls
-		var bottom_center: Control = controls.get_node("BottomCenter")
-		assert_eq(controls.get_node("%ThrowChargeBar").get_parent(), bottom_center,
-			"The throw charge is an input hint, so it stays in the bottom-centre cluster")
-		controls.hud_scale = 2.0
-		assert_eq(bottom_center.scale, controls.get_node("BottomLeft").scale, "and the new cluster follows hud_scale like the corners")
-		assert_ne(bottom_center.scale, Vector2.ONE)
-		controls.hud_scale = 1.0
+		assert_null(controls.get_node_or_null("BottomCenter"), "The controls HUD is the buttons; a bar is not one")
+		assert_null(controls.get_node_or_null("%ThrowChargeBar"))
+		var bar: ProgressBar = player_instance.get_node("ThrowChargeBar") as ProgressBar
+		assert_eq(player_instance.held_object.throw_charge_bar, bar, "HeldObject drives the bar beside the cast bar")
+		assert_false(bar.visible, "hidden until a charge starts, by the Player scene that instances it")
 
 	## The gameplay readouts are their own scenes beside the systems that drive them, so they are in no cluster
 	## at all. They draw themselves at the size the HUD is drawn at instead, which keeps the whole screen one size.

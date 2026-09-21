@@ -445,7 +445,6 @@ var paraglider: Node3D
 @onready var health: Health = $Health
 @onready var respawn_timer: Timer = $RespawnTimer ## Runs after death; its timeout is wired to [method respawn].
 @onready var quest_log: QuestLog = get_node_or_null("QuestLog") as QuestLog ## The Player's quests; saved with them.
-@onready var dialogue_screen: DialogueScreen = get_node_or_null("DialogueScreen") as DialogueScreen ## The conversation box a [TalkingNpc] opens.
 @onready var quest_tracker: QuestTracker = get_node_or_null("QuestTracker") as QuestTracker ## The tracked quest's objectives, top right.
 var _ragdoll_was_enabled: bool = true ## enable_ragdoll before death forced it on.
 @onready var initial_transform: Transform3D = global_transform

@@ -5,8 +5,8 @@ extends GutTest
 ## unit from the inventory (none carried, no reload) and fires the loaded kind's own projectile scene; a Bow takes
 ## one arrow per shot, falls back to regular arrows when the selected kind runs out and fires nothing at zero.
 
-const BULLET_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/bullet.tscn")
-const ARROW_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/arrow.tscn")
+const BULLET_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/projectile/bullet.tscn")
+const ARROW_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/projectile/arrow.tscn")
 const PLAYER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player.tscn")
 const FIREARM_SCRIPT: Script = preload("res://addons/3d_player_controller/scripts/firearm.gd")
 const BOW_SCRIPT: Script = preload("res://addons/3d_player_controller/scripts/bow.gd")

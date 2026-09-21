@@ -2,12 +2,11 @@
 
 [ext_resource type="Script" uid="uid://drpnelwdn38te" path="res://addons/3d_player_controller/scenes/demo/demo.gd" id="1_demogd"]
 [ext_resource type="PackedScene" uid="uid://ct7n8imyllhbo" path="res://addons/3d_player_controller/scenes/player.tscn" id="2_playerscene"]
-[ext_resource type="PackedScene" uid="uid://bra3khigbuanl" path="res://addons/3d_player_controller/scenes/paraglider.tscn" id="3_glider"]
-[ext_resource type="PackedScene" uid="uid://c7talkingnpc01" path="res://addons/3d_player_controller/scenes/talking_npc.tscn" id="4_talker"]
-[ext_resource type="Resource" uid="uid://c7dialoguedemo1" path="res://addons/3d_player_controller/resources/dialogues/demo_guide.tres" id="5_dialogue"]
-[ext_resource type="PackedScene" uid="uid://c7checkpoint01" path="res://addons/3d_player_controller/scenes/checkpoint.tscn" id="6_checkpoint"]
-[ext_resource type="PackedScene" uid="uid://c7killzone0001" path="res://addons/3d_player_controller/scenes/kill_zone.tscn" id="7_killzone"]
-[ext_resource type="PackedScene" uid="uid://c7savegame0001" path="res://addons/3d_player_controller/scenes/save_game.tscn" id="8_savegame"]
+[ext_resource type="PackedScene" uid="uid://bra3khigbuanl" path="res://addons/3d_player_controller/scenes/equipment/paraglider.tscn" id="3_glider"]
+[ext_resource type="PackedScene" uid="uid://cnx71qvyglb5" path="res://addons/3d_player_controller/scenes/npc/talking_npc.tscn" id="4_talker"]
+[ext_resource type="PackedScene" uid="uid://dpamk5qeelx2w" path="res://addons/3d_player_controller/scenes/prop/checkpoint.tscn" id="6_checkpoint"]
+[ext_resource type="PackedScene" uid="uid://dxbtulpdax42w" path="res://addons/3d_player_controller/scenes/prop/kill_zone.tscn" id="7_killzone"]
+[ext_resource type="PackedScene" uid="uid://bn81yd2prab5" path="res://addons/3d_player_controller/scenes/ui/save_game.tscn" id="8_savegame"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_demo"]
 sky_horizon_color = Color(0.65, 0.72, 0.8, 1)
@@ -225,7 +224,6 @@ paraglider_scene = ExtResource("3_glider")
 [node name="Guide" parent="." instance=ExtResource("4_talker")]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 4, 0, -4)
 display_name = "Guide"
-dialogue = ExtResource("5_dialogue")
 
 [node name="Checkpoint" parent="." instance=ExtResource("6_checkpoint")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, -4)
@@ -302,3 +300,4 @@ text = "Press [F3] for full Debug HUD"
 [connection signal="pressed" from="HUD/TeleportPanel/VBox/Grid/TeleportTower" to="." method="_on_teleport_pressed" binds= [NodePath("Markers/Tower")]]
 [connection signal="pressed" from="HUD/TeleportPanel/VBox/Grid/TeleportPool" to="." method="_on_teleport_pressed" binds= [NodePath("Markers/Pool")]]
 [connection signal="pressed" from="HUD/TeleportPanel/VBox/Grid/TeleportWall" to="." method="_on_teleport_pressed" binds= [NodePath("Markers/ClimbingWall")]]
+[connection signal="talked_to" from="Guide" to="." method="_on_guide_talked_to"]

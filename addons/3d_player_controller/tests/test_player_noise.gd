@@ -5,8 +5,8 @@ extends GutTest
 ## told to come looking, and the HUD meter follows the reading.
 
 const PLAYER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player.tscn")
-const ENEMY_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/enemy_npc.tscn")
-const METER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/noise_meter.tscn")
+const ENEMY_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/npc/enemy_npc.tscn")
+const METER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/ui/noise_meter.tscn")
 
 var root: Node3D
 var player: Player

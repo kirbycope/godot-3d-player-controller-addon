@@ -55,7 +55,7 @@ not the inventory's to use; widen the table before widening the code.
 | `show_menu()` | `-> void` | Shows, sets `player.is_paused = true`, frees the mouse, focuses `focus_on_show` |
 | `hide_menu()` | `-> void` | Hides, sets `player.is_paused = false`, captures the mouse |
 
-## Pause (`scenes/pause.tscn`, a `PlayerMenuLayer` at `player.pause`)
+## Pause (`scenes/ui/pause.tscn`, a `PlayerMenuLayer` at `player.pause`)
 
 | Member | Type | Needed for |
 |---|---|---|

@@ -25,8 +25,8 @@ const FORWARD_PLUS: String = "forward_plus"
 
 @export var mode: Mode = Mode.OFF: ## The current look; the saved setting overrides this at start.
 	set = set_mode
-@export var binbun_material: ShaderMaterial = preload("res://addons/3d_player_controller/resources/binbun_toon.tres") ## The BINBUN template; each surface gets a copy carrying its own albedo.
-@export var botw_material: ShaderMaterial = preload("res://addons/3d_player_controller/resources/botw_toon.tres") ## The BOTW template (assets/shaders/botw_toon.gdshader), used the same way.
+@export var binbun_material: ShaderMaterial = preload("res://addons/3d_player_controller/resources/toon/binbun_toon.tres") ## The BINBUN template; each surface gets a copy carrying its own albedo.
+@export var botw_material: ShaderMaterial = preload("res://addons/3d_player_controller/resources/toon/botw_toon.tres") ## The BOTW template (assets/shaders/botw_toon.gdshader), used the same way.
 
 var enabled: bool: ## True in any mode but OFF; setting it picks NEWSPAPER or OFF.
 	get:

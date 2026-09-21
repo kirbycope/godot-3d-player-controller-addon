@@ -4,9 +4,9 @@ extends GutTest
 ## without leaving the test values in the developer's real settings file.
 
 const AUDIO_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/audio.tscn")
-const AUDIO_SETTINGS_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/audio_settings.tscn")
-const CONTROLS_SETTINGS_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/controls_settings.tscn")
-const VIDEO_SETTINGS_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/video_settings.tscn")
+const AUDIO_SETTINGS_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/ui/audio_settings.tscn")
+const CONTROLS_SETTINGS_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/ui/controls_settings.tscn")
+const VIDEO_SETTINGS_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/ui/video_settings.tscn")
 
 var _backup: PackedByteArray
 var _had_file: bool

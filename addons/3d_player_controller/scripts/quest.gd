@@ -1,7 +1,7 @@
 class_name Quest
 extends Resource
 ## A quest: a title, a description, the [QuestObjective]s that finish it and what the Player gets for it.
-## Start it with [method QuestLog.start] (a [DialogueLine] or [DialogueChoice] can), report progress with
+## Start it with [method QuestLog.start] (a conversation, a trigger, a pickup), report progress with
 ## [method QuestLog.progress], and the log completes it and hands out [member rewards] once every objective is met.
 
 @export var id: StringName = &"" ## Stable name the log and saves key it by; the file name when empty.

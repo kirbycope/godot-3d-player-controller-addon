@@ -14,7 +14,7 @@ enum Element { FIRE = 1, WATER = 2 } ## Bits of [member elements]: what the impa
 const BURN_SECONDS: float = 3.0 ## Fire sets what stands in it ablaze for this long (anything in the Burnable group with a `burn` method: an enemy).
 const BURN_DAMAGE_PER_SECOND: float = 5.0 ## What burning costs per second, in ticks, over [constant BURN_SECONDS].
 
-const SPELL_PROJECTILE_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/spell_projectile.tscn")
+const SPELL_PROJECTILE_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/projectile/spell.tscn")
 const SPELL_CLIP_GROUPS: Array[String] = ["Shield", "GreatSword"] ## Locomotion groups with their own spell clips: a Spell Casting channel, a Spell Cast and a Power Up.
 ## The standing one-handed clip for each style; unarmed has no power up clip, so the upward cast stands in.
 const STANDING_CAST_STATES: Dictionary = {

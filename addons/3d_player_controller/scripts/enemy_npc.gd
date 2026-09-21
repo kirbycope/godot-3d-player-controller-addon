@@ -155,7 +155,7 @@ func aggro(who: Node) -> void:
 	aggroed.emit(target)
 
 
-## Gives up the hunt on purpose (a [VisionCone] that lost sight of the Player) and heads back to the post.
+## Gives up the hunt on purpose (a lookout that lost sight of the Player) and heads back to the post.
 func lose_target() -> void:
 	if target == null:
 		return

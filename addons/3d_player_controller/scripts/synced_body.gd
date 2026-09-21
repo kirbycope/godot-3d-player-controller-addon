@@ -3,8 +3,8 @@ extends MultiplayerSynchronizer
 ## Replicates a physics body from its multiplayer authority (the server by default).
 ## Peers that do not own the body freeze it kinematically so replicated transforms are not fought by
 ## local physics; the authority simulates as usual. Pair it with
-## [code]resources/rigid_body_replication.tres[/code] (RigidBody3D) or
-## [code]resources/character_body_replication.tres[/code] (CharacterBody3D).
+## [code]resources/replication/rigid_body_replication.tres[/code] (RigidBody3D) or
+## [code]resources/replication/character_body_replication.tres[/code] (CharacterBody3D).
 
 
 func _ready() -> void:

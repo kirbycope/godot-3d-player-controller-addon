@@ -44,6 +44,7 @@ func before_each() -> void:
 	player.controls.current_input_type = Controls.InputType.KEYBOARD_MOUSE
 	spellbook = player.inventory.spellbook
 	screen = SCREEN_SCENE.instantiate()
+	screen.hide() # as Pause does when it instances one; the scene itself saves visible so it can be seen in the editor
 	screen.player = player
 	player.add_child(screen)
 	sender = InputSender.new(Input)
