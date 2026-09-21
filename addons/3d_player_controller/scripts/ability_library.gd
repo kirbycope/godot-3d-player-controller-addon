@@ -1,5 +1,4 @@
 @tool
-@icon("res://addons/3d_player_controller/assets/game_icons/wizard-staff.svg")
 class_name AbilityLibrary
 extends Node3D
 ## Every ability a game has, loaded once and kept warm, so any Player, puppet or NPC can cast any of them without

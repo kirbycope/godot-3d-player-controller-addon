@@ -1,5 +1,4 @@
 @tool
-@icon("res://addons/3d_player_controller/assets/game_icons/wizard-staff.svg")
 class_name AbilityEntry
 extends Node3D
 ## One ability in an [AbilityLibrary]: a node carrying the [Ability] resource, so the library's contents are nodes a
@@ -43,6 +42,14 @@ func preview_cast(caster: Node3D, target: Node3D) -> void:
 	if ability == null or caster == null or target == null or _casting:
 		return
 	_casting = true
+	if Engine.is_editor_hint():
+		var phases: PackedStringArray = []
+		for phase: Ability.Phase in [Ability.Phase.CHANNELING, Ability.Phase.CASTING, Ability.Phase.IMPACT]:
+			var has_vfx: bool = ability.get_vfx(phase) != null
+			var has_sfx: bool = ability.get_sfx(phase) != null
+			if has_vfx or has_sfx:
+				phases.append("%s (%s)" % [Ability.Phase.keys()[phase].to_lower(), "VFX and sound" if has_vfx and has_sfx else ("VFX" if has_vfx else "sound only")])
+		print("AbilityEntry: %s from %s to %s: %s" % [ability.display_name, caster.name, target.name, ", ".join(phases) if not phases.is_empty() else "nothing to show, the ability has no VFX and no sound"])
 	var from: Vector3 = caster.global_position + caster.global_basis.y * HAND_HEIGHT
 	var to: Vector3 = target.global_position + target.global_basis.y * CHEST_HEIGHT
 	if ability.cast_time > 0.0:
@@ -75,11 +82,11 @@ func preview_cast(caster: Node3D, target: Node3D) -> void:
 func _spawn(phase: Ability.Phase, at: Vector3) -> Node3D:
 	var stream: AudioStream = ability.get_sfx(phase)
 	if stream:
-		var audio: AudioStreamPlayer3D = AudioStreamPlayer3D.new()
+		# Not positional: a preview has to be heard wherever the editor camera happens to be
+		var audio: AudioStreamPlayer = AudioStreamPlayer.new()
 		audio.name = PREVIEW + "Audio"
 		audio.stream = stream
 		add_child(audio)
-		audio.global_position = at
 		audio.play()
 		audio.finished.connect(audio.queue_free)
 		get_tree().create_timer(ability.fx_lifetime + 5.0).timeout.connect(audio.queue_free)
