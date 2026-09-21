@@ -9,7 +9,7 @@ const DEMO_QUEST: Quest = preload("res://addons/3d_player_controller/resources/q
 const APPLE: Item = preload("res://addons/3d_player_controller/inventory/resources/items/apple.tres")
 
 var player: Player
-var log: QuestLog
+var quest_log: QuestLog
 
 
 func before_each() -> void:
@@ -17,7 +17,7 @@ func before_each() -> void:
 	add_child_autofree(root)
 	player = PLAYER_SCENE.instantiate()
 	root.add_child(player)
-	log = player.quest_log
+	quest_log = player.quest_log
 	await wait_physics_frames(2)
 
 
@@ -35,69 +35,69 @@ func _quest(id: String, objective_ids: Array, required: int = 1) -> Quest:
 
 
 func test_the_player_carries_a_quest_log() -> void:
-	assert_not_null(log)
-	assert_eq(log.player, player)
-	assert_true(log.get_all().is_empty())
+	assert_not_null(quest_log)
+	assert_eq(quest_log.player, player)
+	assert_true(quest_log.get_all().is_empty())
 	assert_false(player.quest_tracker.visible, "Nothing tracked, nothing shown")
 
 
 func test_starting_a_quest_tracks_it_and_counts_its_objectives() -> void:
 	var quest: Quest = _quest("errand", ["talk", "chop"], 1)
-	watch_signals(log)
-	assert_true(log.start(quest))
-	assert_false(log.start(quest), "A quest is started once")
-	assert_signal_emitted(log, "quest_started")
-	assert_true(log.is_active(quest))
-	assert_eq(log.tracked, quest)
+	watch_signals(quest_log)
+	assert_true(quest_log.start(quest))
+	assert_false(quest_log.start(quest), "A quest is started once")
+	assert_signal_emitted(quest_log, "quest_started")
+	assert_true(quest_log.is_active(quest))
+	assert_eq(quest_log.tracked, quest)
 	assert_true(player.quest_tracker.visible)
 	assert_eq(player.quest_tracker.title_label.text, "Errand")
 	assert_true(player.quest_tracker.objectives_label.text.contains("[ ] Talk"))
-	assert_true(log.progress(&"talk"))
-	assert_signal_emitted(log, "objective_progressed")
-	assert_true(log.is_objective_done(quest, &"talk"))
+	assert_true(quest_log.progress(&"talk"))
+	assert_signal_emitted(quest_log, "objective_progressed")
+	assert_true(quest_log.is_objective_done(quest, &"talk"))
 	assert_true(player.quest_tracker.objectives_label.text.contains("[x] Talk"))
-	assert_false(log.progress(&"talk"), "A met objective counts no further")
-	assert_false(log.progress(&"nothing_asks_for_this"))
-	assert_signal_not_emitted(log, "quest_completed")
+	assert_false(quest_log.progress(&"talk"), "A met objective counts no further")
+	assert_false(quest_log.progress(&"nothing_asks_for_this"))
+	assert_signal_not_emitted(quest_log, "quest_completed")
 
 
 func test_meeting_every_objective_completes_the_quest_and_pays() -> void:
 	var quest: Quest = _quest("gather", ["logs"], 3)
 	quest.rewards[APPLE] = 2
-	watch_signals(log)
-	log.start(quest)
-	log.progress(&"logs", 2)
-	assert_eq(log.get_count(quest, &"logs"), 2)
+	watch_signals(quest_log)
+	quest_log.start(quest)
+	quest_log.progress(&"logs", 2)
+	assert_eq(quest_log.get_count(quest, &"logs"), 2)
 	assert_true(player.quest_tracker.objectives_label.text.contains("(2/3)"))
-	log.progress(&"logs")
-	assert_signal_emitted(log, "quest_completed")
-	assert_true(log.is_complete(quest))
+	quest_log.progress(&"logs")
+	assert_signal_emitted(quest_log, "quest_completed")
+	assert_true(quest_log.is_complete(quest))
 	assert_eq(player.inventory.count_of(APPLE), 2, "The reward is in the bag")
-	assert_null(log.tracked, "Done, it leaves the tracker")
+	assert_null(quest_log.tracked, "Done, it leaves the tracker")
 	assert_false(player.quest_tracker.visible)
-	assert_eq(log.get_completed(), [quest])
+	assert_eq(quest_log.get_completed(), [quest])
 
 
 func test_the_tracker_falls_back_to_another_active_quest() -> void:
 	var first: Quest = _quest("first", ["a"])
 	var second: Quest = _quest("second", ["b"])
-	log.start(first)
-	log.start(second)
-	assert_eq(log.tracked, second, "The latest started is tracked")
-	log.track(first)
-	assert_eq(log.tracked, first)
-	log.progress(&"a")
-	assert_eq(log.tracked, second, "Completing the tracked one tracks what is left")
+	quest_log.start(first)
+	quest_log.start(second)
+	assert_eq(quest_log.tracked, second, "The latest started is tracked")
+	quest_log.track(first)
+	assert_eq(quest_log.tracked, first)
+	quest_log.progress(&"a")
+	assert_eq(quest_log.tracked, second, "Completing the tracked one tracks what is left")
 
 
 func test_the_log_round_trips_through_a_save() -> void:
 	var quest: Quest = _quest("errand", ["talk", "chop"], 2)
-	log.start(quest)
-	log.progress(&"talk", 2)
-	log.progress(&"chop")
-	log.start(DEMO_QUEST)
-	log.track(quest)
-	var state: Dictionary = log.save_state()
+	quest_log.start(quest)
+	quest_log.progress(&"talk", 2)
+	quest_log.progress(&"chop")
+	quest_log.start(DEMO_QUEST)
+	quest_log.track(quest)
+	var state: Dictionary = quest_log.save_state()
 	assert_true(state["quests"].has("errand"))
 	assert_eq(state["tracked"], "errand")
 	# A fresh log on a fresh Player: the demo quest comes back by path, the ad hoc one by the id it already knows
@@ -115,9 +115,9 @@ func test_the_log_round_trips_through_a_save() -> void:
 func test_the_quests_screen_lists_and_tracks() -> void:
 	var quest: Quest = _quest("errand", ["talk"])
 	var done: Quest = _quest("finished", ["x"])
-	log.start(done)
-	log.progress(&"x")
-	log.start(quest)
+	quest_log.start(done)
+	quest_log.progress(&"x")
+	quest_log.start(quest)
 	player.pause.show_menu()
 	assert_true(player.pause.quests_button.visible, "The pause menu offers Quests")
 	player.pause._on_quests_pressed()

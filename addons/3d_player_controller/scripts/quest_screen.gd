@@ -27,13 +27,13 @@ func rebuild() -> void:
 	for button: Button in _quest_buttons:
 		button.queue_free()
 	_quest_buttons.clear()
-	var log: QuestLog = player.quest_log if player else null
-	var quests: Array[Quest] = log.get_all() if log else []
+	var quest_log: QuestLog = player.quest_log if player else null
+	var quests: Array[Quest] = quest_log.get_all() if quest_log else []
 	empty_label.visible = quests.is_empty()
 	for quest: Quest in quests:
 		var button: Button = Button.new()
 		button.text = quest.title if not quest.title.is_empty() else String(quest.get_id())
-		if log.is_complete(quest):
+		if quest_log.is_complete(quest):
 			button.text += " (done)"
 		button.custom_minimum_size.y = 32.0
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -50,8 +50,8 @@ func rebuild() -> void:
 
 func _show_details(quest: Quest) -> void:
 	focused_quest = quest
-	var log: QuestLog = player.quest_log if player else null
-	if quest == null or log == null:
+	var quest_log: QuestLog = player.quest_log if player else null
+	if quest == null or quest_log == null:
 		detail_title.text = ""
 		detail_status.text = ""
 		detail_description.text = ""
@@ -59,10 +59,10 @@ func _show_details(quest: Quest) -> void:
 		track_button.visible = false
 		return
 	detail_title.text = quest.title
-	detail_status.text = "Complete" if log.is_complete(quest) else ("Tracked" if log.tracked == quest else "Active")
+	detail_status.text = "Complete" if quest_log.is_complete(quest) else ("Tracked" if quest_log.tracked == quest else "Active")
 	detail_description.text = quest.description
-	detail_objectives.text = log.describe_objectives(quest)
-	track_button.visible = log.is_active(quest) and log.tracked != quest
+	detail_objectives.text = quest_log.describe_objectives(quest)
+	track_button.visible = quest_log.is_active(quest) and quest_log.tracked != quest
 
 
 func _on_track_pressed() -> void:
