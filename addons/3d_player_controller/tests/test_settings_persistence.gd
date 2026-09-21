@@ -3,7 +3,7 @@ extends GutTest
 ## Purpose: To test loading and saving user settings in PlayerSettingsResource at user://settings.tres
 ## without leaving the test values in the developer's real settings file.
 
-const AUDIO_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/audio.tscn")
+const AUDIO_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player_audio.tscn")
 const AUDIO_SETTINGS_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/ui/audio_settings.tscn")
 const CONTROLS_SETTINGS_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/ui/controls_settings.tscn")
 const VIDEO_SETTINGS_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/ui/video_settings.tscn")

@@ -2,7 +2,7 @@ extends GutTest
 
 ## Purpose: The settings menus adjust the Dialog/Menu/Music/SFX buses, so the Audio node must create them when the project's bus layout lacks them.
 
-const AUDIO_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/audio.tscn")
+const AUDIO_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player_audio.tscn")
 
 
 func test_audio_node_creates_missing_buses_and_footsteps_use_sfx() -> void:
