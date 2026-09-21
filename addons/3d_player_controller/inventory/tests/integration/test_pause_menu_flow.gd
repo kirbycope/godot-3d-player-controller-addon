@@ -29,7 +29,7 @@ func before_each() -> void:
 	floor_body.position.y = -0.5
 	root.add_child(floor_body)
 	player = PLAYER_SCENE.instantiate()
-	var book: Spellbook = player.get_node("Inventory/Spellbook")
+	var book: Spellbook = player.get_node("Hud/Inventory/Spellbook")
 	book.tree = DEMO_TREE
 	book.skill_points = 3
 	root.add_child(player)

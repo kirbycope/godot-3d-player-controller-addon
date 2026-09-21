@@ -18,7 +18,7 @@ class ControlsTestBase:
 		add_child_autofree(root)
 		player_instance = PlayerScene.instantiate() as Player
 		root.add_child(player_instance)
-		player_debug = player_instance.get_node("Debug") as CanvasLayer
+		player_debug = player_instance.get_node("Hud/Debug") as CanvasLayer
 		await wait_physics_frames(2)
 
 	## Runs after each test is executed.
@@ -359,7 +359,7 @@ class TestHudLayout:
 		var controls: PlayerControls = player_instance.controls
 		assert_null(controls.get_node_or_null("BottomCenter"), "The controls HUD is the buttons; a bar is not one")
 		assert_null(controls.get_node_or_null("%ThrowChargeBar"))
-		var bar: ProgressBar = player_instance.get_node("ThrowChargeBar") as ProgressBar
+		var bar: ProgressBar = player_instance.get_node("Hud/ThrowChargeBar") as ProgressBar
 		assert_eq(player_instance.held_object.throw_charge_bar, bar, "HeldObject drives the bar beside the cast bar")
 		assert_false(bar.visible, "hidden until a charge starts, by the Player scene that instances it")
 

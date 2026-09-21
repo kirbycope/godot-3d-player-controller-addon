@@ -14,7 +14,7 @@ func before_each() -> void:
 	add_child_autofree(root)
 	player = PLAYER_SCENE.instantiate()
 	root.add_child(player)
-	debug = player.get_node("Debug") as Debug
+	debug = player.get_node("Hud/Debug") as Debug
 	await wait_physics_frames(2)
 
 

@@ -1,0 +1,64 @@
+extends GutTest
+
+## Purpose: The Player's screen lives in one scene, player_hud.tscn, instanced under the Player as Hud. The Player
+## still reaches every panel, bar, menu and screen through its own properties, each child still knows its Player,
+## the animation graph the AnimationTree drives is the shared resource, and the HUD scene opens on its own.
+
+const PLAYER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player.tscn")
+const HUD_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/ui/player_hud.tscn")
+const ANIMATION_TREE: AnimationNodeBlendTree = preload("res://addons/3d_player_controller/resources/animation/player_animation_tree.tres")
+const CHILDREN: Array[String] = ["Controls", "Crosshair", "Stamina", "Health", "BossBar", "AmmoReadout", "CastBar", "ThrowChargeBar", "SeekerWheel", "Chat", "Debug", "Inventory", "Abilities", "QuestTracker", "UnderwaterOverlay", "DeathScreen", "Pause", "Settings", "AudioSettings", "ControlsSettings", "VideoSettings", "LobbyManager"]
+
+var player: Player
+
+
+func before_each() -> void:
+	player = PLAYER_SCENE.instantiate()
+	add_child_autofree(player)
+	await wait_physics_frames(1)
+
+
+func test_the_screen_is_one_child_of_the_player() -> void:
+	var hud: PlayerHud = player.hud
+	assert_not_null(hud, "The Player carries a Hud")
+	assert_eq(hud.player, player, "The HUD knows its Player")
+	for child: String in CHILDREN:
+		assert_not_null(hud.get_node_or_null(child), child + " is under the Hud")
+		assert_null(player.get_node_or_null(child), child + " is no longer a direct child of the Player")
+
+
+func test_the_player_still_reaches_every_panel_through_its_properties() -> void:
+	assert_eq(player.controls, player.hud.controls)
+	assert_eq(player.pause, player.hud.pause)
+	assert_eq(player.inventory, player.hud.inventory)
+	assert_eq(player.abilities, player.hud.abilities)
+	assert_eq(player.chat, player.hud.chat)
+	assert_eq(player.debug, player.hud.debug)
+	assert_eq(player.stamina, player.hud.stamina)
+	assert_eq(player.health, player.hud.health)
+	assert_eq(player.crosshair, player.hud.crosshair)
+	assert_eq(player.seeker_wheel, player.hud.seeker_wheel)
+	assert_eq(player.quest_tracker, player.hud.quest_tracker)
+	assert_eq(player.settings, player.hud.settings)
+	assert_eq(player.lobby_manager, player.hud.lobby_manager)
+	assert_eq(player.radial_menu, player.hud.inventory.get_node("RadialMenu"))
+
+
+func test_each_panel_still_knows_its_player() -> void:
+	for child: String in ["Controls", "Chat", "Debug", "Inventory", "Abilities", "SeekerWheel", "Pause", "Settings", "AudioSettings", "ControlsSettings", "VideoSettings", "LobbyManager", "DeathScreen", "Stamina"]:
+		assert_eq(player.hud.get_node(child).get("player"), player, child + " points two levels up, at the Player")
+	assert_eq(player.abilities.fx_root, player.get_node("AbilityFx"), "The abilities' effects root is still the Player's")
+	assert_eq(player.held_object.throw_charge_bar, player.hud.throw_charge_bar, "The held object's charge bar is the one on the Hud")
+
+
+func test_the_animation_graph_is_the_shared_resource() -> void:
+	assert_eq(player.animation_tree.tree_root, ANIMATION_TREE, "The AnimationTree drives resources/animation/player_animation_tree.tres")
+	assert_true(player.animation_tree.active)
+
+
+func test_the_hud_scene_opens_on_its_own() -> void:
+	var hud: PlayerHud = HUD_SCENE.instantiate()
+	add_child_autofree(hud)
+	await wait_process_frames(1)
+	assert_null(hud.player, "Nothing above it: no Player")
+	assert_eq(hud.get_child_count(), CHILDREN.size())

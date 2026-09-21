@@ -31,7 +31,7 @@ const SURFACE_EPSILON: float = 0.05 ## Depth (m) below which the player counts a
 var _vertical_swim_effort: float = 0.0 ## 0-1 stroke effort from active vertical dive input (drives the swim blend without stick input).
 
 var _ledge_ray_default_y: float = 0.0 ## Scene height of the ledge ray, restored when leaving the water.
-@onready var _underwater_overlay: CanvasLayer = player.get_node_or_null(^"UnderwaterOverlay") as CanvasLayer if player else null
+@onready var _underwater_overlay: CanvasLayer = player.get_node_or_null(^"Hud/UnderwaterOverlay") as CanvasLayer if player else null
 
 
 ## Called when there is an input event.

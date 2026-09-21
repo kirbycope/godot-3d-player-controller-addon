@@ -38,8 +38,8 @@ func _add_checkpoint(at: Vector3) -> Checkpoint:
 
 func test_the_spawn_point_is_the_first_respawn_point() -> void:
 	assert_almost_eq(player.respawn_transform.origin, Vector3.ZERO, Vector3.ONE * 0.01)
-	assert_true(player.get_node("DeathScreen") is DeathScreen, "The Player carries its death screen")
-	assert_false(player.get_node("DeathScreen").visible)
+	assert_true(player.get_node("Hud/DeathScreen") is DeathScreen, "The Player carries its death screen")
+	assert_false(player.get_node("Hud/DeathScreen").visible)
 
 
 func test_walking_through_a_checkpoint_takes_it_and_heals() -> void:
@@ -75,7 +75,7 @@ func test_dying_shows_the_screen_and_respawns_at_the_checkpoint() -> void:
 	player.warp_to(Transform3D(Basis(), Vector3(20.0, 0.0, 5.0)))
 	await wait_physics_frames(2)
 	watch_signals(player)
-	var screen: DeathScreen = player.get_node("DeathScreen")
+	var screen: DeathScreen = player.get_node("Hud/DeathScreen")
 	player.take_hit(500.0, player.global_position + Vector3.FORWARD)
 	await wait_physics_frames(2)
 	assert_true(screen.visible, "The death screen shows on death")

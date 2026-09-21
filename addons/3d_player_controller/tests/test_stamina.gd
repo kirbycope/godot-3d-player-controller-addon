@@ -30,7 +30,7 @@ class StaminaTestBase:
 		root.add_child(player)
 		player.position = Vector3(0, 0.1, 0) # Slightly above floor to snap down
 		player.enable_stamina = true
-		stamina = player.get_node("Stamina")
+		stamina = player.get_node("Hud/Stamina")
 
 		# Await physics frames so state machine can boot
 		await wait_physics_frames(2)

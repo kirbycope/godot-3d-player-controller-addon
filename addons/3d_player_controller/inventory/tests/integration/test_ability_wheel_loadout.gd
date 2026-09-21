@@ -20,9 +20,9 @@ func before_each() -> void:
 	add_child_autofree(root)
 	player = PLAYER_SCENE.instantiate()
 	var none: Array[Ability] = []
-	player.get_node("Abilities").abilities = none
-	player.get_node("Abilities").active_ability = null
-	var book: Spellbook = player.get_node("Inventory/Spellbook")
+	player.get_node("Hud/Abilities").abilities = none
+	player.get_node("Hud/Abilities").active_ability = null
+	var book: Spellbook = player.get_node("Hud/Inventory/Spellbook")
 	book.tree = DEMO_TREE
 	book.skill_points = 3
 	root.add_child(player)

@@ -200,7 +200,7 @@ func test_gentle_water_entry_spawns_no_splash() -> void:
 
 
 func test_underwater_overlay_follows_camera_submersion() -> void:
-	var overlay: CanvasLayer = player.get_node("UnderwaterOverlay") as CanvasLayer
+	var overlay: CanvasLayer = player.get_node("Hud/UnderwaterOverlay") as CanvasLayer
 	assert_not_null(overlay, "Player scene should contain the UnderwaterOverlay")
 	assert_false(overlay.visible, "Overlay should start hidden")
 

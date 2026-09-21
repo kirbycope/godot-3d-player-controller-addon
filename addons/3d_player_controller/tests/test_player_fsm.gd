@@ -77,7 +77,7 @@ class TestStandingTransitions:
 
 	func test_exhausted_player_can_jump():
 		player.enable_stamina = true
-		var stamina: Node = player.get_node("Stamina")
+		var stamina: Node = player.get_node("Hud/Stamina")
 		stamina.set("stamina", 0.0)
 		player.is_exhausted = true
 		await wait_physics_frames(15)
@@ -149,7 +149,7 @@ class TestStandingTransitions:
 	## Drains the stamina bar so exhaustion sticks (it clears again only once the bar has refilled).
 	func _exhaust() -> void:
 		player.enable_stamina = true
-		player.get_node("Stamina").set("stamina", 0.0)
+		player.get_node("Hud/Stamina").set("stamina", 0.0)
 		player.is_exhausted = true
 		await wait_physics_frames(15)
 
