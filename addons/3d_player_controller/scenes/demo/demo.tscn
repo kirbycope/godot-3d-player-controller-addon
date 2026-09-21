@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" uid="uid://dpamk5qeelx2w" path="res://addons/3d_player_controller/scenes/prop/checkpoint.tscn" id="6_checkpoint"]
 [ext_resource type="PackedScene" uid="uid://dxbtulpdax42w" path="res://addons/3d_player_controller/scenes/prop/kill_zone.tscn" id="7_killzone"]
 [ext_resource type="PackedScene" uid="uid://bn81yd2prab5" path="res://addons/3d_player_controller/scenes/ui/save_game.tscn" id="8_savegame"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/ability_library.tscn" id="9_library"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_demo"]
 sky_horizon_color = Color(0.65, 0.72, 0.8, 1)
@@ -232,6 +233,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, -4)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -40, 0)
 
 [node name="SaveGame" parent="." instance=ExtResource("8_savegame")]
+
+[node name="AbilityLibrary" parent="." instance=ExtResource("9_library")]
 
 [node name="HUD" type="CanvasLayer" parent="." unique_id=1179813114]
 

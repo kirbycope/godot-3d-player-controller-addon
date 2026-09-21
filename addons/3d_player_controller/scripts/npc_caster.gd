@@ -21,6 +21,14 @@ var _channeling_vfx: Node3D
 @onready var cast_timer: Timer = $CastTimer
 
 
+func _ready() -> void:
+	# The scene's AbilityLibrary, when it has one: the resources here become its loaded copies of the same ids
+	var library: AbilityLibrary = AbilityLibrary.find(self)
+	if library:
+		for i: int in abilities.size():
+			abilities[i] = library.resolve(abilities[i])
+
+
 func is_ready(ability: Ability) -> bool:
 	return Time.get_ticks_msec() >= _cooldown_ends.get(ability, 0)
 

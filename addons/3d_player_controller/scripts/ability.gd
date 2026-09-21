@@ -25,6 +25,7 @@ const STANDING_CAST_STATES: Dictionary = {
 	CastStyle.POWER_UP: "SpellCastUpwards",
 }
 
+@export var id: StringName = &"" ## What an [AbilityLibrary] and a cast by name key it by; the file name when empty.
 @export var display_name: String = ""
 @export var icon: Texture2D
 @export var icon_color: Color = Color.WHITE ## Tints [member icon] on the wheel, the spell tree and the loadout (a fire spell orange, frost pale blue).
@@ -71,6 +72,13 @@ func activate(_caster: Node3D) -> bool:
 func deactivate(_caster: Node3D) -> void:
 	pass
 
+
+
+## [member id], or the file name for an ability saved without one.
+func get_id() -> StringName:
+	if not id.is_empty():
+		return id
+	return StringName(resource_path.get_file().get_basename())
 
 func get_vfx(phase: Phase) -> PackedScene:
 	return [channeling_vfx, casting_vfx, impact_vfx][phase]

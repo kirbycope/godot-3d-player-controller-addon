@@ -160,6 +160,12 @@ World of Warcraft style spells on the Zelda-style controls, so an action RPG nev
 - Only the multiplayer authority reads input and casts; effects that others must see belong on replicated Player properties, as Stealth does.
 - `Player.slow(factor, seconds)` is an RPC that lands on the owning peer like `take_hit` and scales the movement wish by `movement_scale` for a while, so a slowing spell walks the Player where it would run; a newer slow replaces an older one and runs its own timer. Give any other target a `slow(factor, seconds)` method and a slowing `DamageAbility` reaches it the same way.
 
+### 4c. The Ability Library (`AbilityLibrary`, `AbilityEntry`)
+- **One place every ability lives, loaded once and kept warm**: `scenes/ability_library.tscn` is an `AbilityLibrary` (a `Node3D`, in the `AbilityLibrary` group) whose children are `AbilityEntry` nodes, each carrying one `Ability`. A project instances it in its world scene, marks it editable and adds entries for its own spells; the addon's ships with Heal and Stealth. It is a scene and a `class_name`, not an autoload, so a game that never places one still runs.
+- **Warm at ready**: with `warm_on_ready` on, every phase VFX of every entry is instanced under the library for one frame and freed, which is what compiles its shaders and particles, so the first cast by any Player, puppet or NPC pays nothing; `warmed` fires and `is_warm` says so. `warm()` does it again on demand.
+- **Casters take from it**: `Abilities` (the Player's) and `NpcCaster` resolve each of their `abilities` through `AbilityLibrary.find(self)` at ready, so a scene carrying its own copy of a resource ends up on the library's loaded one of the same id; without a library they keep what they were given. `Abilities.cast_id(name)` casts by id, the caster's own first, else the library's.
+- **Ids**: `Ability.id`, or the resource's file name when empty (`Ability.get_id()`), the way quests are named.
+
 ### 5. Multi-Platform Contextual Controls (`PlayerControls`)
 The HUD itself is the [Controls addon](https://github.com/kirbycope/godot-controls), a separate repository, because
 most projects want on-screen input hints without a player controller. What lives here is `PlayerControls`

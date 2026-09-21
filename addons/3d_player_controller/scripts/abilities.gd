@@ -66,6 +66,7 @@ var _channeling_vfx: Node3D
 
 func _ready() -> void:
 	_wire_from_player()
+	_take_from_library()
 	set_physics_process(false)
 	set_process_unhandled_input(is_multiplayer_authority())
 	if not is_multiplayer_authority():
@@ -92,6 +93,30 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 		hold_timer.stop()
 		cast(active_ability)
+
+
+## The scene's [AbilityLibrary], when it has one: every ability here becomes the library's loaded copy of the same
+## id, so each caster shares the one warm instance. Without a library the resources stay as set.
+func _take_from_library() -> void:
+	var library: AbilityLibrary = AbilityLibrary.find(self)
+	if library == null:
+		return
+	for i: int in abilities.size():
+		abilities[i] = library.resolve(abilities[i])
+	if active_ability:
+		active_ability = library.resolve(active_ability)
+
+
+## Casts the ability called [param id]: one of this caster's own, else the library's. Nothing happens when nobody
+## knows the name.
+func cast_id(id: StringName) -> void:
+	for ability: Ability in abilities:
+		if ability and ability.get_id() == id:
+			cast(ability)
+			return
+	var library: AbilityLibrary = AbilityLibrary.find(self)
+	if library and library.has_ability(id):
+		cast(library.get_ability(id))
 
 
 ## Casts [param ability] now, starts its cast bar, or ends it when it is an active toggle.
