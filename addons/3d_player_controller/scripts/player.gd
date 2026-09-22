@@ -1559,11 +1559,18 @@ func _apply_synced_blend_position(blend_pos: Vector2) -> void:
 
 
 ## Points the spine [LookAtModifier3D] at [param target], or clears it when [param target] is null.
-## [HeldObject] (carried body) and [Bow] (crosshair while aiming) are the only callers.
-func set_look_at_target(target: Node3D) -> void:
+## [HeldObject] (carried body), [Bow] and [Firearm] (crosshair while aiming) are the only callers.
+## [param forward_axis] is the axis of the Spine that the stance already points at the target, and the
+## modifier pitches about the horizontal axis square to it: +Z for a gun held out in front (pitching about X),
+## +X for the archer's side-on stance, where the spine's front faces the bow arm's side (pitching about Z).
+func set_look_at_target(target: Node3D, forward_axis: SkeletonModifier3D.BoneAxis = SkeletonModifier3D.BONE_AXIS_PLUS_Z) -> void:
 	var modifier: LookAtModifier3D = look_at_modifier as LookAtModifier3D
 	if modifier == null:
 		return
+	if target:
+		var sideways: bool = forward_axis in [SkeletonModifier3D.BONE_AXIS_PLUS_X, SkeletonModifier3D.BONE_AXIS_MINUS_X]
+		modifier.forward_axis = forward_axis
+		modifier.primary_rotation_axis = Vector3.AXIS_Z if sideways else Vector3.AXIS_X
 	modifier.target_node = modifier.get_path_to(target) if target else NodePath("")
 	modifier.active = target != null
 

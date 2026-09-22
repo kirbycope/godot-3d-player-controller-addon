@@ -19,6 +19,7 @@ extends Equipment
 
 signal ammo_selected(ammo: AmmoItem) ## Emitted when Use on an [AmmoItem] for the bow picks the arrows it fires.
 
+const AIM_AXIS: SkeletonModifier3D.BoneAxis = SkeletonModifier3D.BONE_AXIS_PLUS_X ## The archery stance is side-on: the spine's +X runs down the aim, so that is the axis the look-at pitches while drawn.
 const RAY_MISS_DISTANCE: float = 40.0 ## Aim point distance when the projectile ray hits nothing.
 const TAKE_OUT_SFX: AudioStream = preload("res://addons/3d_player_controller/resources/audio/bow_take_out.tres") ## Randomizer resources rather than the clips: an exported scene list walks a resource for its clip, never a script preload.
 const PUT_AWAY_SFX: AudioStream = preload("res://addons/3d_player_controller/resources/audio/bow_put_away.tres")
@@ -54,7 +55,7 @@ func _on_locomotion_node_changed(state_path: String) -> void:
 	if not player.inventory.equipment.has(self) or player.held_object.is_holding_object() or player.is_throwing:
 		return
 	var is_aiming: bool = state_path == "Bow/ArcheryLocomotion"
-	player.set_look_at_target(player.look_at_target if is_aiming else null)
+	player.set_look_at_target(player.look_at_target if is_aiming else null, AIM_AXIS)
 	var shown: Projectile = get_nocked_arrow()
 	if shown:
 		shown.visible = is_aiming

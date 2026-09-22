@@ -749,20 +749,21 @@ bone_name = "Neck"
 bone_idx = 5
 
 [node name="LookAtModifier3D" type="LookAtModifier3D" parent="PlayerModel/Armature/GeneralSkeleton" index="3" unique_id=703324849]
-editor_description = "Bends the Spine towards CameraMount/ProjectileRaycast/LookAtTarget, so the torso turns to the aim. Limited to about 110 degrees either way, and only active while HeldObject or Bow asks for it through Player.set_look_at_target."
+editor_description = "Pitches the Spine towards CameraMount/ProjectileRaycast/LookAtTarget, so the torso, and the arms with it, follow the aim up and down. Relative to the animation's own pose and about one horizontal axis only, the one square to whichever axis the stance points at the target (the caller says: X for a gun held out in front, Z for the archer's side-on stance): the body already turns to the camera while aiming, so the stance keeps the twist its clip gave it and only the pitch is added. Limited to about 60 degrees either way, and only active while HeldObject, Bow or a Firearm asks for it through Player.set_look_at_target."
 active = false
 target_node = NodePath("../../../../CameraMount/ProjectileRaycast/LookAtTarget")
 bone_name = "Spine"
 bone = 2
-forward_axis = 0
+forward_axis = 4
+primary_rotation_axis = 0
+use_secondary_rotation = false
+relative = true
 duration = 0.2
 ease_type = 2
 use_angle_limitation = true
 symmetry_limitation = true
-primary_limit_angle = 1.9198622
+primary_limit_angle = 2.0943952
 primary_damp_threshold = 1.0
-secondary_limit_angle = 1.9198622
-secondary_damp_threshold = 1.0
 
 [node name="ParagliderBoneAttachment" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton" index="4" unique_id=1910251258]
 editor_description = "Rides the RightHand bone and carries the paraglider, so the glider hangs off the hand that holds it."

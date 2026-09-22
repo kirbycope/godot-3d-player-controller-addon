@@ -2,7 +2,9 @@ class_name Firearm
 extends Equipment
 ## A gun: while shoot is held it launches [member projectile_scene] along the Player's projectile ray,
 ## level with [member muzzle], so every round flies exactly through the crosshair, and shows
-## [member laser_sight] from the muzzle to the aim point while aiming or shooting.
+## [member laser_sight] from the muzzle to the aim point while aiming or shooting. Aiming or shooting also turns
+## the Player's torso to the crosshair through the spine [LookAtModifier3D] ([method Player.set_look_at_target]),
+## the way the bow does while drawn, and hands it back to the animation when the gun comes down or is stowed.
 ## It carries [member magazine_size] rounds; the "reload" action or an empty trigger pull takes one unit of
 ## ammunition ([AmmoItem], see [method get_ammo]) from the Player's inventory after [member reload_time] and refills
 ## the magazine, and the rounds of that kind fly until the next reload. [member reserve_rounds] is what the
@@ -43,6 +45,7 @@ var selected_ammo: AmmoItem ## The kind Use picked for this weapon; null takes t
 var loaded_ammo: AmmoItem ## The kind the last reload put in the magazine; null is the weapon's own round.
 var is_reloading: bool = false
 var _trigger_was_held: bool = false
+var _is_aiming: bool = false ## Whether the torso is pointed at the crosshair (see [method _set_aiming]).
 
 
 func _ready() -> void:
@@ -70,8 +73,10 @@ func _on_equipment_changed() -> void:
 	elif not player.has_firearm_equipped:
 		if player.ammo_readout:
 			player.ammo_readout.hide_ammo()
-	if not equipped and laser_sight:
-		laser_sight.hide()
+	if not equipped:
+		_set_aiming(false)
+		if laser_sight:
+			laser_sight.hide()
 
 
 ## Use on an [AmmoItem] for this weapon selects it; the next reload takes that kind.
@@ -97,8 +102,10 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _physics_process(_delta: float) -> void:
 	var shooting: bool = player.is_shooting
+	var aiming: bool = shooting or player.is_focusing
+	_set_aiming(aiming)
 	if laser_sight:
-		laser_sight.visible = shooting or player.is_focusing
+		laser_sight.visible = aiming
 		if laser_sight.visible:
 			laser_sight.aim(muzzle.global_position, get_aim_point())
 	if shooting and fire_timer.is_stopped() and (automatic or not _trigger_was_held):
@@ -106,6 +113,16 @@ func _physics_process(_delta: float) -> void:
 		if fire() != null:
 			fire_timer.start(fire_interval)
 	_trigger_was_held = shooting
+
+
+## Points the Player's torso at the crosshair while [param aiming], through the spine [LookAtModifier3D] the bow
+## uses too, and gives it back to the animation when the gun comes down. Left alone while a body is carried:
+## [HeldObject] owns the look-at then and clears it itself on the drop.
+func _set_aiming(aiming: bool) -> void:
+	if aiming == _is_aiming or (player.held_object and player.held_object.is_holding_object()):
+		return
+	_is_aiming = aiming
+	player.set_look_at_target(player.look_at_target if aiming else null)
 
 
 ## Where the Player's camera-aligned projectile ray lands, or a point far along it.
