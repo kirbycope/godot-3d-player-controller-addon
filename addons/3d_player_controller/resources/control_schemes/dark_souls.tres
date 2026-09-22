@@ -25,4 +25,5 @@ slot_labels = {
 "button_8": "Lock-On",
 "button_9": "Guard"
 }
+rolls = true
 locks_on = true

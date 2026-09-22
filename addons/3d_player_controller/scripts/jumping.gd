@@ -8,6 +8,12 @@ func _input(event: InputEvent) -> void:
 	# Do nothing if the player is not set
 	if not player or player.is_paused or player.is_typing or player.is_ragdolling: return
 
+	# A dive from the air, Odyssey's move: Sprint, or Throw with Crouch held (ZL and Y), while off the ground
+	if event.is_action_pressed(&"sprint") or (event.is_action_pressed(&"throw") and player.is_action_pressed(&"crouch")):
+		if player.try_air_dive(state):
+			get_viewport().set_input_as_handled()
+			return
+
 	# Jump action triggers while jumping
 	if event.is_action_pressed(&"jump") and not player.is_on_floor():
 		# A game with a double jump means the jump, wall or no wall

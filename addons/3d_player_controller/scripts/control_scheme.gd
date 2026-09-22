@@ -46,6 +46,11 @@ extends Resource
 ## to the action's own name, which is how every layout used to read before it was given its own words.
 @export var slot_labels: Dictionary[String, String] = {}
 
+@export_group("Movement")
+## A tap of Sprint rolls, Souls style: a dive roll along the direction moved, a backstep when still, and in the air a
+## forward dive; a hold sprints. [member Player.enable_dodge] turns the same on under any scheme.
+@export var rolls: bool = false
+
 @export_group("Focus")
 ## Focus locks on to a target, Breath of the Wild style. Off, Focus is a free over-the-shoulder aim, Grand
 ## Theft Auto style. [method Player.lock_on_enabled] is this flag, and [Camera] and [Focus] follow it.

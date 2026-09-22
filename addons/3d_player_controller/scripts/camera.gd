@@ -3,6 +3,7 @@ class_name Camera
 
 signal looking_at_changed(previous: Node3D, current: Node3D) ## Emitted when the interactable under the camera ray changes (either may be null).
 signal interaction_target_changed(previous: Node3D, current: Node3D) ## Emitted when the one thing the action button would act on changes (either may be null).
+signal perspective_changed(perspective: Perspective) ## Emitted once the swap to [member perspective] has been applied, so what is in hand can change how it is held.
 
 enum Perspective {
 	FIRST_PERSON, ## Rendered from the viewpoint of the player character
@@ -14,7 +15,8 @@ const FOCUS_AIM_WORLD_RADIUS: float = 0.5 ## World-space radius in units/meters 
 
 @export var camera_mount: Node3D
 @export var camera_spring_arm: SpringArm3D
-@export var first_person_offset: Vector3 = Vector3(0.0, 0.0, -0.3) ## The offset of the camera from the player's head when in first-person perspective.
+@export var first_person_offset: Vector3 = Vector3.ZERO ## Nudge of the first person camera from the eyes, in view space. The eye point itself is the skeleton's FirstPersonEyes marker, so this is normally zero: an offset along the view is what used to push the camera into the chest when looking down.
+@export var first_person_near: float = 0.12 ## Near clip in first person, metres: enough to keep the face and the skull out of the frame with the camera at the eyes. The scene's own near comes back in third person.
 @export var first_person_item_spring_length: float = 0.7 ## Held-item spring length in first-person.
 @export var held_pitch_min: float = -0.35 ## Radians: in third person the item arm never dips below this when the camera looks down, so a held object stays out of the ground and the Player's legs.
 @export var held_pitch_max: float = 0.6 ## Radians: and never rises above this when the camera looks up.
@@ -27,7 +29,14 @@ const FOCUS_AIM_WORLD_RADIUS: float = 0.5 ## World-space radius in units/meters 
 @export var aim_fov: float = 58.0 ## Narrowed FOV when aiming/shooting (over-the-shoulder).
 @export var default_h_offset: float = 0.0 ## Base horizontal offset.
 @export var aim_h_offset: float = 0.25 ## Over-the-right-shoulder offset when aiming/shooting.
-@export var perspective: Perspective = Perspective.THIRD_PERSON ## What perspective should the Camera use?
+@export var perspective: Perspective = Perspective.THIRD_PERSON: ## What perspective should the Camera use? Setting it applies the swap (see [method _apply_perspective]).
+	set(value):
+		var changed: bool = value != perspective
+		perspective = value
+		if is_node_ready():
+			_apply_perspective()
+			if changed:
+				perspective_changed.emit(perspective)
 @export_group("Locked View", "locked_")
 @export var locked_view: bool = false ## Holds the third-person camera at [member locked_pitch_degrees] and [member locked_yaw_degrees], [member locked_distance] out, and ignores the look stick and the mouse: an action RPG's view from above.
 @export var locked_pitch_degrees: float = -55.0
@@ -55,9 +64,11 @@ var interaction_target: Node3D = null: ## The one thing the action button acts o
 		interaction_target_changed.emit(previous, value)
 
 @onready var camera_initial_transform: Transform3D = transform
+@onready var camera_initial_near: float = near
 @onready var camera_ray_cast: RayCast3D = $CameraRayCast
 @onready var camera_follow_timer: Timer = $CameraFollowTimer ## Running while the camera holds its manual rotation instead of following the player.
 @onready var first_person_bone_attachment: BoneAttachment3D = %FirstPersonCameraBoneAttachment
+@onready var first_person_eyes: Marker3D = %FirstPersonEyes ## The eye point on the Head bone the first person camera sits at.
 @onready var item_spring_arm: SpringArm3D = %ItemSpringArm
 @onready var item_spring_arm_initial_transform: Transform3D = item_spring_arm.transform
 
@@ -103,7 +114,7 @@ func _ready() -> void:
 	# The item arm shortens against walls and the ground, never against the Player carrying the item
 	item_spring_arm.add_excluded_object(player.get_rid())
 
-	_update_raycast()
+	_apply_perspective()
 
 
 ## Shows the interaction prompt of the one thing the button would act on, and hides the previous one. Only
@@ -118,11 +129,18 @@ func _on_interaction_target_changed(previous: Node3D, current: Node3D) -> void:
 ## Swaps first and third person, the way the perspective button does; public so a seat that has taken the
 ## Player's input (the retro computer while DOOM plays) can still answer that button.
 func toggle_perspective() -> void:
+	perspective = Perspective.THIRD_PERSON if perspective == Perspective.FIRST_PERSON else Perspective.FIRST_PERSON
+
+
+## Puts the camera where [member perspective] says: at the eyes with [member first_person_near] in first person,
+## back on the spring arm with the scene's own near in third, and the interaction ray sized to match.
+func _apply_perspective() -> void:
 	if perspective == Perspective.FIRST_PERSON:
-		perspective = Perspective.THIRD_PERSON
-		transform = camera_initial_transform
+		near = first_person_near
+		move_camera_to_player_head()
 	else:
-		perspective = Perspective.FIRST_PERSON
+		near = camera_initial_near
+		transform = camera_initial_transform
 	_update_raycast()
 
 
@@ -218,8 +236,10 @@ func _process(delta: float) -> void:
 				look_multiplier = held_joypad_look_multiplier
 			rotate_camera_using_joypad_motion(delta * look_multiplier)
 
-	# Only continue if the perspective is third-person
-	if perspective != Perspective.THIRD_PERSON: return
+	# First person takes the look input every frame, not only on physics ticks, so a turn never stutters
+	if perspective == Perspective.FIRST_PERSON:
+		move_camera_to_player_head()
+		return
 
 	# Smoothly interpolate FOV and shoulder offset when aiming/shooting (BotW/TotK over-the-shoulder framing).
 	# Free aim (a firearm, or the GTA scheme with anything in hand) is over the shoulder for as long as focus is held.
@@ -339,9 +359,13 @@ func rotate_camera_using_mouse_motion(event: InputEventMouseMotion) -> void:
 	camera_mount.rotation_degrees.x = clampf(new_rotation_x, -89.0, 89.0)
 
 
-## Update the camera to follow the character head's position (while in "first-person").
+## Puts the camera at the eyes (the FirstPersonEyes marker on the Head bone, or the bone attachment itself when a
+## scene has none) looking where the camera mount looks, while in first person. The eye point rides the head,
+## so the view moves with the animation; the rotation is the mount's alone, so looking down never tips the camera
+## into the body the way an offset along the view did.
 func move_camera_to_player_head() -> void:
-	global_position = first_person_bone_attachment.global_position
+	var eyes: Node3D = first_person_eyes if is_instance_valid(first_person_eyes) else first_person_bone_attachment
+	global_position = eyes.global_position
 	global_rotation = camera_mount.global_rotation
 	global_position += global_transform.basis.z * first_person_offset.z
 	global_position += global_transform.basis.y * first_person_offset.y

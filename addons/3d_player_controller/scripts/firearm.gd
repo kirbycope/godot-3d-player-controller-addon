@@ -4,7 +4,10 @@ extends Equipment
 ## level with [member muzzle], so every round flies exactly through the crosshair, and shows
 ## [member laser_sight] from the muzzle to the aim point while aiming or shooting. Aiming or shooting also turns
 ## the Player's torso to the crosshair through the spine [LookAtModifier3D] ([method Player.set_look_at_target]),
-## the way the bow does while drawn, and hands it back to the animation when the gun comes down or is stowed.
+## the way the bow does while drawn, and hands it back to the animation when the gun comes down or is stowed. In
+## first person the hands are glued to the view instead ([method Player.set_first_person_hands], placed by
+## [member first_person_right_hand] and [member first_person_left_hand]) for as long as the gun is out, so the
+## arms and the gun go up and down with the look while the torso and the head under the camera never move.
 ## It carries [member magazine_size] rounds; the "reload" action or an empty trigger pull takes one unit of
 ## ammunition ([AmmoItem], see [method get_ammo]) from the Player's inventory after [member reload_time] and refills
 ## the magazine, and the rounds of that kind fly until the next reload. [member reserve_rounds] is what the
@@ -36,6 +39,18 @@ const RAY_MISS_DISTANCE: float = 100.0 ## Aim point distance when the projectile
 @export var laser_sight: LaserSight ## Optional pointer shown while aiming.
 @export var fire_sfx: AudioStreamPlayer3D ## Optional shot sound: its stream travels with the round ([method Projectile.play_launch_sfx]), so every peer hears the shot where the muzzle was; the node itself never plays.
 @export var reload_sfx: AudioStreamPlayer3D ## Optional reload sound.
+@export_group("First person", "first_person_")
+## Where the right hand sits in the view in first person, in the camera's own space (the eyes at the origin, -Z ahead),
+## so the arms ride the view instead of the torso. The default is the pistol's two-handed grip, read off its aim pose
+## and turned so the barrel sits on the crosshair; another gun sets its own in the inspector.
+@export var first_person_right_hand: Transform3D = Transform3D(
+		Basis(Vector3(-0.005185, 0.984873, 0.173201), Vector3(0.172699, 0.171482, -0.969932), Vector3(-0.984961, 0.024883, -0.170976)),
+		Vector3(0.0189, -0.1395, -0.2162))
+## And the left, the support hand, so the two-handed grip holds as the view moves.
+@export var first_person_left_hand: Transform3D = Transform3D(
+		Basis(Vector3(0.209083, -0.976204, -0.057525), Vector3(0.242839, 0.108813, -0.963944), Vector3(0.947266, 0.187575, 0.259812)),
+		Vector3(-0.0843, -0.1646, -0.2521))
+@export_group("")
 
 var rounds: int = 0: ## Rounds left in the magazine.
 	set(value):
@@ -45,7 +60,8 @@ var selected_ammo: AmmoItem ## The kind Use picked for this weapon; null takes t
 var loaded_ammo: AmmoItem ## The kind the last reload put in the magazine; null is the weapon's own round.
 var is_reloading: bool = false
 var _trigger_was_held: bool = false
-var _is_aiming: bool = false ## Whether the torso is pointed at the crosshair (see [method _set_aiming]).
+var _spine_aiming: bool = false ## Whether the torso is pointed at the crosshair (see [method _set_aiming]).
+var _hands_on_view: bool = false ## Whether the hands are glued to the view, in first person (see [method _set_aiming]).
 
 
 func _ready() -> void:
@@ -103,7 +119,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _physics_process(_delta: float) -> void:
 	var shooting: bool = player.is_shooting
 	var aiming: bool = shooting or player.is_focusing
-	_set_aiming(aiming)
+	_set_aiming(aiming or player.is_first_person)
 	if laser_sight:
 		laser_sight.visible = aiming
 		if laser_sight.visible:
@@ -115,14 +131,25 @@ func _physics_process(_delta: float) -> void:
 	_trigger_was_held = shooting
 
 
-## Points the Player's torso at the crosshair while [param aiming], through the spine [LookAtModifier3D] the bow
-## uses too, and gives it back to the animation when the gun comes down. Left alone while a body is carried:
-## [HeldObject] owns the look-at then and clears it itself on the drop.
+## Points the Player at the crosshair while [param aiming] (or for as long as the view is first person), and gives
+## the pose back to the animation when the gun comes down. Third person turns the torso through the spine
+## [LookAtModifier3D] the bow uses too; first person glues the hands to the view instead, so the arms and the gun
+## go up and down with the look and nothing of the torso or the head, and the camera on it, moves. Left alone
+## while a body is carried: [HeldObject] owns the look-at then and clears it itself on the drop.
 func _set_aiming(aiming: bool) -> void:
-	if aiming == _is_aiming or (player.held_object and player.held_object.is_holding_object()):
+	if player.held_object and player.held_object.is_holding_object():
 		return
-	_is_aiming = aiming
-	player.set_look_at_target(player.look_at_target if aiming else null)
+	var hands: bool = aiming and player.is_first_person
+	var spine: bool = aiming and not hands
+	if hands != _hands_on_view:
+		_hands_on_view = hands
+		if hands:
+			player.set_first_person_hands(first_person_right_hand, first_person_left_hand)
+		else:
+			player.clear_first_person_hands()
+	if spine != _spine_aiming:
+		_spine_aiming = spine
+		player.set_look_at_target(player.look_at_target if spine else null)
 
 
 ## Where the Player's camera-aligned projectile ray lands, or a point far along it.

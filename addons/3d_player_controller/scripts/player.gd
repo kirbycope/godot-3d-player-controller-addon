@@ -68,7 +68,7 @@ var uses_mouse: bool: ## Whether the mouse is this Player's: only a Player on th
 @export var air_jumps: int = 1 ## Jumps allowed off nothing before the feet touch ground again.
 @export var jump_speed: float = 5.0 ## The upward speed a jump starts with, on the ground (at the clip's keyframe) or in the air (at once).
 @export var instant_jump: bool = false ## Leave the ground on the press itself rather than at the clip's keyframe a third of a second later: a platformer's jump, timed at the edge.
-@export var enable_dodge: bool = false ## A tap of Sprint rolls (Souls style): forward in the direction moved, a backstep when still. Holding still sprints.
+@export var enable_dodge: bool = false ## A tap of Sprint rolls (Souls style): a dive roll in the direction moved, a backstep when still, a forward dive in the air. Holding still sprints. A [ControlScheme] with [member ControlScheme.rolls] turns this on as well (see [member dodge_enabled]).
 @export var dodge_stamina_cost: float = 20.0 ## Stamina a roll spends when stamina is on; an exhausted Player cannot roll.
 @export var dodge_tap_seconds: float = 0.25 ## Sprint released within this many seconds of the press is a tap, and a roll.
 @export var dodge_iframe_seconds: float = 0.45 ## The roll's first seconds take no hit at all.
@@ -231,6 +231,9 @@ var is_fishing: bool = false ## Is the Player currently fishing (has a rod equip
 var is_casting_line: bool = false ## Is the Player currently casting a fishing line?
 var is_reeling_line: bool = false ## Is the Player currently casting a fishing line?
 var is_flying: bool = false ## Is the Player currently flying?
+var is_first_person: bool: ## Is the view from the Player's own eyes? The body then turns with the view at once and a gun in hand follows its pitch (see [Camera]).
+	get:
+		return camera is Camera and (camera as Camera).perspective == Camera.Perspective.FIRST_PERSON
 var is_focusing: bool: ## Is the Player currently focusing (forward or on a target)?
 	get:
 		if not is_multiplayer_authority() or is_typing or riding_blocks_hands():
@@ -253,7 +256,7 @@ var is_flipping: bool: ## Is the Player currently front or back flipping?
 		if not is_multiplayer_authority() or animation_tree == null:
 			return false
 		return is_front_flipping or is_back_flipping \
-				or current_locomotion_node in ["Backflip", "FowardFlip"]
+				or current_locomotion_node in ["Backflip", "FowardFlip"] or current_locomotion_node.ends_with("Dive")
 var is_throwing: bool: ## Is the Player currently in a throw wind-up? (Delegates to [HeldObject].)
 	get:
 		return held_object != null and held_object.is_throwing
@@ -409,6 +412,13 @@ var is_shooting: bool: ## Is the Player currently shooting? Replicated: a puppet
 var is_sitting: bool = false ## Is the Player currently sitting?
 var is_sliding: bool = false ## Is the Player currently sliding?
 var is_dodging: bool = false ## Is the Player mid-roll (see [member enable_dodge])?
+var dodge_enabled: bool: ## The Souls roll is on: [member enable_dodge], or the scheme in use rolls ([member ControlScheme.rolls]).
+	get:
+		return enable_dodge or (control_scheme != null and control_scheme.rolls)
+var dodge_from_run: bool = false ## The roll being started came out of a run (see [method try_dodge]), so it is the longer sprinting dive.
+var dive_from_air: bool = false ## The roll being started is a dive from the air (see [method try_air_dive]).
+var _sprint_press_motion: float = 0.0 ## How hard the Player was moving when Sprint went down, to tell a roll out of a run from one out of a stand.
+var _sprint_hold_ended_msec: int = -1 ## When a held sprint was last let go, so a tap right after it still rolls out of the run.
 var air_jumps_left: int = 0 ## Air jumps still to be had before landing; refilled on the ground.
 var dodge_invulnerable: bool = false ## The roll's invulnerability frames are on: [method take_hit] does nothing.
 var _sprint_pressed_msec: int = -1 ## When Sprint last went down, for telling a tap (a roll) from a hold (a sprint).
@@ -490,6 +500,12 @@ var _ragdoll_was_enabled: bool = true ## enable_ragdoll before death forced it o
 @onready var look_at_modifier: LookAtModifier3D = $PlayerModel/Armature/GeneralSkeleton/LookAtModifier3D
 @onready var head_look_at_modifier: LookAtModifier3D = $PlayerModel/Armature/GeneralSkeleton/HeadLookAtModifier3D ## Turns the head alone; the spine one above is for aiming.
 @onready var right_hand_ik: TwoBoneIK3D = $PlayerModel/Armature/GeneralSkeleton/RightHandIK
+@onready var left_hand_ik: TwoBoneIK3D = $PlayerModel/Armature/GeneralSkeleton/LeftHandIK ## First person with a gun: the support hand on the grip (see [method set_first_person_hands]).
+@onready var first_person_right_hand_rotation: CopyTransformModifier3D = $PlayerModel/Armature/GeneralSkeleton/FirstPersonRightHandRotation ## Turns the right hand with the view once the IK has placed it.
+@onready var first_person_left_hand_rotation: CopyTransformModifier3D = $PlayerModel/Armature/GeneralSkeleton/FirstPersonLeftHandRotation ## The same for the left.
+@onready var first_person_right_hand: Marker3D = %FirstPersonRightHand ## Where the right hand sits in the view in first person; a Firearm places it.
+@onready var first_person_left_hand: Marker3D = %FirstPersonLeftHand ## And the left.
+@onready var hand_ik_pole: Marker3D = $PlayerModel/HandIKPole ## The elbow pole both hand IKs share unless a caller brings its own.
 @onready var physical_bone_simulator: PhysicalBoneSimulator3D = $PlayerModel/Armature/GeneralSkeleton/PhysicalBoneSimulator3D
 @onready var spring_arm: SpringArm3D = $CameraMount/CameraSpringArm
 @onready var camera: Camera3D = $CameraMount/CameraSpringArm/Camera3D
@@ -816,7 +832,6 @@ func apply_input(delta: float) -> void:
 	# A slow scales the wish, so the blend walks where it would run
 	target_motion *= movement_scale
 
-	var is_first_person: bool = camera is Camera and (camera as Camera).perspective == Camera.Perspective.FIRST_PERSON
 	# Handle movement is strafing
 	if not is_riding and (is_shooting or is_focusing or is_first_person):
 		# Rotate to face the target, or the camera direction when shooting or in first person
@@ -842,7 +857,8 @@ func apply_input(delta: float) -> void:
 					orientation.basis = Basis(q_from.slerp(q_to, focus_weight))
 				else:
 					var rotate_speed: float = rotation_interpolate_speed * 2.0 if is_aiming_firearm else rotation_interpolate_speed
-					var rotate_weight: float = clampf(delta * rotate_speed, 0.0, 1.0)
+					# First person turns the body with the view at once: any lag here swings the hands, and the gun in them, across the screen
+					var rotate_weight: float = 1.0 if is_first_person else clampf(delta * rotate_speed, 0.0, 1.0)
 					orientation.basis = Basis(q_from.slerp(q_to, rotate_weight))
 
 		_set_locomotion_blend(target_motion)
@@ -1575,6 +1591,63 @@ func set_look_at_target(target: Node3D, forward_axis: SkeletonModifier3D.BoneAxi
 	modifier.active = target != null
 
 
+## Glues the hands to two nodes for first person: [param right] and [param left] are what the hand IKs reach for
+## and the two rotation copies turn the hands as, so whatever is in hand rides them instead of the torso, and the
+## head, and the camera on it, never move. Either may be null to leave that arm to the animation. [param right_pole]
+## aims the right elbow for as long as this holds (a drawing arm bends back and out, a grip on a gun low and in
+## front); null keeps the shared [member hand_ik_pole]. [Firearm] passes the two camera markers, placed by
+## [method set_first_person_hands]; [Bow] its string hand marker and the camera's left one.
+## [method clear_first_person_hands] gives the arms back to the animation.
+func set_first_person_hand_targets(right: Node3D, left: Node3D, right_pole: Node3D = null) -> void:
+	if not is_instance_valid(right_hand_ik) or not is_instance_valid(left_hand_ik):
+		return
+	if is_instance_valid(right):
+		var pole: Node3D = right_pole if is_instance_valid(right_pole) else hand_ik_pole
+		right_hand_ik.set_target_node(0, right_hand_ik.get_path_to(right))
+		right_hand_ik.set_pole_node(0, right_hand_ik.get_path_to(pole))
+		right_hand_ik.influence = 1.0
+		right_hand_ik.active = true
+		first_person_right_hand_rotation.set_reference_node(0, first_person_right_hand_rotation.get_path_to(right))
+		first_person_right_hand_rotation.influence = 1.0
+		first_person_right_hand_rotation.active = true
+	else:
+		_release_right_hand()
+	if is_instance_valid(left):
+		left_hand_ik.set_target_node(0, left_hand_ik.get_path_to(left))
+		left_hand_ik.active = true
+		first_person_left_hand_rotation.set_reference_node(0, first_person_left_hand_rotation.get_path_to(left))
+		first_person_left_hand_rotation.active = true
+	else:
+		left_hand_ik.active = false
+		first_person_left_hand_rotation.active = false
+
+
+## Glues both hands to the view at [param right] and [param left], the hands' transforms in the camera's own space:
+## a gun, held the same way whatever the view does. [Firearm] is the caller, with the transforms it exports per gun.
+func set_first_person_hands(right: Transform3D, left: Transform3D) -> void:
+	first_person_right_hand.transform = right
+	first_person_left_hand.transform = left
+	set_first_person_hand_targets(first_person_right_hand, first_person_left_hand)
+
+
+## Lets go of the view: both hand IKs and rotation copies off, the right IK's target cleared and its pole back on
+## the shared one for whoever asks next.
+func clear_first_person_hands() -> void:
+	if not is_instance_valid(right_hand_ik) or not is_instance_valid(left_hand_ik):
+		return
+	_release_right_hand()
+	left_hand_ik.active = false
+	first_person_left_hand_rotation.active = false
+
+
+func _release_right_hand() -> void:
+	right_hand_ik.active = false
+	right_hand_ik.influence = 0.0
+	right_hand_ik.set_target_node(0, NodePath(""))
+	right_hand_ik.set_pole_node(0, right_hand_ik.get_path_to(hand_ik_pole))
+	first_person_right_hand_rotation.active = false
+
+
 ## Points the head [LookAtModifier3D] at [param target], or clears it when [param target] is null. Separate
 ## from [method set_look_at_target], which turns the spine to aim: this one turns the head only, so it can sit
 ## on top of whatever the body is doing (reading a screen while the hands keep typing). The modifier is last
@@ -1877,22 +1950,47 @@ func respawn() -> void:
 
 ## Every state watches for the Sprint press so a tap can be told from a hold; see [method try_dodge].
 func _input(event: InputEvent) -> void:
-	if enable_dodge and event.is_action_pressed(&"sprint") and not event.is_echo():
+	if dodge_enabled and event.is_action_pressed(&"sprint") and not event.is_echo():
 		_sprint_pressed_msec = Time.get_ticks_msec()
+		_sprint_press_motion = smoothed_motion.length()
 
 
-## A Sprint release: when [member enable_dodge] is on, the press was a tap ([member dodge_tap_seconds]), the Player
+## A Sprint release: when [member dodge_enabled], the press was a tap ([member dodge_tap_seconds]), the Player
 ## is on the ground and can afford it, this rolls ([constant NodeStateMachine.States.DODGING]) from [param from_state]
-## and returns true; the grounded states call it on the release and stop there when it took.
+## and returns true; the grounded states call it on the release and stop there when it took. The roll is the
+## sprinting dive ([member dodge_from_run]) when the Player was already at a run when Sprint went down, or lets a
+## held sprint go and taps again within half a second; otherwise the standing dive.
 func try_dodge(from_state: NodeStateMachine.States) -> bool:
-	if not enable_dodge or _sprint_pressed_msec < 0 or is_paused or is_typing:
+	if not dodge_enabled or _sprint_pressed_msec < 0 or is_paused or is_typing:
 		return false
-	var held: float = (Time.get_ticks_msec() - _sprint_pressed_msec) / 1000.0
+	var now: int = Time.get_ticks_msec()
+	var held: float = (now - _sprint_pressed_msec) / 1000.0
 	_sprint_pressed_msec = -1
-	if held > dodge_tap_seconds or not is_on_floor() or is_exhausted or is_riding or is_swimming or is_climbing:
+	if held > dodge_tap_seconds:
+		_sprint_hold_ended_msec = now
+		return false
+	if not is_on_floor() or is_exhausted or is_riding or is_swimming or is_climbing:
 		return false
 	if not stamina.spend(dodge_stamina_cost):
 		return false
+	dodge_from_run = _sprint_press_motion > 1.2 or (_sprint_hold_ended_msec >= 0 and now - _sprint_hold_ended_msec < 500)
+	dive_from_air = false
+	state_machine.travel(from_state, NodeStateMachine.States.DODGING)
+	return true
+
+
+## A dive from the air, Odyssey's move: the air states call it on Sprint, or Throw with Crouch held, while off the
+## ground, and with [member dodge_enabled] and the stamina for it the Player dives forward ([member dive_from_air],
+## the Falling To Dive Forward clip) and rolls out of the landing. Returns true when it took.
+func try_air_dive(from_state: NodeStateMachine.States) -> bool:
+	if not dodge_enabled or is_on_floor() or is_paused or is_typing or is_exhausted or is_riding or is_swimming \
+			or is_climbing or is_paragliding or is_flying or is_dodging:
+		return false
+	if not stamina.spend(dodge_stamina_cost):
+		return false
+	_sprint_pressed_msec = -1
+	dive_from_air = true
+	dodge_from_run = false
 	state_machine.travel(from_state, NodeStateMachine.States.DODGING)
 	return true
 

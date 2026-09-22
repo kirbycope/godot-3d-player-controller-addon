@@ -240,6 +240,12 @@
 [ext_resource type="AudioStream" path="res://addons/3d_player_controller/resources/audio/sword_sheath.tres" id="264_odb2g"]
 [ext_resource type="AudioStream" uid="uid://bkmhucmanhtth" path="res://addons/3d_player_controller/resources/audio/sword_attack.tres" id="265_t5nng"]
 [ext_resource type="AudioStream" path="res://addons/3d_player_controller/resources/audio/sword_impact.tres" id="266_l6fg8"]
+[ext_resource type="AnimationLibrary" uid="uid://bflbltjl3fsg5" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Bow Standing Dive Forward.glb" id="dive_bow"]
+[ext_resource type="AnimationLibrary" uid="uid://by4u3x83jwos2" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Falling To Dive Forward.glb" id="dive_falling"]
+[ext_resource type="AnimationLibrary" uid="uid://ydyj1ijnvy21" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Rife Standing Dive Forward.glb" id="dive_rifle_standing"]
+[ext_resource type="AnimationLibrary" uid="uid://dyj6g04yebnw4" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Rifle Running Dive Forward.glb" id="dive_rifle_running"]
+[ext_resource type="AnimationLibrary" uid="uid://dobl01t7bitkt" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Sprinting Dive Forward.glb" id="dive_sprinting"]
+[ext_resource type="AnimationLibrary" uid="uid://btaoohtgbsix1" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Standing Dive Forward.glb" id="dive_standing"]
 [ext_resource type="AnimationNodeBlendTree" uid="uid://c8uh3alyfnbea" path="res://addons/3d_player_controller/resources/animation/player_animation_tree.tres" id="anim_tree"]
 [ext_resource type="PackedScene" uid="uid://c25vl8otl1rj5" path="res://addons/3d_player_controller/scenes/ui/player_hud.tscn" id="hud_scene"]
 
@@ -744,9 +750,14 @@ bones/64/rotation = Quaternion(-2.1100695e-07, 0.99807346, 0.062044404, -2.67401
 
 [node name="FirstPersonCameraBoneAttachment" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton" index="2" unique_id=1896825249]
 unique_name_in_owner = true
-editor_description = "Rides the Neck bone. First person puts the camera here, so the view moves with the head the animation is giving it."
-bone_name = "Neck"
-bone_idx = 5
+editor_description = "Rides the Head bone. First person puts the camera at its FirstPersonEyes child, so the view moves with the head the animation is giving it and sits where the eyes are rather than at the neck."
+bone_name = "Head"
+bone_idx = 6
+
+[node name="FirstPersonEyes" type="Marker3D" parent="PlayerModel/Armature/GeneralSkeleton/FirstPersonCameraBoneAttachment" unique_id=1896825250]
+unique_name_in_owner = true
+editor_description = "Where the eyes are, in the head's own frame: a little above the Head bone and forward to the face, so the first person camera clears the skull instead of being pushed out along the view and into the chest when looking down."
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.07, 0.1)
 
 [node name="LookAtModifier3D" type="LookAtModifier3D" parent="PlayerModel/Armature/GeneralSkeleton" index="3" unique_id=703324849]
 editor_description = "Pitches the Spine towards CameraMount/ProjectileRaycast/LookAtTarget, so the torso, and the arms with it, follow the aim up and down. Relative to the animation's own pose and about one horizontal axis only, the one square to whichever axis the stance points at the target (the caller says: X for a gun held out in front, Z for the archer's side-on stance): the body already turns to the camera while aiming, so the stance keeps the twist its clip gave it and only the pitch is added. Limited to about 60 degrees either way, and only active while HeldObject, Bow or a Firearm asks for it through Player.set_look_at_target."
@@ -1606,12 +1617,12 @@ transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0, 0)
 shape = SubResource("CapsuleShape3D_krtyc")
 
 [node name="RightHandIK" type="TwoBoneIK3D" parent="PlayerModel/Armature/GeneralSkeleton" index="6" unique_id=942617038]
-editor_description = "Two-bone IK pulling the right hand onto a target, aimed by RightHandIKPole. Used where an animation alone will not put the hand where the world needs it, such as a grip on a ledge or a handlebar."
+editor_description = "Two-bone IK pulling the right hand onto a target, aimed by HandIKPole unless the caller brings a pole of its own. Used where an animation alone will not put the hand where the world needs it, such as a grip on a ledge or a handlebar, and in first person, where Player.set_first_person_hand_targets points it at the camera's FirstPersonRightHand for a gun or at a bow's string hand marker for the draw."
 active = false
 influence = 0.0
 setting_count = 1
 settings/0/target_node = NodePath("")
-settings/0/pole_node = NodePath("../../../RightHandIKPole")
+settings/0/pole_node = NodePath("../../../HandIKPole")
 settings/0/root_bone_name = "RightUpperArm"
 settings/0/root_bone = 33
 settings/0/middle_bone_name = "RightLowerArm"
@@ -1622,12 +1633,50 @@ settings/0/end_bone = 35
 settings/0/use_virtual_end = false
 settings/0/extend_end_bone = false
 
-[node name="HeldItemConnector" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton" index="7" unique_id=327941306]
+[node name="LeftHandIK" type="TwoBoneIK3D" parent="PlayerModel/Armature/GeneralSkeleton" index="7" unique_id=942617039]
+editor_description = "Two-bone IK pulling the left hand onto the camera's FirstPersonLeftHand, aimed by the same HandIKPole as the right. First person only (Player.set_first_person_hand_targets): a gun's support hand stays on the grip and a bow hand holds the bow up, while the torso and head under the camera are never touched."
+active = false
+setting_count = 1
+settings/0/target_node = NodePath("../../../../CameraMount/CameraSpringArm/Camera3D/FirstPersonLeftHand")
+settings/0/pole_node = NodePath("../../../HandIKPole")
+settings/0/root_bone_name = "LeftUpperArm"
+settings/0/root_bone = 9
+settings/0/middle_bone_name = "LeftLowerArm"
+settings/0/middle_bone = 10
+settings/0/pole_direction = 0
+settings/0/end_bone_name = "LeftHand"
+settings/0/end_bone = 11
+settings/0/use_virtual_end = false
+settings/0/extend_end_bone = false
+
+[node name="FirstPersonRightHandRotation" type="CopyTransformModifier3D" parent="PlayerModel/Armature/GeneralSkeleton" index="8" unique_id=942617040]
+editor_description = "Copies the camera's FirstPersonRightHand rotation onto the RightHand bone once RightHandIK has put the hand there, so the gun in it points exactly where the view does at every pitch. First person with a gun only (Player.set_first_person_hands); it has to come after the IK, which sets the arm the hand hangs off."
+active = false
+setting_count = 1
+settings/0/apply_bone_name = "RightHand"
+settings/0/apply_bone = 35
+settings/0/reference_type = 1
+settings/0/reference_node = NodePath("../../../../CameraMount/CameraSpringArm/Camera3D/FirstPersonRightHand")
+settings/0/copy = 2
+settings/0/axes = 7
+
+[node name="FirstPersonLeftHandRotation" type="CopyTransformModifier3D" parent="PlayerModel/Armature/GeneralSkeleton" index="9" unique_id=942617041]
+editor_description = "The same for the left hand, from the camera's FirstPersonLeftHand after LeftHandIK, so the support hand keeps its hold on the gun rather than the angle the forearm happens to give it."
+active = false
+setting_count = 1
+settings/0/apply_bone_name = "LeftHand"
+settings/0/apply_bone = 11
+settings/0/reference_type = 1
+settings/0/reference_node = NodePath("../../../../CameraMount/CameraSpringArm/Camera3D/FirstPersonLeftHand")
+settings/0/copy = 2
+settings/0/axes = 7
+
+[node name="HeldItemConnector" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton" index="10" unique_id=327941306]
 editor_description = "Where equipment and carried objects are parented, so whatever is in hand follows the hand bone."
 bone_name = "RightIndexProximal"
 bone_idx = 40
 
-[node name="LeftHandHitboxAttachment" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton" index="8" unique_id=85372565]
+[node name="LeftHandHitboxAttachment" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton" index="11" unique_id=85372565]
 editor_description = "Rides the left hand; the melee hitbox for an unarmed strike hangs here."
 bone_name = "LeftHand"
 bone_idx = 11
@@ -1641,7 +1690,7 @@ monitorable = false
 [node name="CollisionShape3D" type="CollisionShape3D" parent="PlayerModel/Armature/GeneralSkeleton/LeftHandHitboxAttachment/LeftHandHitbox" unique_id=497567958]
 shape = SubResource("SphereShape3D_hand_hitbox")
 
-[node name="RightHandHitboxAttachment" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton" index="9" unique_id=118412252]
+[node name="RightHandHitboxAttachment" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton" index="12" unique_id=118412252]
 editor_description = "The same on the right hand, and where a weapon's own hitbox sits while it is swung."
 bone_name = "RightHand"
 bone_idx = 35
@@ -1655,7 +1704,7 @@ monitorable = false
 [node name="CollisionShape3D" type="CollisionShape3D" parent="PlayerModel/Armature/GeneralSkeleton/RightHandHitboxAttachment/RightHandHitbox" unique_id=1096177976]
 shape = SubResource("SphereShape3D_hand_hitbox")
 
-[node name="HeadAttachment" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton" index="10" unique_id=1176968755]
+[node name="HeadAttachment" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton" index="13" unique_id=1176968755]
 editor_description = "Rides the Head bone. It carries the Head area, which is the headshot hitbox, and it is what a TalkingNpc points its own head modifier at."
 bone_name = "Head"
 bone_idx = 6
@@ -1670,12 +1719,12 @@ monitorable = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0)
 shape = SubResource("SphereShape3D_head")
 
-[node name="SpellHand" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton" index="11" unique_id=602208519]
+[node name="SpellHand" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton" index="14" unique_id=602208519]
 editor_description = "The hand a spell leaves from, so a cast starts at the fingertips rather than the Player's origin."
 bone_name = "RightHand"
 bone_idx = 35
 
-[node name="HeadLookAtModifier3D" type="LookAtModifier3D" parent="PlayerModel/Armature/GeneralSkeleton" index="12" unique_id=1009984629]
+[node name="HeadLookAtModifier3D" type="LookAtModifier3D" parent="PlayerModel/Armature/GeneralSkeleton" index="15" unique_id=1009984629]
 editor_description = "Bends the Head alone, and is deliberately the last child of the skeleton so it applies after the spine look-at and the hand IK. Narrower limits than the spine one (about 70 degrees across, 60 up and down) so a target behind the Player is simply not followed. Driven by Player.set_head_look_at_target, which is how the Player can read a screen while their hands keep typing."
 active = false
 bone_name = "Head"
@@ -1701,6 +1750,7 @@ libraries/Backflip = ExtResource("5_1vyhy")
 "libraries/Bow Standing Aim Walk Forward" = ExtResource("10_5747x")
 "libraries/Bow Standing Aim Walk Left" = ExtResource("11_de1tq")
 "libraries/Bow Standing Aim Walk Right" = ExtResource("12_rmmfp")
+"libraries/Bow Standing Dive Forward" = ExtResource("dive_bow")
 "libraries/Bow Standing Draw Arrow" = ExtResource("13_fl2ne")
 "libraries/Bow Standing Fire Arrow" = ExtResource("14_pfofw")
 "libraries/Bow Standing Idle 01" = ExtResource("15_k28ki")
@@ -1750,6 +1800,7 @@ libraries/Driving = ExtResource("58_mtw4v")
 "libraries/Entering Car" = ExtResource("59_mlkau")
 "libraries/Exiting Car" = ExtResource("60_mhxao")
 "libraries/Falling Idle" = ExtResource("61_ykcvn")
+"libraries/Falling To Dive Forward" = ExtResource("dive_falling")
 "libraries/Fishing Cast" = ExtResource("62_wwufx")
 "libraries/Fishing Idle" = ExtResource("63_7rill")
 libraries/Flying = ExtResource("64_k7mdr")
@@ -1808,6 +1859,7 @@ libraries/Pushing = ExtResource("116_vnblg")
 "libraries/Pushing Start" = ExtResource("117_76nfx")
 "libraries/Pushing Stop" = ExtResource("118_fbx6n")
 "libraries/Ready To Cast Spell Standing Idle" = ExtResource("119_2wq4o")
+"libraries/Rife Standing Dive Forward" = ExtResource("dive_rifle_standing")
 "libraries/Rifle Aiming Jump" = ExtResource("120_juqeu")
 "libraries/Rifle Aiming Run Backward" = ExtResource("121_ieptx")
 "libraries/Rifle Aiming Run Forward" = ExtResource("122_tvs5d")
@@ -1830,6 +1882,7 @@ libraries/Pushing = ExtResource("116_vnblg")
 "libraries/Rifle Run Forward" = ExtResource("139_q00qq")
 "libraries/Rifle Run Left" = ExtResource("140_gexmx")
 "libraries/Rifle Run Right" = ExtResource("141_86p33")
+"libraries/Rifle Running Dive Forward" = ExtResource("dive_rifle_running")
 "libraries/Rifle Sprint Forward" = ExtResource("142_dmuig")
 "libraries/Rifle Standing Idle" = ExtResource("143_oc5ea")
 "libraries/Rifle Walk Backward" = ExtResource("144_njh0u")
@@ -1854,12 +1907,14 @@ libraries/Running = ExtResource("150_i4cbi")
 "libraries/Skateboarding Idle Low" = ExtResource("163_e1p2n")
 "libraries/Skateboarding Kick Push" = ExtResource("164_fhoga")
 libraries/Sprint = ExtResource("165_ebnvw")
+"libraries/Sprinting Dive Forward" = ExtResource("dive_sprinting")
 "libraries/Standard Walk" = ExtResource("166_vlr1g")
 "libraries/Standing 1H Spell Cast Forwards" = ExtResource("167_p25xl")
 "libraries/Standing 1H Spell Cast Sweeping Sideways" = ExtResource("168_67b37")
 "libraries/Standing 1H Spell Cast Sweeping Upwards" = ExtResource("169_ghg0k")
 "libraries/Standing 1H Spell Cast Upwards" = ExtResource("170_2cy3j")
 "libraries/Standing Backflip" = ExtResource("171_1genc")
+"libraries/Standing Dive Forward" = ExtResource("dive_standing")
 "libraries/Standing Throw" = ExtResource("172_rryyf")
 libraries/Stomping = ExtResource("173_kyh50")
 libraries/Swimming = ExtResource("174_a45c2")
@@ -1900,8 +1955,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0)
 visible = false
 target_position = Vector3(0, 0, 1)
 
-[node name="RightHandIKPole" type="Marker3D" parent="PlayerModel" unique_id=1287346059]
-editor_description = "The pole target aiming the right arm's elbow, so RightHandIK bends it the way an elbow bends."
+[node name="HandIKPole" type="Marker3D" parent="PlayerModel" unique_id=1287346059]
+editor_description = "The pole target aiming the elbows, so RightHandIK and LeftHandIK bend an arm the way an elbow bends: low and in front, which both arms share."
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0.8)
 
 [node name="LedgeDetectionHorizontal" type="RayCast3D" parent="PlayerModel" unique_id=258103021]
@@ -2001,6 +2056,14 @@ collide_with_areas = true
 editor_description = "Runs while the camera holds a rotation the player set by hand, before it goes back to following behind the Player."
 wait_time = 0.8
 one_shot = true
+
+[node name="FirstPersonRightHand" type="Marker3D" parent="CameraMount/CameraSpringArm/Camera3D" unique_id=285025251]
+unique_name_in_owner = true
+editor_description = "Where the right hand sits in the view in first person, so the arms and the gun ride the view instead of the torso: RightHandIK reaches for it and FirstPersonRightHandRotation copies its rotation onto the hand. A Firearm places it from its first_person_right_hand export while it is out in first person (a Bow pulls that hand onto its own string instead), so it is left at the camera here."
+
+[node name="FirstPersonLeftHand" type="Marker3D" parent="CameraMount/CameraSpringArm/Camera3D" unique_id=285025252]
+unique_name_in_owner = true
+editor_description = "The same for the left hand, placed from a Firearm's first_person_left_hand so the support hand keeps the two-handed grip as the view moves, or from a Bow's carry and aim transforms for the bow hand."
 
 [node name="ToonFilter" parent="CameraMount/CameraSpringArm/Camera3D" unique_id=960733877 instance=ExtResource("206_e4ijf")]
 editor_description = "The cel and newspaper post-process, switched from the Video settings menu. Cel needs Forward+, so it is greyed elsewhere."
