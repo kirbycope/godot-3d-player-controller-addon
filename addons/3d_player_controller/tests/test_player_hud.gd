@@ -64,3 +64,23 @@ func test_the_hud_scene_holds_the_whole_screen_and_nothing_else() -> void:
 	for child: String in CHILDREN:
 		assert_not_null(hud.get_node_or_null(child), child + " is in the HUD scene")
 	hud.free()
+
+
+## The crosshair is a region of Kenney's crosshair sheet, an SVG. A change to the sheet's import scale moves every
+## shape under a fixed region, and once it moved so far the region cut empty space: the node was there, visible,
+## centred, and drew nothing. So the region is checked against the sheet as Godot rasterises it.
+func test_the_crosshair_region_cuts_a_shape_out_of_the_sheet() -> void:
+	var atlas_texture: AtlasTexture = player.crosshair.texture as AtlasTexture
+	assert_not_null(atlas_texture, "The crosshair is a region of the Kenney sheet")
+	var sheet: Image = Image.new()
+	sheet.load_svg_from_string(FileAccess.get_file_as_string(atlas_texture.atlas.resource_path), 1.0)
+	assert_eq(sheet.get_size(), Vector2i(atlas_texture.atlas.get_size()), "The sheet is imported at the scale the region was picked at")
+	var region: Rect2i = Rect2i(atlas_texture.region)
+	assert_true(Rect2i(Vector2i.ZERO, sheet.get_size()).encloses(region), "The region is inside the sheet")
+	var opaque: int = 0
+	for y: int in range(region.position.y, region.end.y):
+		for x: int in range(region.position.x, region.end.x):
+			if sheet.get_pixel(x, y).a > 0.1:
+				opaque += 1
+	assert_gt(opaque, 50, "The region holds a crosshair, not the space between two: %d opaque pixels" % opaque)
+	assert_true(player.crosshair.visible, "and the reticle is on screen from the start")

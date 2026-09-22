@@ -31,7 +31,7 @@
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_fk680"]
 atlas = ExtResource("228_5acoi")
-region = Rect2(2, 28, 18, 18)
+region = Rect2(4, 75, 52, 52)
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_underwater"]
 shader = ExtResource("261_dd4mk")
