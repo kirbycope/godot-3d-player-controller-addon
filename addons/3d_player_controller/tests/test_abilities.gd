@@ -220,8 +220,10 @@ func test_a_cast_needs_the_energy_cost() -> void:
 
 ## A PackedScene whose root is a plain Node3D, standing in for a particle effect.
 func _make_vfx() -> PackedScene:
+	var node := Node3D.new()
 	var scene := PackedScene.new()
-	scene.pack(Node3D.new())
+	scene.pack(node)
+	node.free()
 	return scene
 
 

@@ -39,6 +39,7 @@ func after_each() -> void:
 	Inventory.persistence_enabled = _persistence_was_enabled
 	if FileAccess.file_exists(TEST_SAVE):
 		DirAccess.remove_absolute(TEST_SAVE)
+	await wait_process_frames(1) # the spells screen's replaced buttons were queued for freeing
 
 
 ## A Player whose starting spells are cleared, with the demo tree and some points.

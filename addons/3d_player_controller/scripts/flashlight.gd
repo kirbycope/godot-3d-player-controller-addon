@@ -6,10 +6,11 @@ extends SpotLight3D
 ## beam stands still while lit ([member FollowerNpc.frozen], so a frostbolt's slow on it outlasts the beam), the
 ## way a thing that only moves in the dark does. [signal toggled] and [signal battery_changed] are for the HUD.
 ##
-## Multiplayer: only the Player's authority reads the key and drains the battery, and [member is_on] reaches every
-## peer's copy of the torch through [method _switch]. The beam is aimed by the owner's camera, which no other peer
-## has, so the owner works out what it lights and tells the server ([method _hold]), which holds those still; the
-## owner's copy runs its physics only while the torch is on.
+## Multiplayer: instance [code]scenes/equipment/flashlight.tscn[/code], whose [code]StateSynchronizer[/code] carries
+## [member is_on] from the Player's authority to every peer's copy of the torch, a player joining later included. Only
+## the authority reads the key and drains the battery. The beam is aimed by the owner's camera, which no other peer has,
+## so the owner works out what it lights and tells the server ([method _hold]), which holds those still; the owner's
+## copy runs its physics only while the torch is on.
 
 signal toggled(on: bool)
 signal battery_changed(seconds_left: float, capacity: float)
@@ -26,7 +27,7 @@ signal went_dark ## The battery ran out with the light on.
 @export var freeze_range: float = 14.0
 @export var starts_on: bool = false
 
-var is_on: bool = false: ## On every peer; the owner switches it through [method _switch].
+var is_on: bool = false: ## On every peer; the owner switches it and the StateSynchronizer carries it to the rest.
 	set(value):
 		is_on = value and battery > 0.0
 		visible = is_on
@@ -56,21 +57,15 @@ func _exit_tree() -> void:
 func _input(event: InputEvent) -> void:
 	if player and is_multiplayer_authority() and not player.is_paused and not player.is_typing and InputMap.has_action(action) \
 			and event.is_action_pressed(action) and not event.is_echo():
-		_switch.rpc(not is_on)
+		is_on = not is_on
 		get_viewport().set_input_as_handled()
-
-
-## The owner's switch, on every peer.
-@rpc("authority", "call_local", "reliable")
-func _switch(on: bool) -> void:
-	is_on = on
 
 
 ## The owner's copy, while on: the battery drains and what the beam lights goes to the server.
 func _physics_process(delta: float) -> void:
 	battery -= delta
 	if battery <= 0.0:
-		_switch.rpc(false)
+		is_on = false
 		went_dark.emit()
 		return
 	var lit: Array[EnemyNpc] = []

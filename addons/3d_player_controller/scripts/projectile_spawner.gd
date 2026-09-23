@@ -15,7 +15,8 @@ extends MultiplayerSpawner
 ## (its Auto Spawn List in the inspector, so list every scene a client fires or drops: bullets, arrows, thrown
 ## items, [code]item_pickup.tscn[/code] and droppable equipment), or for a drop, "world_pickup" must name a world
 ## [Equipment]; the shooter it names must be the sender's own; and an "item" must be an [Item] of this project, its
-## "count" clamped to a stack. Lightning ([method strike_lightning], [method arc_lightning]) goes through here too, so
+## "count" clamped to a stack. A client's throw does what the thrown item or equipment does, never the damage it sent
+## ([method _request_spawn]). Lightning ([method strike_lightning], [method arc_lightning]) goes through here too, so
 ## a client's bolt reaches every peer.
 
 
@@ -97,20 +98,33 @@ func _spawn_everywhere(data: Dictionary) -> Node:
 
 ## A client's spawn: refused unless the scene is on the spawnable list (or its "world_pickup" is a world
 ## [Equipment]), the shooter is the sender's own and any "item" is an [Item] of this project; its "count" is clamped
-## to a stack.
+## to a stack. A fired item is a throw ([ThrownItem]), so it must be [member Item.throwable], and thrown "equipment"
+## must be an [Equipment] scene on the list; the throw's "damage" is then that item's or that scene's
+## [code]throw_damage[/code], whatever number the client sent.
 @rpc("any_peer", "call_remote", "reliable")
 func _request_spawn(data: Dictionary) -> void:
 	var world_pickup: String = str(data.get("world_pickup", ""))
 	var listed: bool = get_node_or_null(world_pickup) is Equipment if not world_pickup.is_empty() else _is_spawnable(str(data.get("scene", "")))
 	if not multiplayer.is_server() or not listed or not _sent_by_owner(NodePath(str(data.get("shooter", "")))):
 		return
+	var damage: float = 0.0
 	var item_path: String = str(data.get("item", ""))
 	if not item_path.is_empty():
 		var item: Item = load(item_path) as Item if item_path.begins_with("res://") and ResourceLoader.exists(item_path) else null
-		if item == null:
+		if item == null or (data.has("origin") and not item.throwable):
 			return
 		var count: Variant = data.get("count", 1)
 		data["count"] = clampi(count if count is int else 1, 1, item.max_stack)
+		damage = item.throw_damage
+	var equipment_path: String = str(data.get("equipment", ""))
+	if not equipment_path.is_empty():
+		var piece: Equipment = Inventory.pickup_from(equipment_path, self) if _is_spawnable(equipment_path) else null
+		if piece == null:
+			return
+		damage = piece.throw_damage
+		piece.free()
+	if data.has("damage"):
+		data["damage"] = damage
 	spawn(data)
 
 

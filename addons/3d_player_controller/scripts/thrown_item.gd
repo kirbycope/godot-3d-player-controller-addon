@@ -8,7 +8,9 @@ extends RigidBody3D
 ## the item, or the equipment's own walk-over scene. Both go through the world's [ProjectileSpawner], so every peer
 ## gets the pickup and loses the body (a spawned node freed on the server is freed everywhere); without a spawner
 ## both happen locally. The spawner builds it on every peer with the launch data in [member pending_launch], like
-## a [Projectile]; the extra keys are "item" (resource path), "equipment" (scene path) and "damage".
+## a [Projectile]; the extra keys are "item" (resource path), "equipment" (scene path) and "damage". For a client's
+## throw the server sets "damage" from the item's or the equipment scene's [code]throw_damage[/code] and refuses an item
+## that is not throwable or equipment off its spawnable list ([ProjectileSpawner]), so no client picks its own damage.
 
 signal landed(collider: Node) ## Emitted on every peer the first time the body touches anything.
 

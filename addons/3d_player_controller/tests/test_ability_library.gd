@@ -63,7 +63,7 @@ func test_warming_instances_every_vfx_once_and_frees_it() -> void:
 	assert_false(library.is_warm)
 	# A spell with a VFX for two of its phases, the way a game's spells have (the addon's own two carry none)
 	var vfx: PackedScene = PackedScene.new()
-	vfx.pack(Node3D.new())
+	vfx.pack(autofree(Node3D.new()))
 	var spell: Ability = Ability.new()
 	spell.id = &"sparkle"
 	spell.casting_vfx = vfx

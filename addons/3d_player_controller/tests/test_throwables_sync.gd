@@ -3,11 +3,16 @@ extends GutTest
 ## Purpose: throwing is decided on the Player's multiplayer authority alone. On a real host/client session the
 ## client's copy of the host's Player neither consumes nor spawns; the host's throw reaches the client as the same
 ## ThrownItem through the ProjectileSpawner, and when it lands the host replaces it with an ItemPickup on both peers.
+## A client's throw request is checked by the host: its damage is the thrown thing's own, never the number it sent.
 
 const PORT: int = 47395
 const PLAYER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player.tscn")
 const PLAYER_SPAWNER: Script = preload("res://addons/3d_player_controller/scripts/player_spawner.gd")
 const PROJECTILE_SPAWNER: Script = preload("res://addons/3d_player_controller/scripts/projectile_spawner.gd")
+const THROWN_ITEM_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/projectile/thrown_item.tscn")
+const SWORD_SCENE: PackedScene = preload("res://addons/3d_player_controller/inventory/scenes/demo/wooden_sword.tscn")
+const APPLE: Item = preload("res://addons/3d_player_controller/inventory/resources/items/apple.tres")
+const PROJECT_ROCK_PATH: String = "res://addons/3d_player_controller/tests/sync_project_rock.tres" ## Held in the cache only, as a project's own throwable is.
 const ROCK_PATH: String = "user://test_sync_rock.tres" ## A throwable saved to disk, so it has a path the spawner can send.
 
 var server_root: Node3D
@@ -33,6 +38,8 @@ func _build_branch(root: Node3D) -> void:
 	projectile_spawner.name = "ProjectileSpawner"
 	projectile_spawner.spawn_path = NodePath("../Projectiles")
 	projectile_spawner.add_to_group(&"ProjectileSpawner") # ProjectileSpawner.find_for matches by multiplayer session
+	projectile_spawner.add_spawnable_scene(THROWN_ITEM_SCENE.resource_path) # a client's throw is only for a listed scene
+	projectile_spawner.add_spawnable_scene(SWORD_SCENE.resource_path) # and lands only as listed equipment
 	root.add_child(projectile_spawner)
 
 
@@ -87,6 +94,7 @@ func after_each() -> void:
 	get_tree().set_multiplayer(null, client_path)
 	if FileAccess.file_exists(ROCK_PATH):
 		DirAccess.remove_absolute(ROCK_PATH)
+	await wait_process_frames(1) # a body the host despawned leaves the client's tree queued for freeing
 
 
 func test_a_copy_off_the_authority_neither_consumes_nor_spawns() -> void:
@@ -133,3 +141,43 @@ func test_the_authoritys_throw_reaches_the_client_and_lands_as_a_pickup_on_both(
 	assert_not_null(pickup)
 	assert_eq(pickup.item.get_id(), &"sync_rock", "holding the rock")
 	assert_eq(pickup.count, 1)
+
+
+## A client that asks the host for a throw names the item and a damage. The host refuses an item the client could never
+## have thrown (not throwable, or no Item of the project) and equipment off its list, and a throw it accepts does what
+## the rock or the sword does, not the 9999 the client sent.
+func test_the_host_derives_a_clients_throw_damage_and_refuses_what_it_could_not_have_thrown() -> void:
+	var project_rock := Item.new()
+	project_rock.id = &"sync_project_rock"
+	project_rock.throwable = true
+	project_rock.throw_damage = 5.0
+	project_rock.take_over_path(PROJECT_ROCK_PATH)
+	var mine: Player = client_root.get_node("Players/" + str(client_api.get_unique_id()))
+	var client_spawner: ProjectileSpawner = client_root.get_node("ProjectileSpawner")
+	var on_host: Node = server_root.get_node("Projectiles")
+	var on_client: Node = client_root.get_node("Projectiles")
+	var far: Transform3D = Transform3D(Basis.IDENTITY, Vector3(300.0, 50.0, 0.0))
+	assert_false(APPLE.throwable, "The apple is food, never thrown")
+	client_spawner.fire(THROWN_ITEM_SCENE, far, Vector3.FORWARD, 1.0, mine, null, {"item": APPLE.resource_path, "damage": 9999.0})
+	client_spawner.fire(THROWN_ITEM_SCENE, far, Vector3.FORWARD, 1.0, mine, null, {"item": "res://nowhere/rock.tres", "damage": 9999.0})
+	client_spawner.fire(THROWN_ITEM_SCENE, far, Vector3.FORWARD, 1.0, mine, null, {"equipment": PLAYER_SCENE.resource_path, "damage": 9999.0})
+	await wait_process_frames(15)
+	assert_eq(on_host.get_child_count(), 0, "An item it could not have thrown, or a scene off the list, flies nowhere")
+	assert_eq(on_client.get_child_count(), 0)
+	client_spawner.fire(THROWN_ITEM_SCENE, far, Vector3.FORWARD, 1.0, mine, null, {"item": PROJECT_ROCK_PATH, "damage": 9999.0})
+	for i in 60:
+		await wait_process_frames(1)
+		if on_client.get_child_count() > 0:
+			break
+	assert_eq(on_host.get_child_count(), 1, "A throwable item of the project flies")
+	assert_eq((on_host.get_child(0) as ThrownItem).damage, 5.0, "doing what the rock does on the host, whose copy lands it")
+	assert_eq((on_client.get_child(0) as ThrownItem).damage, 5.0, "and the client's copy agrees")
+	client_spawner.fire(THROWN_ITEM_SCENE, far, Vector3.FORWARD, 1.0, mine, null, {"equipment": SWORD_SCENE.resource_path, "damage": 9999.0})
+	for i in 60:
+		await wait_process_frames(1)
+		if on_host.get_child_count() > 1:
+			break
+	assert_eq(on_host.get_child_count(), 2, "Listed equipment flies")
+	var sword: ThrownItem = on_host.get_child(1) as ThrownItem
+	assert_eq(sword.equipment_scene, SWORD_SCENE)
+	assert_eq(sword.damage, 0.0, "doing the sword scene's throw_damage, not the client's number")

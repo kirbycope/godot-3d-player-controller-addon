@@ -51,6 +51,7 @@ func after_each() -> void:
 	Inventory.persistence_enabled = _persistence_was_enabled
 	if FileAccess.file_exists(TEST_SAVE):
 		DirAccess.remove_absolute(TEST_SAVE)
+	await wait_process_frames(1) # forgotten equipment was queued for freeing (Inventory.forget_equipment)
 
 
 func _spawn_player() -> Player:

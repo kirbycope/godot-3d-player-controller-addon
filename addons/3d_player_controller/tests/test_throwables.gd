@@ -50,6 +50,7 @@ func after_each() -> void:
 	if is_instance_valid(root):
 		root.free()
 		root = null
+	await wait_process_frames(1) # a thrown piece's attachment was queued for freeing (Inventory.forget_equipment)
 
 
 ## The inventory demo's sword, flagged throwable on the world copy so the equipped copy inherits it; it has a scene to come back from.

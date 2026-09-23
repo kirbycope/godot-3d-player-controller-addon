@@ -259,6 +259,6 @@ func test_a_staff_draws_and_stows_in_silence_while_an_axe_uses_the_sword_set() -
 	player.inventory.remove_equipment(axe)
 	assert_true(audio.stow_audio.playing)
 	for type: Equipment.EquipmentType in [Equipment.EquipmentType.PISTOL, Equipment.EquipmentType.RIFLE, Equipment.EquipmentType.FISHING_ROD, Equipment.EquipmentType.STAFF, Equipment.EquipmentType.BOW]:
-		var quiet := Equipment.new()
+		var quiet: Equipment = autofree(Equipment.new())
 		quiet.equipment_type = type
 		assert_false(WeaponAudio.is_bladed(quiet), "%s draws in silence unless its scene says otherwise" % Equipment.EquipmentType.keys()[type])
