@@ -112,10 +112,18 @@ layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 16
 
-[node name="Grid" type="GridContainer" parent="Panel/VBoxContainer/Body"]
+[node name="GridScroll" type="ScrollContainer" parent="Panel/VBoxContainer/Body"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 3
+follow_focus = true
+
+[node name="Grid" type="GridContainer" parent="Panel/VBoxContainer/Body/GridScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 6
 theme_override_constants/h_separation = 4
 theme_override_constants/v_separation = 4
 columns = 5
@@ -236,3 +244,6 @@ stretch_mode = 5
 [connection signal="mouse_entered" from="Panel/VBoxContainer/Actions/Back" to="Panel/VBoxContainer/Actions/Back" method="grab_focus"]
 [connection signal="pressed" from="Panel/VBoxContainer/Actions/Back" to="." method="_on_back_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/Actions/Back/TouchScreenButton" to="." method="_on_back_touch_screen_button_pressed"]
+[connection signal="resized" from="Panel/VBoxContainer/Body/GridScroll" to="." method="_update_touch_visibility"]
+[connection signal="item_rect_changed" from="Panel/VBoxContainer/Body/GridScroll/Grid" to="." method="_update_touch_visibility"]
+[connection signal="sort_children" from="Panel/VBoxContainer/Body/GridScroll/Grid" to="." method="_update_touch_visibility"]

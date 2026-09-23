@@ -210,22 +210,27 @@ func test_rumble_only_reaches_a_pad() -> void:
 	assert_true(controls.rumble(0.0, 0.8, 0.1), "A pad gets the kick")
 
 
-func test_a_peers_copy_of_a_round_waits_for_the_spawners_despawn_instead_of_freeing_itself() -> void:
-	# A spawner-owned round belongs to the server; a client's copy must not free on its own hit, or the server's
-	# despawn arrives for a node the client no longer has (ERR_UNAUTHORIZED in on_despawn_receive).
+func test_a_peers_copy_of_a_round_lands_without_counting_the_hit_and_waits_for_the_despawn() -> void:
+	# A spawner-owned round belongs to the server. A client's copy must not free on its own hit, or the server's
+	# despawn arrives for a node the client no longer has (ERR_UNAUTHORIZED in on_despawn_receive), and it must not
+	# tell the target either: every peer's copy counting the hit did the damage once per peer.
 	var target := _make_area_target(Vector3(0, 0, -6))
 	var bullet: Projectile = BULLET_SCENE.instantiate()
 	root.add_child(bullet)
 	bullet.set_multiplayer_authority(2) # Somebody else's round
+	watch_signals(bullet)
 	bullet.launch(Transform3D(Basis.IDENTITY, Vector3.ZERO), Vector3.FORWARD, 300.0, null)
 	await wait_physics_frames(4)
-	assert_eq(target.hits, 1, "The copy still simulates the hit")
-	assert_true(is_instance_valid(bullet) and bullet.is_inside_tree(), "but it stays for the spawner's despawn")
+	assert_true(bullet.has_hit, "The copy still simulates the landing")
+	assert_signal_emitted(bullet, "hit", "and says so, for its sounds and effects")
+	assert_eq(target.hits, 0, "but only the round's authority tells the target")
+	assert_true(is_instance_valid(bullet) and bullet.is_inside_tree(), "It stays for the spawner's despawn")
 	assert_true(bullet.freeze, "stopped where it landed")
 	assert_false(bullet.visible, "and out of sight")
 	var mine := _shoot(Vector3.ZERO, Vector3.FORWARD, 300.0)
 	await wait_physics_frames(4)
-	assert_false(is_instance_valid(mine) and mine.is_inside_tree(), "A round this peer owns frees itself as before")
+	assert_eq(target.hits, 1, "A round this peer owns counts its hit once")
+	assert_false(is_instance_valid(mine) and mine.is_inside_tree(), "and frees itself as before")
 
 
 ## A two-round pistol on the Player's skeleton, its trigger polled by the copy in hand. A gun built in code (not

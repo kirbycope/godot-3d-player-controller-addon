@@ -176,3 +176,15 @@ class RayOnly:
 
 	func equip(_who: Player) -> void:
 		pass
+
+
+## The list of what is in reach is kept by the reach volumes themselves: one freed while the Player stands in it
+## reports the exit as it leaves the tree, so nothing has to sweep the list every physics tick.
+func test_an_npc_freed_in_reach_drops_out_of_it() -> void:
+	var npc: TalkingNpc = _npc(Vector3(1.0, 0.0, 0.2))
+	await wait_physics_frames(4)
+	assert_true(camera.in_reach.has(npc), "Standing by the NPC puts it in reach")
+	npc.free()
+	assert_eq(camera.in_reach.size(), 0, "Freed, it goes from the list at once")
+	await wait_physics_frames(2)
+	assert_null(camera.interaction_target, "and nothing is offered")

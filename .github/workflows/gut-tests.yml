@@ -88,6 +88,20 @@ jobs:
             -gcompact_mode \
             -gexit
 
+      # A run that found no tests (GUT missing, a script that failed to parse, a wrong -gdir) can exit 0; a
+      # report with no test cases in it, or no report at all, fails the job instead of passing it.
+      - name: Fail on a run with no tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import sys
+          import xml.etree.ElementTree as ET
+          cases = sum(1 for _ in ET.parse("test-results/gut-junit.xml").getroot().iter("testcase"))
+          print(f"{cases} test case(s) in the JUnit report")
+          sys.exit(0 if cases > 0 else 1)
+          PY
+
       - name: Archive test reports
         if: always()
         uses: actions/upload-artifact@v7

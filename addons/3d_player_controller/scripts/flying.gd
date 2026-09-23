@@ -50,7 +50,7 @@ func _physics_process(delta: float) -> void:
 	var target_motion: Vector2 = player.player_input.motion
 
 	# Update sprint flag and locomotion blend position in FlyingLocomotion
-	player.is_sprinting = player.is_action_pressed(&"sprint") and not player.is_exhausted and not player.is_typing
+	player.is_sprinting = player.is_action_pressed(&"sprint") and not player.is_exhausted and not player.is_typing and not player.is_paused
 	var speed_blend: float = target_motion.length()
 	if player.is_sprinting:
 		speed_blend *= 1.5
@@ -75,11 +75,11 @@ func _physics_process(delta: float) -> void:
 
 	# Vertical control along player.up_direction (jump to fly upward along up_dir, crouch/down to fly downward along -up_dir)
 	var v_speed: float = 0.0
-	if player.is_typing:
-		pass # Typed keys never fly
-	elif Input.is_action_pressed(action(keyboard_up_action, pad_up_action)):
+	if player.is_typing or player.is_paused:
+		pass # Typed keys never fly, and nor does anything behind a menu
+	elif player.is_action_pressed(action(keyboard_up_action, pad_up_action)):
 		v_speed = 6.0
-	elif Input.is_action_pressed(action(keyboard_down_action, pad_down_action)):
+	elif player.is_action_pressed(action(keyboard_down_action, pad_down_action)):
 		v_speed = -6.0
 
 	player.velocity = h_velocity + (up_dir * v_speed)

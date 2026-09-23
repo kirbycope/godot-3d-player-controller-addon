@@ -161,24 +161,40 @@ func _stop_moving() -> void:
 	_move_with_control(Vector3.ZERO)
 
 
-var movement_scale: float = 1.0 ## Fraction of normal speed the navigation asks for; [method slow] lowers it for a while.
+var movement_scale: float = 1.0: ## Fraction of normal speed the navigation asks for; [method slow] lowers it for a while, and it reads 0 while [member frozen].
+	get:
+		return 0.0 if frozen else movement_scale
+var frozen: bool = false ## Held still whatever [method slow] says, set on the server: a [Flashlight]'s beam on something that only moves in the dark. Letting go leaves any slow running.
 var _slow_timer: SceneTreeTimer
 
 
 ## Slows to [param factor] of normal speed for [param seconds]; counts on the server, clients relay theirs.
-func slow(factor: float, seconds: float) -> void:
+## [param source_path] names the caster, and a client may only relay for a caster of its own (see
+## [method _may_affect]).
+func slow(factor: float, seconds: float, source_path: NodePath = ^"") -> void:
 	if not multiplayer.is_server():
-		_request_slow.rpc_id(1, factor, seconds)
+		_request_slow.rpc_id(1, factor, seconds, source_path)
 		return
 	movement_scale = clampf(factor, 0.0, 1.0)
-	_slow_timer = get_tree().create_timer(seconds)
+	_slow_timer = get_tree().create_timer(maxf(seconds, 0.0))
 	_slow_timer.timeout.connect(_end_slow.bind(_slow_timer))
 
 
 @rpc("any_peer", "call_remote", "reliable")
-func _request_slow(factor: float, seconds: float) -> void:
-	if multiplayer.is_server():
-		slow(factor, seconds)
+func _request_slow(factor: float, seconds: float, source_path: NodePath) -> void:
+	if multiplayer.is_server() and _may_affect(source_path):
+		slow(factor, seconds, source_path)
+
+
+## Whether a client's relayed effect ([method slow], and an [EnemyNpc]'s hit and heal) may land: only from the
+## server or from the peer that owns [param source_path], the attacker or caster, as [method Player._may_affect]
+## has it. Anyone else is ignored.
+func _may_affect(source_path: NodePath) -> bool:
+	var sender: int = multiplayer.get_remote_sender_id()
+	if sender == 0 or sender == 1 or sender == multiplayer.get_unique_id():
+		return true
+	var source: Node = null if source_path.is_empty() else get_node_or_null(source_path)
+	return source != null and source.get_multiplayer_authority() == sender
 
 
 func _end_slow(timer: SceneTreeTimer) -> void:

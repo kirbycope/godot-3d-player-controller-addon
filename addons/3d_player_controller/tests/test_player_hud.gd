@@ -84,3 +84,18 @@ func test_the_crosshair_region_cuts_a_shape_out_of_the_sheet() -> void:
 				opaque += 1
 	assert_gt(opaque, 50, "The region holds a crosshair, not the space between two: %d opaque pixels" % opaque)
 	assert_true(player.crosshair.visible, "and the reticle is on screen from the start")
+
+
+## A screen's own scene keeps its root shown, so it can be seen in its own editor tab; the scene that instances it
+## hides the instance there, not the screen's code on ready. The death screen, the quest tracker and the loading
+## screen used to hide themselves in _ready.
+func test_the_screens_open_shown_on_their_own_and_hidden_where_they_are_instanced() -> void:
+	for path: String in ["res://addons/3d_player_controller/scenes/ui/death_screen.tscn", "res://addons/3d_player_controller/scenes/ui/quest_tracker.tscn", "res://addons/3d_player_controller/scenes/ui/loading.tscn"]:
+		var screen: CanvasLayer = (load(path) as PackedScene).instantiate()
+		add_child_autofree(screen)
+		assert_true(screen.visible, path.get_file() + " stays shown on its own")
+	assert_false(player.hud.get_node("DeathScreen").visible, "The HUD hides its death screen in the scene")
+	assert_false(player.quest_tracker.visible, "and its quest tracker")
+	var explorer: LobbyExplorer = (load("res://addons/3d_player_controller/scenes/ui/lobby_explorer.tscn") as PackedScene).instantiate()
+	add_child_autofree(explorer)
+	assert_false(explorer.loading.visible, "The lobby explorer hides its loading screen in the scene")

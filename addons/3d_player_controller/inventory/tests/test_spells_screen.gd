@@ -260,6 +260,42 @@ func test_nodes_scrolled_out_of_the_tree_area_lose_their_touch_target() -> void:
 	screen.hide_menu()
 
 
+## The unlocked list keeps to a fixed area on the Loadout page: a short one is centred in it, a long one scrolls
+## there with the focus instead of spilling out of the panel, and a spell scrolled out of view takes no taps.
+func test_the_unlocked_list_is_centred_when_short_and_scrolls_when_long() -> void:
+	spellbook.unlock(STEALTH)
+	await _open()
+	screen._select_page(SpellsScreen.Page.LOADOUT)
+	await wait_process_frames(2)
+	var area: ScrollContainer = screen.unlocked_scroll
+	var grid: GridContainer = screen.unlocked_grid
+	var area_size: Vector2 = area.size
+	assert_eq(grid.get_parent(), area, "The unlocked spells sit in a scroll area")
+	var centred: Vector2 = ((area.size - grid.size) * 0.5).floor()
+	assert_almost_eq(grid.position.x, centred.x, 1.0, "One spell is centred in it side to side")
+	assert_almost_eq(grid.position.y, centred.y, 1.0, "and top to bottom")
+	var panel_size: Vector2 = screen.get_node("Panel").size
+	for i: int in 40:
+		var spell: Ability = Ability.new()
+		spell.display_name = "Spell %d" % i
+		spellbook.unlocked.append(spell)
+	screen.refresh()
+	await wait_process_frames(3)
+	assert_gt(grid.size.y, area.size.y, "Forty spells are taller than the area")
+	assert_eq(area.size, area_size, "which did not grow to fit them")
+	assert_eq(screen.get_node("Panel").size, panel_size, "and neither did the panel")
+	var first: SpellNodeButton = screen._unlocked_buttons[0]
+	var last: SpellNodeButton = screen._unlocked_buttons[-1]
+	assert_true(first.touch_button.visible, "Unscrolled, the first spell can be tapped")
+	assert_false(last.touch_button.visible, "and the last, out of view, cannot")
+	last.grab_focus()
+	await wait_process_frames(3)
+	assert_gt(area.scroll_vertical, 0, "Focus on the last spell scrolls it into view")
+	assert_true(last.touch_button.visible, "where it can be tapped")
+	assert_false(first.touch_button.visible, "and the first, scrolled away, cannot")
+	screen.hide_menu()
+
+
 ## The unlocked list is rebuilt from scratch on every refresh; a pad player's focus is put back on the same spell.
 func test_a_refresh_keeps_the_focus_on_the_unlocked_list_for_pad_players() -> void:
 	spellbook.unlock(STEALTH)

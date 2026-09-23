@@ -20,7 +20,8 @@ func _on_body_entered(body: Node3D) -> void:
 		if not player.is_multiplayer_authority() or player.is_riding or player.is_flying:
 			return
 		if lethal and player.health.is_alive():
-			player.take_hit(player.health.max_health, global_position)
+			# Straight to the health, not through take_hit: a roll's invulnerability frames do not save anyone from lava
+			player.health.damage(player.health.max_health, global_position)
 		elif not lethal:
 			player.warp_to(player.respawn_transform)
 		killed.emit(body)

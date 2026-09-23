@@ -7,7 +7,7 @@ extends RigidBody3D
 ## Characters wear hurtboxes, Area3Ds on bone attachments on [constant HURTBOX_LAYER]: when the sweep lands on a
 ## CharacterBody3D the same ray is cast again for the hurtbox behind the capsule, and [member hit_part] tells the
 ## handler which body part took the round (one named "Head" is a headshot).
-## Hits are delivered to the nearest ancestor of the collider that has
+## Hits are delivered, by the round's multiplayer authority alone, to the nearest ancestor of the collider that has
 ## [code]register_projectile_hit(projectile, point, normal)[/code], or failing that
 ## [code]register_weapon_hit(weapon, projectile)[/code]; RigidBody3D targets also receive an impulse.
 
@@ -128,9 +128,12 @@ func _on_body_entered(body: Node) -> void:
 	_apply_hit(body, global_position, -along)
 
 
+## Lands the round. Every peer's copy simulates the same flight, so only the round's multiplayer authority (the
+## server for a spawner's round, this peer for a local one) tells the handler; a hit counted on every copy would do
+## its damage once per peer. The impulse, [signal hit], sticking and hiding happen on every copy.
 func _apply_hit(collider: Node, point: Vector3, normal: Vector3) -> void:
 	has_hit = true
-	var handler: Node = _find_hit_handler(collider)
+	var handler: Node = _find_hit_handler(collider) if is_multiplayer_authority() else null
 	if handler:
 		if handler.has_method("register_projectile_hit"):
 			handler.call("register_projectile_hit", self, point, normal)

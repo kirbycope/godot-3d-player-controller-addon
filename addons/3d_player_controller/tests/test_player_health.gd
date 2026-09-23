@@ -36,6 +36,19 @@ func test_a_hit_costs_health_not_stamina() -> void:
 	assert_eq(player.health.health, 80.0)
 
 
+## Amounts are clamped at zero: a negative hit heals nobody, a negative heal hurts nobody, and a negative slow
+## lasts no time at all.
+func test_negative_hits_heals_and_slows_do_nothing() -> void:
+	player.health.health = 50.0
+	player.take_hit(-40.0, player.global_position + Vector3.FORWARD)
+	assert_eq(player.health.health, 50.0, "A negative hit heals nobody")
+	player.heal(-40.0)
+	assert_eq(player.health.health, 50.0, "and a negative heal hurts nobody")
+	player.slow(0.5, -5.0)
+	await wait_physics_frames(3)
+	assert_eq(player.movement_scale, 1.0, "A slow for negative seconds is over at once")
+
+
 func test_death_ragdolls_and_respawns_full_at_the_spawn_point() -> void:
 	player.respawn_timer.wait_time = 0.3
 	player.take_hit(500.0, player.global_position + Vector3.FORWARD)

@@ -2,11 +2,13 @@ extends GutTest
 
 ## Purpose: how loud the Player is. Standing still is silence, crouching is near silence, sprinting is loud,
 ## and a gunshot or a landing spikes the reading and falls back. Whatever is inside the audible distance is
-## told to come looking, and the HUD meter follows the reading.
+## told to come looking, and the HUD meter follows the reading of this peer's own Player.
 
 const PLAYER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player.tscn")
 const ENEMY_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/npc/enemy_npc.tscn")
 const METER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/ui/noise_meter.tscn")
+const PLAYER_SPAWNER: Script = preload("res://addons/3d_player_controller/scripts/player_spawner.gd")
+const PORT: int = 47434
 
 var root: Node3D
 var player: Player
@@ -151,17 +153,58 @@ func test_the_meter_follows_the_reading() -> void:
 	assert_almost_eq(line.level, noise.level, 0.001, "and is the same reading, not a second opinion")
 
 
-## The Player is spawned into the level rather than sitting in it, so it is rarely there when the meter is
-## ready. The meter keeps looking rather than resolving once, which is why it is left to _process.
-func test_the_meter_finds_the_player_without_being_wired_to_it() -> void:
+## The meter draws the noise of the Player this peer controls, handed to it by the PlayerSpawner's
+## local_player_spawned (wired in the world scene). On a client the host's copy is in the tree first, and a meter
+## that took the first Player it found drew that copy, which never moves on this peer and stayed flat.
+func test_a_clients_meter_follows_its_own_player_not_the_hosts_copy() -> void:
+	var server_root: Node3D = Node3D.new()
+	server_root.name = "ServerBranch"
+	var client_root: Node3D = Node3D.new()
+	client_root.name = "ClientBranch"
+	add_child(server_root)
+	add_child(client_root)
+	var server_api: SceneMultiplayer = SceneMultiplayer.new()
+	var client_api: SceneMultiplayer = SceneMultiplayer.new()
+	get_tree().set_multiplayer(server_api, server_root.get_path())
+	get_tree().set_multiplayer(client_api, client_root.get_path())
+	var server_peer: ENetMultiplayerPeer = ENetMultiplayerPeer.new()
+	assert_eq(server_peer.create_server(PORT), OK)
+	server_api.multiplayer_peer = server_peer
+	var client_peer: ENetMultiplayerPeer = ENetMultiplayerPeer.new()
+	assert_eq(client_peer.create_client("127.0.0.1", PORT), OK)
+	client_api.multiplayer_peer = client_peer
 	var meter: Control = METER_SCENE.instantiate()
-	add_child_autofree(meter)
 	var line: NoiseMeter = meter.get_node("Line") as NoiseMeter
-	assert_null(line.noise, "Nothing is wired at instantiation")
+	for branch: Node3D in [server_root, client_root]:
+		var players: Node3D = Node3D.new()
+		players.name = "Players"
+		branch.add_child(players)
+		var spawner: PlayerSpawner = PLAYER_SPAWNER.new()
+		spawner.name = "PlayerSpawner"
+		spawner.spawn_path = NodePath("../Players")
+		spawner.add_child(PLAYER_SCENE.instantiate())
+		if branch == client_root:
+			spawner.local_player_spawned.connect(line.follow) # as the world scene wires it
+		branch.add_child(spawner)
+	client_root.add_child(meter)
+	var own_id: String = str(client_api.get_unique_id())
+	for i in 180:
+		await wait_process_frames(1)
+		if client_root.get_node("Players").has_node(own_id) and client_root.get_node("Players").has_node("1"):
+			break
 
-	await wait_process_frames(3)
-
-	assert_eq(line.noise, noise, "It finds the Player's own PlayerNoise on its own")
+	var own: Player = client_root.get_node("Players/" + own_id)
+	assert_not_null(own, "The client's own Player spawned")
+	assert_eq(line.noise, own.get_node("PlayerNoise"), "The meter draws the client's own Player")
+	assert_ne(line.noise, client_root.get_node("Players/1").get_node("PlayerNoise"), "not the host's copy")
+	var server_path: NodePath = server_root.get_path()
+	var client_path: NodePath = client_root.get_path()
+	server_root.free()
+	client_root.free()
+	server_api.multiplayer_peer.close()
+	client_api.multiplayer_peer.close()
+	get_tree().set_multiplayer(null, server_path)
+	get_tree().set_multiplayer(null, client_path)
 
 
 ## Steam gates the microphone itself and normalises what it sends, so the samples inside a packet say almost
@@ -169,15 +212,15 @@ func test_the_meter_finds_the_player_without_being_wired_to_it() -> void:
 ## came back with the same peak, 0.0233 against 0.0246. What separates them is whether Steam sends anything at
 ## all, 165 packets against 10. The reading follows that flow, which is what these pin.
 func test_no_voice_from_steam_reads_as_silence() -> void:
-	assert_almost_eq(Player.loudness_of(0), 0.0, 0.001, "Nothing sent is nothing said")
-	assert_almost_eq(Player.loudness_of(-1), 0.0, 0.001, "and neither is nonsense")
+	assert_almost_eq(VoiceChat.loudness_of(0), 0.0, 0.001, "Nothing sent is nothing said")
+	assert_almost_eq(VoiceChat.loudness_of(-1), 0.0, 0.001, "and neither is nonsense")
 
 
 func test_more_voice_reads_louder_up_to_a_ceiling() -> void:
-	var trickle: float = Player.loudness_of(186)    # the smallest packet measured
-	var talking: float = Player.loudness_of(600)
-	var full: float = Player.loudness_of(900)
-	var torrent: float = Player.loudness_of(8202)   # the largest measured
+	var trickle: float = VoiceChat.loudness_of(186)    # the smallest packet measured
+	var talking: float = VoiceChat.loudness_of(600)
+	var full: float = VoiceChat.loudness_of(900)
+	var torrent: float = VoiceChat.loudness_of(8202)   # the largest measured
 
 	assert_gt(trickle, 0.0, "A small packet is still somebody speaking")
 	assert_gt(talking, trickle, "and more of it reads louder")
@@ -186,27 +229,27 @@ func test_more_voice_reads_louder_up_to_a_ceiling() -> void:
 
 
 func test_the_full_mark_can_be_moved_for_a_different_setup() -> void:
-	assert_gt(Player.loudness_of(400, 400.0), Player.loudness_of(400),
+	assert_gt(VoiceChat.loudness_of(400, 400.0), VoiceChat.loudness_of(400),
 		"Where the meter fills is a parameter, not something to edit the code for")
 
 
 func test_talking_is_noise_and_holding_the_key_in_silence_is_not() -> void:
-	player.is_broadcasting = true
-	player.voice_loudness = 0.0
+	player.voice_chat.is_broadcasting = true
+	player.voice_chat.voice_loudness = 0.0
 	assert_almost_eq(noise.voice_level(), 0.0, 0.001, "The key held while saying nothing is silence")
 
-	player.voice_loudness = 1.0
+	player.voice_chat.voice_loudness = 1.0
 	assert_almost_eq(noise.voice_level(), noise.voice_multiplier, 0.001, "and a full voice reads the voice level")
 
-	player.is_broadcasting = false
+	player.voice_chat.is_broadcasting = false
 	assert_almost_eq(noise.voice_level(), 0.0, 0.001, "and a Player not on the key is not speaking, whatever the microphone hears")
 
 
 ## Arriving voice keeps the reading up, so the test feeds it the way Steam would, a frame at a time.
 func test_talking_is_loud_and_carries() -> void:
-	player.is_broadcasting = true
+	player.voice_chat.is_broadcasting = true
 	for i: int in 12:
-		player.voice_loudness = 0.9
+		player.voice_chat.voice_loudness = 0.9
 		await wait_physics_frames(1)
 
 	assert_gt(noise.level, 0.5, "Talking is loud")
@@ -216,12 +259,12 @@ func test_talking_is_loud_and_carries() -> void:
 ## Steam sends nothing while you pause, so a held key in silence is silence. The reading drains on its own
 ## rather than waiting for the key to come up.
 func test_the_reading_drains_when_no_voice_arrives() -> void:
-	player.is_broadcasting = true
-	player.voice_loudness = 0.9
+	player.voice_chat.is_broadcasting = true
+	player.voice_chat.voice_loudness = 0.9
 	await wait_seconds(0.6)
 
-	assert_lt(player.voice_loudness, 0.9, "A pause drains it even with the key still held")
-	assert_almost_eq(player.voice_loudness, 0.0, 0.05, "and a long enough pause empties it")
+	assert_lt(player.voice_chat.voice_loudness, 0.9, "A pause drains it even with the key still held")
+	assert_almost_eq(player.voice_chat.voice_loudness, 0.0, 0.05, "and a long enough pause empties it")
 
 
 func test_an_enemy_hears_you_talking() -> void:
@@ -231,9 +274,9 @@ func test_an_enemy_hears_you_talking() -> void:
 	await wait_physics_frames(3)
 	assert_null(enemy.target, "Nobody is hunting yet")
 
-	player.is_broadcasting = true
+	player.voice_chat.is_broadcasting = true
 	for i: int in 24:
-		player.voice_loudness = 0.9
+		player.voice_chat.voice_loudness = 0.9
 		await wait_physics_frames(1)
 
 	assert_eq(enemy.target, player, "Talking over voice chat gives your position away")

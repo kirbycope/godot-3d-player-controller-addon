@@ -1,6 +1,6 @@
 extends GutTest
 
-## Purpose: Unit tests for underwater diving — descend/ascend control, dive state,
+## Purpose: Unit tests for underwater diving: descend/ascend control, dive state,
 ## model pitch, buoyancy, surface clamping, contextual controls, and cleanup.
 
 const PLAYER_SCENE = preload("res://addons/3d_player_controller/scenes/player.tscn")
@@ -215,3 +215,19 @@ func test_underwater_overlay_follows_camera_submersion() -> void:
 
 	swimming_node.stop()
 	assert_false(overlay.visible, "Overlay must hide when swimming stops")
+
+
+## Holding Crouch dives through the Player's own reading of the action: a pad player in a split screen does not
+## dive on the keyboard's Crouch, and nobody dives behind a menu.
+func test_the_dive_reads_the_players_own_input_and_stops_behind_a_menu() -> void:
+	Input.action_press("crouch")
+	player.input_device = 0
+	swimming_node._physics_process(0.1)
+	assert_eq(player.swim_vertical_speed, 0.0, "Pad 0's player does not dive on the keyboard")
+	player.input_device = -1
+	player.is_paused = true
+	swimming_node._physics_process(0.1)
+	assert_eq(player.swim_vertical_speed, 0.0, "and nobody dives behind a menu")
+	player.is_paused = false
+	swimming_node._physics_process(0.1)
+	assert_lt(player.swim_vertical_speed, 0.0, "while the whole input still does")

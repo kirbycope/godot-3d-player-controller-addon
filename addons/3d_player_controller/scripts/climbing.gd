@@ -107,7 +107,7 @@ func _physics_process(delta: float) -> void:
 		player.state_machine.travel(state, States.STANDING)
 		return
 
-	# Check if the player is exhausted — let go of the wall
+	# Check if the player is exhausted: let go of the wall
 	if player.is_exhausted and not player.is_climbing_on:
 		# Start "falling"
 		player.state_machine.travel(state, States.FALLING)
@@ -134,12 +134,13 @@ func _physics_process(delta: float) -> void:
 			player.state_machine.travel(state, States.HANGING)
 			return
 
-	# Climbing, Speed Up [Input] — sprint climbing is blocked on wet walls
+	# Climbing, Speed Up [Input]; sprint climbing is blocked on wet walls
 	if player.is_climbing \
 	and not player.is_exhausted \
 	and not player.is_typing \
+	and not player.is_paused \
 	and not wall_is_wet \
-	and Input.is_action_pressed(action(keyboard_sprint_action, pad_sprint_action)):
+	and player.is_action_pressed(action(keyboard_sprint_action, pad_sprint_action)):
 		player.animation_tree.set("parameters/LocomotionTimeScale/scale", 1.5)
 		player.is_sprinting = true
 	else:

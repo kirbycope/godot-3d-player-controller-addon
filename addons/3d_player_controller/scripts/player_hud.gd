@@ -15,7 +15,7 @@ extends Node
 
 @onready var controls: PlayerControls = $Controls
 @onready var crosshair: TextureRect = $Crosshair
-@onready var stamina: TextureProgressBar = $Stamina
+@onready var stamina: Stamina = $Stamina
 @onready var health: Health = $Health
 @onready var boss_bar: BossBar = $BossBar
 @onready var target_frame: TargetFrame = $TargetFrame

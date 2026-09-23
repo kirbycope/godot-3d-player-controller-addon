@@ -77,14 +77,11 @@ var interaction_target: Node3D = null: ## The one thing the action button acts o
 ## Uses atan2(FOCUS_AIM_WORLD_RADIUS, distance) so the angular window shrinks with distance.
 func get_max_focus_aim_angle() -> float:
 	var dist: float = 5.0
-	if player:
+	if player and player.focus:
 		if is_instance_valid(player.current_focus_target):
-			var target_pos: Vector3 = Focus.get_focus_target_position(player.current_focus_target)
-			dist = maxf(camera_mount.global_position.distance_to(target_pos), 1.0)
-		elif player.focus and player.focus.target_detection:
-			var col: CollisionShape3D = player.focus.target_detection.get_node_or_null("CollisionShape3D") as CollisionShape3D
-			if col and col.shape is SphereShape3D:
-				dist = (col.shape as SphereShape3D).radius
+			dist = maxf(camera_mount.global_position.distance_to(player.focus.focus_aim_position()), 1.0)
+		else:
+			dist = player.focus.detection_radius
 	return atan2(FOCUS_AIM_WORLD_RADIUS, dist)
 
 
@@ -257,7 +254,7 @@ func _process(delta: float) -> void:
 			focus_aim_offset = focus_aim_offset.move_toward(Vector2.ZERO, delta * 4.0)
 
 		if is_instance_valid(player.current_focus_target):
-			var target_pos: Vector3 = Focus.get_focus_target_position(player.current_focus_target)
+			var target_pos: Vector3 = player.focus.focus_aim_position()
 			# CameraMount is a child of the Player body, so its rotation is local: put the target direction in the body frame first
 			var to_target: Vector3 = player.global_basis.inverse() * (target_pos - camera_mount.global_position)
 			var target_yaw: float = atan2(-to_target.x, -to_target.z) + focus_aim_offset.x
@@ -301,7 +298,6 @@ func _physics_process(_delta: float) -> void:
 ## up to something still offers it. Anything carrying an [InteractionReach] has to be in that reach to qualify,
 ## which is what stops a distant NPC answering across the road just because they are under the crosshair.
 func _resolve_interaction_target() -> void:
-	in_reach = in_reach.filter(func(node: Node3D) -> bool: return is_instance_valid(node))
 	if looking_at and (not looking_at.is_in_group(REACH_GROUP) or in_reach.has(looking_at)):
 		interaction_target = looking_at
 		return
@@ -312,8 +308,10 @@ func _resolve_interaction_target() -> void:
 func nearest_in_reach() -> Node3D:
 	var best: Node3D = null
 	var shortest: float = INF
-	for node: Node3D in in_reach:
-		var distance: float = player.global_position.distance_squared_to(node.global_position)
+	for node: Variant in in_reach:
+		if not is_instance_valid(node):
+			continue
+		var distance: float = player.global_position.distance_squared_to((node as Node3D).global_position)
 		if distance < shortest:
 			shortest = distance
 			best = node
@@ -326,9 +324,10 @@ func reach_entered(host: Node3D) -> void:
 		in_reach.append(host)
 
 
-## Called by an [InteractionReach] when the Player steps out of it.
+## Called by an [InteractionReach] when the Player steps out of it, which its area also reports as it leaves the
+## tree; anything freed without a word goes from the list here too.
 func reach_exited(host: Node3D) -> void:
-	in_reach.erase(host)
+	in_reach = in_reach.filter(func(node: Variant) -> bool: return is_instance_valid(node) and node != host)
 	if interaction_target == host:
 		_resolve_interaction_target()
 

@@ -32,19 +32,28 @@ var selected_target: Node3D = null: ## The Target: what abilities land on and th
 		if value == selected_target:
 			return
 		selected_target = value
+		selected_aim = get_aim_node(value)
 		_place_marker()
 		target_changed.emit(selected_target)
 var current_focus_target: Node3D = null: ## The body currently locked on to, if any; in a scheme that holds Focus it is the Target too.
 	set(value):
-		current_focus_target = value
+		if value != current_focus_target:
+			current_focus_target = value
+			focus_aim = get_aim_node(value)
 		if not frees_cursor():
 			selected_target = value
+var selected_aim: Node3D = null ## Where on the Target to aim ([method get_aim_node]), looked up when the Target changes.
+var focus_aim: Node3D = null ## Where on the locked-on body to aim, looked up when the lock changes.
+var detection_radius: float = 5.0 ## The radius of [member target_detection]'s sphere, read once on ready; the camera sizes its aim window by it.
 
 
 func _ready() -> void:
 	set_process_input(is_multiplayer_authority())
 	set_process_unhandled_input(is_multiplayer_authority())
 	set_physics_process(is_multiplayer_authority())
+	var shape: CollisionShape3D = target_detection.get_node_or_null(^"CollisionShape3D") as CollisionShape3D if target_detection else null
+	if shape and shape.shape is SphereShape3D:
+		detection_radius = (shape.shape as SphereShape3D).radius
 
 
 func _input(event: InputEvent) -> void:
@@ -190,8 +199,8 @@ static func disposition_toward(body: Node3D, viewer: Node3D) -> Disposition:
 func _place_marker() -> void:
 	if not is_instance_valid(focus_target_marker):
 		return
-	if is_instance_valid(selected_target):
-		focus_target_marker.global_position = get_focus_target_position(selected_target) + Vector3(0, 0.4, 0)
+	if is_instance_valid(selected_target) and is_instance_valid(selected_aim):
+		focus_target_marker.global_position = selected_aim.global_position + Vector3(0, 0.4, 0)
 		focus_target_marker.show()
 	else:
 		focus_target_marker.hide()
@@ -206,15 +215,27 @@ static func get_focus_target_node(body: Node3D) -> Node3D:
 	return body.find_child("Marker3D_FocusTarget", true, false) as Node3D
 
 
-## Returns the global 3D position to focus on for the given body.
-static func get_focus_target_position(body: Node3D) -> Vector3:
+## The node on [param body] to aim at: its "Marker3D_FocusTarget", else its CollisionShape3D, else the body itself;
+## null for no body. Two recursive searches, so the Target and the lock look it up once, as they change.
+static func get_aim_node(body: Node3D) -> Node3D:
 	if not is_instance_valid(body):
-		return Vector3.ZERO
+		return null
 	var marker: Node3D = get_focus_target_node(body)
 	if marker:
-		return marker.global_position
-	var col: CollisionShape3D = body.find_child("CollisionShape3D", true, false) as CollisionShape3D
-	return col.global_position if col else body.global_position
+		return marker
+	var col: Node3D = body.find_child("CollisionShape3D", true, false) as Node3D
+	return col if col else body
+
+
+## Returns the global 3D position to focus on for the given body.
+static func get_focus_target_position(body: Node3D) -> Vector3:
+	var aim: Node3D = get_aim_node(body)
+	return aim.global_position if aim else Vector3.ZERO
+
+
+## Where the lock aims now: [member focus_aim]'s position, or zero with no lock.
+func focus_aim_position() -> Vector3:
+	return focus_aim.global_position if is_instance_valid(current_focus_target) and is_instance_valid(focus_aim) else Vector3.ZERO
 
 
 ## The focusable bodies in range, hostile ones first, each group sorted by horizontal angular proximity to the

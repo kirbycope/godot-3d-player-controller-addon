@@ -76,10 +76,6 @@ func start() -> void:
 	player.is_standing = true
 	# Transition directly to the grounded locomotion that matches the equipped state.
 	player.travel_locomotion(String(player.get_grounded_locomotion_state()))
-	# Re-derive the grounded locomotion when equipment or exhaustion changes while standing
-	if not player.inventory.equipment_changed.is_connected(_on_grounded_locomotion_changed):
-		player.inventory.equipment_changed.connect(_on_grounded_locomotion_changed)
-		player.exhausted_changed.connect(_on_grounded_locomotion_changed)
 
 
 ## Stop "standing".
@@ -89,7 +85,8 @@ func stop() -> void:
 	player.is_standing = false
 
 
-## Travels to the grounded locomotion matching the current equipment and exhaustion, while standing.
+## Wired to Inventory.equipment_changed and Player.exhausted_changed in player.tscn: travels to the grounded
+## locomotion matching the current equipment and exhaustion, while standing.
 func _on_grounded_locomotion_changed(_is_exhausted: bool = false) -> void:
 	if process_mode == Node.PROCESS_MODE_INHERIT:
 		player.travel_locomotion(String(player.get_grounded_locomotion_state()))

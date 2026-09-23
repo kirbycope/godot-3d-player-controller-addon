@@ -4,7 +4,7 @@ extends Node3D
 ## each with a default stream set in player.tscn (the TomMusic sword set as [AudioStreamRandomizer] resources under
 ## [code]resources/audio/[/code]). An [Equipment]'s [member Equipment.equip_sfx], [member Equipment.stow_sfx],
 ## [member Equipment.attack_sfx] and [member Equipment.hit_sfx] stand in for the defaults on that weapon (a [Bow]
-## brings its own take-out, put-away and shot).
+## brings its own take-out and put-away; its shot travels with the arrow instead, see [Bow]).
 ##
 ## The draw and stow defaults are a blade leaving and entering a scabbard, so only metal melee weapons (an axe, a
 ## dagger, a sword, see [constant BLADED_TYPES]) fall back to them: a staff, a rod, a gun or a shield draws in
@@ -13,9 +13,10 @@ extends Node3D
 ## Wired in player.tscn: [code]Inventory.equipment_changed[/code] (drawn and stowed), [signal Player.locomotion_node_changed]
 ## (a weapon swing node) and [signal HitDetection.weapon_hit] (a swing landing on something that takes a hit).
 ##
-## Multiplayer: equipment lives only on the Player's authority, so drawing and stowing are heard there; a swing node
-## arrives on every peer with the animation, so the attack sound plays everywhere; a hit is registered on the authority
-## and relayed by [method _play_hit] with [code]call_local[/code], the way [Abilities] sends its casting sounds.
+## Multiplayer: a peer's copy of the Player carries the authority's equipment, rebuilt from the inventory's synced
+## equipment, so a draw or a stow plays wherever that copy's equipment changes; a swing node arrives on every peer
+## with the animation, so the attack sound plays everywhere; a hit is registered on the authority and relayed by
+## [method _play_hit] with [code]call_local[/code], the way [Abilities] sends its casting sounds.
 
 const UNARMED_NODES: Array[String] = ["ShortHeadJab", "BackHandCross"] ## Boxing swings: no weapon to hear.
 ## The metal melee weapons: the only equipment whose draw and stow fall back to the sword unsheath and sheath.
@@ -94,7 +95,7 @@ func _on_weapon_hit(equipment: Node, target: Node) -> void:
 	_play_hit.rpc(stream.resource_path if stream else "")
 
 
-## Plays the attack slot: [param stream], or the scene default without one. A [Bow] calls this for its shot.
+## Plays the attack slot: [param stream], or the scene default without one.
 func play_attack(stream: AudioStream = null) -> void:
 	_play(attack_audio, stream)
 
@@ -104,8 +105,7 @@ func _play_hit(stream_path: String) -> void:
 	_play(hit_audio, load(stream_path) as AudioStream if not stream_path.is_empty() else null)
 
 
-## The equipped melee weapon's own stream for [param property] when it names one; null (the default) otherwise, and
-## always on the other peers' copies, which carry no equipment.
+## The equipped melee weapon's own stream for [param property] when it names one; null (the default) otherwise.
 func _weapon_stream(property: StringName) -> AudioStream:
 	if player == null or player.inventory == null:
 		return null

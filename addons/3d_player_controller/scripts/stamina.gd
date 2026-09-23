@@ -1,3 +1,4 @@
+class_name Stamina
 extends TextureProgressBar
 ## Stamina bar: drains while sprinting, climbing, swimming fast, diving or gliding; refills otherwise.
 ##

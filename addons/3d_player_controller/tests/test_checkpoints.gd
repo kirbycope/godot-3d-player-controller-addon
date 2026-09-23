@@ -126,6 +126,18 @@ func test_a_kill_zone_kills_anything_with_health() -> void:
 	assert_false(health.is_alive(), "An enemy that falls in dies")
 
 
+## A roll's invulnerability frames dodge a sword, not lava: a lethal zone kills straight through them.
+func test_a_kill_zone_kills_through_dodge_invulnerability() -> void:
+	var zone: KillZone = KILL_ZONE_SCENE.instantiate()
+	root.add_child(zone)
+	zone.global_position = Vector3(0.0, -30.0, 0.0)
+	player.dodge_invulnerable = true
+	player.warp_to(Transform3D(Basis(), Vector3(0.0, -30.0, 0.0)))
+	await wait_physics_frames(3)
+	assert_eq(player.health.health, 0.0, "Rolling into lava still kills")
+	player.dodge_invulnerable = false
+
+
 func test_unstuck_goes_to_the_checkpoint() -> void:
 	_add_checkpoint(Vector3(10.0, 0.0, 0.0))
 	player.warp_to(Transform3D(Basis(), Vector3(10.0, 0.0, 0.0)))

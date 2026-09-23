@@ -73,8 +73,6 @@ var uses_mouse: bool: ## Whether the mouse is this Player's: only a Player on th
 @export var dodge_tap_seconds: float = 0.25 ## Sprint released within this many seconds of the press is a tap, and a roll.
 @export var dodge_iframe_seconds: float = 0.45 ## The roll's first seconds take no hit at all.
 @export var attack_stamina_cost: float = 0.0 ## Stamina every swing spends when stamina is on; 0 makes swings free.
-@export_category("Optional Gadgets & Gear")
-@export var paraglider_scene: PackedScene
 @export_category("Optional Interaction")
 @export var push_force: float = 1.0
 @export var mass: float = 80.0
@@ -100,25 +98,12 @@ var active_locomotion_playback: AnimationNodeStateMachinePlayback: ## Playback o
 		if root_node in LOCOMOTION_GROUPS:
 			return animation_tree.get("parameters/LocomotionStateMachine/" + root_node + "/playback")
 		return root_playback
-var current_locomotion_node: String: ## The deepest current locomotion state name (resolves grouped state machines).
+var current_locomotion_node: String: ## The deepest current locomotion state name (the Node of "Group/Node"), read off [member sync_locomotion_node].
 	get:
-		if animation_tree == null:
-			return ""
-		var playback: AnimationNodeStateMachinePlayback = active_locomotion_playback
-		if playback == null:
-			return ""
-		return String(playback.get_current_node())
-var current_locomotion_path: String: ## The current locomotion state path ("Group/Node" or "Node"), as accepted by [method travel_locomotion].
+		return sync_locomotion_node.get_file()
+var current_locomotion_path: String: ## The current locomotion state path ("Group/Node" or "Node"), as accepted by [method travel_locomotion]. It is [member sync_locomotion_node], which the authority reads off the AnimationTree once a frame and the puppets receive.
 	get:
-		if animation_tree == null:
-			return ""
-		var root_playback: AnimationNodeStateMachinePlayback = locomotion_state
-		if root_playback == null:
-			return ""
-		var root_node: String = String(root_playback.get_current_node())
-		if root_node in LOCOMOTION_GROUPS:
-			return root_node + "/" + current_locomotion_node
-		return root_node
+		return sync_locomotion_node
 var equipped_axe_1h: bool:
 	get:
 		return inventory != null and inventory.has_equipment(Equipment.EquipmentType.AXE_1H)
@@ -155,19 +140,9 @@ var equipped_sword_2h: bool:
 var has_move_input: bool:
 	get:
 		return player_input != null and player_input.motion.length_squared() > 0.001
-var uses_equipment_jump_variants: bool:
+var uses_equipment_jump_variants: bool: ## Read by the AnimationTree's jump edges: anything in hand jumps with the equipment's clips.
 	get:
-		return equipped_axe_1h \
-			or equipped_axe_2h \
-			or equipped_bow \
-			or equipped_dagger \
-			or equipped_fishing_rod \
-			or equipped_pistol \
-			or equipped_rifle \
-			or equipped_shield \
-			or equipped_staff \
-			or equipped_sword_1h \
-			or equipped_sword_2h
+		return equipment_group() not in ["", "Boxing"]
 var is_boxing: bool = false
 
 # Attack Sequence
@@ -186,21 +161,21 @@ var is_aiming_bow: bool:
 			return is_aiming_bow
 		if held_object and (held_object.is_holding_object() or held_object.is_charging_throw or held_object.is_throwing):
 			return false
-		return current_locomotion_node == "ArcheryLocomotion" if is_multiplayer_authority() and equipped_bow else false
+		return equipped_bow and current_locomotion_node == "ArcheryLocomotion"
 var is_drawing_arrow: bool:
 	get:
 		if not is_multiplayer_authority():
 			return is_drawing_arrow
 		if held_object and (held_object.is_holding_object() or held_object.is_charging_throw or held_object.is_throwing):
 			return false
-		return current_locomotion_node == "BowDrawArrow" if is_multiplayer_authority() and equipped_bow else false
+		return equipped_bow and current_locomotion_node == "BowDrawArrow"
 var is_firing_arrow: bool:
 	get:
 		if not is_multiplayer_authority():
 			return is_firing_arrow
 		if held_object and (held_object.is_holding_object() or held_object.is_charging_throw or held_object.is_throwing):
 			return false
-		return current_locomotion_node == "BowFireArrow" if is_multiplayer_authority() and equipped_bow else false
+		return equipped_bow and current_locomotion_node == "BowFireArrow"
 # Climbing
 var is_climbing: bool = false ## Is the Player currently climbing?
 var is_climbing_on: bool = false ## Is the Player currently climbing on to a ledge?
@@ -236,7 +211,7 @@ var is_first_person: bool: ## Is the view from the Player's own eyes? The body t
 		return camera is Camera and (camera as Camera).perspective == Camera.Perspective.FIRST_PERSON
 var is_focusing: bool: ## Is the Player currently focusing (forward or on a target)?
 	get:
-		if not is_multiplayer_authority() or is_typing or riding_blocks_hands():
+		if not is_multiplayer_authority() or is_typing or is_paused or riding_blocks_hands():
 			return false
 		if held_object and held_object.is_holding_object():
 			return false
@@ -253,10 +228,10 @@ var is_front_flipping: bool = false ## Is the Player currently front flipping?
 var is_back_flipping: bool = false ## Is the Player currently back flipping?
 var is_flipping: bool: ## Is the Player currently front or back flipping?
 	get:
-		if not is_multiplayer_authority() or animation_tree == null:
+		if not is_multiplayer_authority():
 			return false
-		return is_front_flipping or is_back_flipping \
-				or current_locomotion_node in ["Backflip", "FowardFlip"] or current_locomotion_node.ends_with("Dive")
+		var node: String = current_locomotion_node
+		return is_front_flipping or is_back_flipping or node in ["Backflip", "FowardFlip"] or node.ends_with("Dive")
 var is_throwing: bool: ## Is the Player currently in a throw wind-up? (Delegates to [HeldObject].)
 	get:
 		return held_object != null and held_object.is_throwing
@@ -337,19 +312,16 @@ func lock_on_enabled() -> bool:
 	return control_scheme != null and control_scheme.locks_on
 
 
-## Returns the 3D focus target position (resolving Marker3D_FocusTarget on the target body if present).
+## Returns the 3D focus target position (the Marker3D_FocusTarget on the target body if present, which [Focus]
+## looks up once when the lock changes).
 func get_focus_target_position() -> Vector3:
 	if not is_instance_valid(current_focus_target):
 		return global_position
-	return Focus.get_focus_target_position(current_focus_target)
+	return focus.focus_aim_position()
 
 var has_firearm_equipped: bool: ## Is a firearm (Pistol, Rifle) currently equipped?
 	get:
 		return inventory != null and inventory.has_firearm_equipped()
-
-var has_bow_equipped: bool: ## Is a bow currently equipped?
-	get:
-		return inventory != null and inventory.has_bow_equipped()
 
 var is_aiming_firearm: bool: ## Is the Player currently aiming with a firearm (Pistol, Rifle)?
 	get:
@@ -363,16 +335,12 @@ var is_mining: bool: ## Is the Player currently mining? Replicated: a puppet rea
 	get:
 		if not is_multiplayer_authority():
 			return is_mining
-		if animation_tree == null:
-			return false
-		return is_locomotion_state_active_or_queued("Mining")
+		return current_locomotion_node == "Mining"
 var is_logging: bool: ## Is the Player currently logging? Replicated: a puppet reads what the authority sent.
 	get:
 		if not is_multiplayer_authority():
 			return is_logging
-		if animation_tree == null:
-			return false
-		return is_locomotion_state_active_or_queued("Logging")
+		return current_locomotion_node == "Logging"
 var is_navigating: bool = false: ## Is the Player currently navigating (click to move)?
 	set(value):
 		if value != is_navigating:
@@ -393,7 +361,7 @@ var is_shooting: bool: ## Is the Player currently shooting? Replicated: a puppet
 	get:
 		if not is_multiplayer_authority():
 			return is_shooting
-		if is_typing or riding_blocks_hands() or inventory == null:
+		if is_typing or is_paused or riding_blocks_hands() or inventory == null:
 			return false
 		if is_throwing:
 			return false
@@ -426,11 +394,11 @@ var is_sprinting: bool = false ## Is the Player currently sprinting?
 var is_standing: bool = false ## Is the Player currently standing?
 var is_typing_at_keyboard: bool = false ## Is the Player seated and typing? The AnimationTree advances the Sitting -> SittingToTyping -> SittingTyping chain off this, the way [member is_sitting] drives Sitting itself; it is the keyboard pose, unrelated to [member is_typing], which means a text field has focus.
 var last_safe_shore_position: Vector3 = Vector3.ZERO ## Last known grounded position on dry land.
-var is_stealthed: bool = false: ## Is the Player hidden by Stealth? Replicated, so puppets fade too and followers ignore them.
+var is_stealthed: bool = false: ## Is the Player hidden by Stealth? Replicated, so puppets fade too (through [StealthLook]) and followers ignore them.
 	set(value):
 		is_stealthed = value
-		if skeleton and is_inside_tree():
-			_apply_stealth_look(is_stealthed)
+		if stealth_look and is_inside_tree():
+			stealth_look.apply(is_stealthed)
 var is_swimming: bool = false ## Is the Player currently swimming?
 var is_diving: bool = false ## Is the Player currently diving underwater (submerged swimming)?
 var swim_vertical_speed: float = 0.0 ## Vertical swim speed (m/s along up_direction) applied while swimming/diving.
@@ -440,10 +408,9 @@ var drawn_weapon_group: String = "" ## Locomotion group whose draw animation alr
 var last_fall_speed: float = 0.0 ## The downward vertical fall speed right before movement update.
 var initial_collision_shape_height: float
 var initial_collision_shape_position: Vector3
-var orientation := Transform3D()
-var root_motion := Transform3D()
+var orientation: Transform3D = Transform3D()
 var smoothed_motion: Vector2 = Vector2.ZERO
-var paraglider: Node3D
+var _updrafts: Array[Area3D] = [] ## Updraft and Thermal areas UpdraftDetection is inside, from its area signals.
 
 @onready var attack_sequence_timer: Timer = $AttackSequenceTimer
 @onready var collision_shape: CollisionShape3D = $CollisionShape3D
@@ -471,13 +438,12 @@ var paraglider: Node3D
 @onready var controls_settings: PlayerMenuLayer = $Hud/ControlsSettings
 @onready var video_settings: PlayerMenuLayer = $Hud/VideoSettings
 @onready var lobby_manager: PlayerMenuLayer = get_node_or_null("Hud/LobbyManager") as PlayerMenuLayer
-@onready var stamina: TextureProgressBar = $Hud/Stamina
+@onready var stamina: Stamina = $Hud/Stamina
 @onready var health: Health = $Hud/Health
 @onready var respawn_timer: Timer = $RespawnTimer ## Runs after death; its timeout is wired to [method respawn].
 @onready var quest_log: QuestLog = get_node_or_null("QuestLog") as QuestLog ## The Player's quests; saved with them.
 @onready var quest_tracker: QuestTracker = get_node_or_null("Hud/QuestTracker") as QuestTracker ## The tracked quest's objectives, top right.
 var _ragdoll_was_enabled: bool = true ## enable_ragdoll before death forced it on.
-@onready var initial_transform: Transform3D = global_transform
 @onready var respawn_transform: Transform3D = global_transform ## Where [method respawn] and Unstuck put the Player: the spawn point until a [Checkpoint] is taken.
 @onready var falling_raycast: RayCast3D = $FallingRaycast
 @onready var player_model: Node3D = $PlayerModel
@@ -513,8 +479,11 @@ var _ragdoll_was_enabled: bool = true ## enable_ragdoll before death forced it o
 @onready var state_machine: NodeStateMachine = $NodeStateMachine ## Enables/Disables the scripts that run when various States are entered/exited.
 @onready var audio: Audio = $SFX_Footsteps
 @onready var steam_persona_name: Label3D = $SteamPersonaName
-@onready var voice_chat_indicator: MeshInstance3D = get_node_or_null("VoiceChatIndicator") as MeshInstance3D
-@onready var voice_audio_player: AudioStreamPlayer3D = get_node_or_null("VoiceAudioPlayer") as AudioStreamPlayer3D
+@onready var voice_chat: VoiceChat = get_node_or_null("VoiceChat") as VoiceChat ## Steam push-to-talk and voice activation; optional.
+@onready var stealth_look: StealthLook = get_node_or_null("StealthLook") as StealthLook ## Draws [member is_stealthed]; optional.
+## Optional: an effect a game hangs on its Player as a child named UpdraftAura (a weather addon's rising air), shown on
+## every peer while the Player is in a thermal or within five metres of one. The Player hides it on ready.
+@onready var updraft_aura: Node3D = get_node_or_null("UpdraftAura") as Node3D
 @onready var player_synchronizer: MultiplayerSynchronizer = get_node_or_null("PlayerSynchronizer") as MultiplayerSynchronizer
 
 @export var sync_locomotion_node: String = "":
@@ -549,15 +518,6 @@ var display_name: String = "": ## The name over the head (the Steam persona); re
 			steam_persona_name.text = value
 			steam_persona_name.visible = not value.is_empty()
 
-const VOICE_FALLOFF_PER_SECOND: float = 2.5 ## How fast [member voice_loudness] falls once the talk key is let go.
-const VOICE_FULL_BYTES: float = 900.0 ## Compressed bytes in one frame's worth of voice that counts as speaking at full volume. Measured packets ran from about 186 to 8202 bytes.
-const VOICE_RISE_PER_SECOND: float = 6.0 ## How fast the reading comes up once Steam starts sending voice.
-const VOICE_ACTIVATION_LEVEL: float = 0.6 ## How loud counts as speaking while voice activation is on. It is the mark on the microphone bar, so "drag until an ordinary voice reaches the mark" and "reaching the mark transmits" are the same instruction.
-
-var voice_playback: AudioStreamGeneratorPlayback = null
-var is_broadcasting: bool = false
-var _recording: bool = false ## Whether Steam is capturing, which is not the same as transmitting: voice activation listens continuously and decides per packet.
-var voice_loudness: float = 0.0 ## How loudly this Player is speaking on push-to-talk, 0 to 1, measured from the captured voice rather than from the fact of holding the key. [PlayerNoise] treats it as noise, so talking gives you away.
 var current_water_area: Area3D = null
 
 
@@ -575,16 +535,13 @@ func _ready() -> void:
 		animation_tree.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_PHYSICS
 	_apply_cursor_mode()
 
-	# Spawn state lands before the skeleton and the label exist, so a late joiner applies it here
-	if is_stealthed:
-		_apply_stealth_look(true)
-	if inventory:
-		inventory.equipment_changed.connect(_on_equipment_changed_while_stealthed)
+	# Spawn state lands before the label exists, so a late joiner applies it here
 	display_name = display_name
+	if updraft_aura:
+		_show_updraft_aura(false)
 
 	# Do nothing if not the authority
 	if not is_multiplayer_authority():
-		set_process(false)
 		set_physics_process(false)
 		set_process_input(false)
 		set_process_unhandled_input(false)
@@ -595,8 +552,8 @@ func _ready() -> void:
 	orientation = player_model.global_transform
 	orientation.origin = Vector3()
 
-	# Apply persistent user settings; the on-screen controls follow the device in hand from here on
-	controls.input_type_changed.connect(_on_controls_input_type_changed)
+	# Apply persistent user settings; the on-screen controls follow the device in hand from here on (the HUD's
+	# input_type_changed is wired to _on_controls_input_type_changed in player.tscn)
 	PlayerSettingsResource.load_or_create().apply_all(get_viewport(), self)
 
 	# Record the initial collision shape height and position for crouching and sliding.
@@ -625,46 +582,14 @@ func _ready() -> void:
 	else:
 		current_state = NodeStateMachine.States.STANDING
 
-	# Initialize optional gadget scenes if assigned
-	if not paraglider:
-		paraglider = get_node_or_null("PlayerModel/Armature/GeneralSkeleton/ParagliderBoneAttachment/Paraglider")
-	if paraglider_scene and not paraglider:
-		var bone_attachment: Node = get_node_or_null("PlayerModel/Armature/GeneralSkeleton/ParagliderBoneAttachment")
-		var paraglider_instance: Node3D = paraglider_scene.instantiate() as Node3D
-		if paraglider_instance:
-			if bone_attachment:
-				bone_attachment.add_child(paraglider_instance)
-			else:
-				player_model.add_child(paraglider_instance)
-			paraglider = paraglider_instance
-			if "player" in paraglider:
-				paraglider.set("player", self)
-			paraglider.hide()
-
 	# Update Steam persona name if Steam is enabled
-	var steamworks: Node = get_node_or_null("/root/Steamworks")
-	if steamworks and steamworks.get("steam_id") != 0 and Engine.has_singleton("Steam"):
-		var steam_singleton: Object = Engine.get_singleton("Steam")
-		var lobby_update_callback: Callable = _on_steam_lobby_chat_update
-		if not steam_singleton.is_connected("lobby_chat_update", lobby_update_callback):
-			steam_singleton.connect("lobby_chat_update", lobby_update_callback)
+	var steam: Object = SteamPeer.session(self)
+	if steam:
+		if not steam.is_connected("lobby_chat_update", _on_steam_lobby_chat_update):
+			steam.connect("lobby_chat_update", _on_steam_lobby_chat_update)
 		# A name given before ready (a spawner's, a test's) stands; only an unnamed Player asks Steam for one
 		if display_name.is_empty():
 			_update_steam_persona_name()
-
-	# Initialize voice audio player playback
-	if voice_audio_player:
-		var generator: AudioStreamGenerator = voice_audio_player.stream as AudioStreamGenerator
-		var steam: Object = _get_steam_running()
-		if generator and steam:
-			var optimal_rate: int = steam.getVoiceOptimalSampleRate()
-			if optimal_rate > 0:
-				generator.mix_rate = float(optimal_rate)
-		if not voice_audio_player.playing:
-			voice_audio_player.play()
-		voice_playback = voice_audio_player.get_stream_playback() as AudioStreamGeneratorPlayback
-
-	_setup_updraft_vfx()
 
 
 ## Called when there is an unhandled input event.
@@ -691,19 +616,13 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(&"whistle") and not event.is_echo() and not is_riding:
 		whistled.emit(self)
 
-	# Push-to-talk voice broadcasting (action="broadcast", key="V")
-	if event.is_action_pressed(&"broadcast"):
-		start_broadcasting()
-	elif event.is_action_released(&"broadcast"):
-		stop_broadcasting()
-
 
 ## Walks to where [param screen_position] lands on the Player's movement plane, over the navigation mesh, and drops
 ## a [constant CLICK_MARKER_SCENE] there. Nothing happens when the click leaves the plane (the sky).
 func click_to_move_at(screen_position: Vector2) -> void:
 	var from: Vector3 = camera.project_ray_origin(screen_position)
 	var to: Vector3 = from + camera.project_ray_normal(screen_position) * 10000.0
-	var movement_plane := Plane(up_direction, global_position.dot(up_direction))
+	var movement_plane: Plane = Plane(up_direction, global_position.dot(up_direction))
 	var cursor_position: Variant = movement_plane.intersects_ray(from, to)
 	if cursor_position == null:
 		return
@@ -716,53 +635,19 @@ func click_to_move_at(screen_position: Vector2) -> void:
 		debug.draw_navigation_marker(cursor_position)
 
 
-## Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-	var listening: bool = is_broadcasting or voice_activation_enabled()
-	var steam: Object = _get_steam_running() if is_multiplayer_authority() and listening else null
-	_set_recording(steam, steam != null)
-	var packet_arrived: bool = false
-	if steam:
-		var available_voice: Dictionary = steam.getAvailableVoice()
-		# GodotSteam returns "size" here, not "written". Reading the wrong key meant this was always 0, so the
-		# capture below never ran and push-to-talk sent nothing at all.
-		if available_voice.get("result") == STEAM_VOICE_RESULT_OK and available_voice.get("size", 0) > 0:
-			var voice_data: Dictionary = steam.getVoice()
-			if voice_data.get("result") == STEAM_VOICE_RESULT_OK:
-				var buffer: PackedByteArray = voice_data.get("buffer", PackedByteArray())
-				if not buffer.is_empty():
-					packet_arrived = true
-					# Rise rather than snap, so a burst of speech does not make the meter flicker
-					var heard: float = loudness_of(int(available_voice.get("size", 0)), voice_full_bytes())
-					voice_loudness = minf(voice_loudness + delta * VOICE_RISE_PER_SECOND, heard) if heard > voice_loudness else heard
-					if is_broadcasting and multiplayer.has_multiplayer_peer() and multiplayer.get_peers().size() > 0:
-						_receive_voice_packet.rpc(buffer)
-	if not packet_arrived and voice_loudness > 0.0:
-		# Falls away whenever no voice arrived this frame, which covers letting the key go, holding it while
-		# saying nothing, and Steam being there but sending nothing. Steam goes quiet during a pause, so a held
-		# key in silence reads as silence. Keyed off the packet rather than off Steam being absent: as an elif
-		# on the branch above, a running Steam client with nothing to say held the last reading forever.
-		voice_loudness = maxf(voice_loudness - delta * VOICE_FALLOFF_PER_SECOND, 0.0)
-	if voice_activation_enabled():
-		# Speaking past the mark opens the channel, and falling back under it closes it
-		var speaking: bool = voice_loudness >= VOICE_ACTIVATION_LEVEL
-		if speaking != is_broadcasting:
-			_set_transmitting(speaking)
-
-
 ## Called every physics frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(delta: float) -> void:
 	# A frozen clock (a menu holding Engine.time_scale at zero) moves nothing, and root motion is divided by delta
 	if delta <= 0.0:
 		return
 	# Track which weapon group has finished its draw so re-entering it skips the redraw.
-	var root_locomotion_node: String = String(locomotion_state.get_current_node())
+	var root_locomotion_node: String = sync_locomotion_node.get_slice("/", 0)
 	if root_locomotion_node in LOCOMOTION_GROUPS:
 		var inner_node: String = current_locomotion_node
 		# Skip Start/End so the flag isn't set before the entry edge picks draw vs skip.
 		if not inner_node.ends_with("Draw") and inner_node not in ["Start", "End", ""]:
 			drawn_weapon_group = root_locomotion_node
-	elif drawn_weapon_group != "" and not is_group_equipment_equipped(drawn_weapon_group):
+	elif drawn_weapon_group != "" and drawn_weapon_group != equipment_group():
 		drawn_weapon_group = ""
 
 	# Apply player input to control the character and update the animation state.
@@ -783,16 +668,29 @@ func _physics_process(delta: float) -> void:
 			has_started_emoting = false
 			is_throwing = false
 
-	# Update network animation sync properties on authority
-	if is_multiplayer_authority():
-		var curr_loco: String = current_locomotion_path
-		if curr_loco != sync_locomotion_node and not curr_loco.is_empty():
-			sync_locomotion_node = curr_loco
-		var blend_to_sync := Vector2(0.0, smoothed_motion.length())
-		if is_focusing or is_shooting or is_boxing:
-			blend_to_sync = smoothed_motion
-		if blend_to_sync != sync_blend_position:
-			sync_blend_position = blend_to_sync
+	# The blend the puppets play (only the authority runs this)
+	var blend_to_sync: Vector2 = Vector2(0.0, smoothed_motion.length())
+	if is_focusing or is_shooting or is_boxing:
+		blend_to_sync = smoothed_motion
+	if blend_to_sync != sync_blend_position:
+		sync_blend_position = blend_to_sync
+
+
+## Wired to AnimationTree.mixer_applied in player.tscn: once a frame, right after the tree has advanced, the
+## authority reads where the locomotion machine is into [member sync_locomotion_node], which replicates it and
+## emits [signal locomotion_node_changed]. Every per-frame reader goes through that one value rather than the tree.
+func _on_animation_tree_mixer_applied() -> void:
+	if not is_multiplayer_authority():
+		return
+	var root_playback: AnimationNodeStateMachinePlayback = locomotion_state
+	if root_playback == null:
+		return
+	var path: String = String(root_playback.get_current_node())
+	if path in LOCOMOTION_GROUPS:
+		var group_playback: AnimationNodeStateMachinePlayback = animation_tree.get("parameters/LocomotionStateMachine/" + path + "/playback")
+		path += "/" + String(group_playback.get_current_node())
+	if path != sync_locomotion_node and not path.is_empty():
+		sync_locomotion_node = path
 
 # https://github.com/godotengine/tps-demo/blob/master/player/gd#L86
 func apply_input(delta: float) -> void:
@@ -841,7 +739,7 @@ func apply_input(delta: float) -> void:
 			if is_focusing and is_instance_valid(current_focus_target):
 				look_dir = (get_focus_target_position() - global_position).slide(up_direction)
 			else:
-				var camera_basis := spring_arm.global_transform.basis
+				var camera_basis: Basis = spring_arm.global_transform.basis
 				look_dir = - camera_basis.z
 				look_dir = look_dir.slide(up_direction)
 				
@@ -866,8 +764,8 @@ func apply_input(delta: float) -> void:
 	# Handle movement when not strafing
 	elif not is_riding:
 		# Use camera-relative direction for target_motion direction
-		var camera_basis := spring_arm.global_transform.basis
-		var target_dir := camera_basis * Vector3(target_motion.x, 0.0, -target_motion.y)
+		var camera_basis: Basis = spring_arm.global_transform.basis
+		var target_dir: Vector3 = camera_basis * Vector3(target_motion.x, 0.0, -target_motion.y)
 		target_dir = target_dir.slide(up_direction)
 		if target_dir.length_squared() > 0.001 and not is_firing_arrow and not is_hanging_braced and not is_hanging_free and not is_climbing:
 			target_dir = target_dir.normalized()
@@ -877,11 +775,11 @@ func apply_input(delta: float) -> void:
 
 		_set_locomotion_blend(Vector2(0.0, target_motion.length()))
 
-	var root_motion_position := animation_tree.get_root_motion_position()
+	var root_motion_position: Vector3 = animation_tree.get_root_motion_position()
 	if is_swimming and not is_climbing_on:
 		root_motion_position *= swimming_root_motion_multiplier
 
-	root_motion = Transform3D(animation_tree.get_root_motion_rotation(), root_motion_position)
+	var root_motion: Transform3D = Transform3D(animation_tree.get_root_motion_rotation(), root_motion_position)
 
 	orientation *= root_motion
 
@@ -902,19 +800,19 @@ func apply_input(delta: float) -> void:
 	# Influence of root motion is removed when in the air, and movement is instead based on the input direction to allow for more player control while jumping and falling.
 	# Flips stay root-motion driven so held move input doesn't push the player around.
 	if (is_jumping or is_falling) and not is_flipping:
-		var camera_basis := spring_arm.global_transform.basis
-		var target_dir := camera_basis * Vector3(target_motion.x, 0.0, -target_motion.y)
+		var camera_basis: Basis = spring_arm.global_transform.basis
+		var target_dir: Vector3 = camera_basis * Vector3(target_motion.x, 0.0, -target_motion.y)
 		target_dir = target_dir.slide(up_direction)
 		
-		var current_h_vel := velocity.slide(up_direction)
-		var current_speed := current_h_vel.length()
-		var air_speed_cap := max(current_speed, 5.0)
+		var current_h_vel: Vector3 = velocity.slide(up_direction)
+		var current_speed: float = current_h_vel.length()
+		var air_speed_cap: float = maxf(current_speed, 5.0)
 		var target_h_vel: Vector3 = target_dir * air_speed_cap
 		
 		# Slowly lerp to target air speed to preserve momentum
 		h_velocity = current_h_vel.lerp(target_h_vel, 3.0 * delta)
 
-	var vertical_speed := velocity.dot(up_direction)
+	var vertical_speed: float = velocity.dot(up_direction)
 	if is_climbing or is_climbing_on or is_climbing_hopping_left or is_climbing_hopping_right or is_climbing_hopping_up:
 		vertical_speed = h_velocity.dot(up_direction)
 	elif is_hanging_braced or is_hanging_free:
@@ -933,32 +831,34 @@ func apply_input(delta: float) -> void:
 
 
 ## Feeds [param motion] to the blend space of the stance being played: crouching is its own locomotion state, so
-## while crouched only that space moves; otherwise the equipped weapon's space, boxing, or plain standing.
+## while crouched only that space moves; otherwise the [method equipment_group]'s space, or plain standing.
 func _set_locomotion_blend(motion: Vector2) -> void:
 	if is_crouching:
 		animation_tree.set(CROUCHING_LOCOMOTION_BLEND_POSITION_PATH, motion)
-	elif inventory.has_equipment(Equipment.EquipmentType.BOW):
-		animation_tree.set(ARCHERY_LOCOMOTION_BLEND_POSITION_PATH if is_shooting else BOW_LOCOMOTION_BLEND_POSITION_PATH, motion)
-	elif inventory.has_one_handed_or_shield_equipped():
-		animation_tree.set(SHIELD_LOCOMOTION_BLEND_POSITION_PATH, motion)
-	elif inventory.has_heavy_weapon_equipped():
-		animation_tree.set(GREATSWORD_LOCOMOTION_BLEND_POSITION_PATH, motion)
-	elif inventory.has_equipment(Equipment.EquipmentType.PISTOL):
-		animation_tree.set(PISTOL_LOCOMOTION_BLEND_POSITION_PATH, motion)
-	elif inventory.has_equipment(Equipment.EquipmentType.RIFLE):
-		animation_tree.set(RIFLE_LOCOMOTION_BLEND_POSITION_PATH, motion)
-	elif inventory.is_unarmed() and is_boxing:
-		animation_tree.set(BOXING_LOCOMOTION_BLEND_POSITION_PATH, motion)
-	else:
-		animation_tree.set(STANDING_LOCOMOTION_BLEND_POSITION_PATH, motion)
+		return
+	match equipment_group():
+		"GreatSword":
+			animation_tree.set(GREATSWORD_LOCOMOTION_BLEND_POSITION_PATH, motion)
+		"Bow":
+			animation_tree.set(ARCHERY_LOCOMOTION_BLEND_POSITION_PATH if is_shooting else BOW_LOCOMOTION_BLEND_POSITION_PATH, motion)
+		"Shield":
+			animation_tree.set(SHIELD_LOCOMOTION_BLEND_POSITION_PATH, motion)
+		"Pistol":
+			animation_tree.set(PISTOL_LOCOMOTION_BLEND_POSITION_PATH, motion)
+		"Rifle":
+			animation_tree.set(RIFLE_LOCOMOTION_BLEND_POSITION_PATH, motion)
+		"Boxing":
+			animation_tree.set(BOXING_LOCOMOTION_BLEND_POSITION_PATH, motion)
+		_:
+			animation_tree.set(STANDING_LOCOMOTION_BLEND_POSITION_PATH, motion)
 
 
 ## Detect if the player is in front of a ledge and can hang from it and/or climb on to it.
 func detect_ledge() -> bool:
 	# Ledge detection [Raycast]
-	var ledge_detected := false
+	var ledge_detected: bool = false
 	if not is_on_floor() and ledge_detection_horizontal and ledge_detection_horizontal.is_colliding():
-		var forward_direction := -ledge_detection_horizontal.global_transform.basis.z.normalized()
+		var forward_direction: Vector3 = -ledge_detection_horizontal.global_transform.basis.z.normalized()
 		ledge_detection_vertical.global_position = ledge_detection_horizontal.get_collision_point() + (forward_direction * 0.05) + up_direction
 		ledge_detection_vertical.force_raycast_update()
 		if ledge_detection_vertical.is_colliding():
@@ -1050,16 +950,11 @@ func release_charging_throw() -> void:
 ## Updates the Steam persona label for the current lobby size.
 func _update_steam_persona_name() -> void:
 	display_name = ""
-	if OS.has_feature("web") or not Engine.has_singleton("Steam"):
+	var steam: Object = SteamPeer.session(self)
+	var lobby_id: int = SteamPeer.lobby_of(self)
+	if steam == null or lobby_id == 0 or steam.getNumLobbyMembers(lobby_id) <= 1:
 		return
-	var steamworks: Node = get_node_or_null("/root/Steamworks")
-	if steamworks == null or steamworks.get("steam_id") == 0:
-		return
-	var steam_singleton: Object = Engine.get_singleton("Steam")
-	var lobby_id: int = steamworks.get("lobby_id")
-	if lobby_id == 0 or steam_singleton.getNumLobbyMembers(lobby_id) <= 1:
-		return
-	display_name = steam_singleton.getPersonaName()
+	display_name = steam.getPersonaName()
 
 
 ## Refreshes the Steam persona label when a lobby member joins or leaves.
@@ -1069,10 +964,8 @@ func _on_steam_lobby_chat_update(
 		_making_change_id: int,
 		_chat_state: int,
 ) -> void:
-	var steamworks: Node = get_node_or_null("/root/Steamworks")
-	if steamworks == null or steamworks.get("lobby_id") != lobby_id:
-		return
-	_update_steam_persona_name()
+	if lobby_id == SteamPeer.lobby_of(self):
+		_update_steam_persona_name()
 
 
 ## Called by throw animation(s) using "Call Method Track" to throw the held object at the right frame.
@@ -1089,21 +982,32 @@ func get_grounded_locomotion_state() -> StringName:
 		return &"HeavyBreathing"
 	if is_crouching:
 		return &"CrouchingLocomotion"
+	var group: String = equipment_group()
+	if group.is_empty():
+		return &"StandingLocomotion"
+	if group == "Bow" and is_shooting:
+		return &"Bow/ArcheryLocomotion"
+	return StringName(group + "/" + group + "Locomotion")
+
+
+## The locomotion group the equipment in hand plays in: "GreatSword" (two-handed weapons, the rod and the staff),
+## "Bow", "Shield" (one-handed weapons and the sword and shield), "Pistol", "Rifle", "Boxing" when unarmed in the
+## stance, or "" for plain standing. Two-handed wins over the bow, which wins over one-handed, so the stance, its
+## blend space and the drawn-weapon check always name the same group.
+func equipment_group() -> String:
 	if equipped_axe_2h or equipped_fishing_rod or equipped_staff or equipped_sword_2h:
-		return &"GreatSword/GreatSwordLocomotion"
+		return "GreatSword"
 	if equipped_bow:
-		if is_shooting:
-			return &"Bow/ArcheryLocomotion"
-		return &"Bow/BowLocomotion"
+		return "Bow"
 	if equipped_axe_1h or equipped_dagger or equipped_shield or equipped_sword_1h:
-		return &"Shield/ShieldLocomotion"
+		return "Shield"
 	if equipped_pistol:
-		return &"Pistol/PistolLocomotion"
+		return "Pistol"
 	if equipped_rifle:
-		return &"Rifle/RifleLocomotion"
+		return "Rifle"
 	if is_boxing:
-		return &"Boxing/BoxingLocomotion"
-	return &"StandingLocomotion"
+		return "Boxing"
+	return ""
 
 
 ## True if the state is the deepest current locomotion node or queued in a travel path.
@@ -1204,24 +1108,6 @@ func _end_channel_emote() -> void:
 		has_started_emoting = false
 
 
-## True if the equipment matching the given locomotion group is currently equipped.
-func is_group_equipment_equipped(group_name: String) -> bool:
-	match group_name:
-		"Bow":
-			return equipped_bow
-		"Boxing":
-			return is_boxing
-		"GreatSword":
-			return equipped_axe_2h or equipped_fishing_rod or equipped_staff or equipped_sword_2h
-		"Pistol":
-			return equipped_pistol
-		"Rifle":
-			return equipped_rifle
-		"Shield":
-			return equipped_axe_1h or equipped_dagger or equipped_shield or equipped_sword_1h
-	return false
-
-
 static var _weather_fx_script: Script = null
 static var _weather_fx_checked: bool = false
 
@@ -1229,7 +1115,7 @@ static var _weather_fx_checked: bool = false
 func get_precipitation_strength() -> float:
 	if not _weather_fx_checked:
 		_weather_fx_checked = true
-		var weather_fx_path := "res://addons/weather_fx/scripts/weather_fx.gd"
+		var weather_fx_path: String = "res://addons/weather_fx/scripts/weather_fx.gd"
 		if ResourceLoader.exists(weather_fx_path):
 			_weather_fx_script = load(weather_fx_path) as Script
 	if _weather_fx_script:
@@ -1237,80 +1123,52 @@ func get_precipitation_strength() -> float:
 	return 0.0
 
 
-## Returns true if the player is currently inside an updraft or thermal air column.
+## Returns true if the player is currently inside an updraft or thermal air column. The overlaps come from
+## UpdraftDetection's area signals; a burned-out thermal has monitoring off, so a ghost updraft never grants lift.
 func is_in_updraft() -> bool:
-	if not is_inside_tree():
-		return false
-	var tree := get_tree()
-	if tree == null:
-		return false
-
-	var pool: Array[Node] = []
-	pool.append_array(tree.get_nodes_in_group("Updraft"))
-	pool.append_array(tree.get_nodes_in_group("Thermal"))
-
-	for node: Node in pool:
-		# A burned-out thermal has monitoring off, so a ghost updraft never grants lift
-		if node is Area3D and (node as Area3D).monitoring and (node as Area3D).overlaps_body(self):
+	for area: Area3D in _updrafts:
+		if is_instance_valid(area) and area.monitoring:
 			return true
 	return false
 
 
-## Returns the distance in meters to the nearest active updraft or thermal air source.
-func get_nearest_updraft_distance() -> float:
-	if not is_inside_tree():
-		return 999.0
-	var tree := get_tree()
-	if tree == null:
-		return 999.0
-
-	var min_d: float = 999.0
-	var pool: Array[Node] = []
-	pool.append_array(tree.get_nodes_in_group("Updraft"))
-	pool.append_array(tree.get_nodes_in_group("Thermal"))
-
-	for node: Node in pool:
-		if node is Area3D:
-			var area := node as Area3D
-			if area.monitoring or area.monitorable:
-				var d := area.global_position.distance_to(global_position)
-				if d < min_d:
-					min_d = d
-	return min_d
+## Wired to UpdraftDetection.area_entered in player.tscn: an area in the "Updraft" or "Thermal" group is lift.
+func _on_updraft_detection_area_entered(area: Area3D) -> void:
+	if area.is_in_group(&"Updraft") or area.is_in_group(&"Thermal"):
+		_updrafts.append(area)
 
 
-var updraft_aura_vfx: Node3D = null
-
-func _setup_updraft_vfx() -> void:
-	var vfx_scene_path := "res://addons/weather_fx/assets/vfx/wind/Scenes/VFX_AirFlowUP.tscn"
-	if ResourceLoader.exists(vfx_scene_path):
-		var scene := load(vfx_scene_path) as PackedScene
-		if scene:
-			updraft_aura_vfx = scene.instantiate() as Node3D
-			updraft_aura_vfx.name = "UpdraftAuraVFX"
-			updraft_aura_vfx.visible = false
-			updraft_aura_vfx.scale = Vector3(1.2, 1.6, 1.2)
-			add_child(updraft_aura_vfx)
-			for p: Node in updraft_aura_vfx.find_children("*", "GPUParticles3D", true, false):
-				if p is GPUParticles3D:
-					p.emitting = false
+## Wired to UpdraftDetection.area_exited in player.tscn.
+func _on_updraft_detection_area_exited(area: Area3D) -> void:
+	_updrafts.erase(area)
 
 
+## Wired to UpdraftVfxTimer.timeout: the optional [member updraft_aura] shows, on every peer, while the Player is in
+## a thermal or within five metres of an active one.
 func _update_updraft_vfx() -> void:
-	if not is_instance_valid(updraft_aura_vfx):
+	if not is_instance_valid(updraft_aura):
 		return
+	var should_show: bool = is_in_updraft()
+	if not should_show:
+		for node: Node in get_tree().get_nodes_in_group(&"Updraft") + get_tree().get_nodes_in_group(&"Thermal"):
+			var area: Area3D = node as Area3D
+			if area and (area.monitoring or area.monitorable) and area.global_position.distance_to(global_position) <= 5.0:
+				should_show = true
+				break
+	if updraft_aura.visible != should_show:
+		_show_updraft_aura(should_show)
 
-	var should_show: bool = is_in_updraft() or get_nearest_updraft_distance() <= 5.0
-	if updraft_aura_vfx.visible != should_show:
-		updraft_aura_vfx.visible = should_show
-		for p: Node in updraft_aura_vfx.find_children("*", "GPUParticles3D", true, false):
-			if p is GPUParticles3D:
-				p.emitting = should_show
+
+## Shows or hides [member updraft_aura], its particles emitting only while it shows.
+func _show_updraft_aura(shown: bool) -> void:
+	updraft_aura.visible = shown
+	for particles: Node in updraft_aura.find_children("*", "GPUParticles3D", true, false):
+		(particles as GPUParticles3D).emitting = shown
 
 
 ## Gets the player's forward direction projected onto the movement plane.
 func get_facing_direction() -> Vector3:
-	var facing_direction := -player_model.global_transform.basis.z
+	var facing_direction: Vector3 = -player_model.global_transform.basis.z
 	facing_direction = facing_direction.slide(up_direction)
 	if facing_direction.length_squared() <= 0.001:
 		return Vector3.ZERO
@@ -1321,7 +1179,7 @@ func get_facing_direction() -> Vector3:
 ## ground raycast, not is_on_floor(): only move_and_slide() computes that, and a puppet never moves itself.
 func sfx_footsteps_play() -> void:
 	if paraglider_raycast.is_colliding() and not is_ragdolling:
-		var collider := paraglider_raycast.get_collider() as Node3D
+		var collider: Node3D = paraglider_raycast.get_collider() as Node3D
 		if audio:
 			audio.play_footstep(collider)
 
@@ -1329,7 +1187,7 @@ func sfx_footsteps_play() -> void:
 ## Called by the animation(s) using "Call Method Track" to play sliding footstep sound effects at the right time.
 func sfx_footsteps_slide_play() -> void:
 	if paraglider_raycast.is_colliding():
-		var collider := paraglider_raycast.get_collider() as Node3D
+		var collider: Node3D = paraglider_raycast.get_collider() as Node3D
 		if audio:
 			audio.play_slide(collider)
 
@@ -1341,25 +1199,25 @@ func _on_attack_sequence_timer_timeout() -> void:
 
 ## Applies the current velocity, moves the player, and updates the orientation to match the up_direction.
 func update_movement_and_rotation(delta: float) -> void:
-	var current_body_up := global_basis.y
+	var current_body_up: Vector3 = global_basis.y
 	if not current_body_up.is_equal_approx(up_direction):
-		var q_align_body := Quaternion(current_body_up, up_direction)
+		var q_align_body: Quaternion = Quaternion(current_body_up, up_direction)
 		global_basis = Basis(q_align_body) * global_basis
 
-	var pre_velocity := velocity
+	var pre_velocity: Vector3 = velocity
 	move_and_slide()
 
 	for i: int in get_slide_collision_count():
-		var c := get_slide_collision(i)
+		var c: KinematicCollision3D = get_slide_collision(i)
 		if c.get_collider() is RigidBody3D:
-			var rb := c.get_collider() as RigidBody3D
+			var rb: RigidBody3D = c.get_collider() as RigidBody3D
 			if rb != held_rigidbody:
-				var push_dir := -c.get_normal()
-				var velocity_proj := pre_velocity.dot(push_dir)
-				var rb_velocity_proj := rb.linear_velocity.dot(push_dir)
-				var relative_velocity_proj := velocity_proj - rb_velocity_proj
+				var push_dir: Vector3 = -c.get_normal()
+				var velocity_proj: float = pre_velocity.dot(push_dir)
+				var rb_velocity_proj: float = rb.linear_velocity.dot(push_dir)
+				var relative_velocity_proj: float = velocity_proj - rb_velocity_proj
 				if relative_velocity_proj > 0.0:
-					var effective_mass := (mass * rb.mass) / (mass + rb.mass)
+					var effective_mass: float = (mass * rb.mass) / (mass + rb.mass)
 					rb.apply_impulse(push_dir * relative_velocity_proj * effective_mass * push_force, c.get_position() - rb.global_position)
 
 	if is_on_floor() and not is_swimming and not is_falling:
@@ -1370,10 +1228,10 @@ func update_movement_and_rotation(delta: float) -> void:
 	orientation = orientation.orthonormalized() # Orthonormalize orientation.
 
 	# Smoothly align character body and model orientation Y-axis with up_direction
-	var current_up := orientation.basis.y
+	var current_up: Vector3 = orientation.basis.y
 	if not current_up.is_equal_approx(up_direction):
-		var next_up := current_up.slerp(up_direction, delta * 10.0).normalized()
-		var q_align := Quaternion(current_up, next_up)
+		var next_up: Vector3 = current_up.slerp(up_direction, delta * 10.0).normalized()
+		var q_align: Quaternion = Quaternion(current_up, next_up)
 		orientation.basis = Basis(q_align) * orientation.basis
 
 
@@ -1385,7 +1243,7 @@ func update_movement_and_rotation(delta: float) -> void:
 		else:
 			# Pitch about a hip-height pivot so the body doesn't sweep around the feet like a ball
 			var pitched_basis: Basis = orientation.basis * Basis(Vector3.RIGHT, model_pitch)
-			var pivot_local := Vector3(0.0, model_pitch_pivot_height, 0.0)
+			var pivot_local: Vector3 = Vector3(0.0, model_pitch_pivot_height, 0.0)
 			var base_origin: Vector3 = to_global(initial_player_model_transform.origin)
 			var pivot_global: Vector3 = base_origin + (orientation.basis * pivot_local)
 			player_model.global_transform = Transform3D(pitched_basis, pivot_global - (pitched_basis * pivot_local))
@@ -1395,16 +1253,21 @@ func update_movement_and_rotation(delta: float) -> void:
 		separation_ray_shape.global_transform = Transform3D(rotated_basis, rotated_origin)
 
 
-## Called by a water Area3D when the player enters water.
+## Called by a water Area3D when the player enters water. Every peer's area reports it, but only the owning peer
+## runs the state machine; the others follow the replicated state (and see the splash through [Swimming]).
 func enter_water(water_area: Area3D = null) -> void:
+	if not is_multiplayer_authority():
+		return
 	current_water_area = water_area
 	if not is_swimming and not is_riding and not is_ragdolling:
 		if state_machine:
 			state_machine.travel(current_state, NodeStateMachine.States.SWIMMING)
 
 
-## Called by a water Area3D when the player exits water.
+## Called by a water Area3D when the player exits water; like [method enter_water], the owning peer's alone.
 func exit_water(water_area: Area3D = null) -> void:
+	if not is_multiplayer_authority():
+		return
 	if water_area == null or water_area == current_water_area:
 		current_water_area = null
 		if is_swimming:
@@ -1423,129 +1286,6 @@ func update_sfx_volume(value: float) -> void:
 func update_music_volume(value: float) -> void:
 	if audio:
 		audio.set_music_volume(value)
-
-
-const STEAM_VOICE_RESULT_OK: int = 0 ## Mirrors Steam.VOICE_RESULT_OK (Steam class is absent on web exports).
-
-
-## Returns the Steam singleton while the Steamworks session is up, otherwise null. The client running is not
-## enough: the session only initialises on a desktop Forward+ build, and the voice calls error before it has.
-func _get_steam_running() -> Object:
-	var steamworks: Node = get_node_or_null("/root/Steamworks")
-	if steamworks == null or steamworks.get("steam_id") == 0 or not Engine.has_singleton("Steam"):
-		return null
-	return Engine.get_singleton("Steam")
-
-
-## Whether this Player transmits by speaking rather than by holding the key. A pad player has no choice: the
-## Zelda layout binds every usable button, so there is none left for push-to-talk.
-func voice_activation_enabled() -> bool:
-	return PlayerSettingsResource.load_or_create().voice_activation
-
-
-## Turns Steam's capture on or off, which is not the same as transmitting. Voice activation has to listen the
-## whole time to know when you have started speaking, and Steam's own voice detection means listening costs
-## nothing while the room is quiet: it simply sends no packets.
-func _set_recording(steam: Object, on: bool) -> void:
-	if steam == null or on == _recording:
-		return
-	_recording = on
-	if on:
-		steam.startVoiceRecording()
-	else:
-		steam.stopVoiceRecording()
-
-
-## Opens or closes the channel: the indicator, Steam's own speaking flag and the peers all follow this.
-func _set_transmitting(on: bool) -> void:
-	if is_broadcasting == on:
-		return
-	is_broadcasting = on
-	if voice_chat_indicator:
-		voice_chat_indicator.visible = on
-	var steam: Object = _get_steam_running()
-	if steam:
-		var my_id: int = steam.getSteamID()
-		if my_id > 0:
-			steam.setInGameVoiceSpeaking(my_id, on)
-	if multiplayer.has_multiplayer_peer() and multiplayer.get_peers().size() > 0:
-		_set_voice_indicator.rpc(on)
-
-
-## Start push-to-talk voice broadcasting. Holding the key still works with voice activation on, so a player who
-## wants to be certain they are heard can take the decision off the meter.
-func start_broadcasting() -> void:
-	_set_recording(_get_steam_running(), true)
-	_set_transmitting(true)
-
-
-## Stop push-to-talk voice broadcasting. The capture is left alone: voice activation may still be listening,
-## and _process turns it off when nothing is.
-func stop_broadcasting() -> void:
-	_set_transmitting(false)
-
-
-
-
-## How much voice [param available_bytes] of compressed Steam audio counts as, 0 to 1.
-##
-## Deliberately not an amplitude. Steam gates the microphone with its own voice-activity detection and
-## normalises what it sends, so the samples inside a packet say almost nothing about how loudly you spoke:
-## measured on a laptop, ten seconds of talking and eight seconds of silence came back with the same peak
-## level, 0.0233 against 0.0246. What separates them is whether Steam sends anything at all, 165 packets
-## against 10, and how much. So the reading follows the flow of voice rather than its waveform.
-## The bytes that count as a full-voice frame on this machine, from the microphone sensitivity set in Audio
-## settings. A quieter microphone needs fewer bytes to mean the same thing, so a higher sensitivity lowers the
-## bar. Microphones differ by more than any built-in default can cover, which is why this is a setting the
-## player calibrates by talking rather than a number guessed here.
-func voice_full_bytes() -> float:
-	var sensitivity: float = PlayerSettingsResource.load_or_create().voice_sensitivity
-	return VOICE_FULL_BYTES * (100.0 / maxf(sensitivity, 1.0))
-
-
-static func loudness_of(available_bytes: int, full_bytes: float = VOICE_FULL_BYTES) -> float:
-	if available_bytes <= 0:
-		return 0.0
-	return clampf(float(available_bytes) / maxf(full_bytes, 1.0), 0.0, 1.0)
-
-
-## Voice from the owning peer, decoded into this copy's 3D player; only the authority ever sends it.
-@rpc("authority", "call_remote", "unreliable_ordered")
-func _receive_voice_packet(compressed_buffer: PackedByteArray) -> void:
-	var steam: Object = _get_steam_running()
-	if steam == null or compressed_buffer.is_empty():
-		return
-	var sample_rate: int = steam.getVoiceOptimalSampleRate()
-	if sample_rate <= 0:
-		sample_rate = 48000
-	var decompressed: Dictionary = steam.decompressVoice(compressed_buffer, sample_rate)
-	if decompressed.get("result") == STEAM_VOICE_RESULT_OK:
-		var uncompressed: PackedByteArray = decompressed.get("uncompressed", PackedByteArray())
-		if uncompressed.is_empty():
-			return
-		if voice_playback == null and voice_audio_player:
-			if not voice_audio_player.playing:
-				voice_audio_player.play()
-			voice_playback = voice_audio_player.get_stream_playback() as AudioStreamGeneratorPlayback
-		if voice_playback:
-			var sample_count: int = uncompressed.size() / 2
-			var frames: PackedVector2Array = PackedVector2Array()
-			frames.resize(sample_count)
-			for i: int in range(sample_count):
-				var sample_val: float = float(uncompressed.decode_s16(i * 2)) / 32768.0
-				frames[i] = Vector2(sample_val, sample_val)
-			var frames_available: int = voice_playback.get_frames_available()
-			if frames.size() > frames_available:
-				frames = frames.slice(0, frames_available)
-			if not frames.is_empty():
-				voice_playback.push_buffer(frames)
-
-
-## The speaking indicator over this copy's head; only the authority ever sends it.
-@rpc("authority", "call_remote", "reliable")
-func _set_voice_indicator(is_speaking: bool) -> void:
-	if voice_chat_indicator:
-		voice_chat_indicator.visible = is_speaking
 
 
 ## Applies the synchronized locomotion path ("Group/Node" or "Node") to a puppet's AnimationTree.
@@ -1664,8 +1404,6 @@ func set_head_look_at_target(target: Node3D) -> void:
 @export_category("Combat")
 @export var skill_level: int = 0 ## Marksmanship: shrinks the spread of ranged equipment per its [Accuracy] resource (0 novice, expert at the resource's expert_level).
 @export_category("Traversal")
-@export var stealth_transparency: float = 0.7 ## How faded the model is while [member is_stealthed]: 1 is invisible.
-@export var stealth_fade_time: float = 1.0 ## Seconds the ghost takes to settle in when stealth starts, and to solidify when it ends.
 @export var lethal_fall_speed: float = 15.0 ## Landing at or above this downward speed (m/s) ragdolls the player.
 @export var wall_leap_horizontal_speed: float = 5.0 ## Horizontal impulse away from the wall on a climbing/hanging back-eject.
 @export var wall_leap_vertical_speed: float = 3.5 ## Vertical impulse on a climbing/hanging back-eject.
@@ -1727,10 +1465,16 @@ func apply_hud_visibility() -> void:
 	controls.visible = true
 
 
+## Wired to Controls.input_type_changed in player.tscn: the HUD follows the device in hand, and the current state
+## puts its own button labels back for it.
 func _on_controls_input_type_changed(_input_type: int) -> void:
+	if not is_multiplayer_authority():
+		return
 	apply_hud_visibility()
+	refresh_contextual_controls()
 
 
+## The current state's contextual labels, applied again (the device changed, the equipment changed, a prompt let go).
 func refresh_contextual_controls() -> void:
 	if controls == null or state_machine == null:
 		return
@@ -1771,15 +1515,22 @@ var movement_scale: float = 1.0 ## Fraction of normal movement speed; [method sl
 var _slow_timer: SceneTreeTimer
 
 
-## Slows movement to [param factor] of normal for [param seconds], as a Frostbolt does; lands on the owning peer like a hit.
-@rpc("any_peer", "call_local", "reliable")
-func slow(factor: float, seconds: float) -> void:
+## Slows movement to [param factor] of normal for [param seconds], as a Frostbolt does. Lands on the owning peer like
+## a hit: a copy on another peer sends it there. [param source_path] names the caster.
+func slow(factor: float, seconds: float, source_path: NodePath = ^"") -> void:
 	if not is_multiplayer_authority():
-		slow.rpc_id(get_multiplayer_authority(), factor, seconds)
+		_slow.rpc_id(get_multiplayer_authority(), factor, seconds, source_path)
 		return
 	movement_scale = clampf(factor, 0.0, 1.0)
-	_slow_timer = get_tree().create_timer(seconds)
+	_slow_timer = get_tree().create_timer(maxf(seconds, 0.0))
 	_slow_timer.timeout.connect(_end_slow.bind(_slow_timer))
+
+
+## [method slow] arriving from another peer; see [method _may_affect].
+@rpc("any_peer", "reliable")
+func _slow(factor: float, seconds: float, source_path: NodePath) -> void:
+	if is_multiplayer_authority() and _may_affect(source_path):
+		slow(factor, seconds, source_path)
 
 
 func _end_slow(timer: SceneTreeTimer) -> void:
@@ -1787,116 +1538,50 @@ func _end_slow(timer: SceneTreeTimer) -> void:
 		movement_scale = 1.0
 
 
-const STEALTH_SHADER: Shader = preload("res://addons/3d_player_controller/assets/shaders/stealth.gdshader")
-const STEALTH_DEPTH_SHADER: Shader = preload("res://addons/3d_player_controller/assets/shaders/stealth_depth.gdshader")
-
-var _stealth_originals: Dictionary[MeshInstance3D, Array] = {} ## Mesh -> its surface override materials before stealth, restored when it ends.
-var _stealth_tween: Tween
-
-
-## Turns every mesh under the skeleton into its ghost, or back. The ghost is two passes over each surface: one that
-## writes the body's depth and draws nothing, then the stealth shader carrying the surface's own colour and texture,
-## washed pale, which colours only the nearest surface, so limbs never show through the body.
-## Its alpha tweens over [member stealth_fade_time] each way; the original materials return once the fade out lands.
-func _apply_stealth_look(stealthed: bool) -> void:
-	if _stealth_tween:
-		_stealth_tween.kill()
-	_stealth_tween = create_tween().set_parallel(true)
-	if stealthed:
-		# owned = false: equipment is attached at runtime and has no owner, and it has to fade with the body
-		for mesh: MeshInstance3D in skeleton.find_children("*", "MeshInstance3D", true, false):
-			if mesh.mesh == null or _stealth_originals.has(mesh):
-				continue
-			var originals: Array[Material] = []
-			for surface: int in mesh.mesh.get_surface_count():
-				originals.append(mesh.get_surface_override_material(surface))
-				mesh.set_surface_override_material(surface, _ghost_of(mesh.get_active_material(surface)))
-			_stealth_originals[mesh] = originals
-	var target_alpha: float = 1.0 - stealth_transparency if stealthed else 1.0
-	for ghost: ShaderMaterial in _stealth_ghosts():
-		# A method, not the shader_parameter property: it exists only once the shader is compiled, which a headless run never does
-		_stealth_tween.tween_method(_set_ghost_alpha.bind(ghost), float(ghost.get_shader_parameter(&"alpha")), target_alpha, stealth_fade_time)
-	if not stealthed:
-		_stealth_tween.chain().tween_callback(_restore_stealth_materials)
+## Whether an effect sent from another peer ([method take_hit], [method heal], [method slow], [method hunted_by])
+## may land on this Player: one from the server (every NPC, projectile and hazard runs there), or one from the peer
+## that owns [param source_path], the attacker or caster. Anyone else is ignored. Asked only by the RPC entry points
+## (_take_hit, _heal, _slow, _hunted_by), the one place the remote sender is the caller: a call this peer makes itself
+## while it handles somebody else's RPC is its own, and runs directly.
+func _may_affect(source_path: NodePath) -> bool:
+	var sender: int = multiplayer.get_remote_sender_id()
+	if sender == 1:
+		return true
+	var source: Node = null if source_path.is_empty() else get_node_or_null(source_path)
+	return source != null and source.get_multiplayer_authority() == sender
 
 
-## A piece equipped while stealthed fades too: the ghost pass only touches meshes it has not seen, so this is
-## cheap when nothing new is there.
-func _on_equipment_changed_while_stealthed() -> void:
-	if is_stealthed and skeleton:
-		_apply_stealth_look(true)
-
-
-## The ghost of [param original]: a depth pass that draws nothing, with the stealth shader wearing the original's
-## colours as its next_pass, drawn after it. Anything but a StandardMaterial3D ghosts as plain white.
-func _ghost_of(original: Material) -> ShaderMaterial:
-	var depth: ShaderMaterial = ShaderMaterial.new()
-	depth.shader = STEALTH_DEPTH_SHADER
-	depth.render_priority = 0
-	var ghost: ShaderMaterial = ShaderMaterial.new()
-	ghost.shader = STEALTH_SHADER
-	ghost.render_priority = 1 # After the depth pass, so it only finds the nearest surface to colour
-	ghost.set_shader_parameter(&"alpha", 1.0)
-	depth.next_pass = ghost
-	if original is StandardMaterial3D:
-		var standard: StandardMaterial3D = original as StandardMaterial3D
-		ghost.set_shader_parameter(&"albedo_color", standard.albedo_color)
-		if standard.albedo_texture:
-			ghost.set_shader_parameter(&"albedo_texture", standard.albedo_texture)
-			ghost.set_shader_parameter(&"use_texture", true)
-	return depth
-
-
-func _set_ghost_alpha(alpha: float, ghost: ShaderMaterial) -> void:
-	ghost.set_shader_parameter(&"alpha", alpha)
-
-
-func _stealth_ghosts() -> Array[ShaderMaterial]:
-	var ghosts: Array[ShaderMaterial] = []
-	for mesh: MeshInstance3D in _stealth_originals:
-		if not is_instance_valid(mesh):
-			continue
-		for surface: int in mesh.mesh.get_surface_count():
-			var material: Material = mesh.get_surface_override_material(surface)
-			if material is ShaderMaterial and (material as ShaderMaterial).shader == STEALTH_DEPTH_SHADER:
-				ghosts.append(material.next_pass as ShaderMaterial) # The colour is on the pass after the depth
-	return ghosts
-
-
-func _restore_stealth_materials() -> void:
-	for mesh: MeshInstance3D in _stealth_originals:
-		if not is_instance_valid(mesh):
-			continue
-		var originals: Array = _stealth_originals[mesh]
-		for surface: int in originals.size():
-			mesh.set_surface_override_material(surface, originals[surface])
-	_stealth_originals.clear()
-
-
-## Damage lands on the owning peer: it costs health, shoves away from [param from] and rumbles the pad.
-## Enemies run on the server, so their hits arrive here through the RPC.
-@rpc("any_peer", "call_local", "reliable")
-func take_hit(damage: float, from: Vector3) -> void:
+## Damage lands on the owning peer: it costs health, shoves away from [param from] and rumbles the pad. A copy on
+## another peer sends it there; enemies run on the server, so their hits arrive that way. [param source_path] names
+## the attacker, which lets a hit from another player's peer through (see [method _may_affect]). A negative amount
+## does nothing.
+func take_hit(damage: float, from: Vector3, source_path: NodePath = ^"") -> void:
 	if not is_multiplayer_authority():
-		take_hit.rpc_id(get_multiplayer_authority(), damage, from)
+		_take_hit.rpc_id(get_multiplayer_authority(), damage, from, source_path)
 		return
 	if not health.is_alive() or dodge_invulnerable:
 		return
-	health.damage(damage, from)
+	health.damage(maxf(damage, 0.0), from)
 	var away: Vector3 = (global_position - from).slide(up_direction)
 	if away.length_squared() > 0.001:
 		velocity += away.normalized() * 4.0 + up_direction * 1.5
 	controls.rumble(0.6, 0.8, 0.25)
 
 
+## [method take_hit] arriving from another peer; see [method _may_affect].
+@rpc("any_peer", "reliable")
+func _take_hit(damage: float, from: Vector3, source_path: NodePath) -> void:
+	if is_multiplayer_authority() and _may_affect(source_path):
+		take_hit(damage, from, source_path)
+
+
 var hunters: Array[Node] = [] ## Enemies currently targeting this Player; mana regenerates only when it is empty.
 
 
 ## Enemies report starting and stopping their hunt; lands on the owning peer, where mana lives.
-@rpc("any_peer", "call_local", "reliable")
 func hunted_by(enemy_path: NodePath, hunting: bool) -> void:
 	if not is_multiplayer_authority():
-		hunted_by.rpc_id(get_multiplayer_authority(), enemy_path, hunting)
+		_hunted_by.rpc_id(get_multiplayer_authority(), enemy_path, hunting)
 		return
 	var enemy: Node = get_node_or_null(enemy_path)
 	# A hunter freed without a word (a wave that stood down) is dropped before the list is touched, or the typed
@@ -1911,34 +1596,51 @@ func hunted_by(enemy_path: NodePath, hunting: bool) -> void:
 	health.regen_paused = not hunters.is_empty()
 
 
+## [method hunted_by] arriving from another peer; see [method _may_affect].
+@rpc("any_peer", "reliable")
+func _hunted_by(enemy_path: NodePath, hunting: bool) -> void:
+	if is_multiplayer_authority() and _may_affect(enemy_path):
+		hunted_by(enemy_path, hunting)
+
+
 ## True while a heal would do something; abilities check it before spending anything.
 func can_heal() -> bool:
 	return health.can_heal()
 
 
-## Restores health on the owning peer, so one player can heal another; false only when already full here.
-@rpc("any_peer", "call_local", "reliable")
-func heal(amount: float) -> bool:
+## Restores health on the owning peer, so one player can heal another; false only when already full here. A copy
+## on another peer sends it there. [param source_path] names the healer, which lets a heal from another player's
+## peer through (see [method _may_affect]). A negative amount heals nothing.
+func heal(amount: float, source_path: NodePath = ^"") -> bool:
 	if not is_multiplayer_authority():
-		heal.rpc_id(get_multiplayer_authority(), amount)
+		_heal.rpc_id(get_multiplayer_authority(), amount, source_path)
 		return true
-	return health.heal(amount)
+	return health.heal(maxf(amount, 0.0))
 
 
-## Called by a landing [Projectile]; the Player is a valid target for enemy arrows and bullets.
+## [method heal] arriving from another peer; see [method _may_affect].
+@rpc("any_peer", "reliable")
+func _heal(amount: float, source_path: NodePath) -> void:
+	if is_multiplayer_authority() and _may_affect(source_path):
+		heal(amount, source_path)
+
+
+## Called by a landing [Projectile] (its authority's copy alone); the Player is a valid target for enemy arrows and
+## bullets, and the shooter is named as the hit's source.
 func register_projectile_hit(projectile: Projectile, point: Vector3, _normal: Vector3) -> void:
 	if projectile.shooter == self:
 		return
 	# A round on the Head hurtbox kills outright
 	var headshot: bool = projectile.hit_part != null and projectile.hit_part.name == "Head"
-	take_hit(health.max_health if headshot else projectile.damage, point)
+	take_hit(health.max_health if headshot else projectile.damage, point, projectile.shooter.get_path() if is_instance_valid(projectile.shooter) else ^"")
 
 
 ## Wired to Health.died: the body drops into the ragdoll and the RespawnTimer brings the Player back.
 func _on_health_died() -> void:
 	if not is_multiplayer_authority():
 		return
-	# Death always drops the body, even where falls are set not to ragdoll
+	# Death always drops the body, even where falls are set not to ragdoll, and behind a menu or the chat too
+	# (NodeStateMachine.travel holds only a living Player's ragdoll back while paused or typing)
 	_ragdoll_was_enabled = enable_ragdoll
 	enable_ragdoll = true
 	state_machine.travel(current_state, NodeStateMachine.States.RAGDOLLING)

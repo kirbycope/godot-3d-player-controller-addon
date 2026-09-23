@@ -160,6 +160,16 @@ static func burn_around(tree: SceneTree, at: Vector3, radius: float) -> void:
 			body.call(&"burn", BURN_SECONDS, BURN_DAMAGE_PER_SECOND)
 
 
+## Calls [param method] ([code]take_hit[/code], [code]heal[/code], [code]slow[/code]) on [param target] with
+## [param args], adding [param source]'s path when the method takes one more argument: the source path a [Player] and
+## an NPC check an effect's sender by ([method Player.take_hit]), without which a client's hit on another peer's
+## Player is refused. A handler without it (a two-argument [code]take_hit[/code]) gets [param args] alone.
+static func affect(target: Node, method: StringName, args: Array, source: Node) -> Variant:
+	if is_instance_valid(source) and source.is_inside_tree() and target.get_method_argument_count(method) > args.size():
+		return target.callv(method, args + [source.get_path()])
+	return target.callv(method, args)
+
+
 ## Tells [param caster] what its next cast lands on, in place of its focus, its aim or an NPC's target; null lets
 ## those decide again. A test range's way of casting at a chosen body ([method Abilities.cast] and
 ## [method NpcCaster.cast] take it as their second argument), and the casters clear it once the effect has landed.

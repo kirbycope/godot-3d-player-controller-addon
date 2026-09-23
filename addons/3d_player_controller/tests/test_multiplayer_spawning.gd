@@ -32,6 +32,7 @@ func _build_branch(root: Node3D) -> void:
 	var projectile_spawner: ProjectileSpawner = PROJECTILE_SPAWNER.new()
 	projectile_spawner.name = "ProjectileSpawner"
 	projectile_spawner.spawn_path = NodePath("../Projectiles")
+	projectile_spawner.add_spawnable_scene(BULLET_SCENE.resource_path) # a client's request is only for a listed scene
 	root.add_child(projectile_spawner)
 
 

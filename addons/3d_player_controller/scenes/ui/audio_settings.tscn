@@ -390,6 +390,7 @@ rounded = false
 allow_greater = false
 allow_lesser = false
 script = ExtResource("mic_slider")
+normal_value = 94.0
 
 [node name="Voice" type="Label" parent="Panel/VBoxContainer/VoiceSettings" unique_id=1427057411]
 custom_minimum_size = Vector2(0, 54)
@@ -493,6 +494,8 @@ shape = SubResource("RectangleShape2D_nh3kh")
 [connection signal="value_changed" from="Panel/VBoxContainer/VoiceSettings/Voice/VolumeSlider" to="." method="_on_volume_slider_value_changed" binds= [&"Voice"]]
 [connection signal="pressed" from="Panel/VBoxContainer/VoiceSettings/Voice/VolumePlus" to="." method="_on_volume_plus_pressed" binds= [NodePath("Panel/VBoxContainer/VoiceSettings/Voice/VolumeSlider")]]
 [connection signal="pressed" from="Panel/VBoxContainer/VoiceSettings/Voice/VolumePlus/TouchScreenButton" to="." method="_on_voice_volume_plus_touch_screen_button_pressed"]
+[connection signal="toggled" from="Panel/VBoxContainer/VoiceSettings/VoiceActivation" to="." method="_on_voice_activation_toggled"]
+[connection signal="value_changed" from="Panel/VBoxContainer/VoiceSettings/Microphone/Sensitivity" to="." method="_on_mic_sensitivity_changed"]
 [connection signal="toggled" from="Panel/VBoxContainer/VoiceSettings/MuteVoice" to="." method="_on_mute_voice_toggled"]
 [connection signal="pressed" from="Panel/VBoxContainer/VoiceSettings/MuteVoice/TouchScreenButton" to="." method="_on_mute_voice_touch_screen_button_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/BACK" to="." method="_on_back_pressed"]

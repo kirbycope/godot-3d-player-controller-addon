@@ -57,18 +57,14 @@ var _since_listen: float = 0.0
 var _connected_firearms: Array[Firearm] = []
 
 
+## The Player's state_changed, HitDetection's weapon_hit and the inventory's equipment_changed are wired to the
+## handlers below in player.tscn.
 func _ready() -> void:
 	if player == null:
 		player = get_parent() as Player
 	if player == null:
 		set_physics_process(false)
 		return
-	player.state_changed.connect(_on_state_changed)
-	var hits: HitDetection = player.get_node_or_null(^"HitDetection") as HitDetection
-	if hits:
-		hits.weapon_hit.connect(_on_weapon_hit)
-	if player.inventory:
-		player.inventory.equipment_changed.connect(_follow_equipment)
 	_follow_equipment()
 
 
@@ -109,9 +105,10 @@ func moving_level() -> float:
 ## How much of the reading the Player's own voice accounts for. Push-to-talk only: a Player who is not
 ## broadcasting is not speaking, whatever their microphone is picking up.
 func voice_level() -> float:
-	if not player.is_broadcasting:
+	var voice: VoiceChat = player.voice_chat
+	if voice == null or not voice.is_broadcasting:
 		return 0.0
-	return clampf(player.voice_loudness, 0.0, 1.0) * voice_multiplier
+	return clampf(voice.voice_loudness, 0.0, 1.0) * voice_multiplier
 
 
 ## A one-off noise of [param amount], which spikes the reading and falls back. Anything in the world can call

@@ -68,6 +68,7 @@ def main() -> int:
     lock = load_lock()
     changed = False
     blocked = False
+    failed = False
 
     print(f"Project:  {ROOT}")
     print(f"Addons:   {len(addons)}")
@@ -86,6 +87,7 @@ def main() -> int:
                 cache, commit = sync_archive(addon, fetch=not args.offline)
             except (RuntimeError, OSError) as exc:
                 print(f"{name:<28} FAILED  {exc}")
+                failed = True
                 continue
             subject = addon["archive"].rsplit("/", 1)[-1]
             previous = None
@@ -94,6 +96,7 @@ def main() -> int:
                 cache = sync_cache(addon, fetch=not args.offline)
             except RuntimeError as exc:
                 print(f"{name:<28} FAILED  {exc}")
+                failed = True
                 continue
 
             try:
@@ -105,6 +108,7 @@ def main() -> int:
                 run(["git", "checkout", "--quiet", "--force", target], cwd=cache)
             except RuntimeError as exc:
                 print(f"{name:<28} FAILED  cannot check out {addon['ref']}: {exc}")
+                failed = True
                 continue
 
             commit = run(["git", "rev-parse", "HEAD"], cwd=cache)
@@ -210,9 +214,14 @@ def main() -> int:
 
     if args.dry_run:
         print("Dry run, nothing was written.")
-        return 0
+        return 1 if failed else 0
 
     save_lock(lock)
+
+    if failed:
+        # A partial addons/ must not pass for a whole one: CI would carry on and test against what is missing.
+        print("Some addons FAILED to pull; addons/ is incomplete.")
+        return 1
 
     if blocked:
         print("Some addons were left alone because a pull would have deleted local work.")

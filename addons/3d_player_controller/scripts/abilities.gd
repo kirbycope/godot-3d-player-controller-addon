@@ -110,13 +110,17 @@ func _take_from_library() -> void:
 ## Casts the ability called [param id]: one of this caster's own, else the library's. Nothing happens when nobody
 ## knows the name.
 func cast_id(id: StringName) -> void:
+	cast(get_ability(id))
+
+
+## The ability called [param id]: one of this caster's own, else the scene's [AbilityLibrary]'s; null when nobody
+## knows the name.
+func get_ability(id: StringName) -> Ability:
 	for ability: Ability in abilities:
 		if ability and ability.get_id() == id:
-			cast(ability)
-			return
+			return ability
 	var library: AbilityLibrary = AbilityLibrary.find(self)
-	if library and library.has_ability(id):
-		cast(library.get_ability(id))
+	return library.get_ability(id) if library else null
 
 
 ## Casts [param ability] now, starts its cast bar, or ends it when it is an active toggle. [param at] names what
@@ -263,29 +267,37 @@ func _on_cast_timer_timeout() -> void:
 		cast_interrupted.emit(ability) # Fizzled at the end of the cast: the channel pose has to drop
 
 
-## Plays a phase's VFX/SFX on every peer; abilities not on the wheel play nothing.
+## Plays a phase's VFX/SFX here and on every other peer. The ability travels by id ([method Ability.get_id]) and
+## each peer looks it up again ([method get_ability]): the owner's loadout is its own (a spellbook rearranges it there
+## alone), so a place in [member abilities] means something else on every other peer.
 func _play(ability: Ability, phase: Ability.Phase, at: Vector3, target_path: NodePath = NodePath(), destination: Vector3 = Vector3.ZERO) -> void:
-	var index: int = abilities.find(ability)
-	if index != -1:
-		_play_phase.rpc(index, phase, at, target_path, destination)
+	_spawn_phase(ability, phase, at, target_path, destination)
+	_play_phase.rpc(ability.get_id(), phase, at, target_path, destination)
 
 
-@rpc("authority", "call_local", "reliable")
-func _play_phase(ability_index: int, phase: Ability.Phase, at: Vector3, target_path: NodePath = NodePath(), destination: Vector3 = Vector3.ZERO) -> void:
-	var ability: Ability = abilities[ability_index]
+## The owner's phase on another peer; an ability that peer cannot name (no library, and not on its copy's own list)
+## plays nothing there.
+@rpc("authority", "call_remote", "reliable")
+func _play_phase(id: StringName, phase: Ability.Phase, at: Vector3, target_path: NodePath = NodePath(), destination: Vector3 = Vector3.ZERO) -> void:
+	var ability: Ability = get_ability(id)
+	if ability:
+		_spawn_phase(ability, phase, at, target_path, destination)
+
+
+func _spawn_phase(ability: Ability, phase: Ability.Phase, at: Vector3, target_path: NodePath, destination: Vector3) -> void:
 	var audio: AudioStreamPlayer3D = [channeling_audio, casting_audio, impact_audio][phase]
 	# Channeling VFX are parented to the hand so they follow it through the cast
 	var parent: Node3D = hand_anchor if phase == Ability.Phase.CHANNELING and is_instance_valid(hand_anchor) else fx_root
 	var node: Node3D = ability.spawn_phase(phase, at, parent, audio, get_node_or_null(target_path), destination)
 	if phase == Ability.Phase.CASTING and node is SpellProjectile and is_multiplayer_authority():
 		# Only the caster's copy lands the impact
-		(node as SpellProjectile).arrived.connect(_on_bolt_arrived.bind(ability_index, target_path))
+		(node as SpellProjectile).arrived.connect(_on_bolt_arrived.bind(ability, target_path))
 	elif phase == Ability.Phase.CHANNELING:
 		_channeling_vfx = node
 
 
-func _on_bolt_arrived(at: Vector3, ability_index: int, target_path: NodePath) -> void:
-	_land(abilities[ability_index], get_node_or_null(target_path), at)
+func _on_bolt_arrived(at: Vector3, ability: Ability, target_path: NodePath) -> void:
+	_land(ability, get_node_or_null(target_path), at)
 
 
 @rpc("authority", "call_local", "reliable")

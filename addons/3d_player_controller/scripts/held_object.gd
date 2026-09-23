@@ -11,6 +11,11 @@ extends Node
 ## [ThrownItem] with the same emote, on the spine blend, so the Player keeps moving. Only the Player's multiplayer
 ## authority throws; the body reaches every peer through the [ProjectileSpawner]. Pausing mid-charge puts the
 ## item back.
+##
+## A world body is the server's: picking it up, dropping it and throwing it are asked of the server, which puts it
+## in the carrier's hands on every peer and hands it (and its [SyncedBody]) to the carrier's peer for the carry, so
+## every peer sees the carry; a drop or a throw puts it back where it came from and gives it back to the server,
+## which throws it.
 
 const THROWN_ITEM_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/projectile/thrown_item.tscn")
 const CHARGE_START_DELAY: float = 0.2 ## Seconds "shoot" must be held before a charged throw starts.
@@ -56,6 +61,7 @@ var throwable_equipment: PackedScene = null ## The scene the equipment in hand w
 var throwable_damage: float = 0.0 ## What the throwable in hand does to what it lands on.
 var _original_collision_layer: int = 0
 var _original_freeze: bool = false
+var _held_home: Node ## Where the held body lived before it was picked up; a drop puts it back there on every peer.
 var _connector_node: Node3D
 var _held_distance: float = 2.0
 var _held_offset: Vector2 = Vector2.ZERO
@@ -278,10 +284,11 @@ func execute_throw() -> void:
 	_throw_what_is_held(throw_dir, power)
 
 
-## Drops the held [RigidBody3D] back into the world without applying an impulse.
+## Drops the held [RigidBody3D] back into the world without applying an impulse (through the server, see
+## [method _let_go]).
 func drop_held_rigidbody() -> void:
 	if is_instance_valid(held_rigidbody):
-		_release_held_rigidbody()
+		_let_go(Vector3.ZERO)
 	else:
 		held_rigidbody = null
 		_end_hold()
@@ -485,9 +492,7 @@ func _throw_held_node(held_node: Node, throw_dir: Vector3, power: float) -> void
 	elif held_node.has_method("throw"):
 		held_node.call("throw", throw_dir)
 	elif held_node == held_rigidbody:
-		var body: RigidBody3D = _release_held_rigidbody()
-		body.freeze = false
-		body.apply_impulse(throw_dir * throw_force * power, Vector3.ZERO)
+		_let_go(throw_dir * throw_force * power)
 
 
 ## Gets the throw direction from the camera crosshair, falling back to the facing direction.
@@ -500,7 +505,7 @@ func _get_crosshair_throw_direction() -> Vector3:
 	return -player.global_transform.basis.z.normalized()
 
 
-## Attempts to pick up the [RigidBody3D] under the crosshair. Returns true on success.
+## Asks the server for the [RigidBody3D] under the crosshair ([method _request_pickup]). True when there was one.
 func _try_pickup_rigidbody_from_crosshair() -> bool:
 	if not player.camera or not player.camera.camera_ray_cast.is_colliding() or is_holding_object():
 		return false
@@ -512,13 +517,65 @@ func _try_pickup_rigidbody_from_crosshair() -> bool:
 	if node == null or node is VehicleBody3D:
 		return false
 
-	_pickup_rigidbody(node as RigidBody3D)
+	_request_pickup.rpc_id(1, get_path_to(node))
 	return true
 
 
-## Freezes the body, disables its world collision, and parents it to the item spring arm.
+## The server's half of a pickup: the body ([param body_path], from this node, the same on every peer) goes to this
+## Player, asked for from the Player's own peer, unless it is already in somebody's hands; then every peer puts it in
+## them ([method _carry]).
+@rpc("any_peer", "call_local", "reliable")
+func _request_pickup(body_path: NodePath) -> void:
+	var body: RigidBody3D = get_node_or_null(body_path) as RigidBody3D
+	if not multiplayer.is_server() or body == null or body is VehicleBody3D or body.get_parent() is SpringArm3D \
+			or multiplayer.get_remote_sender_id() != player.get_multiplayer_authority():
+		return
+	_carry.rpc(body_path)
+
+
+## From the server, on every peer: the body goes into this Player's hands, and answers to the carrier's peer for the
+## carry, synchronizer and all, so the carrier moves it and every peer sees it.
+@rpc("any_peer", "call_local", "reliable")
+func _carry(body_path: NodePath) -> void:
+	var body: RigidBody3D = get_node_or_null(body_path) as RigidBody3D
+	if multiplayer.get_remote_sender_id() != 1 or body == null:
+		return
+	_pickup_rigidbody(body)
+	body.set_multiplayer_authority(player.get_multiplayer_authority())
+
+
+## Drops ([param impulse] zero) or throws the held body through the server. This side goes quiet first, handing the
+## body back to the server here, so the server's first packets meet no rival sender.
+func _let_go(impulse: Vector3) -> void:
+	held_rigidbody.set_multiplayer_authority(1)
+	_request_release.rpc_id(1, impulse)
+
+
+## The server's half of a drop or a throw, from the carrier's own peer: every peer lets go ([method _release]).
+@rpc("any_peer", "call_local", "reliable")
+func _request_release(impulse: Vector3) -> void:
+	if multiplayer.is_server() and multiplayer.get_remote_sender_id() == player.get_multiplayer_authority() and is_instance_valid(held_rigidbody):
+		_release.rpc(impulse)
+
+
+## From the server, on every peer: the body goes back where it came from and to the server, which throws it with
+## [param impulse] (none for a drop).
+@rpc("any_peer", "call_local", "reliable")
+func _release(impulse: Vector3) -> void:
+	if multiplayer.get_remote_sender_id() != 1 or not is_instance_valid(held_rigidbody):
+		return
+	var body: RigidBody3D = _release_held_rigidbody()
+	body.set_multiplayer_authority(1)
+	if impulse != Vector3.ZERO and body.is_multiplayer_authority():
+		body.freeze = false
+		body.apply_impulse(impulse, Vector3.ZERO)
+
+
+## Freezes the body, disables its world collision, and parents it to the item spring arm; this peer's own part of a
+## pickup ([method _carry]).
 func _pickup_rigidbody(body: RigidBody3D) -> void:
 	held_rigidbody = body
+	_held_home = body.get_parent()
 	_original_collision_layer = body.collision_layer
 	_original_freeze = body.freeze
 
@@ -543,17 +600,19 @@ func _pickup_rigidbody(body: RigidBody3D) -> void:
 		player.is_emoting = true
 		player.has_started_emoting = false
 	player.set_look_at_target(body)
-	refresh_contextual_controls()
+	if player.is_multiplayer_authority():
+		refresh_contextual_controls()
 
 
-## Returns the held body to the world with the collision and freeze state recorded on pickup.
+## Returns the held body to where it lived before, with the collision and freeze state recorded on pickup (on a peer
+## whose [SyncedBody] froze it, that is frozen still, under the server's transform).
 func _release_held_rigidbody() -> RigidBody3D:
 	var body: RigidBody3D = held_rigidbody
 	held_rigidbody = null
 	body.collision_layer = _original_collision_layer
 	body.freeze = _original_freeze
 	get_tree().create_timer(RELEASE_GRACE).timeout.connect(_end_release_grace.bind(body))
-	var world: Node = player.get_parent() if player.get_parent() else get_tree().current_scene
+	var world: Node = _held_home if is_instance_valid(_held_home) else (player.get_parent() if player.get_parent() else get_tree().current_scene)
 	if world:
 		body.reparent(world, true)
 	body.linear_velocity = Vector3.ZERO
@@ -583,6 +642,8 @@ func _end_hold() -> void:
 		player.is_emoting = false
 		player.has_started_emoting = false
 	player.set_look_at_target(null)
+	if not player.is_multiplayer_authority():
+		return
 	# Hand the control labels back to the active state.
 	player.controls.reset_labels()
 	var state_node: NodeStateMachine = player.state_machine.get_node_or_null(NodePath(NodeStateMachine.get_state_name(player.current_state))) as NodeStateMachine

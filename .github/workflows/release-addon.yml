@@ -103,24 +103,28 @@ jobs:
           generate_release_notes: true
           files: 3d_player_controller-v${{ steps.version.outputs.version }}.zip
 
-      - name: Bump the demo project version and create the next branch
+      # The demo project is the repository root now (the old demo/ copy is gone), and the addon's own version
+      # lives in its plugin.cfg; both move to the next development version.
+      - name: Bump the project and plugin versions and create the next branch
         if: steps.version.outputs.skip == 'false'
         shell: bash
         run: |
           set -euo pipefail
           next_dev_version="${{ steps.version.outputs.next_dev_version }}"
           next_dev_branch="${{ steps.version.outputs.next_dev_branch }}"
+          plugin_cfg="addons/3d_player_controller/plugin.cfg"
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          if grep -q '^config/version=' demo/project.godot; then
-            sed -i "s|^config/version=.*|config/version=\"$next_dev_version\"|" demo/project.godot
+          if grep -q '^config/version=' project.godot; then
+            sed -i "s|^config/version=.*|config/version=\"$next_dev_version\"|" project.godot
           else
-            sed -i "/^\[application\]/a config/version=\"$next_dev_version\"" demo/project.godot
+            sed -i "/^\[application\]/a config/version=\"$next_dev_version\"" project.godot
           fi
+          sed -i "s|^version=.*|version=\"$next_dev_version\"|" "$plugin_cfg"
 
-          git add demo/project.godot
+          git add project.godot "$plugin_cfg"
           if ! git diff --cached --quiet; then
             git commit -m "chore: bump version to $next_dev_version [skip ci]"
             git push origin main

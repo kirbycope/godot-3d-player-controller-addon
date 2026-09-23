@@ -27,24 +27,24 @@ func test_player_voice_chat_nodes_and_default_state() -> void:
 	var player: Player = PLAYER_SCENE.instantiate() as Player
 	add_child_autofree(player)
 
-	assert_not_null(player.voice_chat_indicator, "VoiceChatIndicator should exist on Player")
-	assert_false(player.voice_chat_indicator.visible, "VoiceChatIndicator should be hidden by default")
-	assert_not_null(player.voice_audio_player, "VoiceAudioPlayer should exist on Player")
-	assert_eq(player.voice_audio_player.playback_type, AudioServer.PLAYBACK_TYPE_STREAM, "Voice is streamed, so the web build can play it too")
-	assert_false(player.is_broadcasting, "is_broadcasting should be false by default")
+	assert_not_null(player.voice_chat.indicator, "VoiceChatIndicator should exist on Player")
+	assert_false(player.voice_chat.indicator.visible, "VoiceChatIndicator should be hidden by default")
+	assert_not_null(player.voice_chat.audio_player, "VoiceAudioPlayer should exist on Player")
+	assert_eq(player.voice_chat.audio_player.playback_type, AudioServer.PLAYBACK_TYPE_STREAM, "Voice is streamed, so the web build can play it too")
+	assert_false(player.voice_chat.is_broadcasting, "is_broadcasting should be false by default")
 
 
 func test_player_broadcasting_indicator_toggle() -> void:
 	var player: Player = PLAYER_SCENE.instantiate() as Player
 	add_child_autofree(player)
 
-	player.start_broadcasting()
-	assert_true(player.is_broadcasting, "Player is_broadcasting should be true after start_broadcasting()")
-	assert_true(player.voice_chat_indicator.visible, "VoiceChatIndicator should be visible when broadcasting")
+	player.voice_chat.start_broadcasting()
+	assert_true(player.voice_chat.is_broadcasting, "Player is_broadcasting should be true after start_broadcasting()")
+	assert_true(player.voice_chat.indicator.visible, "VoiceChatIndicator should be visible when broadcasting")
 
-	player.stop_broadcasting()
-	assert_false(player.is_broadcasting, "Player is_broadcasting should be false after stop_broadcasting()")
-	assert_false(player.voice_chat_indicator.visible, "VoiceChatIndicator should be hidden when not broadcasting")
+	player.voice_chat.stop_broadcasting()
+	assert_false(player.voice_chat.is_broadcasting, "Player is_broadcasting should be false after stop_broadcasting()")
+	assert_false(player.voice_chat.indicator.visible, "VoiceChatIndicator should be hidden when not broadcasting")
 
 
 func test_voice_bus_exists_and_the_voice_player_uses_it() -> void:
@@ -52,7 +52,7 @@ func test_voice_bus_exists_and_the_voice_player_uses_it() -> void:
 	assert_true(Audio.BUSES.has(&"Voice"), "Audio creates the Voice bus when a project's layout lacks it")
 	var player: Player = PLAYER_SCENE.instantiate() as Player
 	add_child_autofree(player)
-	assert_eq(player.voice_audio_player.bus, &"Voice", "Voice playback runs on its own bus so it has its own volume and mute")
+	assert_eq(player.voice_chat.audio_player.bus, &"Voice", "Voice playback runs on its own bus so it has its own volume and mute")
 
 
 func test_voice_settings_show_with_steam_and_hide_without() -> void:
@@ -71,7 +71,7 @@ func test_voice_settings_show_with_steam_and_hide_without() -> void:
 
 ## Only the owning peer ever sends its voice and its speaking indicator, so the RPCs are the authority's.
 func test_voice_rpcs_are_sent_by_the_authority_alone() -> void:
-	var config: Dictionary = (load("res://addons/3d_player_controller/scripts/player.gd") as Script).get_rpc_config()
+	var config: Dictionary = (load("res://addons/3d_player_controller/scripts/voice_chat.gd") as Script).get_rpc_config()
 	assert_eq(config["_receive_voice_packet"]["rpc_mode"], MultiplayerAPI.RPC_MODE_AUTHORITY)
 	assert_eq(config["_receive_voice_packet"]["transfer_mode"], MultiplayerPeer.TRANSFER_MODE_UNRELIABLE_ORDERED, "The other flags are as they were")
 	assert_eq(config["_set_voice_indicator"]["rpc_mode"], MultiplayerAPI.RPC_MODE_AUTHORITY)
@@ -86,6 +86,6 @@ func test_voice_reaches_steam_only_while_the_session_is_up() -> void:
 		steamworks.set("steam_id", 0)
 	var player: Player = preload("res://addons/3d_player_controller/scenes/player.tscn").instantiate()
 	add_child_autofree(player)
-	assert_null(player._get_steam_running(), "No session, no Steam for the voice code")
+	assert_null(SteamPeer.session(player.voice_chat), "No session, no Steam for the voice code")
 	if steamworks:
 		steamworks.set("steam_id", signed_in)

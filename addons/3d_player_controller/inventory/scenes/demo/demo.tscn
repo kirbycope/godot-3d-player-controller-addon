@@ -107,6 +107,8 @@ autowrap_mode = 3
 wait_time = 3.0
 one_shot = true
 
-[connection signal="item_dropped" from="Player/Inventory" to="." method="_on_item_dropped"]
-[connection signal="item_used" from="Player/Inventory" to="." method="_on_item_used"]
+[connection signal="item_dropped" from="Player/Hud/Inventory" to="." method="_on_item_dropped"]
+[connection signal="item_used" from="Player/Hud/Inventory" to="." method="_on_item_used"]
 [connection signal="timeout" from="HUD/HintTimer" to="." method="_on_hint_timer_timeout"]
+
+[editable path="Player"]

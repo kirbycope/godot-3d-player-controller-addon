@@ -1,13 +1,7 @@
 extends Node3D
-## Paraglider visuals and audio, shown while the Player is in the PARAGLIDING state.
-
-@export var player: Player:
-	set(value):
-		if player:
-			player.state_changed.disconnect(_on_player_state_changed)
-		player = value
-		if player:
-			player.state_changed.connect(_on_player_state_changed)
+## Paraglider visuals and audio, shown while the Player is in the PARAGLIDING state. It is a node of
+## [code]player.tscn[/code], saved hidden on the Player's right hand, and the Player's state_changed is wired to it
+## there. The state replicates, so every peer opens the glider on every Player's copy.
 
 @onready var opening: AudioStreamPlayer3D = $Opening
 @onready var cloth_ruffling: AudioStreamPlayer3D = $ClothRuffling
@@ -17,10 +11,8 @@ extends Node3D
 @onready var opening_wind_burst: GPUParticles3D = $OpeningWindBurst
 
 
-## Opens the paraglider when paragliding starts and packs it away when it ends.
+## Wired to Player.state_changed: opens the paraglider when paragliding starts and packs it away when it ends.
 func _on_player_state_changed(from_state: int, to_state: int) -> void:
-	if not is_multiplayer_authority(): return
-
 	if to_state == NodeStateMachine.States.PARAGLIDING:
 		show()
 		left_wing.emitting = true

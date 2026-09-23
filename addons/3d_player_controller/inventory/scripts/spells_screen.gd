@@ -39,6 +39,7 @@ var _slot_buttons: Array[InventorySlotButton] = []
 @onready var detail_info: Label = %DetailInfo ## What the ability does in numbers (`Ability.get_details()`: damage, ticks, slows, fire).
 @onready var detail_requires: Label = %DetailRequires
 @onready var unlock_button: Button = %Unlock
+@onready var unlocked_scroll: ScrollContainer = %UnlockedScroll ## The unlocked list's fixed area: the grid is centred in it when smaller and scrolls, following focus, when larger.
 @onready var unlocked_grid: GridContainer = %UnlockedGrid
 @onready var wheel_grid: GridContainer = %WheelGrid
 @onready var clear_button: Button = %Clear
@@ -104,16 +105,21 @@ func _build_tree() -> void:
 	_update_touch_visibility()
 
 
-## A [TouchScreenButton] ignores the holder's clipping, so a node scrolled out of view would still take taps over
-## the tabs and the action row; hiding it turns its hit test off. Wired to the holder's resized and the canvas's
-## item_rect_changed (a scroll moves the canvas) in spells_screen.tscn, and called after every rebuild.
+## A [TouchScreenButton] ignores its scroll area's clipping, so a node or an unlocked spell scrolled out of view would
+## still take taps over the tabs and the action row; hiding it turns its hit test off. Wired to each area's resized,
+## the tree canvas's and the unlocked grid's item_rect_changed (a scroll moves them) and the grid's sort_children
+## (its spells were laid out) in spells_screen.tscn, and called after every tree rebuild.
 func _update_touch_visibility() -> void:
-	if not is_instance_valid(tree_holder):
+	if not is_instance_valid(tree_holder) or not is_instance_valid(unlocked_scroll):
 		return
 	var shown: Rect2 = tree_holder.get_global_rect()
 	for button: SpellNodeButton in _node_buttons.values():
 		if is_instance_valid(button) and is_instance_valid(button.touch_button):
 			button.touch_button.visible = shown.intersects(button.get_global_rect())
+	var listed: Rect2 = unlocked_scroll.get_global_rect()
+	for button: SpellNodeButton in _unlocked_buttons:
+		if is_instance_valid(button) and is_instance_valid(button.touch_button):
+			button.touch_button.visible = listed.intersects(button.get_global_rect())
 
 
 func _input(event: InputEvent) -> void:

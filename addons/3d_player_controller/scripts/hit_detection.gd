@@ -27,9 +27,7 @@ const SWING_NODES: Array[String] = [
 @export var strike_groups: Array[StringName] = [&"Focusable", &"Gatherable"] ## The groups a swing reaches without the blade touching: enemies, and the trees and rocks a tool works.
 @export var strike_arc_degrees: float = 110.0 ## How wide in front of the Player the reach counts.
 @export var strike_delay: float = 0.28 ## Seconds into a swing node when the reach is checked, the blade roughly level with the target.
-
-var _strike_timer: Timer
-var _strike_equipment: Node = null
+@export var strike_timer: Timer ## One-shot, started [member strike_delay] into a swing on the authority; its timeout is wired to [method _strike_ahead] in player.tscn.
 
 var _hitboxes: Array[Area3D] = [] ## Hitboxes of the current loadout (hands when unarmed).
 var _weapon_bodies: Array[AnimatableBody3D] = [] ## WeaponBody nodes of the equipped weapons.
@@ -39,10 +37,6 @@ var _swing_hit_targets: Array[Node] = [] ## Targets already notified during the 
 func _ready() -> void:
 	if player == null or not is_multiplayer_authority():
 		return
-	_strike_timer = Timer.new()
-	_strike_timer.one_shot = true
-	_strike_timer.timeout.connect(_strike_ahead)
-	add_child(_strike_timer)
 	left_hand_hitbox.body_entered.connect(_on_hitbox_body_entered.bind(left_hand_hitbox, null))
 	right_hand_hitbox.body_entered.connect(_on_hitbox_body_entered.bind(right_hand_hitbox, null))
 	_hitboxes.assign([left_hand_hitbox, right_hand_hitbox])
@@ -58,8 +52,8 @@ func _on_locomotion_node_changed(state_path: String) -> void:
 	var is_swing_node: bool = state_path.get_file() in SWING_NODES
 	for body: AnimatableBody3D in _weapon_bodies:
 		body.set_collision_layer_value(WEAPONS_LAYER, is_swing_node)
-	if is_swing_node and strike_reach > 0.0 and _strike_timer:
-		_strike_timer.start(strike_delay)
+	if is_swing_node and strike_reach > 0.0 and strike_timer and is_multiplayer_authority():
+		strike_timer.start(strike_delay)
 
 
 ## The reach of a swing: the thin blade shape sweeps past a body standing square in front more often than it
@@ -123,8 +117,11 @@ func _on_hitbox_body_entered(body: Node3D, _hitbox: Area3D, equipment: Equipment
 	_register_weapon_hit(body, equipment if equipment else player)
 
 
-## Notifies the nearest ancestor that handles weapon hits, once per target per swing.
+## Notifies the nearest ancestor that handles weapon hits, once per target per swing. Only the Player's authority
+## registers: a puppet's weapon swings too, for the props, but its hits are the owner's to tell.
 func _register_weapon_hit(collider: Node, equipment: Node) -> void:
+	if not is_multiplayer_authority():
+		return
 	var node: Node = collider
 	while node:
 		if node.has_method("register_weapon_hit"):

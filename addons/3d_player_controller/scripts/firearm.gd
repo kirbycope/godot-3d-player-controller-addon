@@ -125,8 +125,11 @@ func _physics_process(_delta: float) -> void:
 		if laser_sight.visible:
 			laser_sight.aim(muzzle.global_position, get_aim_point())
 	if shooting and fire_timer.is_stopped() and (automatic or not _trigger_was_held):
-		# An empty trigger pull started a reload on the same timer; only a round that left spaces the next one
-		if fire() != null:
+		# An empty trigger pull started a reload on the same timer; a round that left spaces the next one, whether or
+		# not this peer got it back (a client's comes through the spawner, so fire() hands it null)
+		var before: int = rounds
+		fire()
+		if rounds < before:
 			fire_timer.start(fire_interval)
 	_trigger_was_held = shooting
 
@@ -196,7 +199,7 @@ func fire() -> Projectile:
 	var direction: Vector3 = scatter(aim - origin.origin)
 	var projectile: Projectile
 	var shot_sound: String = fire_sfx.stream.resource_path if fire_sfx and fire_sfx.stream else ""
-	var spawner: ProjectileSpawner = get_tree().get_first_node_in_group(&"ProjectileSpawner") as ProjectileSpawner
+	var spawner: ProjectileSpawner = ProjectileSpawner.find_for(player)
 	if spawner:
 		projectile = spawner.fire(scene, origin, direction, projectile_speed, player, self, {"fire_sfx": shot_sound} if not shot_sound.is_empty() else {})
 	else:

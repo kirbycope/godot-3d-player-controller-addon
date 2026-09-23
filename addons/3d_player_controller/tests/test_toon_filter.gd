@@ -363,3 +363,18 @@ func test_the_botw_shader_compiles_and_paints_the_tree_in_place_of_binbun() -> v
 	filter.set_mode(ToonFilter.Mode.OFF)
 	assert_null(box.get_surface_override_material(0), "Off puts the original back")
 	camera.free()
+
+
+## The saved look is this machine's, for its own camera. Another peer's Player copy keeps its filter off, or with
+## four players in Newspaper every peer would draw four full-screen passes.
+func test_another_peers_copy_keeps_its_filter_off() -> void:
+	var settings: PlayerSettingsResource = PlayerSettingsResource.load_or_create()
+	settings.toon_mode = ToonFilter.Mode.NEWSPAPER
+	var mine: ToonFilter = TOON_SCENE.instantiate()
+	add_child_autofree(mine)
+	var puppet: ToonFilter = TOON_SCENE.instantiate()
+	puppet.set_multiplayer_authority(2)
+	add_child_autofree(puppet)
+	assert_eq(mine.mode, ToonFilter.Mode.NEWSPAPER, "This peer's own filter takes the saved look")
+	assert_eq(puppet.mode, ToonFilter.Mode.OFF, "a copy of another peer's stays off")
+	assert_false(puppet.visible, "and draws nothing")

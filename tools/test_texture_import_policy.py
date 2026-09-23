@@ -105,12 +105,24 @@ class TextureImportPolicyTests(unittest.TestCase):
         self.assertIn("process/size_limit=0", path.read_text())
 
     def test_a_file_that_is_not_a_texture_is_untouched(self) -> None:
-        path = self.write("assets/hit.wav.import", '[remap]\n\nimporter="wav"\n')
+        # A WAV's compress/mode is an audio setting; a 1 there is not Lossy and must not be rewritten.
+        wav = '[remap]\n\nimporter="wav"\n\n[params]\n\ncompress/mode=1\n'
+        path = self.write("assets/hit.wav.import", wav)
+
+        fixed, vram = fix_import_files(self.root)
+
+        self.assertEqual((fixed, vram), (0, 0))
+        self.assertEqual(path.read_text(), wav)
+
+    def test_a_lossless_texture_that_would_never_be_promoted_is_let_promote(self) -> None:
+        path = self.write("assets/rock.png.import", LOSSY_IMPORT.replace("compress/mode=1", "compress/mode=0")
+                          .replace("process/size_limit=512", "process/size_limit=0"))
 
         fixed, _ = fix_import_files(self.root)
 
-        self.assertEqual(fixed, 0)
-        self.assertNotIn("compress/mode", path.read_text())
+        self.assertEqual(fixed, 1, "detect_3d/compress_to 0 is off policy even on a lossless texture")
+        self.assertIn("detect_3d/compress_to=1", path.read_text())
+        self.assertIn("compress/mode=0", path.read_text())
 
     def test_an_addon_pulled_from_another_repository_is_not_rewritten(self) -> None:
         self.write(

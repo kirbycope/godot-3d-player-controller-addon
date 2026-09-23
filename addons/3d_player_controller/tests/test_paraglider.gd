@@ -36,18 +36,17 @@ class TestParagliderContrails:
 		assert_not_null(left_wing.color_gradient, "LeftWing should have a color gradient.")
 		assert_not_null(left_wing.width_curve, "LeftWing should have a width curve.")
 
+	## The Player carries its own glider, saved hidden, with state_changed wired to it in player.tscn.
 	func test_paraglider_state_toggles_trail_emitting() -> void:
-		var left_wing: Contrail3D = paraglider.get_node("LeftWing") as Contrail3D
-		var right_wing: Contrail3D = paraglider.get_node("RightWing") as Contrail3D
-
-		# Mock a player object using player.tscn
 		var player_scene = preload("res://addons/3d_player_controller/scenes/player.tscn")
 		var mock_player: Player = player_scene.instantiate() as Player
 		add_child_autofree(mock_player)
-		paraglider.player = mock_player
+		paraglider = mock_player.get_node("PlayerModel/Armature/GeneralSkeleton/ParagliderBoneAttachment/Paraglider")
+		var left_wing: Contrail3D = paraglider.get_node("LeftWing") as Contrail3D
+		var right_wing: Contrail3D = paraglider.get_node("RightWing") as Contrail3D
+		assert_false(paraglider.visible, "The glider is packed away until the Player glides")
 
 		# Simulate paragliding started
-		paraglider.visible = false
 		mock_player.current_state = NodeStateMachine.States.PARAGLIDING
 
 		assert_true(paraglider.visible, "Paraglider should be visible when paragliding.")

@@ -13,7 +13,6 @@ extends CanvasLayer
 
 
 func _ready() -> void:
-	hide()
 	set_process(false)
 	title_label.text = title
 

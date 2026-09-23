@@ -386,6 +386,48 @@ class TestPauseTransitions:
 		
 		assert_ne(player.current_state, NodeStateMachine.States.RAGDOLLING, "Player should not transition to RAGDOLLING when Pause CanvasLayer is visible.")
 
+	## Only a living Player's ragdoll waits for the menu: dying behind it, or with the chat open, drops the body.
+	func test_death_behind_the_menu_or_the_chat_still_ragdolls():
+		player.respawn_timer.wait_time = 30.0
+		player.pause.show_menu()
+		player.is_typing = true
+		player.take_hit(player.health.max_health, player.global_position + Vector3.FORWARD)
+		assert_eq(player.current_state, NodeStateMachine.States.RAGDOLLING, "A dead Player drops even behind a menu")
+		assert_false(player.respawn_timer.is_stopped(), "and the respawn is on its way")
+		player.is_typing = false
+		player.pause.hide_menu()
+
+	## A menu holds the aim and the trigger: in multiplayer the clock keeps running behind it.
+	func test_focus_and_shooting_stop_behind_a_menu():
+		player.inventory.can_player_shoot = true
+		Input.action_press("focus")
+		Input.action_press("shoot")
+		assert_true(player.is_focusing, "Holding focus focuses")
+		assert_true(player.is_shooting, "and holding shoot shoots")
+		player.is_paused = true
+		assert_false(player.is_focusing, "but not behind a menu")
+		assert_false(player.is_shooting, "and neither does the trigger")
+		player.is_paused = false
+		Input.action_release("focus")
+		Input.action_release("shoot")
+
+	## A dead Player lies there until the respawn; Action gets only a living one up.
+	func test_the_dead_do_not_stand_up_early():
+		player.respawn_timer.wait_time = 30.0
+		var action := InputEventAction.new()
+		action.action = "action"
+		action.pressed = true
+		var ragdolling: NodeStateMachine = player.get_node("NodeStateMachine/Ragdolling")
+		player.take_hit(player.health.max_health, player.global_position + Vector3.FORWARD)
+		assert_eq(player.current_state, NodeStateMachine.States.RAGDOLLING)
+		ragdolling._input(action)
+		assert_eq(player.current_state, NodeStateMachine.States.RAGDOLLING, "Action does not bring the dead back")
+		player.respawn()
+		player.enable_ragdoll = true
+		player.state_machine.travel(player.current_state, NodeStateMachine.States.RAGDOLLING)
+		ragdolling._input(action)
+		assert_eq(player.current_state, NodeStateMachine.States.STANDING, "A living Player knocked down gets up on Action")
+
 class TestRidingTransitions:
 	extends FsmTestBase
 
@@ -682,6 +724,46 @@ class TestSlidingTransitions:
 			frames_waited += 5
 		assert_eq(player.current_state, NodeStateMachine.States.STANDING, "Sliding should end in STANDING once RunningSlide finishes.")
 
+	## RunningSlide is reached only from StandingLocomotion, so with a sword out Crouch does not slide at a sprint.
+	func test_no_slide_with_a_weapon_out():
+		var greatsword: Equipment = Equipment.new()
+		greatsword.equipment_type = Equipment.EquipmentType.SWORD_2H
+		root.add_child(greatsword)
+		player.inventory.add_equipment(greatsword)
+		await wait_physics_frames(5)
+		player.smoothed_motion = Vector2(0, 1.0)
+		var sender = InputSender.new(Input)
+		sender.set_auto_flush_input(true)
+		sender.action_down("move_up")
+		sender.action_down("sprint")
+		await wait_physics_frames(2)
+		assert_eq(player.current_state, NodeStateMachine.States.SPRINTING, "Sprinting with the sword")
+		sender.action_down("crouch")
+		await wait_physics_frames(2)
+		sender.action_up("crouch")
+		assert_ne(player.current_state, NodeStateMachine.States.SLIDING, "The GreatSword stance has no way into the slide")
+		sender.action_up("sprint")
+		sender.action_up("move_up")
+
+	## A slide whose clip never plays stands up after the timeout, with the full-height capsule back.
+	func test_a_slide_that_never_plays_times_out():
+		var height: float = player.initial_collision_shape_height
+		player.animation_tree.active = false # the locomotion never moves, as when the tree has no path into RunningSlide
+		player.state_machine.travel(player.current_state, NodeStateMachine.States.SLIDING)
+		assert_eq(player.current_state, NodeStateMachine.States.SLIDING)
+		assert_lt(player.collision_shape.shape.height, height, "Sliding halves the capsule")
+		await wait_seconds(Sliding.TIMEOUT + 0.3)
+		assert_eq(player.current_state, NodeStateMachine.States.STANDING, "The slide gives up")
+		assert_eq(player.collision_shape.shape.height, height, "and the capsule is whole again")
+		player.animation_tree.active = true
+
+	## Sliding off a ledge falls rather than sliding on through the air.
+	func test_sliding_off_a_ledge_falls():
+		player.state_machine.travel(player.current_state, NodeStateMachine.States.SLIDING)
+		player.global_position = Vector3(0, 6.0, 0)
+		await wait_physics_frames(3)
+		assert_eq(player.current_state, NodeStateMachine.States.FALLING, "No ground, no slide")
+
 class TestHangingTransitions:
 	extends FsmTestBase
 
@@ -768,3 +850,109 @@ class TestLocomotionBlend:
 		player.is_crouching = false
 		player._set_locomotion_blend(Vector2(0.0, 0.7))
 		assert_eq(player.animation_tree.get(Player.SHIELD_LOCOMOTION_BLEND_POSITION_PATH), Vector2(0.0, 0.7), "Standing with a sword, the Shield space moves")
+
+	## One helper names the group for all of them: with a two-handed sword and a bow both in hand, the stance, its
+	## blend space and the jump edges agree on the GreatSword, as the stance always chose.
+	func test_the_stance_and_its_blend_space_name_the_same_group() -> void:
+		for type: Equipment.EquipmentType in [Equipment.EquipmentType.BOW, Equipment.EquipmentType.SWORD_2H]:
+			var item := Equipment.new()
+			item.equipment_type = type
+			root.add_child(item)
+			player.inventory.add_equipment(item)
+		assert_eq(player.equipment_group(), "GreatSword")
+		assert_eq(player.get_grounded_locomotion_state(), &"GreatSword/GreatSwordLocomotion")
+		player.animation_tree.set(Player.BOW_LOCOMOTION_BLEND_POSITION_PATH, Vector2.ZERO)
+		player._set_locomotion_blend(Vector2(0.0, 0.6))
+		assert_eq(player.animation_tree.get(Player.GREATSWORD_LOCOMOTION_BLEND_POSITION_PATH), Vector2(0.0, 0.6), "The blend feeds the stance being played")
+		assert_eq(player.animation_tree.get(Player.BOW_LOCOMOTION_BLEND_POSITION_PATH), Vector2.ZERO, "not the bow's")
+		assert_true(player.uses_equipment_jump_variants, "and the jump edges see something in hand")
+
+
+class TestJumpVariants:
+	extends FsmTestBase
+
+	## A double jump: in the air, Jump goes up again at jump_speed, air_jumps times before the feet touch down.
+	func test_air_jump_spends_one_jump_per_press() -> void:
+		player.enable_double_jump = true
+		player.air_jumps = 1
+		await wait_physics_frames(10)
+		assert_true(player.is_on_floor(), "Standing, the air jumps are refilled")
+		assert_false(player.air_jump(), "Not from the ground")
+		player.global_position = Vector3(0, 6.0, 0)
+		await wait_physics_frames(3)
+		assert_eq(player.current_state, NodeStateMachine.States.FALLING)
+		var jump := InputEventAction.new()
+		jump.action = "jump"
+		jump.pressed = true
+		player.get_node("NodeStateMachine/Falling")._input(jump)
+		assert_eq(player.current_state, NodeStateMachine.States.JUMPING, "The air jump plays the jump")
+		assert_almost_eq(player.velocity.dot(player.up_direction), player.jump_speed, 0.01, "and goes up at jump_speed at once")
+		assert_eq(player.air_jumps_left, 0, "spending the one air jump")
+		assert_false(player.air_jump(), "so there is no second one")
+
+	## Without the double jump the air is the air.
+	func test_air_jump_is_off_by_default() -> void:
+		player.global_position = Vector3(0, 6.0, 0)
+		await wait_physics_frames(3)
+		assert_false(player.air_jump(), "No double jump unless the game turns it on")
+
+	## A spring or a stomp throws the Player up at the given speed, into the jump.
+	func test_bounce_throws_the_player_up() -> void:
+		player.bounce(12.0)
+		assert_eq(player.current_state, NodeStateMachine.States.JUMPING)
+		assert_almost_eq(player.velocity.dot(player.up_direction), 12.0, 0.01, "Straight up at the bounce's speed")
+		assert_false(player.is_jump_queued, "with no jump left waiting for the clip")
+		await wait_physics_frames(5)
+		assert_false(player.is_on_floor(), "and off the ground")
+
+	## instant_jump leaves the ground on the press; without it the jump waits for the clip's keyframe.
+	func test_instant_jump_leaves_the_ground_on_the_press() -> void:
+		player.state_machine.travel(player.current_state, NodeStateMachine.States.JUMPING)
+		assert_true(player.is_jump_queued, "The ordinary jump waits for the clip")
+		assert_almost_eq(player.velocity.dot(player.up_direction), 0.0, 0.5, "and has not left yet")
+		player.state_machine.travel(player.current_state, NodeStateMachine.States.STANDING)
+		await wait_physics_frames(10)
+		player.instant_jump = true
+		player.state_machine.travel(player.current_state, NodeStateMachine.States.JUMPING)
+		assert_false(player.is_jump_queued, "The platformer's jump is not queued")
+		assert_almost_eq(player.velocity.dot(player.up_direction), player.jump_speed, 0.01, "it is under way on the press")
+
+
+class TestInputThroughThePlayer:
+	extends FsmTestBase
+
+	## The states that hold an action down ask the Player, so a pad player in a split screen reads their own pad:
+	## the keyboard's Sprint is not theirs, so it does not speed their flight.
+	func test_a_pad_player_does_not_read_the_keyboard() -> void:
+		player.enable_flying = true
+		player.global_position = Vector3(0, 6.0, 0)
+		player.state_machine.travel(player.current_state, NodeStateMachine.States.FLYING)
+		Input.action_press("jump")
+		await wait_physics_frames(2)
+		assert_gt(player.velocity.dot(player.up_direction), 0.0, "The whole input flies up on Jump")
+		player.input_device = 0
+		await wait_physics_frames(2)
+		assert_almost_eq(player.velocity.dot(player.up_direction), 0.0, 0.01, "Pad 0's player does not fly on the keyboard's Jump")
+		player.input_device = -1
+		player.is_paused = true
+		await wait_physics_frames(2)
+		assert_almost_eq(player.velocity.dot(player.up_direction), 0.0, 0.01, "nor does anyone behind a menu")
+		player.is_paused = false
+		Input.action_release("jump")
+
+
+class TestSceneWiring:
+	extends FsmTestBase
+
+	## The HUD's device change reaches the current state through one connection in player.tscn (to
+	## Player._on_controls_input_type_changed); travelling adds and removes no connections of its own.
+	func test_a_device_change_reaches_the_current_state_through_the_scene() -> void:
+		var before: int = player.controls.input_type_changed.get_connections().size()
+		player.enable_flying = true
+		player.state_machine.travel(player.current_state, NodeStateMachine.States.FLYING)
+		assert_eq(player.controls.input_type_changed.get_connections().size(), before, "Travelling adds no connection")
+		var jump_label: Label = player.controls.action_label(&"jump", player.controls.joypad_button_3_label)
+		assert_eq(jump_label.text, "Fly Up", "The new state's labels go up on the way in")
+		jump_label.text = ""
+		player.controls.input_type_changed.emit(player.controls.current_input_type)
+		assert_eq(jump_label.text, "Fly Up", "and a device change puts them back")

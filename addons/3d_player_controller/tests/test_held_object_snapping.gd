@@ -49,7 +49,7 @@ func test_held_object_45_degree_rotation_snapping() -> void:
 
 	held_object.drop_held_rigidbody()
 	assert_false(held_object.is_holding_object(), "Dropping releases the body")
-	assert_eq(rb.get_parent(), player.get_parent(), "Dropped bodies return to the player's parent")
+	assert_eq(rb.get_parent(), player.get_parent(), "Dropped bodies go back where they were picked up from")
 	assert_ne(player.controls.joypad_button_1_label.text, "Drop", "Dropping hands the labels back to the state")
 
 
@@ -85,6 +85,26 @@ func test_hit_detection_registers_once_per_swing_via_hitbox() -> void:
 
 	player.inventory.remove_equipment(weapon)
 	assert_true(hit_detection._hitboxes.has(hit_detection.left_hand_hitbox), "Unarmed falls back to the hand hitboxes")
+
+
+## A puppet's weapon swings too (its locomotion node arrives with the animation), but only the owner's peer tells a
+## target it was hit, or the host counted every client's swing a second time. The reach check runs on the scene's
+## StrikeTimer, started on the authority alone.
+func test_only_the_players_authority_registers_a_swing() -> void:
+	var player: Player = PLAYER_SCENE.instantiate() as Player
+	add_child_autofree(player)
+	var hit_detection: HitDetection = player.get_node("HitDetection")
+	assert_eq(hit_detection.strike_timer, hit_detection.get_node("StrikeTimer"), "The strike timer is a node in player.tscn")
+	var target = HitTarget.new()
+	add_child_autofree(target)
+	hit_detection._on_locomotion_node_changed("Shield/ShieldDownwardSlash")
+	assert_false(hit_detection.strike_timer.is_stopped(), "A swing node starts the reach check on the authority")
+	hit_detection.strike_timer.stop()
+	hit_detection.set_multiplayer_authority(5) # as on another peer's copy of this Player
+	hit_detection._on_locomotion_node_changed("Shield/ShieldCrossSlash")
+	assert_true(hit_detection.strike_timer.is_stopped(), "but not on a puppet")
+	hit_detection._register_weapon_hit(target, player)
+	assert_eq(target.hits, 0, "and a puppet's swing tells nobody")
 
 
 func test_water_splash_frees_once_emitters_finish() -> void:

@@ -2,7 +2,7 @@ class_name InputSynchronizer
 extends MultiplayerSynchronizer
 
 # Synchronized controls
-@export var motion := Vector2()
+@export var motion: Vector2 = Vector2()
 
 
 ## Called when the node enters the scene tree for the first time.
@@ -14,7 +14,7 @@ func _ready() -> void:
 
 ## Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta: float) -> void:
-	var player := get_parent() as Player
+	var player: Player = get_parent() as Player
 	if player and (player.is_paused or player.is_typing or player.is_ragdolling):
 		motion = Vector2.ZERO
 		return
@@ -52,7 +52,7 @@ func _get_navigation_motion(player: Player) -> Vector2:
 	# Invert the camera-relative mapping used in Player.apply_input().
 	var camera_basis: Basis = player.spring_arm.global_transform.basis
 	var local_direction: Vector3 = camera_basis.inverse() * world_direction
-	var navigation_motion := Vector2(local_direction.x, -local_direction.z)
+	var navigation_motion: Vector2 = Vector2(local_direction.x, -local_direction.z)
 	if navigation_motion.length_squared() < 0.0001:
 		return Vector2.ZERO
 	return navigation_motion.normalized()

@@ -23,9 +23,11 @@ func activate(caster: Node3D) -> bool:
 	return can_cast(caster)
 
 
-func impact(_caster: Node3D, target: Node3D) -> void:
+## The heal names its healer ([method Ability.affect]), so the patient's peer accepts it from the healer's (see
+## [method Player.heal]).
+func impact(caster: Node3D, target: Node3D) -> void:
 	if is_instance_valid(target) and target.has_method("heal"):
-		target.call("heal", amount)
+		Ability.affect(target, &"heal", [amount], caster)
 
 
 ## Heals land on the caster itself or the targeted friend, never at the aim point.

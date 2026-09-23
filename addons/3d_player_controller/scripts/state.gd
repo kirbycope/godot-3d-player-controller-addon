@@ -34,8 +34,6 @@ func _ready() -> void:
 	set_process(is_multiplayer_authority())
 	set_physics_process(is_multiplayer_authority())
 	set_process_input(is_multiplayer_authority())
-	if player and is_multiplayer_authority() and not player.locomotion_node_changed.is_connected(_on_locomotion_node_changed):
-		player.locomotion_node_changed.connect(_on_locomotion_node_changed)
 
 
 ## Helper function to get the state name from the `NodeStateMachine.States` enum value.
@@ -46,16 +44,19 @@ static func get_state_name(state_value: int) -> StringName:
 	return StringName(String(state_name).capitalize())
 
 
-## Transition from one state to another.
+## Transition from one state to another. Only the owning peer runs the machine; every other peer follows the
+## replicated [member Player.current_state].
 func travel(from_state: States, to_state: States) -> void:
-	if player == null:
+	if player == null or not player.is_multiplayer_authority():
 		return
 
-	# Optional states must be enabled; RAGDOLLING is also blocked while paused, and nothing but RAGDOLLING changes while ragdolling
+	# Optional states must be enabled. A living Player's RAGDOLLING (a fall, a knock-down) is also held back while
+	# paused or typing, but death always drops the body. Nothing but RAGDOLLING changes while ragdolling.
 	match to_state:
 		States.FLYING when not player.enable_flying: return
 		States.PARAGLIDING when not player.enable_paraglider: return
-		States.RAGDOLLING when not player.enable_ragdoll or player.is_paused or player.is_typing or (player.pause and player.pause.visible): return
+		States.RAGDOLLING when not player.enable_ragdoll or (player.health.is_alive() \
+				and (player.is_paused or player.is_typing or (player.pause and player.pause.visible))): return
 	if player.is_ragdolling and to_state != States.RAGDOLLING and from_state != States.RAGDOLLING:
 		return
 
@@ -65,8 +66,6 @@ func travel(from_state: States, to_state: States) -> void:
 			push_error("Invalid from_state: %s" % from_state)
 		else:
 			if player.controls:
-				if player.controls.input_type_changed.is_connected(from_node._on_input_type_changed):
-					player.controls.input_type_changed.disconnect(from_node._on_input_type_changed)
 				player.controls.reset_labels()
 			from_node.stop()
 
@@ -74,12 +73,11 @@ func travel(from_state: States, to_state: States) -> void:
 	if to_node == null:
 		push_error("Invalid to_state: %s" % to_state)
 		return
+	# The new state's labels go up now; a device change later reaches it through Player.refresh_contextual_controls
 	if player.controls:
 		if player.held_object and player.held_object.is_holding_object():
 			player.held_object.refresh_contextual_controls()
 		else:
-			if not player.controls.input_type_changed.is_connected(to_node._on_input_type_changed):
-				player.controls.input_type_changed.connect(to_node._on_input_type_changed)
 			to_node._on_input_type_changed(player.controls.current_input_type)
 	to_node.start()
 
@@ -104,7 +102,8 @@ func action(keyboard: StringName, pad: StringName) -> StringName:
 	return pad
 
 
-## Called when the player's locomotion path changes; states override it and early-return unless `process_mode == PROCESS_MODE_INHERIT`.
+## Called when the player's locomotion path changes (player.tscn wires locomotion_node_changed to each state that
+## overrides this); states early-return unless `process_mode == PROCESS_MODE_INHERIT`.
 func _on_locomotion_node_changed(_state_path: String) -> void:
 	pass
 

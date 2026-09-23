@@ -3,8 +3,8 @@ extends GutTest
 ## Purpose: the Player's WeaponAudio plays the TomMusic weapon one-shots on events that already happen: a drawn sword
 ## unsheathes and a stowed one sheathes, a bow takes out and puts away, a weapon swing node plays the attack (a punch
 ## does not), a hit on something that takes damage plays the impact (a prop or a fist does not), a weapon's own streams
-## replace the defaults, a shot from a bow without a scene release sound plays the bow attack, and a landing arrow plays
-## its impact.
+## replace the defaults, a bow's release sound (its scene's own, else the bow attack) travels with the arrow and plays
+## where it left, and a landing arrow plays its impact.
 
 const PLAYER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player.tscn")
 const SWORD_SCENE: PackedScene = preload("res://addons/3d_player_controller/inventory/scenes/demo/wooden_sword.tscn")
@@ -69,7 +69,7 @@ func _make_bow(with_release_node: bool) -> Bow:
 	if with_release_node:
 		var release := AudioStreamPlayer3D.new()
 		release.name = "BowFireArrow"
-		release.stream = AudioStreamRandomizer.new()
+		release.stream = load(AUDIO_DIR + "bow_impact.tres") as AudioStream # any sound saved in a file of its own
 		bow.add_child(release)
 	bow.player = player
 	root.add_child(bow)
@@ -182,22 +182,31 @@ func test_a_weapons_own_streams_replace_the_defaults() -> void:
 	assert_eq(audio.attack_audio.stream.resource_path, AUDIO_DIR + "sword_attack.tres", "Stowed, the default is back")
 
 
-func test_a_shot_plays_the_bow_attack_unless_the_bow_scene_brings_a_release_sound() -> void:
+## The release sound goes with the arrow, as a gun's shot goes with its round ([method Projectile.play_launch_sfx]):
+## the speaker stands where the arrow left, on every peer that builds the arrow, rather than on the shooter's alone.
+func test_a_shot_sends_the_bow_attack_with_the_arrow_unless_the_bow_scene_brings_a_release_sound() -> void:
 	var bow: Bow = _make_bow(false)
 	await wait_physics_frames(1)
 	bow._on_locomotion_node_changed("Bow/BowFireArrow")
-	assert_true(audio.attack_audio.playing, "The shot plays through the Player's attack slot")
-	assert_eq(audio.attack_audio.stream.resource_path, AUDIO_DIR + "bow_attack.tres", "with the bow attack")
-	audio.attack_audio.stop()
+	var speakers: Array[Node] = get_tree().root.find_children("LaunchSfx", "AudioStreamPlayer3D", true, false)
+	assert_eq(speakers.size(), 1, "The shot plays beside the arrow it sent")
+	assert_eq((speakers[0] as AudioStreamPlayer3D).stream.resource_path, AUDIO_DIR + "bow_attack.tres", "with the bow attack")
+	assert_false(audio.attack_audio.playing, "and not through the Player's attack slot, which only this peer would hear")
+	for speaker: Node in speakers:
+		speaker.free()
 	player.inventory.remove_equipment(bow)
 	bow.queue_free()
 
 	var scene_bow: Bow = _make_bow(true)
 	await wait_physics_frames(1)
 	scene_bow._on_locomotion_node_changed("Bow/BowFireArrow")
-	assert_false(audio.attack_audio.playing, "A bow with its own BowFireArrow node keeps that sound")
-	assert_true((scene_bow.get_node("BowFireArrow") as AudioStreamPlayer3D).playing, "and plays it once, not twice")
-	for arrow: Node in root.get_children().filter(func(n: Node) -> bool: return n is Arrow):
+	speakers = get_tree().root.find_children("LaunchSfx", "AudioStreamPlayer3D", true, false)
+	assert_eq(speakers.size(), 1, "A bow with its own BowFireArrow node sends that sound instead, once")
+	assert_eq((speakers[0] as AudioStreamPlayer3D).stream.resource_path, AUDIO_DIR + "bow_impact.tres")
+	assert_false((scene_bow.get_node("BowFireArrow") as AudioStreamPlayer3D).playing, "The node itself stays quiet")
+	for speaker: Node in speakers:
+		speaker.free()
+	for arrow: Node in get_tree().root.find_children("*", "RigidBody3D", true, false).filter(func(n: Node) -> bool: return n is Arrow and not (n as Arrow).is_template):
 		arrow.free()
 
 

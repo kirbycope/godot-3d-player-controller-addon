@@ -190,7 +190,7 @@ func test_firearm_aiming_does_not_lock_on_and_updates_contextual_label() -> void
 	player.inventory.add_equipment(rifle)
 
 	assert_true(player.has_firearm_equipped, "player.has_firearm_equipped should be true")
-	assert_false(player.has_bow_equipped, "player.has_bow_equipped should be false")
+	assert_false(player.equipped_bow, "player.equipped_bow should be false")
 	assert_eq(player.controls.joypad_axis_4_plus_label.text, "Aim", "Contextual control label should be 'Aim' for firearms")
 
 	# Test: Pressing shoot alone on a firearm must NOT zoom in
@@ -250,7 +250,7 @@ func test_firearm_aiming_does_not_lock_on_and_updates_contextual_label() -> void
 	player.inventory.add_equipment(bow)
 
 	assert_false(player.has_firearm_equipped, "player.has_firearm_equipped should be false after unequip")
-	assert_true(player.has_bow_equipped, "player.has_bow_equipped should be true")
+	assert_true(player.equipped_bow, "player.equipped_bow should be true")
 	assert_eq(player.controls.joypad_axis_4_plus_label.text, "Focus", "Contextual control label should be 'Focus' for Bow")
 
 
@@ -349,3 +349,31 @@ func test_toggle_perspective_swaps_first_and_third_person() -> void:
 	camera.toggle_perspective()
 	assert_eq(camera.perspective, Camera.Perspective.THIRD_PERSON, "and the next comes back")
 	assert_eq(camera.transform, camera.camera_initial_transform, "to where the camera started")
+
+
+## The node to aim at on a body (its Marker3D_FocusTarget, else its collision shape, else the body) is looked up
+## once, when the lock or the Target changes, not searched for every frame by the camera, the marker and the
+## Player's turn. With no lock the aim window is sized by the detection sphere, read once on ready.
+func test_the_aim_node_is_looked_up_when_the_lock_changes() -> void:
+	var player: Player = PLAYER_SCENE.instantiate() as Player
+	add_child_autofree(player)
+	var focus_node: Focus = player.get_node("Focus") as Focus
+	var body: Node3D = Node3D.new()
+	add_child_autofree(body)
+	body.global_position = player.global_position + Vector3(0.0, 0.0, -6.0)
+	var marker: Marker3D = Marker3D.new()
+	marker.name = "Marker3D_FocusTarget"
+	marker.position = Vector3(0.0, 1.75, 0.0)
+	body.add_child(marker)
+
+	focus_node.current_focus_target = body
+	assert_eq(focus_node.focus_aim, marker, "The lock's aim node is found as the lock is taken")
+	assert_eq(focus_node.selected_aim, marker, "and the Target's, which held Focus makes the same body")
+	assert_almost_eq(player.get_focus_target_position(), marker.global_position, Vector3.ONE * 0.001)
+	focus_node.current_focus_target = null
+	assert_null(focus_node.focus_aim, "Released, there is nothing to aim at")
+
+	var sphere: SphereShape3D = (focus_node.target_detection.get_node("CollisionShape3D") as CollisionShape3D).shape as SphereShape3D
+	assert_eq(focus_node.detection_radius, sphere.radius, "The detection radius is read on ready")
+	assert_almost_eq((player.camera as Camera).get_max_focus_aim_angle(), atan2(Camera.FOCUS_AIM_WORLD_RADIUS, sphere.radius), 0.001,
+		"and sizes the aim window with no lock")

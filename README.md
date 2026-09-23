@@ -46,3 +46,13 @@ before opening the project, or nothing loads.
 
 Copy `addons/3d_player_controller/` into your project's `addons/`. See the
 [addon's README](addons/3d_player_controller/README.md) for what it needs and how to use it.
+
+## Releases and CI
+
+A pull request merged into `main` cuts a release, and nothing else does short of a manual run:
+`.github/workflows/release-addon.yml` publishes `addons/3d_player_controller/` as
+`3d_player_controller-vX.Y.Z.zip` on the [Releases](https://github.com/kirbycope/godot-3d-player-controller-addon/releases)
+page, then moves `config/version` in `project.godot` and `version` in the addon's `plugin.cfg` on to the next
+development version. `.github/workflows/gut-tests.yml` runs the tests on every push and pull request.
+`pull_addons.py` exits 1 when any addon fails to pull, so CI stops there rather than testing a partial `addons/`,
+and a run whose JUnit report holds no test at all fails the job as a failing test would.

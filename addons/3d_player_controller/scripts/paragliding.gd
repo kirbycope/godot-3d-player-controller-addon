@@ -49,7 +49,7 @@ func _physics_process(delta: float) -> void:
 		player.state_machine.travel(state, States.STANDING)
 		return
 
-	# Check if the player is exhausted — close the paraglider
+	# Check if the player is exhausted: close the paraglider
 	if player.is_exhausted:
 		# Start "falling"
 		player.state_machine.travel(state, States.FALLING)
@@ -58,7 +58,7 @@ func _physics_process(delta: float) -> void:
 	# Check for thermal updraft areas
 	var was_in_updraft: bool = is_in_updraft
 	is_in_updraft = player.is_in_updraft()
-	is_diving = not player.is_typing and Input.is_action_pressed(action(keyboard_dive_action, pad_dive_action))
+	is_diving = not player.is_typing and not player.is_paused and player.is_action_pressed(action(keyboard_dive_action, pad_dive_action))
 
 	# While paragliding, regular locomotion is blocked and movement is driven directly (below)
 	# Use camera-relative input, then remove any component along up_direction so glide steering stays tangential.

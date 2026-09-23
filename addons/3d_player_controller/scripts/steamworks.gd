@@ -9,16 +9,25 @@ extends Node
 ## Steam is only initialised on a desktop Forward+ build with the GodotSteam extension present and the
 ## client actually running. Where any of that is untrue the node stays in the tree with
 ## [member steam_id] at 0, which is what the callers read as "no Steam".
+##
+## Invites are accepted here. An invite taken in the Steam overlay ([code]join_requested[/code]) and a launch by
+## one ([code]+connect_lobby <id>[/code] on the command line) both join that lobby, leaving the one we were in.
+## Every lobby joined becomes [member lobby_id]. When the invite's lobby is joined while a world with a
+## [SteamPeer] is up, that session closes and the scene loads again, joining the new lobby as it readies;
+## anywhere else (a title screen) a [LobbyExplorer] in the tree loads its world, as for a lobby from its list.
 
 signal steam_ready ## Emitted once Steam is up and [member steam_id] and [member username] are filled.
 signal steam_failed(reason: String) ## Steam is absent, not running, or refused to initialise.
 
+const CHAT_ROOM_ENTER_RESPONSE_SUCCESS: int = 1 ## Steam's ChatRoomEnterResponse for a lobby joined.
+
 var app_id: int = ProjectSettings.get_setting("steam/initialization/app_data/app_id", 480)
 var steam_id: int = 0 ## The signed-in account, 0 when Steam is not running.
 var username: String = "Player" ## The Steam persona name, unchanged when Steam is not running.
-var lobby_id: int = 0 ## The lobby currently joined; the lobby manager writes this.
+var lobby_id: int = 0 ## The lobby currently joined; set when Steam reports one joined, cleared by [method SteamPeer.end_session].
 
 var _steam: Object = null ## The singleton, held once Steam is up, so the per-frame pump costs no lookup.
+var _invited_lobby: int = 0 ## The lobby an invite asked to join, until Steam reports it joined.
 
 
 func _ready() -> void:
@@ -46,8 +55,48 @@ func initialize() -> void:
 	steam_id = steam.getSteamID()
 	username = steam.getPersonaName()
 	_steam = steam
+	steam.connect(&"join_requested", _on_join_requested)
+	steam.connect(&"lobby_joined", _on_lobby_joined)
 	set_process(true)
 	steam_ready.emit()
+	var invited: int = lobby_in_command_line(OS.get_cmdline_args())
+	if invited != 0:
+		_on_join_requested(invited, 0)
+
+
+## The lobby a Steam invite launched the game into: the id after [code]+connect_lobby[/code], or 0.
+static func lobby_in_command_line(args: PackedStringArray) -> int:
+	var at: int = args.find("+connect_lobby")
+	return args[at + 1].to_int() if at >= 0 and at + 1 < args.size() else 0
+
+
+## An invite accepted in the overlay, or the one the game was launched by: leaves the lobby we are in and joins it.
+func _on_join_requested(lobby: int, _friend_id: int) -> void:
+	if _steam == null or lobby == 0 or lobby == lobby_id:
+		return
+	if lobby_id != 0:
+		_steam.leaveLobby(lobby_id)
+		lobby_id = 0
+	_invited_lobby = lobby
+	_steam.joinLobby(lobby)
+
+
+## Steam joined a lobby, whoever asked for it. The invite's lobby moves a world that is up into it: its session
+## closes and the scene loads again, and its [SteamPeer] joins the new lobby as it readies.
+func _on_lobby_joined(lobby: int, _permissions: int, _locked: bool, response: int) -> void:
+	if response != CHAT_ROOM_ENTER_RESPONSE_SUCCESS:
+		return
+	lobby_id = lobby
+	if lobby != _invited_lobby:
+		return
+	_invited_lobby = 0
+	var steam_peer: SteamPeer = SteamPeer.find_in(get_tree())
+	if steam_peer == null:
+		return
+	if steam_peer.has_session():
+		steam_peer.multiplayer.multiplayer_peer.close()
+	steam_peer.multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
+	get_tree().reload_current_scene()
 
 
 ## Steamworks hands its answers back through callbacks, and nothing arrives until they are run. Without this

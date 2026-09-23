@@ -3,8 +3,10 @@ extends Node3D
 ## A pick-up-able item attached to a Player skeleton bone when equipped.
 ##
 ## In the world it is a GTA-style pickup: a child [Area3D] named "PlayerDetection" (its body_entered wired to
-## [method _on_player_detection_body_entered] in the scene) equips a copy on the first Player to walk over it and
-## then stops monitoring, so each pickup is taken once with no prompt or button.
+## [method _on_player_detection_body_entered] in the scene) equips a copy on the first Player to walk over it, and the
+## pickup then vanishes on every peer, so each pickup is taken once with no prompt or button. One standing in the
+## world stays in the tree, hidden and no longer monitoring, because peers, saves and drops re-create the piece from
+## it by path; a peer joining later is told it is spent. A dropped one is freed ([method _vanish]).
 ##
 ## Melee weapons that should register hits need a child [Area3D] named "Hitbox"; [HitDetection]
 ## enables its monitoring during attack swings. A weapon that should shove props needs a child
@@ -64,6 +66,7 @@ enum EquipmentType {
 @export_group("")
 
 var equipment_instance: Equipment ## The equipped copy of this item, once [method equip] has run.
+var spawned: bool = false ## Put down by the world's [ProjectileSpawner] (a drop, a landed throw): the server's free takes every copy away.
 var player: Player
 
 @onready var player_detection: Area3D = get_node_or_null("PlayerDetection") as Area3D ## The walk-over pickup volume, on world copies.
@@ -94,11 +97,48 @@ func _update_attachment_offsets() -> void:
 	equipment_instance.scale = scale_offset
 
 
-## Wired to PlayerDetection.body_entered: the Player that walked over the pickup takes it, and the pickup is spent.
-## A Player who just dropped it (the inventory marks the pickup "dropped_by") has to step away first.
+## Wired to PlayerDetection.body_entered: the Player that walked over the pickup takes it, and the pickup is spent
+## on every peer. A Player who just dropped it ([method set_dropped_by]) has to step away first.
 func _on_player_detection_body_entered(body: Node3D) -> void:
 	if body is Player and body.is_multiplayer_authority() and not (has_meta("dropped_by") and get_meta("dropped_by") == body) and equip(body):
+		_vanish.rpc()
+
+
+## A drop at [param dropper]'s feet: walking over it takes nothing for them until they have stepped off it once.
+## The inventory's drop calls it, and so does the [ProjectileSpawner] building one, before the pickup is in the tree.
+func set_dropped_by(dropper: Node3D) -> void:
+	set_meta("dropped_by", dropper)
+	var detection: Area3D = get_node_or_null("PlayerDetection") as Area3D
+	if detection and not detection.body_exited.is_connected(_on_player_detection_body_exited):
+		detection.body_exited.connect(_on_player_detection_body_exited)
+
+
+## Connected by [method set_dropped_by]: the Player who dropped the pickup has walked off it, and it can be taken again.
+func _on_player_detection_body_exited(body: Node3D) -> void:
+	if has_meta("dropped_by") and get_meta("dropped_by") == body:
+		remove_meta("dropped_by")
+
+
+## The piece went to the taker alone, so the taker tells every peer's copy of the pickup to go. A drop, which no
+## worn piece names as its origin, is freed, by the server alone for a [member spawned] one (that frees it
+## everywhere). A pickup standing in the world hides and stops monitoring instead, since worn pieces are re-created
+## from it by path; one saved in the level is hidden on every later joiner as well, told by the server.
+@rpc("any_peer", "call_local", "reliable")
+func _vanish() -> void:
+	var dropped: bool = owner == null and (Inventory.has_own_scene(self) or has_meta("origin"))
+	if dropped and (multiplayer.is_server() or not spawned):
+		queue_free()
+		return
+	hide()
+	if player_detection:
 		player_detection.set_deferred(&"monitoring", false)
+	if owner and multiplayer.is_server() and not multiplayer.peer_connected.is_connected(_tell_joiner):
+		multiplayer.peer_connected.connect(_tell_joiner)
+
+
+## Connected on the server once a level's pickup is spent: a peer joining later is told it is gone.
+func _tell_joiner(peer_id: int) -> void:
+	_vanish.rpc_id(peer_id)
 
 
 ## Equips this item on [param target_player]: the inventory duplicates it onto a new [BoneAttachment3D] on the

@@ -248,6 +248,9 @@
 [ext_resource type="AnimationLibrary" uid="uid://btaoohtgbsix1" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Standing Dive Forward.glb" id="dive_standing"]
 [ext_resource type="AnimationNodeBlendTree" uid="uid://c8uh3alyfnbea" path="res://addons/3d_player_controller/resources/animation/player_animation_tree.tres" id="anim_tree"]
 [ext_resource type="PackedScene" uid="uid://c25vl8otl1rj5" path="res://addons/3d_player_controller/scenes/ui/player_hud.tscn" id="hud_scene"]
+[ext_resource type="PackedScene" uid="uid://bra3khigbuanl" path="res://addons/3d_player_controller/scenes/equipment/paraglider.tscn" id="paraglider_scene"]
+[ext_resource type="Script" uid="uid://btounlitfq7nm" path="res://addons/3d_player_controller/scripts/voice_chat.gd" id="voice_chat_script"]
+[ext_resource type="Script" uid="uid://dixkn2wah2qjq" path="res://addons/3d_player_controller/scripts/stealth_look.gd" id="stealth_look_script"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_ym3ug"]
 radius = 0.009999072
@@ -780,6 +783,10 @@ primary_damp_threshold = 1.0
 editor_description = "Rides the RightHand bone and carries the paraglider, so the glider hangs off the hand that holds it."
 bone_name = "RightHand"
 bone_idx = 35
+
+[node name="Paraglider" parent="PlayerModel/Armature/GeneralSkeleton/ParagliderBoneAttachment" unique_id=841772125 instance=ExtResource("paraglider_scene")]
+editor_description = "The glider, its contrails and its sounds. Saved hidden; the Player's state_changed is wired to it, so it opens on every peer while this Player is in PARAGLIDING (enable_paraglider turns the state on)."
+visible = false
 
 [node name="PhysicalBoneSimulator3D" type="PhysicalBoneSimulator3D" parent="PlayerModel/Armature/GeneralSkeleton" index="5" unique_id=389631199]
 editor_description = "The ragdoll. Its PhysicalBone3D children mirror the skeleton and take over on a lethal fall or a knock-down, then hand back when the Player gets up."
@@ -2180,6 +2187,16 @@ editor_description = "The sphere Focus watches for lock-on candidates; its body_
 editor_description = "The lock-on sphere. The Camera reads its radius to work out how far off centre a target may drift before focus lets go."
 shape = SubResource("SphereShape3D_5xw05")
 
+[node name="UpdraftDetection" type="Area3D" parent="." unique_id=629577927]
+editor_description = "Notices Updraft and Thermal areas the body is in: its area_entered and area_exited are wired to the Player, which is how is_in_updraft knows without scanning the groups. It is on no layer and not monitorable, so nothing else detects it."
+collision_layer = 0
+monitorable = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="UpdraftDetection" unique_id=729102899]
+editor_description = "The body capsule again, the same shape resource, so an updraft counts when it overlaps the Player's body."
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_senyo")
+
 [node name="VoiceChatIndicator" type="MeshInstance3D" parent="." unique_id=1500520104]
 editor_description = "The little mark shown while this Player is talking on Steam voice, driven by is_broadcasting."
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.3000002, 0)
@@ -2194,6 +2211,19 @@ autoplay = true
 bus = &"Voice"
 playback_type = 1
 
+[node name="VoiceChat" type="Node" parent="." unique_id=894998561 node_paths=PackedStringArray("player", "indicator", "audio_player")]
+editor_description = "Steam voice: push-to-talk or voice activation on the owning peer, how loudly they are speaking (PlayerNoise hears it), and the voice sent to the other peers, who play it through VoiceAudioPlayer and show VoiceChatIndicator."
+script = ExtResource("voice_chat_script")
+player = NodePath("..")
+indicator = NodePath("../VoiceChatIndicator")
+audio_player = NodePath("../VoiceAudioPlayer")
+
+[node name="StealthLook" type="Node" parent="." unique_id=1787309475 node_paths=PackedStringArray("player", "skeleton")]
+editor_description = "Draws is_stealthed: every mesh under the skeleton, equipment included, fades to a pale ghost and back. Its transparency and fade time are set here."
+script = ExtResource("stealth_look_script")
+player = NodePath("..")
+skeleton = NodePath("../PlayerModel/Armature/GeneralSkeleton")
+
 [node name="AttackSequenceTimer" type="Timer" parent="." unique_id=724736604]
 editor_description = "Holds the melee combo window open. Its timeout ends the sequence, so a late second swing starts a new one rather than continuing the old."
 wait_time = 0.4
@@ -2205,7 +2235,7 @@ wait_time = 3.0
 one_shot = true
 
 [node name="UpdraftVfxTimer" type="Timer" parent="." unique_id=1673872706]
-editor_description = "Polls for thermals five times a second (timeout goes to _update_updraft_vfx) rather than testing every frame, since the aura only needs to appear promptly, not instantly."
+editor_description = "Five times a second (timeout goes to _update_updraft_vfx) decides whether the optional UpdraftAura a game hangs on the Player shows, rather than testing every frame, since the aura only needs to appear promptly, not instantly."
 wait_time = 0.2
 autostart = true
 
@@ -2289,12 +2319,17 @@ editor_description = "How much noise the Player is making, 0 to 1, from how they
 script = ExtResource("240_55th2")
 player = NodePath("..")
 
-[node name="HitDetection" type="Node" parent="." unique_id=486677887 node_paths=PackedStringArray("player", "left_hand_hitbox", "right_hand_hitbox")]
+[node name="HitDetection" type="Node" parent="." unique_id=486677887 node_paths=PackedStringArray("player", "left_hand_hitbox", "right_hand_hitbox", "strike_timer")]
 editor_description = "Resolves melee hits: which hitbox touched what, and whether it counts as a headshot."
 script = ExtResource("241_xt2om")
 player = NodePath("..")
 left_hand_hitbox = NodePath("../PlayerModel/Armature/GeneralSkeleton/LeftHandHitboxAttachment/LeftHandHitbox")
 right_hand_hitbox = NodePath("../PlayerModel/Armature/GeneralSkeleton/RightHandHitboxAttachment/RightHandHitbox")
+strike_timer = NodePath("StrikeTimer")
+
+[node name="StrikeTimer" type="Timer" parent="HitDetection" unique_id=1790341215]
+editor_description = "Started strike_delay into a swing on the authority: when it runs out, the swing reaches whatever stands close in front (HitDetection._strike_ahead)."
+one_shot = true
 
 [node name="NodeStateMachine" type="Node" parent="." unique_id=933239176 node_paths=PackedStringArray("player")]
 editor_description = "The movement states. One is current at a time and each owns its own transitions, so a state can be swapped or removed without touching the others."
@@ -2434,6 +2469,7 @@ replication_config = SubResource("SceneReplicationConfig_player")
 [connection signal="locomotion_node_changed" from="." to="Hud/Controls" method="_on_locomotion_node_changed"]
 [connection signal="locomotion_node_changed" from="." to="Hud/Abilities" method="_on_locomotion_node_changed"]
 [connection signal="locomotion_node_changed" from="." to="HitDetection" method="_on_locomotion_node_changed"]
+[connection signal="timeout" from="HitDetection/StrikeTimer" to="HitDetection" method="_strike_ahead"]
 [connection signal="locomotion_node_changed" from="." to="SFX_Weapons" method="_on_locomotion_node_changed"]
 [connection signal="paused_changed" from="." to="Hud/Chat" method="_on_player_paused_changed"]
 [connection signal="paused_changed" from="." to="HeldObject" method="_on_player_paused_changed"]
@@ -2452,17 +2488,35 @@ replication_config = SubResource("SceneReplicationConfig_player")
 [connection signal="timeout" from="NodeStateMachine/Attacking/AttackTimeoutTimer" to="NodeStateMachine/Attacking" method="_on_attack_timeout_timer_timeout"]
 [connection signal="timeout" from="NodeStateMachine/Climbing/RainSlipTimer" to="NodeStateMachine/Climbing" method="_on_rain_slip_timer_timeout"]
 [connection signal="timeout" from="NodeStateMachine/Pushing/StopGraceTimer" to="NodeStateMachine/Pushing" method="_on_stop_grace_timer_timeout"]
+[connection signal="mixer_applied" from="AnimationTree" to="." method="_on_animation_tree_mixer_applied"]
+[connection signal="locomotion_node_changed" from="." to="NodeStateMachine/Attacking" method="_on_locomotion_node_changed"]
+[connection signal="locomotion_node_changed" from="." to="NodeStateMachine/Climbing" method="_on_locomotion_node_changed"]
+[connection signal="locomotion_node_changed" from="." to="NodeStateMachine/Dodging" method="_on_locomotion_node_changed"]
+[connection signal="locomotion_node_changed" from="." to="NodeStateMachine/Hanging" method="_on_locomotion_node_changed"]
+[connection signal="locomotion_node_changed" from="." to="NodeStateMachine/Riding" method="_on_locomotion_node_changed"]
+[connection signal="locomotion_node_changed" from="." to="NodeStateMachine/Sliding" method="_on_locomotion_node_changed"]
+[connection signal="locomotion_node_changed" from="." to="NodeStateMachine/Swimming" method="_on_locomotion_node_changed"]
+[connection signal="state_changed" from="." to="PlayerModel/Armature/GeneralSkeleton/ParagliderBoneAttachment/Paraglider" method="_on_player_state_changed"]
+[connection signal="state_changed" from="." to="PlayerNoise" method="_on_state_changed"]
+[connection signal="exhausted_changed" from="." to="NodeStateMachine/Standing" method="_on_grounded_locomotion_changed"]
+[connection signal="weapon_hit" from="HitDetection" to="PlayerNoise" method="_on_weapon_hit"]
+[connection signal="area_entered" from="UpdraftDetection" to="." method="_on_updraft_detection_area_entered"]
+[connection signal="area_exited" from="UpdraftDetection" to="." method="_on_updraft_detection_area_exited"]
 
 [connection signal="typing_changed" from="Hud/Chat" to="." method="_on_chat_typing_changed"]
 [connection signal="equipment_changed" from="Hud/Inventory" to="." method="refresh_contextual_controls"]
 [connection signal="equipment_changed" from="Hud/Inventory" to="Focus" method="_on_equipment_changed"]
 [connection signal="equipment_changed" from="Hud/Inventory" to="HitDetection" method="_on_equipment_changed"]
 [connection signal="equipment_changed" from="Hud/Inventory" to="SFX_Weapons" method="_on_equipment_changed"]
+[connection signal="equipment_changed" from="Hud/Inventory" to="PlayerNoise" method="_follow_equipment"]
+[connection signal="equipment_changed" from="Hud/Inventory" to="StealthLook" method="_on_equipment_changed"]
+[connection signal="equipment_changed" from="Hud/Inventory" to="NodeStateMachine/Standing" method="_on_grounded_locomotion_changed"]
 [connection signal="ability_activated" from="Hud/Abilities" to="." method="_on_abilities_ability_activated"]
 [connection signal="cast_interrupted" from="Hud/Abilities" to="." method="_on_abilities_cast_interrupted"]
 [connection signal="cast_started" from="Hud/Abilities" to="." method="_on_abilities_cast_started"]
 [connection signal="died" from="Hud/Health" to="." method="_on_health_died"]
 [connection signal="energy_changed" from="Hud/Health" to="StatusBars3D" method="set_energy"]
 [connection signal="health_changed" from="Hud/Health" to="StatusBars3D" method="set_health"]
+[connection signal="input_type_changed" from="Hud/Controls" to="." method="_on_controls_input_type_changed"]
 [editable path="PlayerModel"]
 [editable path="Hud"]

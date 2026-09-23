@@ -6,6 +6,8 @@ Third-party work in this repository: who made it, where it came from, its licenc
 |---|---|---|
 | `assets/game_icons/` | [game-icons.net](https://game-icons.net/) (authors listed in the `.txt` file next to each icon, e.g. Lorc) | CC BY 3.0 |
 | `assets/icons/` (`stealth.svg`, `heal.svg`, `star.svg`) | Drawn for this addon | CC0 |
+| `inventory/assets/icons/` (`materials.svg`, `food.svg`, `key.svg`, `apple.svg`, `mushroom.svg`, `ore.svg`, `wood.svg`) | Drawn for this addon | CC0 |
+| `inventory/` Equipment tab and the demo's wooden sword (`inventory_screen.tscn`, `scenes/demo/wooden_sword.tscn`, `resources/items/wooden_sword.tres`) use `assets/game_icons/gladius.svg` | [game-icons.net](https://game-icons.net/) (Skoll) | CC BY 3.0 |
 | `assets/kenney_nl/` (incl. `Lobby Icons/`, copied from Kenney's Game Icons pack; the Input Prompts icons moved to the [Controls addon](https://github.com/kirbycope/godot-controls)) | [Kenney](https://www.kenney.nl/) | CC0 |
 | `assets/quaternius/` (characters, `paraglider/`) | [Quaternius](https://quaternius.com/) | CC0 1.0 |
 | `assets/freesound/72853__benboncan__parachute.wav` | [Benboncan on Freesound](https://freesound.org/s/72853/) | CC BY 4.0 |

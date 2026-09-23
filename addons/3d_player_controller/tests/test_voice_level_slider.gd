@@ -67,15 +67,15 @@ func test_the_sensitivity_moves_what_counts_as_a_full_voice() -> void:
 	var was: float = settings.voice_sensitivity
 
 	settings.voice_sensitivity = 100.0
-	var normal: float = player.voice_full_bytes()
+	var normal: float = player.voice_chat.voice_full_bytes()
 	settings.voice_sensitivity = 150.0
-	var sensitive: float = player.voice_full_bytes()
+	var sensitive: float = player.voice_chat.voice_full_bytes()
 	settings.voice_sensitivity = 50.0
-	var deaf: float = player.voice_full_bytes()
+	var deaf: float = player.voice_chat.voice_full_bytes()
 
 	assert_lt(sensitive, normal, "More sensitive means less voice is needed to read as talking")
 	assert_gt(deaf, normal, "and less sensitive means more")
-	assert_gt(Player.loudness_of(500, sensitive), Player.loudness_of(500, deaf),
+	assert_gt(VoiceChat.loudness_of(500, sensitive), VoiceChat.loudness_of(500, deaf),
 		"so the same packet reads louder on the sensitive setting")
 	settings.voice_sensitivity = was
 	settings.save()
@@ -168,16 +168,16 @@ func test_voice_activation_transmits_by_speaking() -> void:
 	var was: bool = settings.voice_activation
 	settings.voice_activation = true
 
-	assert_true(player.voice_activation_enabled(), "The Player reads the setting")
+	assert_true(player.voice_chat.voice_activation_enabled(), "The Player reads the setting")
 	# The frame is driven by hand with no time passing: with no voice packet arriving the reading falls away at
 	# VOICE_FALLOFF_PER_SECOND, and a slow CI frame would drop it under the mark before the check
-	player.voice_loudness = Player.VOICE_ACTIVATION_LEVEL + 0.1
-	player._process(0.0)
-	assert_true(player.is_broadcasting, "Speaking past the mark opens the channel")
+	player.voice_chat.voice_loudness = VoiceChat.VOICE_ACTIVATION_LEVEL + 0.1
+	player.voice_chat._process(0.0)
+	assert_true(player.voice_chat.is_broadcasting, "Speaking past the mark opens the channel")
 
-	player.voice_loudness = 0.0
-	player._process(0.0)
-	assert_false(player.is_broadcasting, "and going quiet closes it again")
+	player.voice_chat.voice_loudness = 0.0
+	player.voice_chat._process(0.0)
+	assert_false(player.voice_chat.is_broadcasting, "and going quiet closes it again")
 
 	settings.voice_activation = was
 	settings.save()
@@ -191,8 +191,20 @@ func test_the_mark_is_the_level_that_transmits() -> void:
 	await wait_process_frames(1)
 	var bar: VoiceLevelSlider = menu.mic_sensitivity
 
-	assert_almost_eq(bar.ratio_of(bar.normal_value), Player.VOICE_ACTIVATION_LEVEL, 0.001,
+	assert_almost_eq(bar.ratio_of(bar.normal_value), VoiceChat.VOICE_ACTIVATION_LEVEL, 0.001,
 		"The mark sits exactly where speaking starts transmitting")
+
+
+## The colours turn at the mark too. The mark's value is set in the scene, before the bar builds its gradient on
+## ready; set afterwards from the menu's code, the turn sat four percent right of the mark.
+func test_the_colours_turn_at_the_mark() -> void:
+	var menu: Node = SETTINGS_SCENE.instantiate()
+	add_child_autofree(menu)
+	var bar: VoiceLevelSlider = menu.mic_sensitivity
+
+	assert_eq(bar.normal_value, 94.0, "The mark is set in audio_settings.tscn")
+	assert_almost_eq(bar._gradient.gradient.offsets[2], bar.ratio_of(bar.normal_value), 0.001,
+		"and the gradient turns from green to yellow exactly there")
 
 
 ## Holding the key still works with voice activation on, for a player who would rather not trust the meter.
@@ -203,10 +215,10 @@ func test_the_key_still_works_with_voice_activation_on() -> void:
 	var was: bool = settings.voice_activation
 	settings.voice_activation = true
 
-	player.start_broadcasting()
-	assert_true(player.is_broadcasting, "The key opens the channel whatever the meter says")
-	player.stop_broadcasting()
-	assert_false(player.is_broadcasting, "and closes it")
+	player.voice_chat.start_broadcasting()
+	assert_true(player.voice_chat.is_broadcasting, "The key opens the channel whatever the meter says")
+	player.voice_chat.stop_broadcasting()
+	assert_false(player.voice_chat.is_broadcasting, "and closes it")
 
 	settings.voice_activation = was
 	settings.save()

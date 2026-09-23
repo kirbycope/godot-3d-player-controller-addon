@@ -199,6 +199,40 @@ func test_the_grid_prints_an_items_badge_and_hides_it_without_one() -> void:
 	screen.hide_menu()
 
 
+## The grid keeps to a fixed area in the panel: a small one is centred in it, a large one scrolls there with the
+## focus instead of spilling out of the 720x480 panel, and a slot scrolled out of view takes no taps.
+func test_the_grid_is_centred_when_small_and_scrolls_inside_the_panel_when_large() -> void:
+	await _open()
+	await wait_process_frames(2)
+	var panel: Control = screen.get_node("Panel")
+	var area: ScrollContainer = screen.grid_scroll
+	var area_size: Vector2 = area.size
+	assert_eq(screen.grid.get_parent(), area, "The grid sits in a scroll area")
+	assert_lt(screen.grid.size.y, area.size.y, "Twenty slots are smaller than the area")
+	var centred: Vector2 = ((area.size - screen.grid.size) * 0.5).floor()
+	assert_almost_eq(screen.grid.position.x, centred.x, 1.0, "and centred in it side to side")
+	assert_almost_eq(screen.grid.position.y, centred.y, 1.0, "and top to bottom")
+	screen.hide_menu()
+	inventory.slots_per_tab = 60
+	screen.bind(player)
+	await _open()
+	await wait_process_frames(2)
+	assert_eq(screen._slots.size(), 60)
+	assert_gt(screen.grid.size.y, area.size.y, "Sixty slots are taller than the area")
+	assert_eq(area.size, area_size, "which did not grow to fit them")
+	assert_eq(panel.size, Vector2(720.0, 480.0), "and neither did the panel")
+	var top: InventorySlotButton = screen._slots[0]
+	var bottom: InventorySlotButton = screen._slots[59]
+	assert_true(top.touch_button.visible, "Unscrolled, the top slot can be tapped")
+	assert_false(bottom.touch_button.visible, "and the bottom one, out of view, cannot")
+	bottom.grab_focus()
+	await wait_process_frames(3)
+	assert_gt(area.scroll_vertical, 0, "Focus on the last slot scrolls it into view")
+	assert_true(bottom.touch_button.visible, "where it can be tapped")
+	assert_false(top.touch_button.visible, "and the top one, scrolled away, cannot")
+	screen.hide_menu()
+
+
 func test_a_long_description_scrolls_inside_the_panel_instead_of_growing_it() -> void:
 	var logbook := Item.new()
 	logbook.id = &"test_logbook"

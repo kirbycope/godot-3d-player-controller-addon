@@ -36,7 +36,6 @@ var _cached_dependency_count: int = 0
 
 ## Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	hide()
 	set_process(false)
 
 

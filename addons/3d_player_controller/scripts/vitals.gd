@@ -3,7 +3,8 @@ extends Node
 ## Hunger and thirst for a survival game: two pools that drain by the second and, at empty, take
 ## [member starving_damage] a second off the owner's [Health]. [method eat] and [method drink] top them up (a game
 ## wires them to its food items). [signal vitals_changed] feeds a HUD; [signal starving] and [signal dehydrated]
-## fire once as each runs out, [signal recovered] when both are back above zero.
+## fire once as each runs out, [signal recovered] when both are back above zero. Only the owner's authority
+## drains: the Health it eats is replicated, so a puppet's copy draining too would take the damage twice.
 
 signal vitals_changed(hunger: float, thirst: float, capacity: float)
 signal starving
@@ -30,6 +31,7 @@ var _was_empty: bool = false
 
 
 func _ready() -> void:
+	set_physics_process(is_multiplayer_authority())
 	if health == null and get_parent():
 		health = get_parent().get("health") as Health
 	hunger = capacity

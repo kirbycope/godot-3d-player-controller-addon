@@ -8,7 +8,7 @@ extends Control
 ## busier the louder it gets, so the shape says at a glance whether a sneak is working. The badge and the line
 ## keep the colours the placeholder was drawn with.
 
-@export var noise: PlayerNoise: ## Whose noise to draw; the first Player's when empty.
+@export var noise: PlayerNoise: ## Whose noise to draw: wired in the scene, or set by [method follow] when this peer's Player spawns.
 	set(value):
 		if noise and noise.level_changed.is_connected(_on_level_changed):
 			noise.level_changed.disconnect(_on_level_changed)
@@ -31,25 +31,14 @@ var _drawn: float = 0.0 ## What is actually on screen, eased toward [member leve
 var _phase: float = 0.0
 
 
-func _ready() -> void:
-	set_process(true)
-
-
-## The Player is spawned rather than sitting in the level, so it is rarely there when this is ready. Look again
-## each frame until one turns up, which costs a group lookup on an empty group until it does.
-func _find_noise() -> void:
-	var player: Player = get_tree().get_first_node_in_group(&"Player") as Player
-	if player == null:
-		return
-	var found: PlayerNoise = player.get_node_or_null(^"PlayerNoise") as PlayerNoise
-	if found:
-		noise = found
+## Draws [param player]'s noise. Wire a [PlayerSpawner]'s local_player_spawned here in the scene: it hands over the
+## Player this peer controls, never another peer's copy, which would stay flat.
+func follow(player: Player) -> void:
+	noise = player.get_node_or_null(^"PlayerNoise") as PlayerNoise if is_instance_valid(player) else null
 
 
 func _process(delta: float) -> void:
 	if noise == null:
-		if not Engine.is_editor_hint():
-			_find_noise()
 		return
 	# Two things caused a continued noise to look like it was stuttering, and both are fixed here. The reading
 	# only changes on the physics tick while this draws every frame, so the shape is eased toward it rather

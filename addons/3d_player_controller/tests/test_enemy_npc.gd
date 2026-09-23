@@ -124,3 +124,41 @@ func test_a_revived_enemy_can_hunt_the_same_player_again() -> void:
 
 	assert_eq(enemy.target, player, "Back up, it hunts the same Player again")
 	assert_true(player.health.died.is_connected(enemy._on_target_died), "and listens for them dying once more")
+
+
+## A hunted Player who leaves the game (a peer that disconnected, its Player freed) is let go of through the
+## Player's tree_exiting: the enemy used to keep a freed target and stand frozen, never walking home or healing.
+func test_the_enemy_lets_go_of_a_hunted_player_who_leaves_the_game() -> void:
+	enemy.register_weapon_hit(player, null)
+	assert_eq(enemy.target, player)
+	assert_true(player.tree_exiting.is_connected(enemy.lose_target), "The hunt listens for the Player leaving")
+	player.queue_free()
+	await wait_physics_frames(2)
+	assert_null(enemy.target, "Gone, the Player is no longer hunted")
+	assert_true(enemy.threat.is_empty(), "nor on the threat table")
+	assert_true(enemy.is_returning_home, "and the enemy heads back to its post")
+
+
+## A swing from a Player this enemy is not hunting is a sneak attack; the striker's own Player says who hunts it,
+## so a client's swing, registered on the client's copy that never hunts anyone, is weighed the same way.
+func test_a_sneak_attack_lands_harder_only_on_an_enemy_not_hunting_the_striker() -> void:
+	enemy.sneak_attack_multiplier = 2.0
+	enemy.register_weapon_hit(player, null)
+	assert_eq(enemy.health.health, enemy.health.max_health - enemy.melee_hit_damage * 2.0, "Caught unaware, it takes double")
+	assert_true(player.hunters.has(enemy), "and now hunts the striker")
+	var before: float = enemy.health.health
+	enemy.register_weapon_hit(player, null)
+	assert_eq(enemy.health.health, before - enemy.melee_hit_damage, "Hunting them, it takes the plain hit")
+
+
+## A boss puts its health on the hunted Player's boss bar, and the bar follows its Health through the connection
+## enemy_npc.tscn wires from Health.health_changed to the Boss node.
+func test_a_boss_enemy_shows_its_health_on_the_hunted_players_bar() -> void:
+	enemy.is_boss = true
+	assert_true(enemy.health.health_changed.is_connected(enemy.boss._on_health_changed), "The scene wires the Boss to the Health")
+	enemy.register_weapon_hit(player, null)
+	assert_true(player.boss_bar.bar.visible, "Hunted, the Player sees the boss bar")
+	var ratio: float = enemy.health.health / enemy.health.max_health
+	assert_almost_eq(player.boss_bar.health_bar.value, ratio, 0.001)
+	enemy.take_hit(10.0, player.global_position)
+	assert_almost_eq(player.boss_bar.health_bar.value, enemy.health.health / enemy.health.max_health, 0.001, "and the bar follows every hit")

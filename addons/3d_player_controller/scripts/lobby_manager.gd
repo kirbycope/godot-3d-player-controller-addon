@@ -2,9 +2,6 @@ extends PlayerMenuLayer
 
 @export var lobby_player_item_scene: PackedScene ## Assigned in the scene so it ships as a scene dependency.
 
-## Steam singleton when the GodotSteam extension is present, otherwise null; read through [method _steam_session].
-var _steam: Object = Engine.get_singleton("Steam") if Engine.has_singleton("Steam") else null
-
 @onready var panel: Panel = $Panel
 @onready var info_label: Label = $Panel/VBoxContainer/InfoLabel
 @onready var player_list: VBoxContainer = $Panel/VBoxContainer/ScrollContainer/PlayerList
@@ -13,14 +10,16 @@ var _steam: Object = Engine.get_singleton("Steam") if Engine.has_singleton("Stea
 @onready var back_button: Button = $Panel/VBoxContainer/BACK
 
 
-## Called when the node enters the scene tree for the first time.
+## Called when the node enters the scene tree for the first time. Every peer carries a copy of every Player's
+## menus, so only the copy this peer owns listens to Steam; the others would run a kick once per Player.
 func _ready() -> void:
 	super()
-	if _steam == null:
+	var steam: Object = SteamPeer.session(self)
+	if steam == null or not is_multiplayer_authority():
 		return
-	_steam.connect("lobby_chat_update", _on_lobby_chat_update)
-	_steam.connect("lobby_data_update", _on_lobby_data_update)
-	_steam.connect("lobby_message", _on_lobby_message)
+	steam.connect("lobby_chat_update", _on_lobby_chat_update)
+	steam.connect("lobby_data_update", _on_lobby_data_update)
+	steam.connect("lobby_message", _on_lobby_message)
 
 
 func show_menu() -> void:
@@ -29,18 +28,12 @@ func show_menu() -> void:
 	super()
 
 
-## The lobby the Steamworks autoload has joined, or 0 when there is none.
-func _active_lobby_id() -> int:
-	var steamworks: Node = get_node_or_null("/root/Steamworks")
-	return int(steamworks.get("lobby_id")) if steamworks else 0
-
-
 func _update_lobby_ui() -> void:
 	for child: Node in player_list.get_children():
 		child.queue_free()
 
-	var active_lobby_id: int = _active_lobby_id()
-	var steam: Object = _steam_session()
+	var active_lobby_id: int = SteamPeer.lobby_of(self)
+	var steam: Object = SteamPeer.session(self)
 	var has_lobby: bool = steam != null and active_lobby_id > 0
 	invite_button.disabled = not has_lobby
 	leave_button.disabled = not has_lobby
@@ -51,10 +44,9 @@ func _update_lobby_ui() -> void:
 		info_label.text = "No active lobby"
 		return
 
-	var owner_id: int = steam.getLobbyOwner(active_lobby_id)
 	var member_count: int = steam.getNumLobbyMembers(active_lobby_id)
 	var max_members: int = steam.getLobbyMemberLimit(active_lobby_id)
-	info_label.text = "Host: %s (%d/%d)" % [steam.getFriendPersonaName(owner_id), member_count, max_members if max_members > 0 else 4]
+	info_label.text = "Host: %s (%d/%d)" % [steam.getFriendPersonaName(SteamPeer.host_of(steam, active_lobby_id)), member_count, max_members if max_members > 0 else 4]
 
 	if lobby_player_item_scene == null:
 		return
@@ -72,19 +64,19 @@ func _on_player_promoted(_steam_id: int) -> void:
 
 #region Steam Callbacks
 func _on_lobby_chat_update(lobby_id: int, _changed_id: int, _making_change_id: int, _chat_state: int) -> void:
-	if _active_lobby_id() == lobby_id and visible:
+	if SteamPeer.lobby_of(self) == lobby_id and visible:
 		_update_lobby_ui()
 
 
-func _on_lobby_data_update(_success: int, lobby_id: int, _member_id: int) -> void:
-	if _active_lobby_id() == lobby_id and visible:
+func _on_lobby_data_update(_success: bool, lobby_id: int, _member_id: int) -> void:
+	if SteamPeer.lobby_of(self) == lobby_id and visible:
 		_update_lobby_ui()
 
 
-## Leaves the lobby when the owner sends "/kick <our steam id>".
+## Leaves the lobby when the host sends "/kick <our steam id>".
 func _on_lobby_message(lobby_id: int, sender: int, message: String, _chat_type: int) -> void:
-	var steam: Object = _steam_session()
-	if steam == null or lobby_id != _active_lobby_id() or not message.begins_with("/kick ") or sender != steam.getLobbyOwner(lobby_id):
+	var steam: Object = SteamPeer.session(self)
+	if steam == null or lobby_id != SteamPeer.lobby_of(self) or not message.begins_with("/kick ") or sender != SteamPeer.host_of(steam, lobby_id):
 		return
 	if int(message.get_slice(" ", 1)) == steam.getSteamID():
 		_on_leave_pressed()
@@ -92,8 +84,8 @@ func _on_lobby_message(lobby_id: int, sender: int, message: String, _chat_type: 
 
 
 func _on_invite_pressed() -> void:
-	var active_lobby_id: int = _active_lobby_id()
-	var steam: Object = _steam_session()
+	var active_lobby_id: int = SteamPeer.lobby_of(self)
+	var steam: Object = SteamPeer.session(self)
 	if steam != null and active_lobby_id > 0:
 		steam.activateGameOverlayInviteDialog(active_lobby_id)
 
@@ -102,14 +94,14 @@ func _on_invite_touch_screen_button_pressed() -> void:
 	_on_invite_pressed()
 
 
+## Leaves the lobby and the game session with it: the world's [SteamPeer] ends the session, and the game goes back
+## to its title on [signal SteamPeer.session_ended], wired in its world scene.
 func _on_leave_pressed() -> void:
-	var active_lobby_id: int = _active_lobby_id()
-	var steam: Object = _steam_session()
-	if steam == null or active_lobby_id <= 0:
+	var steam_peer: SteamPeer = SteamPeer.find_in(get_tree())
+	if steam_peer == null:
 		return
-	steam.leaveLobby(active_lobby_id)
-	get_node("/root/Steamworks").set("lobby_id", 0)
-	_update_lobby_ui()
+	hide_menu()
+	steam_peer.end_session()
 
 
 func _on_leave_touch_screen_button_pressed() -> void:
@@ -126,13 +118,3 @@ func _on_back_pressed() -> void:
 
 func _on_back_touch_screen_button_pressed() -> void:
 	_on_back_pressed()
-
-
-## The Steam singleton while the Steamworks session is up, else null. The client running is not enough: the
-## session only initialises on a desktop Forward+ build, and every lobby call errors before it has, so the
-## reads wait for [code]/root/Steamworks[/code] to report a signed-in [code]steam_id[/code].
-func _steam_session() -> Object:
-	var steamworks: Node = get_node_or_null("/root/Steamworks")
-	if steamworks == null or steamworks.get("steam_id") == 0:
-		return null
-	return _steam

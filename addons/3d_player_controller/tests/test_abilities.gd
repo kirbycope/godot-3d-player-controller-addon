@@ -92,16 +92,20 @@ func test_stealth_toggles_fades_the_model_and_costs_mana_not_stamina() -> void:
 	assert_almost_eq(player.health.energy, before - stealth.energy_cost, 0.01, "Abilities draw on the mana pool")
 	assert_eq(player.stamina.stamina, stamina_before, "The stamina wheel is for moving, not casting")
 	_assert_ghosted(player, 1.0, "The ghost starts solid")
-	await wait_seconds(player.stealth_fade_time + 0.2)
-	_assert_ghosted(player, 1.0 - player.stealth_transparency, "and settles to the stealth alpha over the fade time")
+	var glider: MeshInstance3D = player.get_node("PlayerModel/Armature/GeneralSkeleton/ParagliderBoneAttachment/Paraglider/Paraglider2/Paraglider") as MeshInstance3D
+	var fabric: Material = glider.get_surface_override_material(0)
+	assert_eq((fabric as ShaderMaterial).shader, StealthLook.STEALTH_DEPTH_SHADER, "The packed-away glider fades with the body, so it opens as a ghost too")
+	await wait_seconds(player.stealth_look.fade_time + 0.2)
+	_assert_ghosted(player, 1.0 - player.stealth_look.transparency, "and settles to the stealth alpha over the fade time")
 
 	abilities.cast(stealth)
 	assert_false(player.is_stealthed, "Casting an active toggle ends it")
 	assert_signal_emitted_with_parameters(abilities, "ability_deactivated", [stealth])
-	await wait_seconds(player.stealth_fade_time + 0.2)
-	for mesh: MeshInstance3D in player.skeleton.find_children("*", "MeshInstance3D"):
+	await wait_seconds(player.stealth_look.fade_time + 0.2)
+	for mesh: MeshInstance3D in _body_meshes(player):
 		for surface: int in mesh.mesh.get_surface_count():
 			assert_null(mesh.get_surface_override_material(surface), "The original look is back once the fade out lands")
+	assert_ne((glider.get_surface_override_material(0) as ShaderMaterial).shader, StealthLook.STEALTH_DEPTH_SHADER, "and the glider wears its fabric again")
 
 
 func test_attacking_ends_stealth() -> void:
@@ -351,8 +355,8 @@ func test_puppets_fade_when_the_replicated_flag_arrives() -> void:
 	assert_false(puppet.is_multiplayer_authority())
 	assert_false(puppet.abilities.is_processing_unhandled_input(), "Only the authority casts")
 	puppet.is_stealthed = true
-	await wait_seconds(puppet.stealth_fade_time + 0.2)
-	_assert_ghosted(puppet, 1.0 - puppet.stealth_transparency)
+	await wait_seconds(puppet.stealth_look.fade_time + 0.2)
+	_assert_ghosted(puppet, 1.0 - puppet.stealth_look.transparency)
 
 
 func test_cast_styles_map_to_the_weapon_group_clips() -> void:
@@ -501,21 +505,28 @@ func test_an_unarmed_channel_holds_the_ready_to_cast_emote() -> void:
 	assert_eq(emote.get_current_node(), &"Idle")
 
 
-## Every surface under the skeleton wears the ghost, a depth pass with the stealth shader after it carrying the
-## surface's own colour, at [param alpha].
+## The body's meshes: everything under the skeleton but the packed-away glider, whose fabric is a shader of its own
+## and so ghosts plain white.
+func _body_meshes(who: Player) -> Array:
+	var glider: Node = who.get_node("PlayerModel/Armature/GeneralSkeleton/ParagliderBoneAttachment")
+	return who.skeleton.find_children("*", "MeshInstance3D").filter(func(mesh: Node) -> bool: return not glider.is_ancestor_of(mesh))
+
+
+## Every surface of the body wears the ghost, a depth pass with the stealth shader after it carrying the surface's
+## own colour, at [param alpha].
 func _assert_ghosted(who: Player, alpha: float, text: String = "") -> void:
-	for mesh: MeshInstance3D in who.skeleton.find_children("*", "MeshInstance3D"):
+	for mesh: MeshInstance3D in _body_meshes(who):
 		for surface: int in mesh.mesh.get_surface_count():
 			var depth: ShaderMaterial = mesh.get_surface_override_material(surface) as ShaderMaterial
 			assert_not_null(depth, mesh.name + " wears the ghost")
 			if depth == null:
 				continue
-			assert_eq(depth.shader, Player.STEALTH_DEPTH_SHADER, "The first pass writes the body's depth")
+			assert_eq(depth.shader, StealthLook.STEALTH_DEPTH_SHADER, "The first pass writes the body's depth")
 			var ghost: ShaderMaterial = depth.next_pass as ShaderMaterial
 			assert_not_null(ghost, "and the ghost is the pass after it")
 			if ghost == null:
 				continue
-			assert_eq(ghost.shader, Player.STEALTH_SHADER)
+			assert_eq(ghost.shader, StealthLook.STEALTH_SHADER)
 			assert_gt(ghost.render_priority, depth.render_priority, "drawn after the depth, so only the nearest surface is coloured")
 			assert_almost_eq(float(ghost.get_shader_parameter(&"alpha")), alpha, 0.02, text)
 			assert_ne(ghost.get_shader_parameter(&"albedo_color"), Color.WHITE, "It keeps the surface's own colour")
@@ -524,8 +535,8 @@ func _assert_ghosted(who: Player, alpha: float, text: String = "") -> void:
 func test_the_ghost_colours_only_the_nearest_surface() -> void:
 	# A single see-through pass let the far arm, the far leg and the joint bands show through the torso. The depth
 	# pass has to write depth however transparent the body is, and the ghost after it must not write its own.
-	var depth_code: String = Player.STEALTH_DEPTH_SHADER.code
-	var ghost_code: String = Player.STEALTH_SHADER.code
+	var depth_code: String = StealthLook.STEALTH_DEPTH_SHADER.code
+	var ghost_code: String = StealthLook.STEALTH_SHADER.code
 	assert_string_contains(depth_code, "depth_draw_always", "The depth pass writes depth whatever the alpha")
 	assert_string_contains(depth_code, "ALPHA = 0.0", "and draws nothing itself")
 	assert_string_contains(ghost_code, "depth_draw_never", "The ghost only reads the depth the first pass wrote")
@@ -599,13 +610,13 @@ func test_a_late_joiner_sees_a_player_who_was_already_stealthed() -> void:
 func test_stealth_fades_the_equipment_too() -> void:
 	var worn_first: Equipment = _equip_bare_piece("WornFirst", Equipment.EquipmentType.SWORD_1H, "RightHand")
 	abilities.cast(stealth)
-	await wait_seconds(player.stealth_fade_time + 0.2)
-	_assert_piece_ghosted(worn_first, 1.0 - player.stealth_transparency, "what was in hand fades with the body")
+	await wait_seconds(player.stealth_look.fade_time + 0.2)
+	_assert_piece_ghosted(worn_first, 1.0 - player.stealth_look.transparency, "what was in hand fades with the body")
 	var worn_later: Equipment = _equip_bare_piece("WornLater", Equipment.EquipmentType.DAGGER, "LeftHand")
-	await wait_seconds(player.stealth_fade_time + 0.2)
-	_assert_piece_ghosted(worn_later, 1.0 - player.stealth_transparency, "and so does what is picked up meanwhile")
+	await wait_seconds(player.stealth_look.fade_time + 0.2)
+	_assert_piece_ghosted(worn_later, 1.0 - player.stealth_look.transparency, "and so does what is picked up meanwhile")
 	abilities.cast(stealth)
-	await wait_seconds(player.stealth_fade_time + 0.2)
+	await wait_seconds(player.stealth_look.fade_time + 0.2)
 	for piece: Equipment in [worn_first, worn_later]:
 		for mesh: MeshInstance3D in piece.find_children("*", "MeshInstance3D", true, false):
 			assert_null(mesh.get_surface_override_material(0), "%s is solid again" % piece.name)
@@ -656,8 +667,13 @@ class Dummy extends Node3D:
 		slowed_for = seconds
 
 
-func _make_dummy(at: Vector3, focusable: bool = true) -> Dummy:
-	var dummy := Dummy.new()
+## A body that stands with the caster: a follower, a co-op partner's pet.
+class FriendlyDummy extends Dummy:
+	var disposition: Focus.Disposition = Focus.Disposition.FRIENDLY
+
+
+func _make_dummy(at: Vector3, focusable: bool = true, friendly: bool = false) -> Dummy:
+	var dummy: Dummy = FriendlyDummy.new() if friendly else Dummy.new()
 	dummy.position = at
 	if focusable:
 		dummy.add_to_group(&"Focusable")
@@ -678,7 +694,8 @@ func test_a_damage_ability_hurts_what_it_lands_on() -> void:
 	assert_eq(bystander.hits.size(), 0, "and nobody standing near it does")
 
 
-## With a splash radius everything Focusable inside it takes the hit as well, and the caster never hits itself.
+## With a splash radius the Focusable bodies inside it the ability could be cast at take the hit as well: a
+## hostile-only bolt passes the caster's friends by, and the caster never hits itself.
 func test_splash_catches_the_focusable_bodies_around_the_impact() -> void:
 	var bolt := DamageAbility.new()
 	bolt.damage = 10.0
@@ -687,6 +704,10 @@ func test_splash_catches_the_focusable_bodies_around_the_impact() -> void:
 	var near: Dummy = _make_dummy(Vector3(3.0, 0.0, 0.0))
 	var far: Dummy = _make_dummy(Vector3(9.0, 0.0, 0.0))
 	var unlisted: Dummy = _make_dummy(Vector3(1.0, 0.0, 0.0), false)
+	var friend: Dummy = _make_dummy(Vector3(-2.0, 0.0, 0.0), true, true)
+	var partner: Player = PLAYER_SCENE.instantiate()
+	partner.position = Vector3(0.0, 0.0, 2.0)
+	add_child_autofree(partner)
 
 	bolt.impact(player, target)
 
@@ -694,6 +715,9 @@ func test_splash_catches_the_focusable_bodies_around_the_impact() -> void:
 	assert_eq(near.total(), 10.0, "and so is what stands inside the splash")
 	assert_eq(far.hits.size(), 0, "but not what stands outside it")
 	assert_eq(unlisted.hits.size(), 0, "and not a body that is not Focusable")
+	assert_eq(friend.hits.size(), 0, "A hostile bolt spares a friendly body in the splash")
+	assert_eq(partner.health.health, partner.health.max_health, "and a co-op partner")
+	assert_eq(player.health.health, player.health.max_health, "and the caster")
 
 
 ## A frostbolt slows what it hits, for as long as it says, through the target's own slow().
@@ -719,6 +743,25 @@ func test_an_ability_with_no_slow_leaves_the_target_at_speed() -> void:
 
 	assert_eq(target.slowed_to, 1.0, "Nothing took the target's speed")
 	assert_eq(target.slowed_for, 0.0)
+
+
+## The owner sends a phase by the ability's id and every other peer looks it up in its own copy's list (or the
+## library): the owner's loadout is its own, so the same place in the list is another spell elsewhere.
+func test_a_peer_plays_the_phase_of_the_ability_named_not_the_one_at_that_place() -> void:
+	var first := DamageAbility.new()
+	first.id = &"test_first_bolt"
+	first.casting_sfx = AudioStreamGenerator.new()
+	var second := DamageAbility.new()
+	second.id = &"test_second_bolt"
+	second.casting_sfx = AudioStreamGenerator.new()
+	abilities.abilities = [second, first] # this copy's order is not the owner's
+	abilities._play_phase(&"test_first_bolt", Ability.Phase.CASTING, player.global_position)
+	assert_eq(abilities.casting_audio.stream, first.casting_sfx, "The ability called by the id plays")
+	abilities.casting_audio.stop()
+	abilities.casting_audio.stream = null
+	abilities._play_phase(&"test_unknown_bolt", Ability.Phase.CASTING, player.global_position)
+	assert_null(abilities.casting_audio.stream, "An id this peer cannot name plays nothing")
+	assert_eq(abilities.get_ability(&"test_second_bolt"), second, "get_ability finds the caster's own by id")
 
 
 ## A burn keeps hurting after the hit, one tick a second, the stated damage spread over the duration.

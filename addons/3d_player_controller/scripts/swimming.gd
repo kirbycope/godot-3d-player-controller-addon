@@ -87,12 +87,12 @@ func _physics_process(delta: float) -> void:
 		var vertical_input: float = 0.0
 		_vertical_swim_effort = 0.0
 		if player.is_swimming and not player.is_climbing_on:
-			if player.is_typing:
-				pass # Typed keys never dive or climb out
-			elif enable_diving and Input.is_action_pressed(action(keyboard_crouch_action, pad_crouch_action)):
+			if player.is_typing or player.is_paused:
+				pass # Typed keys never dive or climb out, and nor does anything behind a menu
+			elif enable_diving and player.is_action_pressed(action(keyboard_crouch_action, pad_crouch_action)):
 				vertical_input = -1.0
 				_vertical_swim_effort = 1.0
-			elif depth_below_surface > SURFACE_EPSILON and Input.is_action_pressed(action(keyboard_climb_out_action, pad_climb_out_action)):
+			elif depth_below_surface > SURFACE_EPSILON and player.is_action_pressed(action(keyboard_climb_out_action, pad_climb_out_action)):
 				vertical_input = 1.0
 				_vertical_swim_effort = 1.0
 			elif not player.is_diving and depth_below_surface > SURFACE_EPSILON:
@@ -147,8 +147,9 @@ func _physics_process(delta: float) -> void:
 	if player.is_swimming \
 	and not player.is_exhausted \
 	and not player.is_typing \
+	and not player.is_paused \
 	and has_swim_movement \
-	and Input.is_action_pressed(action(keyboard_sprint_action, pad_sprint_action)):
+	and player.is_action_pressed(action(keyboard_sprint_action, pad_sprint_action)):
 		player.animation_tree.set("parameters/LocomotionTimeScale/scale", 1.5)
 		player.swimming_root_motion_multiplier = 3
 		player.is_sprinting = true
@@ -196,24 +197,22 @@ func start() -> void:
 		var current_position_along_up: float = up_direction.dot(player.global_position)
 		player.global_position += up_direction * (target_position_along_up - current_position_along_up)
 		if impact_speed >= splash_min_impact_speed:
-			_spawn_entry_splash(water_surface_along_up, impact_speed)
+			var surface_point: Vector3 = player.global_position + up_direction * (water_surface_along_up - up_direction.dot(player.global_position))
+			_spawn_entry_splash.rpc(surface_point, impact_speed)
 
 
-## Spawns a one-shot splash at the water surface above the player.
-func _spawn_entry_splash(water_surface_along_up: float, impact_speed: float) -> void:
-	if splash_scene == null or not player.is_inside_tree():
+## Spawns a one-shot splash at [param at], the water surface above the player, on every peer. Only the owning peer
+## knows how hard the Player hit the water and where the surface is, so it sends both with the state change.
+@rpc("authority", "call_local", "reliable")
+func _spawn_entry_splash(at: Vector3, impact_speed: float) -> void:
+	if splash_scene == null or not player.is_inside_tree() or player.get_parent() == null:
 		return
 	var splash: WaterSplash = splash_scene.instantiate() as WaterSplash
 	if splash == null:
 		return
 	splash.impact_speed = impact_speed
-	var splash_parent: Node = player.get_parent()
-	if splash_parent == null:
-		splash.free()
-		return
-	splash_parent.add_child(splash)
-	var up_direction: Vector3 = player.up_direction.normalized()
-	splash.global_position = player.global_position + up_direction * (water_surface_along_up - up_direction.dot(player.global_position))
+	player.get_parent().add_child(splash)
+	splash.global_position = at
 
 
 ## Stop "swimming".

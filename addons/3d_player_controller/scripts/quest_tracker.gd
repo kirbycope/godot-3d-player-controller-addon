@@ -8,10 +8,6 @@ extends CanvasLayer
 @onready var objectives_label: Label = %QuestObjectives
 
 
-func _ready() -> void:
-	hide()
-
-
 ## Shows [param title] and its [param objectives], one per line.
 func show_quest(title: String, objectives: String) -> void:
 	title_label.text = title

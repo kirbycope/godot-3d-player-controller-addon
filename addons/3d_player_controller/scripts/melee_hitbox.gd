@@ -7,7 +7,7 @@ extends Area3D
 
 signal hit(body: Node3D) ## Emitted once per body per swing.
 
-@export var attacker: Node3D ## The body swinging; never hurts itself.
+@export var attacker: Node3D ## The body swinging; never hurts itself, and is named as the hit's source ([method Ability.affect]).
 @export var damage: float = 15.0
 @export var active_seconds: float = 0.35 ## How long the swing stays live after [method swing].
 
@@ -31,7 +31,7 @@ func _on_body_entered(body: Node3D) -> void:
 	if not live or body == attacker or body in _hit_this_swing or not body.has_method("take_hit"):
 		return
 	_hit_this_swing.append(body)
-	body.call("take_hit", damage, global_position)
+	Ability.affect(body, &"take_hit", [damage, global_position], attacker)
 	hit.emit(body)
 
 

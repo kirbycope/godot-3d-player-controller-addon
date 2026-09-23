@@ -20,8 +20,8 @@ func _input(event: InputEvent) -> void:
 		player.state_machine.travel(state, States.JUMPING)
 		return
 
-	# Slide
-	if event.is_action_pressed(&"crouch"):
+	# Slide; RunningSlide is reached only from StandingLocomotion, so a weapon out or the boxing stance does not slide
+	if event.is_action_pressed(&"crouch") and player.current_locomotion_node == "StandingLocomotion":
 		player.state_machine.travel(state, States.SLIDING)
 		return
 

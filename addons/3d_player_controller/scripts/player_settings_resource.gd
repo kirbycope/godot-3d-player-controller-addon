@@ -1,7 +1,7 @@
 class_name PlayerSettingsResource
 extends Resource
 
-const SAVE_PATH: String = "user://settings.tres"
+static var SAVE_PATH: String = "user://settings.tres" ## Where the settings live; a test run points it elsewhere so it never touches the player's own.
 const MSAA_VALUES: Array[Viewport.MSAA] = [Viewport.MSAA_DISABLED, Viewport.MSAA_2X, Viewport.MSAA_4X, Viewport.MSAA_8X] ## Indexed by [member msaa_index].
 const SSAA_SCALES: Array[float] = [1.0, 1.5, 2.0] ## Indexed by [member ssaa_index].
 const TOON_NEWSPAPER: int = 1 ## ToonFilter.Mode.NEWSPAPER, what an old saved toon_enabled = true meant.

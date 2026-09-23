@@ -36,13 +36,13 @@ func _drop_camera_if_the_player_has_one() -> void:
 			camera.queue_free()
 			return
 
-## Wired to Player/Inventory.item_used.
+## Wired to Player/Hud/Inventory.item_used.
 func _on_item_used(item: Item, count: int) -> void:
 	hint.text = "Used %d x %s (item_used signal; the game applies the effect)" % [count, item.get_display_name()]
 	hint_timer.start()
 
 
-## Wired to Player/Inventory.item_dropped.
+## Wired to Player/Hud/Inventory.item_dropped.
 func _on_item_dropped(item: Item, count: int, _pickup: Node3D) -> void:
 	hint.text = "Dropped %d x %s" % [count, item.get_display_name()]
 	hint_timer.start()

@@ -57,9 +57,10 @@ func _process(_delta: float) -> void:
 		resume_world()
 
 
-## Called when there is an input event.
+## Called when there is an input event. A scene with no Player (a title screen showing the settings pages) may
+## not have registered the action at all.
 func _input(event: InputEvent) -> void:
-	if event.is_action_pressed("start") and visible:
+	if visible and InputMap.has_action(&"start") and event.is_action_pressed(&"start"):
 		hide_menu()
 		get_viewport().set_input_as_handled()
 
@@ -83,8 +84,9 @@ func hide_menu() -> void:
 	if player:
 		player.is_paused = false
 	resume_world()
-	if player == null or player.uses_mouse:
-		Input.mouse_mode = player.cursor_mode() if player else Input.MOUSE_MODE_CAPTURED # captured, or visible under a scheme that frees it
+	# Captured, or visible under a scheme that frees it; with no Player (a title screen) the cursor stays as it is
+	if player and player.uses_mouse:
+		Input.mouse_mode = player.cursor_mode()
 
 
 ## Runs the scene tree again, whichever menu paused it.

@@ -180,3 +180,34 @@ func test_an_old_toon_enabled_setting_migrates_to_newspaper() -> void:
 		assert_eq(loaded.toon_mode, old_value[1], "toon_enabled = %s from before toon_mode loads as mode %d" % [old_value[0], old_value[1]])
 		assert_eq(loaded.msaa_index, 2, "and the rest of the file still loads")
 		assert_false("toon_enabled" in loaded, "The old property is gone")
+
+
+## Dragging the microphone bar is many small steps: each keeps the value, and the file is written once, when the
+## menu closes, rather than on every step (on the web every write goes to IndexedDB).
+func test_the_microphone_bar_saves_when_the_menu_closes_not_on_every_step() -> void:
+	DirAccess.remove_absolute(PlayerSettingsResource.SAVE_PATH)
+	var audio_settings: PlayerMenuLayer = AUDIO_SETTINGS_SCENE.instantiate() as PlayerMenuLayer
+	add_child_autofree(audio_settings)
+	audio_settings.show_menu()
+
+	audio_settings.mic_sensitivity.value = 60.0
+	assert_eq(audio_settings.settings_res.voice_sensitivity, 60.0, "The step is kept")
+	assert_false(FileAccess.file_exists(PlayerSettingsResource.SAVE_PATH), "but nothing is written yet")
+
+	audio_settings.hide_menu()
+	assert_true(FileAccess.file_exists(PlayerSettingsResource.SAVE_PATH), "Closing the menu writes it")
+	var loaded: PlayerSettingsResource = ResourceLoader.load(PlayerSettingsResource.SAVE_PATH, "", ResourceLoader.CACHE_MODE_IGNORE)
+	assert_eq(loaded.voice_sensitivity, 60.0)
+
+
+## The settings path is a static var, so a test run can point it at a folder of its own and never touch the
+## player's real settings.
+func test_the_settings_path_can_be_redirected() -> void:
+	var was: String = PlayerSettingsResource.SAVE_PATH
+	PlayerSettingsResource.SAVE_PATH = "user://test_redirected_settings.tres"
+	var settings: PlayerSettingsResource = PlayerSettingsResource.new()
+	settings.music_volume = 12.0
+	settings.save()
+	assert_true(FileAccess.file_exists("user://test_redirected_settings.tres"), "The file goes where the path points")
+	DirAccess.remove_absolute("user://test_redirected_settings.tres")
+	PlayerSettingsResource.SAVE_PATH = was

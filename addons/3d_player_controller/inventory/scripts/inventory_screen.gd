@@ -21,6 +21,7 @@ var _weapons: Array[Equipment] = [] ## What the equipment tab shows, by slot.
 var _inventory: Inventory
 
 @onready var tab_buttons: Array[Button] = [%EquipmentTab, %MaterialsTab, %FoodTab, %KeyItemsTab]
+@onready var grid_scroll: ScrollContainer = %GridScroll ## The grid's fixed area in the panel: the grid is centred in it when smaller and scrolls, following focus, when larger.
 @onready var grid: GridContainer = %Grid
 @onready var detail_icon: TextureRect = %DetailIcon
 @onready var detail_model: SubViewportContainer = %DetailModel ## The turning 3D preview shown instead of the icon when an item has a model.
@@ -66,6 +67,18 @@ func bind(target: Player) -> void:
 		slot.slot_pressed.connect(_on_slot_pressed)
 		slot.slot_focused.connect(_on_slot_focused)
 		_slots.append(slot)
+
+
+## A [TouchScreenButton] ignores the scroll area's clipping, so a slot scrolled out of view would still take taps over
+## the tabs and the actions; hiding it turns its hit test off. Wired to the area's resized and the grid's
+## item_rect_changed (a scroll moves the grid) and sort_children (the slots were laid out) in inventory_screen.tscn.
+func _update_touch_visibility() -> void:
+	if not is_instance_valid(grid_scroll):
+		return
+	var shown: Rect2 = grid_scroll.get_global_rect()
+	for slot: InventorySlotButton in _slots:
+		if is_instance_valid(slot) and is_instance_valid(slot.touch_button):
+			slot.touch_button.visible = shown.intersects(slot.get_global_rect())
 
 
 func _input(event: InputEvent) -> void:

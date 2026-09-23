@@ -16,6 +16,7 @@ var extra_screen: PlayerMenuLayer ## The instanced extra screen, a sibling of th
 @onready var spells_button: Button = $Panel/VBoxContainer/Spells
 @onready var quests_button: Button = $Panel/VBoxContainer/Quests
 @onready var extra_button: Button = $Panel/VBoxContainer/Extra
+@onready var restart_button: Button = $Panel/VBoxContainer/Restart ## Shown only while playing alone: reloading the scene would break a session.
 @onready var save_button: Button = $Panel/VBoxContainer/Save ## Shown while a [SaveGame] is in the scene.
 @onready var load_button: Button = $Panel/VBoxContainer/Load ## Shown with Save, enabled while its file exists.
 
@@ -34,9 +35,15 @@ func _ready() -> void:
 	quests_screen = _instance_screen(quests_screen_scene, quests_button)
 	extra_button.text = extra_screen_label
 	extra_screen = _instance_screen(extra_screen_scene, extra_button)
+	# The Player is still readying its children here, so the screens join it on its own ready signal, in the same
+	# frame; a deferred add would be dropped, and the screens left orphaned, for a Player freed before the frame ends
+	if player and not player.is_node_ready():
+		player.ready.connect(_add_screens, CONNECT_ONE_SHOT)
+	elif player:
+		_add_screens.call_deferred()
 
 
-## Instances a menu scene beside this one on the Player and shows its button; an empty or bad path hides the button.
+## Instances a menu scene for this menu's Player and shows its button; an empty or bad path hides the button.
 func _instance_screen(scene_path: String, button: Button) -> PlayerMenuLayer:
 	button.visible = not scene_path.is_empty()
 	if not button.visible or player == null or not is_multiplayer_authority():
@@ -48,8 +55,14 @@ func _instance_screen(scene_path: String, button: Button) -> PlayerMenuLayer:
 		return null
 	screen.player = player
 	screen.hide() # a screen's own scene saves visible, so it can be seen in the editor; whoever adds it hides it
-	player.add_child.call_deferred(screen)
 	return screen
+
+
+## Puts the instanced screens on the Player, beside this menu.
+func _add_screens() -> void:
+	for screen: PlayerMenuLayer in [inventory_screen, spells_screen, quests_screen, extra_screen]:
+		if screen:
+			player.add_child(screen)
 
 
 ## The Spells button only makes sense with a [Spellbook] under the Inventory; decided here, once the Player's
@@ -60,15 +73,17 @@ func show_menu() -> void:
 		spells_button.hide()
 	if quests_screen and player and player.quest_log == null:
 		quests_button.hide()
+	restart_button.visible = is_single_player()
 	var saver: SaveGame = SaveGame.find_in(get_tree())
 	save_button.visible = saver != null
 	load_button.visible = saver != null
 	load_button.disabled = saver == null or not saver.has_save()
 
 
-## Called when there is an input event; "start" toggles the pause menu.
+## Called when there is an input event; "start" toggles the pause menu. A scene with no Player (a title screen)
+## may not have registered the action at all.
 func _input(event: InputEvent) -> void:
-	if not event.is_action_pressed("start"):
+	if not InputMap.has_action(&"start") or not event.is_action_pressed(&"start"):
 		return
 	if visible:
 		hide_menu()
@@ -142,7 +157,11 @@ func _on_spells_touch_screen_button_pressed() -> void:
 	_on_spells_pressed()
 
 
+## Reloads the scene, which only a Player alone can do: in a session it would leave a client with no Player and a
+## host with none of the clients'.
 func _on_restart_pressed() -> void:
+	if not is_single_player():
+		return
 	resume_world()
 	get_tree().reload_current_scene()
 

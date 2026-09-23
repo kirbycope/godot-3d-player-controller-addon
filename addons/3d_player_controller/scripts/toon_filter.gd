@@ -40,8 +40,12 @@ var _binbun_originals: Dictionary = {} ## Instance id of each overridden MeshIns
 var _binbun_cache: Dictionary = {} ## Albedo texture and colour key to the override material made for it; one per look, not per surface.
 
 
+## The saved look is this machine's, for the camera it looks through: another peer's Player copy keeps its filter
+## off rather than drawing a second full-screen pass nobody sees.
 func _ready() -> void:
 	set_process_unhandled_input(is_multiplayer_authority())
+	if not is_multiplayer_authority():
+		return
 	set_mode(PlayerSettingsResource.load_or_create().toon_mode as Mode)
 
 

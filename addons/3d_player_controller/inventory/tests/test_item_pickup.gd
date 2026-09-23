@@ -143,10 +143,46 @@ func test_typing_in_the_chat_does_not_take_the_stack() -> void:
 	player.is_typing = false
 
 
-## The stack goes into the taker's inventory alone, so the taker tells every peer's copy of the pickup to go.
-func test_a_taken_pickup_vanishes_on_every_peer_and_the_take_action_is_exported() -> void:
+## Any peer asks the server to take; only the server grants and says how many are left, on every peer. The two-peer
+## session is covered in tests/test_pickup_sync.gd.
+func test_the_server_arbitrates_a_take_and_the_take_action_is_exported() -> void:
 	var pickup: ItemPickup = _drop_pickup_at(Vector3(0.5, 0.0, 0.0))
 	assert_eq(pickup.take_action, &"action")
 	var config: Dictionary = (pickup.get_script() as Script).get_rpc_config()
-	assert_eq(config["_vanish"]["rpc_mode"], MultiplayerAPI.RPC_MODE_ANY_PEER, "The taker, whoever it is, frees every copy")
-	assert_true(config["_vanish"]["call_local"])
+	assert_eq(config["_request_take"]["rpc_mode"], MultiplayerAPI.RPC_MODE_ANY_PEER, "The taker, whoever it is, asks")
+	assert_eq(config["_grant"]["rpc_mode"], MultiplayerAPI.RPC_MODE_AUTHORITY, "The server grants")
+	assert_eq(config["_set_count"]["rpc_mode"], MultiplayerAPI.RPC_MODE_AUTHORITY, "and says how many are left")
+	assert_true(config["_set_count"]["call_local"])
+
+
+## A pickup saved in the level is hidden once empty rather than freed, so the server can still tell a peer joining
+## later that it is gone.
+func test_an_emptied_level_pickup_stays_hidden_instead_of_freed() -> void:
+	var pickup: ItemPickup = _drop_pickup_at(Vector3(0.5, 0.0, 0.0), 2)
+	pickup.owner = root # as a pickup saved in the level scene is
+	await wait_physics_frames(3)
+	pickup.take()
+	await wait_physics_frames(2)
+	assert_eq(player.inventory.count_of(APPLE), 2)
+	assert_true(is_instance_valid(pickup), "It stays in the tree")
+	assert_false(pickup.visible, "hidden")
+	assert_false(pickup.player_detection.monitoring, "and nobody takes it again")
+	assert_false(pickup.action_prompt.visible, "The prompt went with it")
+
+
+## A drop whose item was made at run time has no path to send, so it lies on this peer alone and is taken there.
+func test_a_pickup_on_this_peer_alone_is_taken_without_asking_the_server() -> void:
+	var stone: Item = Item.new()
+	stone.id = &"local_stone"
+	player.inventory.add_item(stone, 1)
+	var pickup: ItemPickup = player.inventory.drop_slot(stone.category, 0) as ItemPickup
+	assert_not_null(pickup)
+	assert_true(pickup.local_only)
+	assert_eq(pickup.item, stone, "It holds the item itself")
+	player.warp_to(Transform3D(Basis(), pickup.global_position))
+	await wait_physics_frames(3)
+	pickup.player = player
+	pickup.take()
+	assert_eq(player.inventory.count_of(stone), 1, "Taken back")
+	await wait_physics_frames(1)
+	assert_false(is_instance_valid(pickup))

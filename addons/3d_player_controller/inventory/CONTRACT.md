@@ -13,9 +13,9 @@ not the inventory's to use; widen the table before widening the code.
 |---|---|---|
 | `controls` | `CanvasLayer` (a `Controls`) | `Inventory.rebuild_equipment_cache` calls `reset_labels()`; `InventoryScreen`, `SpellsScreen` and `RadialMenu` read `current_input_type` |
 | `crosshair` | `TextureRect` | `RadialMenu` hides it while the wheel is open and shows it after |
-| `inventory` | `Inventory` | `ItemPickup.take`, `InventoryScreen.bind`, `SpellsScreen.bind`, `Equipment.equip` and the walk-over pickups (`inventory.equip_pickup`), the demo |
+| `inventory` | `Inventory` | `ItemPickup.take` (`inventory.room_for`, then `add_item` once the server grants), `InventoryScreen.bind`, `SpellsScreen.bind`, `Equipment.equip` and the walk-over pickups (`inventory.equip_pickup`), the demo |
 | `abilities` | `Abilities` | `Spellbook._apply` writes the wheel, `SpellsScreen.refresh` reads `active_ability` |
-| `radial_menu` | `RadialMenu` (`$Inventory/RadialMenu`) | The tests reach the weapon wheel through it |
+| `radial_menu` | `RadialMenu` (`$Hud/Inventory/RadialMenu`) | The tests reach the weapon wheel through it |
 | `pause` | `PlayerMenuLayer` | The screens' Back button calls `pause.show_menu()` |
 | `skeleton` | `Skeleton3D` | `Inventory.equip_pickup` adds a `BoneAttachment3D` under it; `Inventory.equip_from_backpack` reparents attachments onto it; `apply_save` checks it is there |
 | `held_object` | `HeldObject` | `Inventory._unhandled_input` ignores weapon taps while `is_holding_object()` |
@@ -23,8 +23,9 @@ not the inventory's to use; widen the table before widening the code.
 | `is_riding` | `bool` | `ItemPickup` ignores a riding Player |
 | `ready` | signal (Node) | `Spellbook._ready` waits for the Player before seeding the wheel |
 | `get_facing_direction()` | `-> Vector3` | `Inventory._drop` drops pickups a metre ahead (`Vector3.ZERO` falls back to forward) |
+| `get_path()` | native | `Inventory._drop` names the dropper to the `ProjectileSpawner` (its "shooter"); `ItemPickup` names the taker to the server by its path from the pickup |
 | `warp_to(target)` | `(Transform3D) -> void` | Tests move the Player onto and off dropped equipment |
-| native | `is_multiplayer_authority()`, `up_direction`, `global_position`, `get_parent()`, `is_node_ready()` | `Inventory`, `ItemPickup`, `Spellbook` |
+| native | `is_multiplayer_authority()`, `get_multiplayer_authority()`, `up_direction`, `global_position`, `get_parent()`, `is_node_ready()` | `Inventory`, `ItemPickup` (the server grants a take only to the Player's own peer), `Spellbook` |
 
 ## Controls (`scripts/controls.gd`, `class_name Controls extends CanvasLayer`)
 
@@ -124,8 +125,27 @@ duplicates the pickup onto it with `scene_file_path` copied and `player` set, di
 | `player` | `Player` | `equip_pickup` sets it on the copy |
 | `get_details()` | `-> String` | Extra lines under the description |
 | `details_changed` | signal | The inventory screen redraws an equipment entry whose details changed while it is open (the fishing rod emits it when its bait changes) |
-| `_on_player_detection_body_entered(body)` | `(Node3D) -> void` | Wired in `wooden_sword.tscn` from a child `Area3D` named `PlayerDetection`: hands the pickup to the first authoritative Player's `inventory.equip_pickup` unless the pickup's `dropped_by` meta is that Player (`drop_equipment` sets it and clears it on the area's `body_exited`), then stops monitoring |
-| `scene_file_path` | native | `save`, `drop_equipment` and `_is_scene_path` |
+| `_on_player_detection_body_entered(body)` | `(Node3D) -> void` | Wired in `wooden_sword.tscn` from a child `Area3D` named `PlayerDetection`: hands the pickup to the first authoritative Player's `inventory.equip_pickup` unless the pickup's `dropped_by` meta is that Player, then vanishes on every peer |
+| `set_dropped_by(dropper)` | `(Node3D) -> void` | `Inventory._spawn_dropped` (and the `ProjectileSpawner` building a drop) mark the Player who dropped it; the pickup clears the mark itself on its area's `body_exited` |
+| `scene_file_path` | native | `origin_of` (a `.tscn` or `.scn` names the piece), `drop_equipment` and `_is_scene_path` |
+| `origin` meta | `String` | Set by `equip_pickup` on a copy of a world pickup: the pickup's node path, what `origin_of` names a piece by when it has no scene of its own (saves, peers, drops) |
+
+## ProjectileSpawner (`scripts/projectile_spawner.gd`, `class_name ProjectileSpawner extends MultiplayerSpawner`)
+
+Optional: without one in the world, drops land by the inventory's own RPC and pickups work as before; with one, a drop
+comes through it, so a peer joining later gets it too.
+
+| Member | Type | Needed for |
+|---|---|---|
+| `find_for(node)` | `static (Node) -> ProjectileSpawner` | `Inventory._drop` looks for the spawner of its session |
+| `place(scene, position, extra)` | `(PackedScene, Vector3, Dictionary) -> Node3D` | `Inventory._drop`: `extra` carries "shooter" (the dropping Player's path), "item" and "count" for an `ItemPickup`, or "world_pickup" (a world pickup's path, with a null scene) for a copy of it; returns the pickup on the server, null on a client |
+| Spawnable scenes | inspector | A client's drop is spawned only for a scene on the list, so the world lists `item_pickup.tscn` and every droppable equipment scene |
+
+The spawner calls back into the inventory for one thing: `Inventory.pickup_from(origin, from)` builds the copy of a world
+pickup a drop names by "world_pickup"; it sets an `ItemPickup`'s `item` and `count`, and marks what it builds `spawned` (`ItemPickup.spawned`,
+`Equipment.spawned`), so an emptied or taken one is left for the server to free on every peer. `item_pickup.gd` names no
+`ProjectileSpawner` itself: the spawner loads the inventory, which preloads `item_pickup.tscn`, so a reference back would
+make that scene load itself half way through.
 
 ## Files the inventory loads by path
 
@@ -147,9 +167,9 @@ duplicates the pickup onto it with `scene_file_path` copied and `player` set, di
 |---|---|
 | `Player` (`CharacterBody3D`, group `Player`) | `player.gd`; a collision shape so `Area3D` pickups see it |
 | `PlayerModel/Armature/GeneralSkeleton` (`Skeleton3D`) | `player.skeleton`, with the bones equipment names (`RightHand`, `LeftHand`) |
-| `Controls` | `player.controls` |
-| `Inventory` (`res://addons/3d_player_controller/inventory/scenes/inventory.tscn`, `player = ..`) | `player.inventory`, `$Inventory/RadialMenu`, `$Inventory/Spellbook` |
-| `Abilities` (`player = ..`, `abilities = [stealth.tres, heal.tres]`) | `player.abilities`; the starting spells the Spellbook seeds from |
-| `Pause` (`player = ..`) | `player.pause`; the real one also points its screen paths at the inventory's screens, see Pause |
-| `Crosshair` (`TextureRect`) | `player.crosshair` |
+| `Hud/Controls` | `player.controls` |
+| `Hud/Inventory` (`res://addons/3d_player_controller/inventory/scenes/inventory.tscn`, `player` set) | `player.inventory`, `$Hud/Inventory/RadialMenu`, `$Hud/Inventory/Spellbook` |
+| `Hud/Abilities` (`player` set, `abilities = [stealth.tres, heal.tres]`) | `player.abilities`; the starting spells the Spellbook seeds from |
+| `Hud/Pause` (`player` set) | `player.pause`; the real one also points its screen paths at the inventory's screens, see Pause |
+| `Hud/Crosshair` (`TextureRect`) | `player.crosshair` |
 | `HeldObject` | `player.held_object` |

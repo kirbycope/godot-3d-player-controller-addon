@@ -141,3 +141,18 @@ func test_the_demo_arena_keeps_each_view_to_the_contextual_hints() -> void:
 	for player: Player in split.players:
 		assert_eq(player.hud_mode_override, PlayerSettingsResource.HudMode.AUTO, "Half a screen has no room for the whole button set, whatever the saved setting says")
 
+
+
+## The split-screen demo instances the demo arena, which has no Player or HUD of its own, rather than stripping the
+## demo's script off; so the arena keeps its script and its pool and Guide answer every view's Player.
+func test_the_demo_arenas_pool_swims_every_view() -> void:
+	var demo: Node3D = DEMO_SCENE.instantiate()
+	add_child_autofree(demo)
+	await wait_physics_frames(2)
+	var arena: Node3D = demo.get_node("DemoArena")
+	assert_not_null(arena.get_script(), "The arena keeps its script")
+	assert_null(arena.get_node_or_null("Player"), "and brings no Player of its own")
+	var second: Player = demo.get_node("SplitScreen").get_player(1)
+	second.global_position = arena.get_node("Markers/Pool").global_position
+	await wait_until(func() -> bool: return second.current_state == NodeStateMachine.States.SWIMMING, 1.0)
+	assert_eq(second.current_state, NodeStateMachine.States.SWIMMING, "The second view's Player swims in the arena's pool")

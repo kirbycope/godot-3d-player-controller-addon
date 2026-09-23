@@ -11,7 +11,7 @@ extends FollowerNpc
 ## Locomotion is a blend space (Idle, Walk, Run) fed by a smoothed [member locomotion_blend], as LittleBuddy's is,
 ## and root motion as for the Player: the navigation decides where to face and how fast it wants to go, and the
 ## animation's Root bone carries the body. Health, death and the animation state replicate from
-## the server; hits from clients relay.
+## the server; hits from clients relay, and the threat table and the hunt are the server's alone.
 
 signal aggroed(target: Node3D)
 signal provoked ## A neutral enemy was attacked and turned hostile.
@@ -147,28 +147,44 @@ func _physics_process(delta: float) -> void:
 		_attack()
 
 
-## Hunts [param who]; only living Players are worth chasing.
+## Hunts [param who]; only living Players are worth chasing. The hunt is the server's: a client's call (a noise
+## that woke this enemy, [PlayerNoise]) asks it, for that client's own Player only and only while this enemy is not
+## already among the Player's [member Player.hunters]. A hunted Player who leaves the game is let go
+## ([method lose_target], wired to its tree_exiting here).
 func aggro(who: Node) -> void:
+	if not multiplayer.is_server():
+		if who is Player and not (who as Player).hunters.has(self):
+			_request_aggro.rpc_id(1, get_path_to(who))
+		return
 	if is_dead or not who is Player or target == who or not (who as Player).health.is_alive():
 		return
 	if not threat.has(who):
 		threat[who] = AGGRO_AREA_THREAT # on the table, so the next hit from somebody else is weighed against it
 	if is_instance_valid(target):
-		target.health.died.disconnect(_on_target_died)
-		target.hunted_by(get_path(), false)
+		_let_go_of_target()
 	target = who
 	player = who
 	is_returning_home = false
 	target.health.died.connect(_on_target_died)
+	target.tree_exiting.connect(lose_target)
 	target.hunted_by(get_path(), true)
 	if is_boss:
 		boss.engage(who.get_multiplayer_authority())
 	aggroed.emit(target)
 
 
-## Gives up the hunt on purpose (a lookout that lost sight of the Player) and heads back to the post.
+## A client's [method aggro], on the server: only for a Player of the sender's own ([param who_path], from this node).
+@rpc("any_peer", "call_remote", "reliable")
+func _request_aggro(who_path: NodePath) -> void:
+	var who: Node = get_node_or_null(who_path)
+	if multiplayer.is_server() and who and who.get_multiplayer_authority() == multiplayer.get_remote_sender_id():
+		aggro(who)
+
+
+## Gives up the hunt on purpose (a lookout that lost sight of the Player), or because the hunted Player left the
+## game, and heads back to the post. Nothing to do for an enemy that is leaving the tree itself (the level closing).
 func lose_target() -> void:
-	if target == null:
+	if target == null or not is_inside_tree():
 		return
 	threat.clear()
 	_drop_target()
@@ -210,12 +226,22 @@ func _walk_toward(point: Vector3, delta: float, speed: float) -> bool:
 ## Gives up the hunt: the target died or went past the leash.
 func _drop_target() -> void:
 	if is_instance_valid(target):
-		target.health.died.disconnect(_on_target_died)
-		target.hunted_by(get_path(), false)
+		_let_go_of_target()
 	target = null
 	player = null
 	caster.interrupt()
 	boss.disengage()
+
+
+## Lets go of the hunted Player's signals and tells them they are no longer hunted, unless they are on their way out
+## of the game (a peer that left, whose Player is being freed), with nobody left to tell.
+func _let_go_of_target() -> void:
+	if target.health.died.is_connected(_on_target_died):
+		target.health.died.disconnect(_on_target_died)
+	if target.tree_exiting.is_connected(lose_target):
+		target.tree_exiting.disconnect(lose_target)
+	if is_multiplayer_authority() and not target.is_queued_for_deletion():
+		target.hunted_by(get_path(), false)
 
 
 ## The hunted Player died: turn on the next on the threat table, else another living Player still inside the
@@ -266,9 +292,11 @@ func _on_aggro_area_body_entered(body: Node3D) -> void:
 
 
 ## [param who] hurt or provoked this enemy by [param amount]: it goes on the threat table, a neutral turns hostile,
-## and whoever now tops the table is hunted. Called by weapon and projectile hits, abilities and the aggro area.
+## and whoever now tops the table is hunted. Called by [method take_hit] for the attacker it names, and by the aggro
+## area. The table is the server's: a client's copy leaves it alone, its hits reaching the server through
+## [method take_hit].
 func add_threat(who: Node, amount: float) -> void:
-	if is_dead or not who is Player or not (who as Player).health.is_alive():
+	if is_dead or not multiplayer.is_server() or not who is Player or not (who as Player).health.is_alive():
 		return
 	threat[who] = threat.get(who, 0.0) + amount
 	if disposition == Focus.Disposition.NEUTRAL:
@@ -296,30 +324,34 @@ func _hunt_top_threat() -> void:
 func register_weapon_hit(equipment: Node = null, _hit_node: Node = null) -> void:
 	var attacker: Node = (equipment as Equipment).player if equipment is Equipment else equipment
 	var from: Vector3 = (attacker as Node3D).global_position if attacker is Node3D else global_position
-	# Caught unaware (not hunting the one who struck): the sneak attack lands harder
-	var damage: float = melee_hit_damage * (sneak_attack_multiplier if target != attacker and sneak_attack_multiplier > 1.0 else 1.0)
-	take_hit(damage, from)
-	add_threat(attacker, damage)
+	# Caught unaware (not hunting the one who struck): the sneak attack lands harder. The striker's own Player knows
+	# who hunts it ([member Player.hunters]), and that is the peer a swing is registered on
+	var unaware: bool = not (attacker is Player and (attacker as Player).hunters.has(self))
+	var damage: float = melee_hit_damage * (sneak_attack_multiplier if unaware and sneak_attack_multiplier > 1.0 else 1.0)
+	take_hit(damage, from, attacker.get_path() if attacker is Node else ^"")
 
 
-## Called by a landing [Projectile]; one on the Head hurtbox kills outright.
+## Called by a landing [Projectile] (its authority's copy alone); one on the Head hurtbox kills outright.
 func register_projectile_hit(projectile: Projectile, point: Vector3, _normal: Vector3) -> void:
 	var damage: float = projectile.damage
 	if projectile.hit_part and projectile.hit_part.name == "Head":
 		damage = health.max_health
 		headshot.emit(projectile)
-	take_hit(damage, point)
-	add_threat(projectile.shooter, damage)
+	take_hit(damage, point, projectile.shooter.get_path() if is_instance_valid(projectile.shooter) else ^"")
 
 
-## Damage counts on the server; clients relay theirs. The hit reaction faces where it came from.
-func take_hit(damage: float, from: Vector3) -> void:
+## Damage counts on the server, and the attacker [param source_path] names goes on the threat table for it; clients
+## relay theirs, which the server takes only from the attacker's own peer ([method FollowerNpc._may_affect]). The
+## hit reaction faces where it came from. A negative amount does nothing.
+func take_hit(damage: float, from: Vector3, source_path: NodePath = ^"") -> void:
 	if is_dead:
 		return
 	if not multiplayer.is_server():
-		_request_hit.rpc_id(1, damage, from)
+		_request_hit.rpc_id(1, damage, from, source_path)
 		return
-	health.damage(damage, from)
+	var amount: float = maxf(damage, 0.0)
+	health.damage(amount, from)
+	add_threat(null if source_path.is_empty() else get_node_or_null(source_path), amount)
 	if not health.is_alive():
 		return
 	caster.interrupt()
@@ -328,9 +360,9 @@ func take_hit(damage: float, from: Vector3) -> void:
 
 
 @rpc("any_peer", "call_remote", "reliable")
-func _request_hit(damage: float, from: Vector3) -> void:
-	if multiplayer.is_server():
-		take_hit(damage, from)
+func _request_hit(damage: float, from: Vector3, source_path: NodePath) -> void:
+	if multiplayer.is_server() and _may_affect(source_path):
+		take_hit(damage, from, source_path)
 
 
 ## Sets the enemy ablaze for [param seconds], costing [param damage_per_second] in ticks of the BurnTickTimer; a
@@ -374,9 +406,19 @@ func can_heal() -> bool:
 	return health.can_heal()
 
 
-## Restores health; false when already full, so a heal ability is not wasted.
-func heal(amount: float) -> bool:
-	return health.heal(amount)
+## Restores health on the server; false when already full, so a heal ability is not wasted. Clients relay theirs,
+## naming the healer in [param source_path] as a hit names its attacker. A negative amount heals nothing.
+func heal(amount: float, source_path: NodePath = ^"") -> bool:
+	if not multiplayer.is_server():
+		_request_heal.rpc_id(1, amount, source_path)
+		return can_heal()
+	return health.heal(maxf(amount, 0.0))
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _request_heal(amount: float, source_path: NodePath) -> void:
+	if multiplayer.is_server() and _may_affect(source_path):
+		heal(amount, source_path)
 
 
 ## Wired to Health.died on every peer; only the authority flips the replicated flag.
@@ -532,14 +574,10 @@ func _apply_death() -> void:
 	caster.interrupt()
 	boss.disengage()
 	if is_instance_valid(target):
-		# Let go of the Player's died signal, not just the reference to them. Clearing target on its own left
-		# the callable connected, so an enemy that died and was revived connected it a second time the next
-		# time it hunted the same Player, and Godot refused the second connect. Guarded rather than
-		# unconditional because this runs on every peer while only the authority ever aggroes.
-		if target.health.died.is_connected(_on_target_died):
-			target.health.died.disconnect(_on_target_died)
-		if is_multiplayer_authority():
-			target.hunted_by(get_path(), false)
+		# Let go of the Player's signals, not just the reference to them. Clearing target on its own left the
+		# callables connected, so an enemy that died and was revived connected them a second time the next time it
+		# hunted the same Player, and Godot refused the second connect.
+		_let_go_of_target()
 	target = null
 	player = null
 	animation_tree.active = false

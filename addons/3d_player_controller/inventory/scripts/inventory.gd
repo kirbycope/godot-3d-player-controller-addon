@@ -14,10 +14,11 @@ extends CanvasLayer
 ## The inventory only signals when an item is used; the game applies the effect. With [member persist] on, the whole
 ## inventory is written to [member save_path] after every change and read back once the Player is ready.
 ##
-## Over the network the equipment is the authority's alone; every other peer's copy of the Player rebuilds the same
-## pieces from their scene paths ([method _sync_equipment]) so its stances read there, and a drop lands in every
-## world under one name ([method _spawn_dropped]) so a later pickup vanishes everywhere. Items themselves never
-## leave the owning peer.
+## The Player's inventory is the [code]Hud/Inventory[/code] node of player.tscn. Over the network the equipment is
+## the authority's alone; every other peer's copy of the Player carries the same pieces through
+## [member synced_equipment], so its stances read there. A drop goes through the world's [ProjectileSpawner], so
+## every peer, a later joiner included, gets it (without one it lands in every present world under one name,
+## [method _spawn_dropped]). Items themselves never leave the owning peer.
 
 signal equipment_changed ## Emitted after the set of equipped items changes.
 signal items_changed ## Emitted after a stack is added, removed, moved, used or dropped.
@@ -26,6 +27,18 @@ signal item_dropped(item: Item, count: int, pickup: Node3D) ## A stack (or part 
 
 const ITEM_PICKUP_SCENE: PackedScene = preload("res://addons/3d_player_controller/inventory/scenes/item_pickup.tscn")
 const ITEM_TABS: Array[Item.Category] = [Item.Category.MATERIALS, Item.Category.FOOD, Item.Category.KEY_ITEMS]
+const HEAVY_TYPES: Array[Equipment.EquipmentType] = [
+	Equipment.EquipmentType.AXE_2H,
+	Equipment.EquipmentType.FISHING_ROD,
+	Equipment.EquipmentType.STAFF,
+	Equipment.EquipmentType.SWORD_2H,
+]
+const ONE_HANDED_TYPES: Array[Equipment.EquipmentType] = [
+	Equipment.EquipmentType.AXE_1H,
+	Equipment.EquipmentType.DAGGER,
+	Equipment.EquipmentType.SWORD_1H,
+	Equipment.EquipmentType.SWORD_AND_SHIELD,
+]
 
 @export var player: Player
 @export_range(1, 100) var slots_per_tab: int = 20 ## Slots on each item tab; the grid shows them all.
@@ -103,12 +116,13 @@ func get_slot(category: Item.Category, index: int) -> ItemSlot:
 
 
 ## Adds [param count] of [param item]: onto stacks of the same item first, then into empty slots. Equipment items
-## are picked up through their [member Item.equipment_scene] instead. Returns how many did not fit.
+## are picked up through their [member Item.equipment_scene] instead, one piece at a time. Returns how many did not
+## fit.
 func add_item(item: Item, count: int = 1) -> int:
 	if item == null or count <= 0:
 		return count
 	if item.category == Item.Category.EQUIPMENT:
-		return count if not _add_equipment_item(item) else 0
+		return count if add_equipment_scene(item.equipment_scene) == null else count - 1
 	var slots: Array = get_slots(item.category)
 	var left: int = count
 	for slot: ItemSlot in slots:
@@ -150,6 +164,26 @@ func remove_item(item: Item, count: int = 1) -> int:
 	if left != count:
 		_items_changed()
 	return count - left
+
+
+## How many of [param item] [method add_item] would take now: the room on its stacks and in the empty slots of its
+## tab, or, for an equipment item, 1 while its scene could be equipped. An [ItemPickup] asks the server for no more.
+func room_for(item: Item) -> int:
+	if item == null:
+		return 0
+	if item.category == Item.Category.EQUIPMENT:
+		var piece: Node = item.equipment_scene.instantiate() if item.equipment_scene else null
+		var fits: bool = can_equip(piece as Equipment)
+		if piece:
+			piece.free()
+		return 1 if fits else 0
+	var room: int = 0
+	for slot: ItemSlot in get_slots(item.category):
+		if slot == null:
+			room += item.max_stack
+		elif slot.item.is_same(item):
+			room += maxi(item.max_stack - slot.count, 0)
+	return room
 
 
 ## How many of [param item] are carried.
@@ -226,6 +260,7 @@ func get_throwable_items() -> Array[Item]:
 
 
 ## Drops [param count] from the stack at [param index] on the ground in front of the Player as an [ItemPickup].
+## Returns the pickup in this world: null on a client whose drop comes back through the [ProjectileSpawner].
 func drop_slot(category: Item.Category, index: int, count: int = 1) -> Node3D:
 	var slot: ItemSlot = get_slot(category, index)
 	if slot == null or player == null:
@@ -235,21 +270,22 @@ func drop_slot(category: Item.Category, index: int, count: int = 1) -> Node3D:
 	slot.count -= dropped
 	if slot.count == 0:
 		get_slots(category)[index] = null
-	var pickup: Node3D = _drop(ITEM_PICKUP_SCENE.resource_path, item.resource_path, dropped)
+	var pickup: Node3D = _drop(ITEM_PICKUP_SCENE.resource_path, item, dropped)
 	_items_changed()
 	item_dropped.emit(item, dropped, pickup)
 	return pickup
 
 
-## Drops an equipped or stowed [Equipment] back into the world (its scene, in front of the Player) and forgets it.
-## Equipment that was not instanced from a scene cannot be dropped; it stays.
+## Drops an equipped or stowed [Equipment] back into the world (its scene, or a copy of the world pickup it came
+## from, in front of the Player) and forgets it. Equipment that neither can re-create cannot be dropped; it stays.
+## Returns the pickup in this world, null on a client as for [method drop_slot].
 func drop_equipment(item: Equipment) -> Node3D:
 	if player == null:
 		return null
 	var scene_path: String = forget_equipment(item)
 	if scene_path.is_empty():
 		return null
-	return _drop(scene_path, "", 0)
+	return _drop(scene_path, null, 0)
 
 
 ## Forgets an equipped or stowed [Equipment] without putting anything in the world (it was thrown, it broke) and
@@ -276,10 +312,11 @@ func forget_equipment(item: Equipment) -> String:
 func add_equipment_scene(scene: PackedScene) -> Equipment:
 	if scene == null or player == null:
 		return null
-	var pickup: Equipment = scene.instantiate() as Equipment
-	if pickup == null:
-		return null
-	return _equip_instance(pickup)
+	var pickup: Node = scene.instantiate()
+	if pickup is Equipment:
+		return _equip_instance(pickup)
+	pickup.free()
+	return null
 
 
 ## Puts [param item] back in the backpack without dropping it.
@@ -312,10 +349,13 @@ func make_save() -> InventorySave:
 			saved.index = i
 			data.slots.append(saved)
 	for item: Equipment in get_all_weapons():
-		if not _is_scene_path(item.scene_file_path):
-			continue # placed inline in a level; it cannot be re-created, so it is not saved
+		# Its own scene, or the world pickup it came from: a model file with the script put on in the level
+		# re-creates nothing by itself.
+		var origin: String = origin_of(item)
+		if origin.is_empty():
+			continue # placed inline in a level and never a pickup; nothing can re-create it, so it is not saved
 		var entry: EquipmentEntry = EquipmentEntry.new()
-		entry.scene_path = item.scene_file_path
+		entry.scene_path = origin
 		entry.equipped = equipment.has(item)
 		data.equipment.append(entry)
 	if spellbook:
@@ -394,14 +434,10 @@ func _rebuild_equipment(scene_paths: PackedStringArray, equipped: PackedByteArra
 	if player == null or player.skeleton == null:
 		return
 	for item: Equipment in get_all_weapons():
-		var attachment: BoneAttachment3D = item.get_parent() as BoneAttachment3D
-		if equipment.has(item):
-			_stow(item)
-		if attachment:
-			attachment.free()
+		_free_piece(item)
 	var instances: Array[Array] = [] # [Equipment, equipped] pairs; only the entries that came back
 	for i: int in scene_paths.size():
-		var pickup: Equipment = _pickup_from(scene_paths[i])
+		var pickup: Equipment = pickup_from(scene_paths[i], self)
 		if pickup == null:
 			continue
 		var instance: Equipment = _equip_instance(pickup)
@@ -499,14 +535,16 @@ func has_firearm_equipped() -> bool:
 	return has_equipment(Equipment.EquipmentType.PISTOL) or has_equipment(Equipment.EquipmentType.RIFLE)
 
 
-## Returns true if the player has a bow equipped.
-func has_bow_equipped() -> bool:
-	return has_equipment(Equipment.EquipmentType.BOW)
-
-
 ## Room for one more weapon or tool under [member max_equipment].
 func can_carry_equipment() -> bool:
 	return get_all_weapons().size() < max_equipment
+
+
+## Whether [method equip_pickup] would take [param pickup]: it names a bone, nothing of its type is carried on that
+## bone, and there is room under [member max_equipment].
+func can_equip(pickup: Equipment) -> bool:
+	return pickup != null and not pickup.bone_attachment_bone_name.is_empty() and can_carry_equipment() \
+			and not has_equipment_in_backpack(pickup.equipment_type, pickup.bone_attachment_bone_name)
 
 
 ## True if an item of this type on this bone is already equipped or stowed.
@@ -533,21 +571,11 @@ func has_equipment_with_capability(capability: StringName) -> bool:
 
 
 func has_heavy_weapon_equipped() -> bool:
-	return has_any_equipment([
-		Equipment.EquipmentType.AXE_2H,
-		Equipment.EquipmentType.FISHING_ROD,
-		Equipment.EquipmentType.STAFF,
-		Equipment.EquipmentType.SWORD_2H,
-	])
+	return has_any_equipment(HEAVY_TYPES)
 
 
 func has_one_handed_or_shield_equipped() -> bool:
-	return has_any_equipment([
-		Equipment.EquipmentType.AXE_1H,
-		Equipment.EquipmentType.DAGGER,
-		Equipment.EquipmentType.SWORD_1H,
-		Equipment.EquipmentType.SWORD_AND_SHIELD,
-	])
+	return has_any_equipment(ONE_HANDED_TYPES)
 
 
 func is_unarmed() -> bool:
@@ -583,9 +611,7 @@ func equip_weapon(target_item: Equipment) -> void:
 ## the item names no bone, the Player already carries one of this type on this bone, or the backpack is full.
 ## [method Equipment.equip] and the walk-over pickups come through here.
 func equip_pickup(pickup: Equipment) -> Equipment:
-	if pickup == null or player == null or pickup.bone_attachment_bone_name.is_empty() \
-			or has_equipment_in_backpack(pickup.equipment_type, pickup.bone_attachment_bone_name) \
-			or not can_carry_equipment():
+	if player == null or not can_equip(pickup):
 		return null
 
 	stow_conflicting(pickup.bone_attachment_bone_name, pickup.is_exclusive)
@@ -601,12 +627,13 @@ func equip_pickup(pickup: Equipment) -> Equipment:
 	attachment.set_multiplayer_authority(player.get_multiplayer_authority())
 	copy.set_multiplayer_authority(player.get_multiplayer_authority())
 	copy.scene_file_path = pickup.scene_file_path # so the inventory can save and drop it as its scene
-	# Where a peer finds the same piece: the pickup itself when it stands in the world on every peer, else the
-	# scene it came from. A model file alone carries no script, so a world pickup is named by its path.
-	if pickup.is_inside_tree() and not player.is_ancestor_of(pickup):
-		copy.set_meta("origin", String(pickup.get_path()))
-	elif pickup.has_meta("origin"):
+	# Where a peer finds the same piece when it has no scene of its own: the world pickup it first came from, by path,
+	# since a model file alone carries no script. A drop is a copy of that pickup and names it again rather than
+	# itself, so the drop can go once it is taken.
+	if pickup.has_meta("origin"):
 		copy.set_meta("origin", pickup.get_meta("origin"))
+	elif pickup.is_inside_tree() and not player.is_ancestor_of(pickup):
+		copy.set_meta("origin", String(pickup.get_path()))
 	attachment.add_child(copy)
 	# Disable world collision but keep the "Hitbox" and "WeaponBody" shapes so HitDetection can use them.
 	for shape: Node in copy.find_children("*", "CollisionShape3D", true, false):
@@ -670,11 +697,6 @@ func _empty_tab() -> Array:
 	return tab
 
 
-## An equipment item is picked up by instancing its scene and equipping it, as a walk-over pickup would.
-func _add_equipment_item(item: Item) -> bool:
-	return add_equipment_scene(item.equipment_scene) != null
-
-
 ## Equips a freshly instanced [param pickup] the way walking over it would: on the Player for the moment it
 ## equips, since [method equip_pickup] applies the scene's hand offsets only while the pickup is in the tree,
 ## then freed. Returns the copy on the skeleton, or null when the equip was refused.
@@ -686,46 +708,78 @@ func _equip_instance(pickup: Equipment) -> Equipment:
 	return instance
 
 
-## Puts [param scene_path] on the ground a metre in front of the Player, on every peer under one name so a later
-## take vanishes it everywhere; an [ItemPickup] carries [param item_path] and [param count]. An item with no
-## resource path cannot travel, so that drop is this peer's alone. Returns the copy in this world.
-func _drop(scene_path: String, item_path: String, count: int) -> Node3D:
+## Takes [param item] off the Player for good: out of the equipped set, and freed with its attachment.
+func _free_piece(item: Equipment) -> void:
+	var attachment: BoneAttachment3D = item.get_parent() as BoneAttachment3D
+	if equipment.has(item):
+		_stow(item)
+	if attachment:
+		attachment.free()
+
+
+## Puts a pickup on the ground a metre in front of the Player: [param scene_path]'s scene, or for a path starting
+## with "/" a copy of the world pickup there, holding [param count] of [param item] when it is an [ItemPickup].
+## Through the world's [ProjectileSpawner] when there is one, so every peer and every later joiner gets it; without
+## one it lands in every present world under one name ([method _spawn_dropped]). An item made at run time has no
+## path to send and lands on this peer alone. Returns the copy in this world, null on a client whose drop comes
+## back through the spawner.
+func _drop(scene_path: String, item: Item, count: int) -> Node3D:
 	var facing: Vector3 = player.get_facing_direction()
 	if facing == Vector3.ZERO:
 		facing = Vector3.FORWARD
-	var at: Transform3D = Transform3D(Basis(), player.global_position + facing.normalized() * 1.0 + player.up_direction * 0.2)
+	var at: Vector3 = player.global_position + facing.normalized() * 1.0 + player.up_direction * 0.2
+	if item and item.resource_path.is_empty():
+		var local: ItemPickup = ITEM_PICKUP_SCENE.instantiate()
+		local.item = item
+		local.count = count
+		local.local_only = true
+		player.get_parent().add_child(local)
+		local.global_position = at
+		return local
+	var item_path: String = item.resource_path if item else ""
+	var spawner: ProjectileSpawner = ProjectileSpawner.find_for(self)
+	if spawner:
+		var extra: Dictionary = {"shooter": String(player.get_path())} # the dropper, who must be the sender's own
+		if item:
+			extra["item"] = item_path
+			extra["count"] = count
+		if scene_path.begins_with("/"):
+			extra["world_pickup"] = scene_path
+			return spawner.place(null, at, extra)
+		return spawner.place(load(scene_path) as PackedScene, at, extra)
 	_drop_counter += 1
 	var node_name: String = "Dropped_%d_%d" % [multiplayer.get_unique_id(), _drop_counter]
-	if scene_path == ITEM_PICKUP_SCENE.resource_path and item_path.is_empty():
-		_spawn_dropped(scene_path, at, node_name, item_path, count)
-	else:
-		_spawn_dropped.rpc(scene_path, at, node_name, item_path, count)
+	_spawn_dropped.rpc(scene_path, at, node_name, item_path, count)
 	return player.get_parent().get_node_or_null(node_name)
 
 
-## Every peer puts the dropped [param scene_path] in its world as [param node_name] at [param at]; see [method _drop].
-@rpc("any_peer", "call_local", "reliable")
-func _spawn_dropped(scene_path: String, at: Transform3D, node_name: String, item_path: String, count: int) -> void:
-	var pickup: Node3D = _pickup_from(scene_path) if scene_path.begins_with("/") else (load(scene_path) as PackedScene).instantiate() as Node3D
+## Every peer puts the dropped [param scene_path] (an [ItemPickup], or an [Equipment] by [method pickup_from]) in its
+## world as [param node_name] at [param at], for a world without a [ProjectileSpawner]; see [method _drop]. Only the
+## Player's own peer, the Inventory's authority, sends it.
+@rpc("authority", "call_local", "reliable")
+func _spawn_dropped(scene_path: String, at: Vector3, node_name: String, item_path: String, count: int) -> void:
+	var pickup: Node3D = null
+	if scene_path == ITEM_PICKUP_SCENE.resource_path:
+		pickup = ITEM_PICKUP_SCENE.instantiate()
+	else:
+		pickup = pickup_from(scene_path, self)
 	if pickup == null:
 		return
 	pickup.name = node_name
-	if not item_path.is_empty():
-		pickup.set("item", load(item_path))
-		pickup.set("count", count)
+	if pickup is ItemPickup:
+		(pickup as ItemPickup).item = load(item_path) as Item if not item_path.is_empty() else null
+		(pickup as ItemPickup).count = count
 	player.get_parent().add_child(pickup)
-	pickup.global_transform = at
-	# A walk-over pickup lands inside its own reach; it ignores the Player who dropped it until they step away
-	pickup.set_meta("dropped_by", player)
-	var detection: Area3D = pickup.get_node_or_null("PlayerDetection") as Area3D
-	if detection:
-		detection.body_exited.connect(_on_dropped_equipment_body_exited.bind(pickup))
+	pickup.global_position = at
+	if pickup is Equipment:
+		(pickup as Equipment).set_dropped_by(player) # it lands inside its own reach, on the Player who dropped it
 
 
 ## What the authority carries, for the Player's synchronizer to carry to every peer's copy
-## ([code]Hud/Inventory:synced_equipment[/code] in player.tscn, sent at spawn and on change): the scene path of each
-## weapon, true while it is equipped. The authority writes it after every change ([method _publish_equipment]); a
-## puppet's copy rebuilds the pieces on its skeleton from it, visual only, registering no actions and writing no save.
+## ([code]Hud/Inventory:synced_equipment[/code] in player.tscn, sent at spawn and on change): what names each weapon
+## ([method origin_of]), true while it is equipped. The authority writes it after every change
+## ([method _publish_equipment]); a puppet's copy follows it on its skeleton ([method _apply_synced_equipment]),
+## visual only, registering no actions and writing no save.
 var synced_equipment: Dictionary = {} :
 	set(value):
 		synced_equipment = value
@@ -746,31 +800,37 @@ func _publish_equipment() -> void:
 	synced_equipment = carried
 
 
-## A puppet's copy rebuilds the authority's pieces from [member synced_equipment].
+## A puppet's copy follows [member synced_equipment]: a piece it already carries stays and is stowed or equipped to
+## match, only a new one is instanced and only one that is gone is freed. A tap that swaps weapons moves two pieces
+## rather than rebuilding them all, and a stow is heard as a stow alone.
 func _apply_synced_equipment() -> void:
-	if is_multiplayer_authority():
+	if is_multiplayer_authority() or player == null or player.skeleton == null:
 		return
-	var scene_paths: PackedStringArray = []
-	var equipped: PackedByteArray = []
-	for origin: String in synced_equipment:
-		scene_paths.append(origin)
-		equipped.append(1 if synced_equipment[origin] else 0)
 	_loading = true
-	_rebuild_equipment(scene_paths, equipped)
+	var carried: Dictionary[String, Equipment] = {}
+	for item: Equipment in get_all_weapons():
+		var origin: String = origin_of(item)
+		if synced_equipment.has(origin) and not carried.has(origin):
+			carried[origin] = item
+		else:
+			_free_piece(item)
+	for origin: String in synced_equipment:
+		if not carried.has(origin):
+			var pickup: Equipment = pickup_from(origin, self)
+			var instance: Equipment = _equip_instance(pickup) if pickup else null
+			if instance:
+				carried[origin] = instance
+	for origin: String in carried: # stows first, so an equip never pushes aside a piece that is leaving anyway
+		if not synced_equipment[origin]:
+			stow_equipment(carried[origin])
+	for origin: String in carried:
+		if synced_equipment[origin]:
+			equip_weapon(carried[origin])
 	_loading = false
 
 
-## The Player who dropped a piece of equipment has walked off it; it can be picked up again.
-func _on_dropped_equipment_body_exited(body: Node3D, pickup: Node3D) -> void:
-	if is_instance_valid(pickup) and pickup.has_meta("dropped_by") and body == pickup.get_meta("dropped_by"):
-		pickup.remove_meta("dropped_by")
-
-
-## Whether a peer can re-create a piece from [param path]: any scene the loader knows, which is a .tscn as much
-## as an imported .fbx or .glb, since a project's weapons are often the model file itself. A node placed inline
-## in a level has no path and stays where it is.
-## What names [param item] to a peer: the scene it was instanced from when that scene is its own (a .tscn
-## carries the script and the settings), else the world pickup it came from, by path, which is what a model
+## What names [param item] to a peer and in a save: the scene it was instanced from when that scene is its own (a
+## .tscn carries the script and the settings), else the world pickup it came from, by path, which is what a model
 ## file with the script put on in the level needs. Empty for a piece placed inline that was never a pickup.
 func origin_of(item: Equipment) -> String:
 	if item == null:
@@ -787,11 +847,13 @@ static func has_own_scene(item: Equipment) -> bool:
 	return item != null and (item.scene_file_path.ends_with(".tscn") or item.scene_file_path.ends_with(".scn"))
 
 
-## A fresh pickup for [param origin]: a copy of the world pickup at that path, or an instance of that scene.
-## Null when neither is there. A copy of a spent pickup is made whole again, so it can be worn or walked over.
-func _pickup_from(origin: String) -> Equipment:
+## A fresh pickup for [param origin] ([method origin_of]): a copy of the world pickup at that path, looked up from
+## [param from] (any node in the tree), or an instance of that scene. Null when neither is there or the scene is no
+## [Equipment] (a bare model file, whose instance is freed). A copy of a spent pickup is made whole again, so it
+## can be worn or walked over.
+static func pickup_from(origin: String, from: Node) -> Equipment:
 	if origin.begins_with("/"):
-		var source: Equipment = get_node_or_null(origin) as Equipment
+		var source: Equipment = from.get_node_or_null(origin) as Equipment
 		if source == null:
 			return null
 		var pickup: Equipment = source.duplicate() as Equipment
@@ -802,9 +864,16 @@ func _pickup_from(origin: String) -> Equipment:
 			detection.monitoring = true
 		pickup.set_meta("origin", origin)
 		return pickup
-	var scene: PackedScene = load(origin) as PackedScene if _is_scene_path(origin) else null
-	return scene.instantiate() as Equipment if scene else null
+	var node: Node = (load(origin) as PackedScene).instantiate() if _is_scene_path(origin) else null
+	if node is Equipment:
+		return node
+	if node:
+		node.free()
+	return null
 
 
+## Whether a peer can re-create a piece from [param path]: any scene the loader knows, which is a .tscn as much
+## as an imported .fbx or .glb, since a project's weapons are often the model file itself. A node placed inline
+## in a level has no path.
 static func _is_scene_path(path: String) -> bool:
 	return ResourceLoader.exists(path) and ResourceLoader.get_resource_type(path) == "PackedScene"

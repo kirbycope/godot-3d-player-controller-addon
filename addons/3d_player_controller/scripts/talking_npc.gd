@@ -5,9 +5,13 @@ extends FollowerNpc
 ## is the game's own (a dialogue addon such as Dialogic): it listens for [signal talked_to], runs its conversation
 ## and calls [method end_talk] when the conversation is over. Left with no [member FollowerNpc.player] they stand
 ## where they are; given one they follow, as any FollowerNpc does. The walk and run blend replicates like the enemy's.
+##
+## Multiplayer: the server decides who is talking. [method talk] and [method end_talk] ask it; it sends the start and
+## the end of the conversation to every peer, so [member talker] is the same everywhere and the NPC turns to a
+## client as it does to the host. The talker's own peer is held still and gets the signals, as its dialogue runs there.
 
-signal talked_to(player: Player) ## [param player] pressed Action on this NPC: the game's cue to start a conversation.
-signal conversation_ended(player: Player) ## [method end_talk] was called: the conversation with [param player] is over.
+signal talked_to(player: Player) ## [param player] pressed Action on this NPC: the game's cue to start a conversation. On the talker's own peer.
+signal conversation_ended(player: Player) ## [method end_talk] was called: the conversation with [param player] is over. On the talker's own peer.
 
 const LOCOMOTION_BLEND_PATH: String = "parameters/blend_position"
 
@@ -17,7 +21,7 @@ const LOCOMOTION_BLEND_PATH: String = "parameters/blend_position"
 @export var faces_talker: bool = true ## Turns on the spot to face whoever they are attending to, yaw only; the head modifier does the rest.
 @export var head_tracks_player: bool = true ## Turns the head alone to the Player's own head, on top of whatever the body is doing.
 
-var talker: Player ## Who is in conversation with this NPC, while one is.
+var talker: Player ## Who is in conversation with this NPC, while one is; the same on every peer, sent by the server.
 var _attention: Player ## Who this NPC has noticed: the one being offered a prompt, or the one being talked to.
 var _control_speed: float = 0.0
 var locomotion_blend: float = 0.0: ## Replicated: 0 idle, 0.5 walk, 1 run.
@@ -94,27 +98,61 @@ func equip(who: Player) -> void:
 
 
 ## Begins a conversation with [param who]: the prompt goes, the Player stands still ([member pauses_talker]), the
-## NPC faces them and [signal talked_to] fires for the game to take it from there. False while already talking.
+## NPC faces them and [signal talked_to] fires for the game to take it from there. False while already talking. The
+## server decides: it starts the conversation on every peer unless somebody got there first.
 func talk(who: Player) -> bool:
 	if talker or who == null:
 		return false
-	hide_menu()
-	talker = who
-	if pauses_talker:
-		who.is_paused = true
-	notice(who)
-	talked_to.emit(who)
+	_request_talk.rpc_id(1, get_path_to(who))
 	return true
 
 
 ## The game's conversation is over: lets the Player go, emits [signal conversation_ended], and offers the prompt
-## again while the Camera still has this NPC as its target.
+## again while the Camera still has this NPC as its target. The server ends it on every peer.
 func end_talk() -> void:
-	if talker == null:
+	if talker:
+		_request_end_talk.rpc_id(1)
+
+
+## A [method talk], on the server: for a Player of the sender's own ([param who_path], from this node, the same on
+## every peer), while nobody is talking.
+@rpc("any_peer", "call_local", "reliable")
+func _request_talk(who_path: NodePath) -> void:
+	var who: Player = get_node_or_null(who_path) as Player
+	var sender: int = multiplayer.get_remote_sender_id()
+	if multiplayer.is_server() and talker == null and who and (sender == multiplayer.get_unique_id() or who.get_multiplayer_authority() == sender):
+		_begin_talk.rpc(who_path)
+
+
+## An [method end_talk], on the server: from the talker's own peer (or the server).
+@rpc("any_peer", "call_local", "reliable")
+func _request_end_talk() -> void:
+	var sender: int = multiplayer.get_remote_sender_id()
+	if multiplayer.is_server() and talker and (sender == multiplayer.get_unique_id() or talker.get_multiplayer_authority() == sender):
+		_end_talk.rpc()
+
+
+## The conversation starts, on every peer.
+@rpc("authority", "call_local", "reliable")
+func _begin_talk(who_path: NodePath) -> void:
+	var who: Player = get_node_or_null(who_path) as Player
+	if who == null:
 		return
+	talker = who
+	hide_menu()
+	notice(who)
+	if who.is_multiplayer_authority():
+		if pauses_talker:
+			who.is_paused = true
+		talked_to.emit(who)
+
+
+## The conversation ends, on every peer.
+@rpc("authority", "call_local", "reliable")
+func _end_talk() -> void:
 	var was: Player = talker
 	talker = null
-	if is_instance_valid(was):
+	if is_instance_valid(was) and was.is_multiplayer_authority():
 		if pauses_talker:
 			was.is_paused = false
 		conversation_ended.emit(was)

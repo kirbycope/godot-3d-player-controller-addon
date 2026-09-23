@@ -3,7 +3,9 @@ extends GutTest
 ## Purpose: the pause menu pauses the scene tree only when the Player plays alone: offline (no peer, Steam not
 ## loaded) and as a connected host nobody has joined. A client never pauses the world, a peer joining a paused
 ## host resumes it with the menu still up, a sub-menu opened from Pause keeps the pause until it closes, closing
-## resumes, and a menu freed while paused resumes. Two branches over ENet on localhost stand in for the Steam session.
+## resumes, and a menu freed while paused resumes. Restart shows only while playing alone. Two branches over ENet on
+## localhost stand in for the Steam session. The menus also cope with no "start" action (a title screen with no
+## Player), and a Player freed in the frame it spawned takes its menu screens with it.
 
 const PORT: int = 47397
 const PLAYER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player.tscn")
@@ -34,6 +36,7 @@ func test_offline_the_pause_menu_pauses_the_world_and_resume_runs_it_again() -> 
 	assert_true(player.pause.is_single_player(), "No peer means playing alone")
 	assert_eq(player.pause.process_mode, Node.PROCESS_MODE_ALWAYS, "The menu keeps working while the tree is paused")
 	player.pause.show_menu()
+	assert_true(player.pause.restart_button.visible, "Alone, Restart is offered")
 	assert_true(get_tree().paused, "The world stands still")
 	assert_true(player.is_paused)
 	assert_eq(Engine.time_scale, 0.0, "and so does the engine clock, which stops shaders, particles and tweens")
@@ -114,11 +117,13 @@ func test_only_a_connected_host_alone_pauses_and_a_joining_peer_resumes() -> voi
 	host.pause.show_menu()
 	assert_false(get_tree().paused, "Pausing again in company only pauses the Player")
 	assert_true(host.is_paused)
+	assert_false(host.pause.restart_button.visible, "Restart would reload the host's world under its clients, so it is gone")
 	host.pause.hide_menu()
 
 	assert_false(guest.pause.is_single_player(), "A client is never alone")
 	guest.pause.show_menu()
 	assert_false(get_tree().paused, "so its pause menu never pauses the world")
+	assert_false(guest.pause.restart_button.visible, "and a client never restarts, which would leave it with no Player")
 	guest.pause.hide_menu()
 
 	var server_path: NodePath = server_root.get_path()
@@ -133,7 +138,7 @@ func test_only_a_connected_host_alone_pauses_and_a_joining_peer_resumes() -> voi
 
 ## Unstuck is the Player's own warp home, the one respawn uses.
 func test_unstuck_warps_the_player_back_to_where_it_started() -> void:
-	var home: Transform3D = player.initial_transform
+	var home: Transform3D = player.respawn_transform
 	player.global_position += Vector3(5.0, 3.0, -2.0)
 	player.velocity = Vector3(1.0, 2.0, 3.0)
 	var pause: Node = player.pause
@@ -160,3 +165,36 @@ func test_a_tree_resumed_behind_the_menus_back_thaws_the_clock_next_frame() -> v
 	assert_eq(Engine.time_scale, 1.0, "A running tree never keeps a frozen clock")
 	player.pause.hide_menu()
 
+
+
+## A title screen shows the settings pages with no Player, where the controls addon may never have registered
+## "start": the menus check for the action before asking about it, rather than erroring on every key.
+func test_the_menus_ask_nothing_of_a_start_action_that_does_not_exist() -> void:
+	var events: Array[InputEvent] = InputMap.action_get_events(&"start") if InputMap.has_action(&"start") else []
+	if InputMap.has_action(&"start"):
+		InputMap.erase_action(&"start")
+	var key: InputEventKey = InputEventKey.new()
+	key.keycode = KEY_ESCAPE
+	key.pressed = true
+	player.pause._input(key)
+	player.settings.show_menu()
+	player.settings._input(key)
+	assert_true(player.settings.visible, "Nothing happened, and nothing errored")
+	player.settings.hide_menu()
+	InputMap.add_action(&"start")
+	for event: InputEvent in events:
+		InputMap.action_add_event(&"start", event)
+
+
+## The pause menu's screens (inventory, spells, quests) join the Player as it readies. A deferred add was dropped
+## for a Player freed before the frame ended, and its screens were left orphaned.
+func test_a_player_freed_as_it_spawns_leaves_no_menu_screens_behind() -> void:
+	await wait_process_frames(1)
+	var before: int = int(Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT))
+	var brief: Player = PLAYER_SCENE.instantiate()
+	root.add_child(brief)
+	assert_not_null(brief.pause.quests_screen, "The screens exist")
+	assert_eq(brief.pause.quests_screen.get_parent(), brief, "and are the Player's already")
+	brief.free()
+	await wait_process_frames(1)
+	assert_eq(int(Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT)), before, "Nothing is left orphaned")

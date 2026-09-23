@@ -7,9 +7,6 @@ extends CanvasLayer
 @export_file("*.tscn") var title_scene: String = "" ## Loaded by BACK.
 @export var footer_text: String = "" ## Shown bottom-right with the current year appended, e.g. a copyright line.
 
-## Steam singleton when the GodotSteam extension is present, otherwise null; read through [method _steam_session].
-var _steam: Object = Engine.get_singleton("Steam") if Engine.has_singleton("Steam") else null
-
 @onready var loading: Loading = $Loading
 @onready var host_button: Button = %Button_Host
 @onready var refresh_button: Button = %Button_Refresh
@@ -27,7 +24,7 @@ func _ready() -> void:
 	label_version.text = version if version.begins_with("v") else "v" + version
 	label_copyright.text = "%s %d" % [footer_text, Time.get_date_dict_from_system().year] if not footer_text.is_empty() else ""
 
-	var steam: Object = _steam_session()
+	var steam: Object = SteamPeer.session(self)
 	if steam == null:
 		status_label.text = "Steam is not running. Lobby features disabled."
 		host_button.disabled = true
@@ -39,7 +36,7 @@ func _ready() -> void:
 
 
 func refresh_lobbies() -> void:
-	var steam: Object = _steam_session()
+	var steam: Object = SteamPeer.session(self)
 	if steam == null:
 		return
 	_clear_lobby_list()
@@ -83,7 +80,7 @@ func _on_touch_back_pressed() -> void:
 
 func _on_join_lobby_requested(lobby_id: int) -> void:
 	status_label.text = "Joining lobby %d..." % lobby_id
-	var steam: Object = _steam_session()
+	var steam: Object = SteamPeer.session(self)
 	if steam != null:
 		steam.joinLobby(lobby_id)
 
@@ -104,25 +101,14 @@ func _on_lobby_match_list(lobbies: Array) -> void:
 		entry.join_requested.connect(_on_join_lobby_requested)
 
 
-func _on_lobby_joined(lobby_id: int, _permissions: int, _locked: int, response: int) -> void:
+## Any lobby joined, from the list or from a Steam invite; the Steamworks autoload has already made it its lobby_id.
+func _on_lobby_joined(lobby_id: int, _permissions: int, _locked: bool, response: int) -> void:
 	# ChatRoomEnterResponse.CHAT_ROOM_ENTER_RESPONSE_SUCCESS == 1
 	if response != 1:
 		status_label.text = "Failed to join lobby (Response code: %d)" % response
 		return
 	status_label.text = "Joined lobby %d! Loading world..." % lobby_id
-	var steamworks: Node = get_node_or_null("/root/Steamworks")
-	if steamworks:
-		steamworks.set("lobby_id", lobby_id)
 	if not world_scene.is_empty():
 		loading.load_scene(world_scene)
 #endregion
 
-
-## The Steam singleton while the Steamworks session is up, else null. The client running is not enough: the
-## session only initialises on a desktop Forward+ build, and every lobby call errors before it has, so the
-## reads wait for [code]/root/Steamworks[/code] to report a signed-in [code]steam_id[/code].
-func _steam_session() -> Object:
-	var steamworks: Node = get_node_or_null("/root/Steamworks")
-	if steamworks == null or steamworks.get("steam_id") == 0:
-		return null
-	return _steam

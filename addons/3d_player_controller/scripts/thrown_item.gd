@@ -70,7 +70,7 @@ func _on_body_entered(body: Node) -> void:
 	if damage > 0.0:
 		var target: Node = _find_hit_target(body)
 		if target:
-			target.call("take_hit", damage, global_position)
+			Ability.affect(target, &"take_hit", [damage, global_position], thrower)
 	land.call_deferred() # out of the physics callback before nodes are added
 
 
@@ -83,13 +83,14 @@ func land() -> void:
 	var scene: PackedScene = equipment_scene if equipment_scene else ITEM_PICKUP_SCENE
 	var spawner: ProjectileSpawner = ProjectileSpawner.find_for(self)
 	if spawner and (equipment_scene or (item and not item.resource_path.is_empty())):
-		var extra: Dictionary = {} if equipment_scene else {"resources": {"item": item.resource_path}, "properties": {"count": 1}}
+		var extra: Dictionary = {} if equipment_scene else {"item": item.resource_path, "count": 1}
 		spawner.place(scene, global_position, extra)
 	elif equipment_scene or item:
 		var pickup: Node3D = scene.instantiate() as Node3D
 		if equipment_scene == null:
 			pickup.set("item", item)
 			pickup.set("count", 1)
+			pickup.set("local_only", true) # on this peer alone, so it is taken without asking the server
 		get_parent().add_child(pickup)
 		pickup.global_position = global_position
 	queue_free()

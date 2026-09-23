@@ -11,6 +11,8 @@ const KEY: Item = preload("res://addons/3d_player_controller/inventory/resources
 const SWORD: Item = preload("res://addons/3d_player_controller/inventory/resources/items/wooden_sword.tres")
 const HEAL: Ability = preload("res://addons/3d_player_controller/resources/abilities/heal.tres")
 const TEST_SAVE: String = "user://test_inventory.tres"
+const MODEL: String = "res://addons/3d_player_controller/assets/quaternius/paraglider/Paraglider.glb" ## A model file, no script of its own.
+const EQUIPMENT_SCRIPT: Script = preload("res://addons/3d_player_controller/scripts/equipment.gd")
 const ContractActions: GDScript = preload("res://addons/3d_player_controller/inventory/tests/contract_actions.gd")
 
 var root: Node3D
@@ -372,7 +374,8 @@ func test_autosave_writes_once_per_frame_however_many_changes() -> void:
 	assert_true(loaded.inventory.has_item(KEY), "with the last change in it")
 
 
-## A drop lands in every peer's world under one name, "Dropped_<peer>_<n>", so a later take vanishes it everywhere.
+## Without a ProjectileSpawner a drop lands in every peer's world under one name, "Dropped_<peer>_<n>", so a later
+## take vanishes it everywhere; only the dropping Player's own peer, the Inventory's authority, may send it.
 func test_drops_are_named_per_peer_and_travel_by_rpc() -> void:
 	inventory.add_item(APPLE, 2)
 	var first: Node3D = inventory.drop_slot(Item.Category.FOOD, 0, 1)
@@ -383,7 +386,7 @@ func test_drops_are_named_per_peer_and_travel_by_rpc() -> void:
 	assert_eq(first.get("item"), APPLE)
 	assert_eq(first.get("count"), 1)
 	var config: Dictionary = (inventory.get_script() as Script).get_rpc_config()
-	assert_eq(config["_spawn_dropped"]["rpc_mode"], MultiplayerAPI.RPC_MODE_ANY_PEER, "Any peer's drop lands in every world")
+	assert_eq(config["_spawn_dropped"]["rpc_mode"], MultiplayerAPI.RPC_MODE_AUTHORITY, "Only the Player's own peer drops into every world")
 	assert_true(config["_spawn_dropped"]["call_local"])
 	assert_false(config.has("_sync_equipment"), "Equipment is no RPC: it rides the PlayerSynchronizer as synced_equipment")
 	var player_state: SceneState = (load("res://addons/3d_player_controller/scenes/player.tscn") as PackedScene).get_state()
@@ -414,3 +417,60 @@ func test_any_loadable_scene_can_travel_to_a_peer() -> void:
 		pass_test("no imported model in the addon to try; the loader check covers it")
 		return
 	assert_true(Inventory._is_scene_path(models[0]), "an imported model is a scene too: %s" % models[0])
+
+
+## A weapon standing in a level as the model file with the Equipment script put on there, the way v3's axes and
+## swords are: as the pickup it came from, as the save names it.
+func _model_weapon(weapon_name: String) -> Equipment:
+	var model: Node = (load(MODEL) as PackedScene).instantiate()
+	model.set_script(EQUIPMENT_SCRIPT)
+	var weapon: Equipment = model as Equipment
+	weapon.name = weapon_name
+	weapon.equipment_type = Equipment.EquipmentType.AXE_1H
+	weapon.bone_attachment_bone_name = "RightHand"
+	root.add_child(weapon)
+	return weapon
+
+
+## The model file alone re-creates nothing, so the save names the world pickup the axe came from and a load
+## duplicates that pickup, as a peer does; before, the save held the model file and the axe was gone after a restart.
+func test_a_weapon_whose_scene_is_a_model_file_survives_a_save_and_a_load() -> void:
+	var axe: Equipment = _model_weapon("WorldAxe")
+	assert_true(axe.equip(player), "The Player picks the axe up")
+	var entries: Array[EquipmentEntry] = inventory.make_save().equipment
+	assert_eq(entries.size(), 1)
+	assert_eq(entries[0].scene_path, String(axe.get_path()), "The save names the pickup it came from, not the model file")
+	assert_true(entries[0].equipped)
+	assert_eq(inventory.save(), OK)
+	var loaded: Player = _spawn_player()
+	await wait_physics_frames(2)
+	assert_true(loaded.inventory.load_save())
+	assert_true(loaded.inventory.has_equipment(Equipment.EquipmentType.AXE_1H), "The axe is back in hand after a restart")
+	assert_eq(loaded.inventory.origin_of(loaded.inventory.get_equipment_by_type(Equipment.EquipmentType.AXE_1H)), String(axe.get_path()))
+
+
+## An instance of a scene that turns out to be no Equipment (a bare model file) is freed, not left lying about.
+func test_a_scene_that_is_no_equipment_is_freed_rather_than_leaked() -> void:
+	var orphans: int = int(Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT))
+	assert_null(Inventory.pickup_from(MODEL, root), "A model file alone is no Equipment")
+	assert_null(inventory.add_equipment_scene(load(MODEL) as PackedScene), "and cannot be equipped")
+	assert_eq(int(Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT)), orphans, "The instances it made were freed")
+
+
+## An equipment item puts one piece in hand, however many the stack says; the rest are left over.
+func test_adding_an_equipment_item_takes_one_piece_of_the_stack() -> void:
+	assert_eq(inventory.add_item(SWORD, 3), 2, "One sword goes in hand, two are left")
+	assert_eq(inventory.get_all_weapons().size(), 1)
+	assert_eq(inventory.add_item(SWORD, 3), 3, "A second of the same type on the same bone is refused, all three left")
+
+
+## What an ItemPickup asks the server for: the room on the item's stacks and in the empty slots of its tab.
+func test_room_for_counts_the_space_an_item_would_take() -> void:
+	assert_eq(inventory.room_for(APPLE), APPLE.max_stack * inventory.slots_per_tab, "An empty tab takes a full stack per slot")
+	inventory.add_item(APPLE, APPLE.max_stack * inventory.slots_per_tab - 3)
+	assert_eq(inventory.room_for(APPLE), 3, "A nearly full tab has three places left")
+	assert_eq(inventory.room_for(KEY), inventory.slots_per_tab, "Other tabs are untouched")
+	assert_eq(inventory.room_for(SWORD), 1, "An equipment item fits once while it could be equipped")
+	inventory.add_item(SWORD)
+	assert_eq(inventory.room_for(SWORD), 0, "and not while one of its type is on that bone")
+	assert_eq(inventory.room_for(null), 0)

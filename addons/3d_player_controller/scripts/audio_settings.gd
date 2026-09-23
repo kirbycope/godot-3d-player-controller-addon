@@ -26,12 +26,7 @@ func _ready() -> void:
 	mute_voice.set_pressed_no_signal(settings_res.voice_muted)
 	mic_sensitivity.set_value_no_signal(settings_res.voice_sensitivity)
 	voice_activation.set_pressed_no_signal(settings_res.voice_activation)
-	voice_activation.toggled.connect(_on_voice_activation_toggled)
-	# The mark is the level that counts as speaking, so the instruction and the threshold are one thing
-	mic_sensitivity.normal_value = mic_sensitivity.min_value \
-			+ Player.VOICE_ACTIVATION_LEVEL * (mic_sensitivity.max_value - mic_sensitivity.min_value)
 	_refresh_microphone_text()
-	mic_sensitivity.value_changed.connect(_on_mic_sensitivity_changed)
 	voice_settings.visible = is_steam_loaded()
 	set_process(true)
 
@@ -41,10 +36,6 @@ func _on_voice_activation_toggled(toggled_on: bool) -> void:
 	settings_res.voice_activation = toggled_on
 	settings_res.save()
 	_refresh_microphone_text()
-
-
-func _on_voice_activation_touch_screen_button_pressed() -> void:
-	voice_activation.button_pressed = not voice_activation.button_pressed # Emits toggled
 
 
 ## The label and the tip say what the bar is for, which depends on how you are transmitting.
@@ -90,15 +81,15 @@ func microphone_hint() -> String:
 ## The bar shows what the microphone is hearing right now, so the handle can be set by talking rather than by
 ## guessing. Only while the menu is open, and only for the Player whose settings these are.
 func _process(_delta: float) -> void:
-	if not visible or player == null:
+	if not visible or player == null or player.voice_chat == null:
 		return
-	mic_sensitivity.level = player.voice_loudness
+	mic_sensitivity.level = player.voice_chat.voice_loudness
 
 
-## Saved as it moves; a drag ends wherever the player lets go and there is no separate confirm.
+## Kept as it moves and written when the menu closes, like the volume sliders: a drag is many steps, and saving on
+## each would write the file every time (IndexedDB on the web).
 func _on_mic_sensitivity_changed(value: float) -> void:
 	settings_res.voice_sensitivity = value
-	settings_res.save()
 
 
 ## Voice chat runs on Steam only, so its rows show only with the Steam singleton; a test overrides this to see both layouts.

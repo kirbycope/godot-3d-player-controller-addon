@@ -3,7 +3,8 @@ extends Node
 ## Puts the owner's name and health on the HUD boss bar of the player it is fighting, Breath of the Wild style.
 ##
 ## The authority calls [method engage] with the hunted player's peer id; `target_peer` replicates, and the
-## peer that owns that player shows the bar on its own Controls. Health follows through the [Health] signals.
+## peer that owns that player shows the bar on its own Controls. Health follows through [signal Health.health_changed],
+## wired to [method _on_health_changed] in the scene that puts the Boss beside its [Health] (enemy_npc.tscn).
 
 @export var boss_name: String = "Boss"
 @export var health: Health
@@ -16,7 +17,6 @@ var _shown_on: Node = null ## The Controls currently showing this boss.
 
 
 func _ready() -> void:
-	health.health_changed.connect(_on_health_changed)
 	_refresh()
 
 

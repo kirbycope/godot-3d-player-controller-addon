@@ -54,7 +54,7 @@ func test_paragliding_thermal_updraft_and_steep_dive() -> void:
 	paragliding_node._physics_process(0.1)
 	assert_lt(player.velocity.y, 0.0, "Normal paragliding should have gentle descent")
 
-	# 2. Test steep dive (dive action is "sprint" — crouch cancels the glide)
+	# 2. Test steep dive (dive action is "sprint"; crouch cancels the glide)
 	Input.action_press("sprint")
 	player.velocity = Vector3(0, 0, 0)
 	paragliding_node._physics_process(0.5)
@@ -244,3 +244,54 @@ func test_a_shapeless_area_nearby_is_no_updraft() -> void:
 	updraft.global_position = player.global_position + Vector3(3.0, 0.0, 0.0)
 	await wait_physics_frames(2)
 	assert_false(player.is_in_updraft(), "An empty area three metres off grants no lift")
+
+
+## The overlap comes from the Player's UpdraftDetection area, so an updraft freed while the Player is inside it is
+## simply gone, with no dead reference left to trip over.
+func test_a_freed_updraft_is_no_updraft() -> void:
+	var player: Player = PLAYER_SCENE.instantiate() as Player
+	add_child_autofree(player)
+	var updraft := Area3D.new()
+	updraft.add_to_group("Updraft")
+	var col := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(20, 20, 20)
+	col.shape = box
+	updraft.add_child(col)
+	add_child(updraft)
+	updraft.global_position = player.global_position
+	await wait_physics_frames(2)
+	assert_true(player.is_in_updraft())
+	updraft.free()
+	assert_false(player.is_in_updraft(), "A freed updraft lifts nobody")
+	await wait_physics_frames(2)
+	assert_false(player.is_in_updraft(), "and nothing is left of it")
+
+
+## An UpdraftAura a game hangs on its Player is a node of that Player on every peer, so a puppet shows it too
+## when its copy stands in a thermal; it starts hidden with its particles off.
+func test_the_updraft_aura_shows_on_a_puppet_in_a_thermal() -> void:
+	var puppet: Player = PLAYER_SCENE.instantiate() as Player
+	puppet.name = "999"
+	var aura := Node3D.new()
+	aura.name = "UpdraftAura"
+	var particles := GPUParticles3D.new()
+	particles.emitting = true
+	aura.add_child(particles)
+	puppet.add_child(aura)
+	add_child_autofree(puppet)
+	assert_false(puppet.is_multiplayer_authority(), "Peer 999's Player")
+	assert_false(aura.visible, "Hidden on ready")
+	assert_false(particles.emitting, "and not emitting")
+	var updraft := Area3D.new()
+	updraft.add_to_group("Thermal")
+	var col := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(20, 20, 20)
+	col.shape = box
+	updraft.add_child(col)
+	add_child_autofree(updraft)
+	updraft.global_position = puppet.global_position
+	await wait_seconds(0.5)
+	assert_true(aura.visible, "The aura shows around the puppet in the thermal")
+	assert_true(particles.emitting)

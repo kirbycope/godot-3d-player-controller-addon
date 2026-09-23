@@ -9,13 +9,15 @@ extends Equipment
 ## the crosshair's aim point ([method arc_direction]), so it lands where the crosshair is, give or take
 ## [member Equipment.accuracy].
 ## Expects a template [Arrow] child named "Arrow" and optional "BowDrawArrow"/"BowFireArrow"
-## audio players; without a "BowFireArrow" the shot plays [member Equipment.attack_sfx] (the TomMusic bow attack) through
-## the Player's [WeaponAudio], and drawing and stowing the bow play its take-out and put-away there too.
+## audio players. The release sound is the "BowFireArrow" node's stream, else [member Equipment.attack_sfx] (the
+## TomMusic bow attack); it travels with the arrow in the launch data, as a [Firearm]'s shot does, so every peer hears
+## it where the arrow left ([method Projectile.play_launch_sfx]); a stream saved in no file of its own cannot travel
+## and is not heard. Drawing and stowing the bow play its take-out and put-away through the Player's [WeaponAudio].
 ## While a kind with its own scene is what [method get_ammo] names, a frozen template copy of that
 ## scene sits on the string in its place ([member nocked_arrow]), so a fire arrow burns and an ice arrow frosts
 ## while drawing. Only the equipped copy on the Player's multiplayer authority (with [member player] set) reacts;
-## peers get the arrow through the [ProjectileSpawner]. The nocked copy is cosmetic and local: the other peers'
-## copies of a Player carry no equipment.
+## peers get the arrow, and its release sound, through the [ProjectileSpawner]. The nocked copy is cosmetic and local:
+## a peer's copy of the bow, rebuilt from the inventory's synced equipment, shows the plain template arrow.
 ##
 ## In first person the bow rides the view instead of the torso ([method Player.set_first_person_hand_targets]):
 ## the bow hand sits at [member first_person_carry_hand] while the bow is only carried and rises to
@@ -62,7 +64,7 @@ var _glue_tween: Tween
 
 @onready var arrow_node: Arrow = get_node_or_null("Arrow") as Arrow ## Template duplicated for every shot.
 @onready var draw_sfx: AudioStreamPlayer3D = get_node_or_null("BowDrawArrow") as AudioStreamPlayer3D
-@onready var fire_sfx: AudioStreamPlayer3D = get_node_or_null("BowFireArrow") as AudioStreamPlayer3D
+@onready var fire_sfx: AudioStreamPlayer3D = get_node_or_null("BowFireArrow") as AudioStreamPlayer3D ## Its stream is the release sound, sent with the arrow; the node itself never plays.
 @onready var string_nocked: Marker3D = get_node_or_null("StringNocked") as Marker3D ## Where the string hand holds the string at rest, in the bow's space.
 @onready var string_drawn: Marker3D = get_node_or_null("StringDrawn") as Marker3D ## And at full draw.
 @onready var string_hand: Marker3D = get_node_or_null("StringHand") as Marker3D ## What the string hand is pulled onto: slid between the two above.
@@ -106,10 +108,6 @@ func _on_locomotion_node_changed(state_path: String) -> void:
 			player.controls.rumble(0.0, 0.2, 0.5)
 		"Bow/BowFireArrow":
 			if fire_arrow():
-				if fire_sfx:
-					fire_sfx.play() # the scene's own release sound stands in for attack_sfx
-				elif player.weapon_audio:
-					player.weapon_audio.play_attack(attack_sfx)
 				player.controls.rumble(0.4, 0.0, 0.5)
 
 
@@ -285,8 +283,9 @@ static func arc_direction(from: Vector3, to: Vector3, speed: float, gravity: flo
 ## Takes one arrow of the kind [method get_ammo] names from the inventory and fires it: its own scene, else
 ## [member arrow_scene], through the world's [ProjectileSpawner] when present (multiplayer), otherwise a local copy.
 ## The arrow leaves on the projectile ray, level with the nocked arrow, on the arc through the ray's hit point
-## ([method arc_direction]), then [method Equipment.scatter] pushes it off that line for the Player's skill.
-## False, and nothing flies, with no arrows carried or off the authority.
+## ([method arc_direction]), then [method Equipment.scatter] pushes it off that line for the Player's skill. The
+## release sound ("BowFireArrow"'s stream, else [member Equipment.attack_sfx]) goes with it, as "fire_sfx" in the
+## launch data. False, and nothing flies, with no arrows carried or off the authority.
 func fire_arrow() -> bool:
 	var ammo: AmmoItem = get_ammo()
 	var scene: PackedScene = (ammo.projectile_scene if ammo.projectile_scene else arrow_scene) if ammo else null
@@ -302,9 +301,11 @@ func fire_arrow() -> bool:
 	origin.origin = ray.global_position + along * maxf((nocked.global_position - ray.global_position).dot(along), 0.0)
 	var gravity: float = float(ProjectSettings.get_setting("physics/3d/default_gravity", 9.8)) * (nocked.gravity_scale if nocked is RigidBody3D else 1.0)
 	var direction: Vector3 = scatter(arc_direction(origin.origin, aim, projectile_speed, gravity))
-	var spawner: ProjectileSpawner = get_tree().get_first_node_in_group(&"ProjectileSpawner") as ProjectileSpawner
+	var release: AudioStream = fire_sfx.stream if fire_sfx and fire_sfx.stream else attack_sfx
+	var release_path: String = release.resource_path if release else ""
+	var spawner: ProjectileSpawner = ProjectileSpawner.find_for(player)
 	if scene and spawner:
-		spawner.fire(scene, origin, direction, projectile_speed, player, self)
+		spawner.fire(scene, origin, direction, projectile_speed, player, self, {"fire_sfx": release_path} if not release_path.is_empty() else {})
 		return true
 	var arrow: Projectile = scene.instantiate() as Projectile if scene else arrow_node.duplicate() as Projectile
 	arrow.is_template = false
@@ -321,4 +322,6 @@ func fire_arrow() -> bool:
 	var swish: AudioStreamPlayer3D = arrow.get_node_or_null("Swish") as AudioStreamPlayer3D
 	if swish:
 		swish.play()
+	if not release_path.is_empty():
+		arrow.play_launch_sfx(release_path)
 	return true

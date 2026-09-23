@@ -1437,6 +1437,7 @@ replication_config = ExtResource("state_sync")
 
 [connection signal="body_entered" from="AggroArea" to="." method="_on_aggro_area_body_entered"]
 [connection signal="health_changed" from="Health" to="StatusBars3D" method="set_health"]
+[connection signal="health_changed" from="Health" to="Boss" method="_on_health_changed"]
 [connection signal="energy_changed" from="Health" to="StatusBars3D" method="set_energy"]
 [connection signal="died" from="Health" to="." method="_on_health_died"]
 [connection signal="timeout" from="StrikeTimer" to="." method="_on_strike_timer_timeout"]

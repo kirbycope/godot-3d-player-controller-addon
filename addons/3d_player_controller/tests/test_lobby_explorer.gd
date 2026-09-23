@@ -62,7 +62,7 @@ func test_the_entry_reads_nothing_from_steam_until_the_session_is_up() -> void:
 	var entry = LOBBY_EXPLORER_ENTRY_SCENE.instantiate()
 	add_child_autofree(entry)
 	entry.set_lobby_id(5)
-	assert_null(entry._steam_session(), "The extension being loaded is not a session")
+	assert_null(SteamPeer.session(entry), "The extension being loaded is not a session")
 	assert_eq(entry.name_label.text, "Lobby 5", "so the entry shows the id and asks Steam nothing")
 	if steamworks:
 		steamworks.set("steam_id", signed_in)
@@ -76,7 +76,7 @@ func test_the_explorer_asks_steam_for_nothing_until_the_session_is_up() -> void:
 		steamworks.set("steam_id", 0)
 	var explorer = LOBBY_EXPLORER_SCENE.instantiate()
 	add_child_autofree(explorer)
-	assert_null(explorer._steam_session())
+	assert_null(SteamPeer.session(explorer))
 	assert_true(explorer.host_button.disabled, "Hosting is off")
 	assert_true(explorer.refresh_button.disabled, "and so is the list")
 	assert_eq(explorer.status_label.text, "Steam is not running. Lobby features disabled.")
