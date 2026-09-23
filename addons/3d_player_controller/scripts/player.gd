@@ -1788,13 +1788,15 @@ func _end_slow(timer: SceneTreeTimer) -> void:
 
 
 const STEALTH_SHADER: Shader = preload("res://addons/3d_player_controller/assets/shaders/stealth.gdshader")
+const STEALTH_DEPTH_SHADER: Shader = preload("res://addons/3d_player_controller/assets/shaders/stealth_depth.gdshader")
 
 var _stealth_originals: Dictionary[MeshInstance3D, Array] = {} ## Mesh -> its surface override materials before stealth, restored when it ends.
 var _stealth_tween: Tween
 
 
-## Turns every mesh under the skeleton into its ghost, or back. The ghost is the stealth shader carrying the surface's
-## own colour and texture: washed pale, tinted cold, drawn after a depth pre-pass so limbs never show through the body.
+## Turns every mesh under the skeleton into its ghost, or back. The ghost is two passes over each surface: one that
+## writes the body's depth and draws nothing, then the stealth shader carrying the surface's own colour and texture,
+## washed pale, which colours only the nearest surface, so limbs never show through the body.
 ## Its alpha tweens over [member stealth_fade_time] each way; the original materials return once the fade out lands.
 func _apply_stealth_look(stealthed: bool) -> void:
 	if _stealth_tween:
@@ -1825,18 +1827,24 @@ func _on_equipment_changed_while_stealthed() -> void:
 		_apply_stealth_look(true)
 
 
-## The stealth shader wearing [param original]'s colours; anything but a StandardMaterial3D ghosts as plain white.
+## The ghost of [param original]: a depth pass that draws nothing, with the stealth shader wearing the original's
+## colours as its next_pass, drawn after it. Anything but a StandardMaterial3D ghosts as plain white.
 func _ghost_of(original: Material) -> ShaderMaterial:
+	var depth: ShaderMaterial = ShaderMaterial.new()
+	depth.shader = STEALTH_DEPTH_SHADER
+	depth.render_priority = 0
 	var ghost: ShaderMaterial = ShaderMaterial.new()
 	ghost.shader = STEALTH_SHADER
+	ghost.render_priority = 1 # After the depth pass, so it only finds the nearest surface to colour
 	ghost.set_shader_parameter(&"alpha", 1.0)
+	depth.next_pass = ghost
 	if original is StandardMaterial3D:
 		var standard: StandardMaterial3D = original as StandardMaterial3D
 		ghost.set_shader_parameter(&"albedo_color", standard.albedo_color)
 		if standard.albedo_texture:
 			ghost.set_shader_parameter(&"albedo_texture", standard.albedo_texture)
 			ghost.set_shader_parameter(&"use_texture", true)
-	return ghost
+	return depth
 
 
 func _set_ghost_alpha(alpha: float, ghost: ShaderMaterial) -> void:
@@ -1850,8 +1858,8 @@ func _stealth_ghosts() -> Array[ShaderMaterial]:
 			continue
 		for surface: int in mesh.mesh.get_surface_count():
 			var material: Material = mesh.get_surface_override_material(surface)
-			if material is ShaderMaterial and (material as ShaderMaterial).shader == STEALTH_SHADER:
-				ghosts.append(material)
+			if material is ShaderMaterial and (material as ShaderMaterial).shader == STEALTH_DEPTH_SHADER:
+				ghosts.append(material.next_pass as ShaderMaterial) # The colour is on the pass after the depth
 	return ghosts
 
 

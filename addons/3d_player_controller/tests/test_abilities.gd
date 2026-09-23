@@ -501,17 +501,35 @@ func test_an_unarmed_channel_holds_the_ready_to_cast_emote() -> void:
 	assert_eq(emote.get_current_node(), &"Idle")
 
 
-## Every surface under the skeleton wears the stealth shader, carrying its own colour, at [param alpha].
+## Every surface under the skeleton wears the ghost, a depth pass with the stealth shader after it carrying the
+## surface's own colour, at [param alpha].
 func _assert_ghosted(who: Player, alpha: float, text: String = "") -> void:
 	for mesh: MeshInstance3D in who.skeleton.find_children("*", "MeshInstance3D"):
 		for surface: int in mesh.mesh.get_surface_count():
-			var ghost: ShaderMaterial = mesh.get_surface_override_material(surface) as ShaderMaterial
-			assert_not_null(ghost, mesh.name + " wears the ghost")
+			var depth: ShaderMaterial = mesh.get_surface_override_material(surface) as ShaderMaterial
+			assert_not_null(depth, mesh.name + " wears the ghost")
+			if depth == null:
+				continue
+			assert_eq(depth.shader, Player.STEALTH_DEPTH_SHADER, "The first pass writes the body's depth")
+			var ghost: ShaderMaterial = depth.next_pass as ShaderMaterial
+			assert_not_null(ghost, "and the ghost is the pass after it")
 			if ghost == null:
 				continue
 			assert_eq(ghost.shader, Player.STEALTH_SHADER)
+			assert_gt(ghost.render_priority, depth.render_priority, "drawn after the depth, so only the nearest surface is coloured")
 			assert_almost_eq(float(ghost.get_shader_parameter(&"alpha")), alpha, 0.02, text)
 			assert_ne(ghost.get_shader_parameter(&"albedo_color"), Color.WHITE, "It keeps the surface's own colour")
+
+
+func test_the_ghost_colours_only_the_nearest_surface() -> void:
+	# A single see-through pass let the far arm, the far leg and the joint bands show through the torso. The depth
+	# pass has to write depth however transparent the body is, and the ghost after it must not write its own.
+	var depth_code: String = Player.STEALTH_DEPTH_SHADER.code
+	var ghost_code: String = Player.STEALTH_SHADER.code
+	assert_string_contains(depth_code, "depth_draw_always", "The depth pass writes depth whatever the alpha")
+	assert_string_contains(depth_code, "ALPHA = 0.0", "and draws nothing itself")
+	assert_string_contains(ghost_code, "depth_draw_never", "The ghost only reads the depth the first pass wrote")
+	assert_false(ghost_code.contains("depth_prepass_alpha"), "and does not go back to the single pass that showed limbs through")
 
 
 class HittableDummy extends Area3D: # An Area3D, so the Player's ledge rays never take the box for a wall to climb
@@ -613,8 +631,10 @@ func _assert_piece_ghosted(piece: Equipment, alpha: float, text: String) -> void
 	var meshes: Array[Node] = piece.find_children("*", "MeshInstance3D", true, false)
 	assert_gt(meshes.size(), 0, piece.name + " has a mesh to fade")
 	for mesh: MeshInstance3D in meshes:
-		var ghost: ShaderMaterial = mesh.get_surface_override_material(0) as ShaderMaterial
-		assert_not_null(ghost, piece.name + " wears the ghost")
+		var depth: ShaderMaterial = mesh.get_surface_override_material(0) as ShaderMaterial
+		assert_not_null(depth, piece.name + " wears the ghost")
+		var ghost: ShaderMaterial = depth.next_pass as ShaderMaterial if depth else null
+		assert_not_null(ghost, piece.name + "'s ghost is the pass after its depth")
 		if ghost:
 			assert_almost_eq(float(ghost.get_shader_parameter(&"alpha")), alpha, 0.02, text)
 
