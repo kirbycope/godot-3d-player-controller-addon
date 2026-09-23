@@ -79,3 +79,15 @@ func test_the_prompt_comes_back_for_the_camera_target_when_the_talk_ends() -> vo
 	npc.end_talk()
 	assert_true(npc.action_prompt.visible, "Still the target, so the prompt is offered again")
 	assert_eq(player.controls.prompt_action_label, "Talk")
+
+
+## An export repacks scenes, and a node added inside the instanced model survives that only when the model is
+## marked editable; without it the web build's Guide had no head modifier at all.
+func test_the_head_modifier_survives_the_repacking_an_export_does() -> void:
+	var original: Node = NPC_SCENE.instantiate()
+	var repacked: PackedScene = PackedScene.new()
+	assert_eq(repacked.pack(original), OK)
+	original.free()
+	var npc: Node = repacked.instantiate()
+	assert_not_null(npc.get_node_or_null("Mannequin_M/Armature/GeneralSkeleton/HeadLookAtModifier3D"))
+	npc.free()

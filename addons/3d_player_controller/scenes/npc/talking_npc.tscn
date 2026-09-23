@@ -89,3 +89,5 @@ replication_config = ExtResource("7_body_sync")
 
 [connection signal="body_entered" from="PlayerDetection" to="PlayerDetection" method="_on_body_entered"]
 [connection signal="body_exited" from="PlayerDetection" to="PlayerDetection" method="_on_body_exited"]
+
+[editable path="Mannequin_M"]
