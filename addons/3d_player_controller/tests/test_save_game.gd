@@ -14,6 +14,7 @@ const PLAYER_SPAWNER: Script = preload("res://addons/3d_player_controller/script
 const APPLE: Item = preload("res://addons/3d_player_controller/inventory/resources/items/apple.tres")
 const SWORD: Item = preload("res://addons/3d_player_controller/inventory/resources/items/wooden_sword.tres")
 const TEST_PATH: String = "user://test_savegame.json"
+const TEST_CLIENT_PATH: String = "user://test_savegame_client.json"
 
 var root: Node3D
 var player: Player
@@ -195,9 +196,8 @@ func test_the_pause_menu_hides_them_without_a_save_game() -> void:
 	player.pause.hide_menu()
 
 
-## A client's world is the host's, and its own Player is named after a peer id the next session will not have, so a
-## client writes nothing: its checkpoints and its Save would otherwise overwrite the single-player save.
-func test_a_client_writes_nothing_over_the_single_player_save() -> void:
+## A host and a client each keep their own save. A client writes its own file, never the single-player one.
+func test_a_client_writes_its_own_save_not_the_single_player_one() -> void:
 	var branch: Node = Node.new()
 	add_child(branch)
 	var api: SceneMultiplayer = SceneMultiplayer.new()
@@ -207,9 +207,13 @@ func test_a_client_writes_nothing_over_the_single_player_save() -> void:
 	api.multiplayer_peer = enet
 	var client_saver: SaveGame = SAVE_GAME_SCENE.instantiate()
 	client_saver.save_path = TEST_PATH
+	client_saver.client_save_path = TEST_CLIENT_PATH
 	branch.add_child(client_saver)
-	assert_eq(client_saver.save_game(), ERR_UNAVAILABLE, "A client's save is refused")
-	assert_false(FileAccess.file_exists(TEST_PATH), "and nothing is written")
+	assert_eq(client_saver.current_path(), TEST_CLIENT_PATH)
+	assert_eq(client_saver.save_game(), OK, "A client saves")
+	assert_true(FileAccess.file_exists(TEST_CLIENT_PATH), "to its own file")
+	assert_false(FileAccess.file_exists(TEST_PATH), "and leaves the single-player save alone")
+	DirAccess.remove_absolute(TEST_CLIENT_PATH)
 	enet.close()
 	var path: NodePath = branch.get_path()
 	branch.free()
@@ -326,3 +330,15 @@ class SaveableCounter extends Node:
 
 	func load_state(state: Dictionary) -> void:
 		count = int(state.get("count", 0))
+
+
+## A spawned Player is named after its peer id, which the next session will not repeat, so it is saved under
+## PLAYER_KEY and loads back into whichever Player this peer owns then.
+func test_a_spawned_player_is_saved_under_a_key_its_next_session_can_find() -> void:
+	player.name = "1" # what a PlayerSpawner names the host's
+	player.health.health = 40.0
+	var states: Dictionary = saver.collect_states()
+	assert_true(states.has(SaveGame.PLAYER_KEY), "Keyed by PLAYER_KEY, not by its path")
+	player.health.health = player.health.max_health
+	saver.apply_states(states)
+	assert_eq(player.health.health, 40.0, "and applied to this peer's own Player")

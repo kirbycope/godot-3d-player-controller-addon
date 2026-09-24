@@ -16,9 +16,10 @@ extends Node
 ## [member save_on_checkpoint] every [Checkpoint] writes as it is taken. A title screen's Continue sets
 ## [member load_requested] before the world loads; the SaveGame loads once this peer's Player is in. A world that
 ## spawns its Players wires its [PlayerSpawner]'s local_player_spawned to [method load_for_player] in the scene; a
-## Player standing in the scene is there already. Over the network only the host saves: a client is in the host's
-## world, and its own Player is named after a peer id the next session will not have. Loading applies only to what
-## this peer owns.
+## Player standing in the scene is there already. Over the network every peer keeps its own save of what it owns: the
+## host (and single player) in [member save_path], a client in [member client_save_path], so joining a friend's game
+## never writes over the single-player save. A spawned Player is keyed [constant PLAYER_KEY] rather than by its peer
+## id, which the next session will not repeat.
 
 signal saved(path: String) ## The file was written.
 signal loaded(path: String) ## The file was read and applied.
@@ -26,11 +27,14 @@ signal load_failed(path: String) ## There was no file, or it could not be read.
 
 const GROUP: StringName = &"Saveable"
 const VERSION: int = 2 ## The file format; 1 was the SaveGameData resource, which is no longer read.
+const PLAYER_KEY: String = "@player" ## The key this peer's own spawned Player is saved under, whatever its peer id.
 
 static var DEFAULT_SAVE_PATH: String = "user://savegame.json" ## Where a SaveGame writes unless told otherwise; a test run points it elsewhere.
+static var DEFAULT_CLIENT_SAVE_PATH: String = "user://savegame_client.json" ## Where a client in somebody else's game writes.
 static var load_requested: bool = false ## Continue was picked: the next SaveGame loads its file once this peer's Player is in.
 
-@export var save_path: String = DEFAULT_SAVE_PATH
+@export var save_path: String = DEFAULT_SAVE_PATH ## The host's and single player's save.
+@export var client_save_path: String = DEFAULT_CLIENT_SAVE_PATH ## This peer's save while it is a client in somebody else's game.
 @export var autosave_interval: float = 0.0: ## Seconds between automatic writes; zero turns them off.
 	set(value):
 		autosave_interval = maxf(value, 0.0)
@@ -66,8 +70,13 @@ static func find_in(tree: SceneTree) -> SaveGame:
 	return tree.get_first_node_in_group(&"SaveGame") as SaveGame
 
 
+## [member save_path] on the host and in single player, [member client_save_path] on a client.
+func current_path() -> String:
+	return save_path if multiplayer.is_server() else client_save_path
+
+
 func has_save() -> bool:
-	return has_save_at(save_path)
+	return has_save_at(current_path())
 
 
 ## Wire a [PlayerSpawner]'s local_player_spawned here in the scene: a Continue waiting on [member load_requested]
@@ -79,12 +88,9 @@ func load_for_player(_player: Player) -> void:
 		load_game.call_deferred()
 
 
-## Writes every Saveable's state to [member save_path]. A client in somebody else's session writes nothing
-## (ERR_UNAVAILABLE): the world is the host's, and the client's own Player would go in under a peer id the next
-## session will not have, over the single-player save at the same path.
+## Writes every Saveable this peer owns to [method current_path].
 func save_game() -> Error:
-	if not multiplayer.is_server():
-		return ERR_UNAVAILABLE
+	var path: String = current_path()
 	var scene: Node = get_tree().current_scene
 	var data: Dictionary = {
 		"version": VERSION,
@@ -92,66 +98,74 @@ func save_game() -> Error:
 		"scene_path": scene.scene_file_path if scene else "",
 		"states": to_plain(collect_states()),
 	}
-	var file: FileAccess = FileAccess.open(save_path, FileAccess.WRITE)
+	var file: FileAccess = FileAccess.open(path, FileAccess.WRITE)
 	var error: Error = FileAccess.get_open_error() if file == null else OK
 	if file:
 		file.store_string(JSON.stringify(JSON.from_native(data), "\t"))
 		error = file.get_error()
 		file.close()
 	if error == OK:
-		saved.emit(save_path)
+		saved.emit(path)
 	else:
-		push_error("SaveGame: could not write %s (%s)" % [save_path, error_string(error)])
+		push_error("SaveGame: could not write %s (%s)" % [path, error_string(error)])
 	return error
 
 
-## What [member save_path] holds (version, saved_at, scene_path and states), or an empty Dictionary when there is no
-## file, it is not this format, or it is another version.
+## What [method current_path] holds (version, saved_at, scene_path and states), or an empty Dictionary when there is
+## no file, it is not this format, or it is another version.
 func read_save() -> Dictionary:
 	if not has_save():
 		return {}
+	var path: String = current_path()
 	var json: JSON = JSON.new()
-	var parsed: bool = json.parse(FileAccess.get_file_as_string(save_path)) == OK
+	var parsed: bool = json.parse(FileAccess.get_file_as_string(path)) == OK
 	var data: Variant = JSON.to_native(json.data) if parsed else null # objects stay out: allow_objects is off
 	if not data is Dictionary or int((data as Dictionary).get("version", 0)) != VERSION or not (data as Dictionary).get("states") is Dictionary:
-		push_warning("SaveGame: %s is not a version %d save; it is left alone" % [save_path, VERSION])
+		push_warning("SaveGame: %s is not a version %d save; it is left alone" % [path, VERSION])
 		return {}
 	data["states"] = from_plain(data["states"])
 	return data
 
 
-## Reads [member save_path] back into the Saveables that are there; false when there is nothing to read.
+## Reads [method current_path] back into the Saveables that are there; false when there is nothing to read.
 func load_game() -> bool:
 	var data: Dictionary = read_save()
 	if data.is_empty():
-		load_failed.emit(save_path)
+		load_failed.emit(current_path())
 		return false
 	apply_states(data["states"])
-	loaded.emit(save_path)
+	loaded.emit(current_path())
 	return true
 
 
 func delete_save() -> void:
 	if has_save():
-		DirAccess.remove_absolute(save_path)
+		DirAccess.remove_absolute(current_path())
 
 
-## Every Saveable this peer owns, keyed by its path from this node's parent.
+## Every Saveable this peer owns, keyed by its path from this node's parent; a spawned Player, named after its peer
+## id, by [constant PLAYER_KEY].
 func collect_states() -> Dictionary:
 	var states: Dictionary = {}
 	var base: Node = get_parent() if get_parent() else self
 	for node: Node in get_tree().get_nodes_in_group(GROUP):
 		if not node.has_method("save_state") or not node.is_multiplayer_authority():
 			continue
-		states[String(base.get_path_to(node))] = node.save_state()
+		var key: String = PLAYER_KEY if node is Player and str(node.name).is_valid_int() else String(base.get_path_to(node))
+		states[key] = node.save_state()
 	return states
 
 
-## Hands each state to the Saveable at its path, if it is still there and this peer owns it.
+## Hands each state to the Saveable at its path, if it is still there and this peer owns it; [constant PLAYER_KEY]
+## goes to this peer's spawned Player, whatever its peer id is this session.
 func apply_states(states: Dictionary) -> void:
 	var base: Node = get_parent() if get_parent() else self
+	var own_player: Node = null
+	for player: Node in get_tree().get_nodes_in_group(&"Player"):
+		if player.is_multiplayer_authority() and str(player.name).is_valid_int():
+			own_player = player
 	for path: String in states:
-		var node: Node = base.get_node_or_null(NodePath(path))
+		var node: Node = own_player if path == PLAYER_KEY else base.get_node_or_null(NodePath(path))
 		if node == null or not node.is_in_group(GROUP) or not node.has_method("load_state") or not node.is_multiplayer_authority():
 			continue
 		node.load_state(states[path])
