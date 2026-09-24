@@ -34,6 +34,56 @@ func test_climbing_wall_back_eject_leap() -> void:
 	assert_false(player.is_climbing, "Player should no longer be climbing")
 
 
+## Hanging from a ledge the Player shimmies along it; climbing up must land where they hang now, not snap back to
+## where they grabbed it. Where the chest ray meets no wall (a thin lip, an eave) the ledge is carried along from
+## where it was grabbed, rather than the climb being refused.
+func test_climbing_up_from_a_hang_lands_where_the_player_hangs_now() -> void:
+	add_child_autofree(CONTROLS_SCENE.instantiate())
+	var world: Node3D = Node3D.new()
+	add_child_autofree(world)
+	var player: Player = PLAYER_SCENE.instantiate() as Player
+	world.add_child(player)
+	await wait_physics_frames(2)
+	var hanging: NodeStateMachine = player.get_node("NodeStateMachine/Hanging")
+	var ray: RayCast3D = player.ledge_detection_horizontal
+	var ahead: Vector3 = (ray.to_global(ray.target_position) - ray.global_position).normalized()
+	ahead.y = 0.0
+	ahead = ahead.normalized()
+	var side: Vector3 = ahead.cross(Vector3.UP)
+	player.climbing_on_target = player.global_position + ahead * 0.55 + Vector3(0.0, 1.62, 0.0) # what Climbing found
+	player.state_machine.travel(player.current_state, NodeStateMachine.States.HANGING)
+	await wait_physics_frames(2) # hanging holds the Player still, so the wall goes where it stays
+	# A wall 1.6 m high and 8 m wide whose face is half a metre ahead: the chest-high ray meets its face and the
+	# ledge ray comes down on its top
+	var wall: StaticBody3D = StaticBody3D.new()
+	var shape: CollisionShape3D = CollisionShape3D.new()
+	shape.shape = BoxShape3D.new()
+	(shape.shape as BoxShape3D).size = Vector3(8.0, 1.6, 1.0)
+	wall.add_child(shape)
+	world.add_child(wall)
+	var centre: Vector3 = Vector3(ray.global_position.x, player.global_position.y + 0.8, ray.global_position.z) + ahead * 1.0
+	wall.look_at_from_position(centre, centre + ahead)
+	await wait_physics_frames(2)
+
+	var grabbed: Vector3 = player.climbing_on_target
+	player.global_position += side * 2.0 # the shimmy
+	await wait_physics_frames(2)
+	var press: InputEventAction = InputEventAction.new()
+	press.action = &"jump"
+	press.pressed = true
+	hanging._input(press)
+	assert_true(player.is_climbing_on, "Jump climbs on")
+	assert_almost_eq((player.climbing_on_target - player.global_position).dot(side), 0.0, 0.3, "where the Player hangs now, not 2 m back where they grabbed on")
+	assert_gt(player.climbing_on_target.distance_to(grabbed), 1.5)
+
+	player.is_climbing_on = false
+	player.global_position += side * 6.0 # beyond the wall: the chest ray meets nothing, as under a thin lip
+	await wait_physics_frames(2)
+	hanging._input(press)
+	assert_true(player.is_climbing_on, "No wall under the chest ray is no reason to refuse the climb")
+	assert_almost_eq((player.climbing_on_target - player.global_position).dot(side), 0.0, 0.3, "and the ledge is carried along the shimmy")
+
+
 func test_paragliding_thermal_updraft_and_steep_dive() -> void:
 	var controls = CONTROLS_SCENE.instantiate()
 	add_child_autofree(controls)

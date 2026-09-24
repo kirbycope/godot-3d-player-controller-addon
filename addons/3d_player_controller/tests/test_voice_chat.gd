@@ -89,3 +89,73 @@ func test_voice_reaches_steam_only_while_the_session_is_up() -> void:
 	assert_null(SteamPeer.session(player.voice_chat), "No session, no Steam for the voice code")
 	if steamworks:
 		steamworks.set("steam_id", signed_in)
+
+
+## Stands in for GodotSteam's voice calls: records whether the capture is on.
+class FakeVoiceSteam:
+	extends RefCounted
+
+	var recording: bool = false
+	var stops: int = 0
+
+	func startVoiceRecording() -> void:
+		recording = true
+
+	func stopVoiceRecording() -> void:
+		recording = false
+		stops += 1
+
+	func getAvailableVoice() -> Dictionary:
+		return {"result": VoiceChat.STEAM_VOICE_RESULT_OK, "size": 0}
+
+	func getSteamID() -> int:
+		return 0
+
+
+func after_each() -> void:
+	SteamPeer.steam_override = null
+
+
+func test_letting_go_of_the_talk_key_behind_a_menu_closes_the_channel() -> void:
+	var player: Player = PLAYER_SCENE.instantiate() as Player
+	add_child_autofree(player)
+	player.voice_chat.start_broadcasting()
+	player.is_paused = true
+	var release: InputEventAction = InputEventAction.new()
+	release.action = &"broadcast"
+	release.pressed = false
+	player.voice_chat._unhandled_input(release)
+	assert_false(player.voice_chat.is_broadcasting, "The release gets past the pause gate; only a press is held back")
+	var press: InputEventAction = release.duplicate()
+	press.pressed = true
+	player.voice_chat._unhandled_input(press)
+	assert_false(player.voice_chat.is_broadcasting, "A press behind the menu still opens nothing")
+	player.is_paused = false
+
+
+func test_opening_the_chat_row_closes_the_channel() -> void:
+	var player: Player = PLAYER_SCENE.instantiate() as Player
+	add_child_autofree(player)
+	var chat: Node = player.get_node("Hud/Chat")
+	player.voice_chat.start_broadcasting()
+	chat.typing_changed.emit(true)
+	assert_false(player.voice_chat.is_broadcasting, "The chat row is a Window of its own, so the talk key's release never arrives; opening it closes the channel")
+	chat.typing_changed.emit(false)
+
+
+func test_steam_capture_stops_when_push_to_talk_ends() -> void:
+	var settings: PlayerSettingsResource = PlayerSettingsResource.load_or_create()
+	var was: bool = settings.voice_activation
+	settings.voice_activation = false
+	var player: Player = PLAYER_SCENE.instantiate() as Player
+	add_child_autofree(player)
+	var steam: FakeVoiceSteam = FakeVoiceSteam.new()
+	SteamPeer.steam_override = steam # after the Player is in, so its _ready does not ask this fake for a persona
+	player.voice_chat.start_broadcasting()
+	player.voice_chat._process(0.0)
+	assert_true(steam.recording, "Holding the talk key captures")
+	player.voice_chat.stop_broadcasting()
+	player.voice_chat._process(0.0)
+	assert_false(steam.recording, "Letting go stops Steam's capture, or it buffers whatever is said next and sends it on the next press")
+	assert_eq(steam.stops, 1)
+	settings.voice_activation = was

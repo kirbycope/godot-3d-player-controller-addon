@@ -180,9 +180,9 @@ func test_magazine_empties_and_reloads_from_the_inventory() -> void:
 	assert_false(gun.is_reloading, "A full magazine does not reload")
 	player.ammo_readout.set_ammo(gun.rounds, gun.reserve_rounds)
 	assert_eq(player.ammo_readout.label.text, "2 / 0")
-	assert_true(player.ammo_readout.label.visible)
+	assert_true(player.ammo_readout.visible, "The readout's own layer shows; the HUD instance starts hidden")
 	player.ammo_readout.hide_ammo()
-	assert_false(player.ammo_readout.label.visible)
+	assert_false(player.ammo_readout.visible)
 
 
 func test_the_aim_point_sits_under_the_crosshair_with_the_shoulder_camera() -> void:

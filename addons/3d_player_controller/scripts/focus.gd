@@ -45,6 +45,7 @@ var current_focus_target: Node3D = null: ## The body currently locked on to, if 
 var selected_aim: Node3D = null ## Where on the Target to aim ([method get_aim_node]), looked up when the Target changes.
 var focus_aim: Node3D = null ## Where on the locked-on body to aim, looked up when the lock changes.
 var detection_radius: float = 5.0 ## The radius of [member target_detection]'s sphere, read once on ready; the camera sizes its aim window by it.
+var _focus_down: bool = false ## Whether Focus was already held, so a trigger's stream of motion events past the deadzone is one tap, not many.
 
 
 func _ready() -> void:
@@ -57,18 +58,27 @@ func _ready() -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if player == null or player.is_paused or player.is_typing or player.is_ragdolling or event.is_echo():
+	if event.is_echo():
+		return
+	# An analog trigger sends a motion event every frame it moves, and each one past the deadzone reads as a press;
+	# only the one that crosses from released to held is a tap. Tracked ahead of the gates so a release behind a
+	# menu still counts.
+	var focus_tap: bool = false
+	if event.is_action(&"focus"):
+		focus_tap = event.is_action_pressed(&"focus") and not _focus_down
+		_focus_down = event.is_action_pressed(&"focus")
+	if player == null or player.is_paused or player.is_typing or player.is_ragdolling:
 		return
 	if frees_cursor():
 		# Tab cycles, as it does in World of Warcraft, and so does the pad's Focus slot; the mouse button behind
 		# Focus is the camera drag here, so a press of it is not a tap
-		if event.is_action_pressed(&"ui_focus_next") or (event.is_action_pressed(&"focus") and not event is InputEventMouseButton):
+		if event.is_action_pressed(&"ui_focus_next") or (focus_tap and not event is InputEventMouseButton):
 			cycle_selection(1) # a tap: the nearest, then the next
 		elif event.is_action_pressed(&"ui_cancel") and is_instance_valid(selected_target):
 			# Escape with a Target clears it and goes no further, as in World of Warcraft; the next Escape opens the menu
 			clear_selection()
 			get_viewport().set_input_as_handled()
-	elif event.is_action_pressed(&"focus") and is_instance_valid(current_focus_target):
+	elif focus_tap and is_instance_valid(current_focus_target):
 		cycle_focus_target(1) # a tap while locked on: the next target
 
 

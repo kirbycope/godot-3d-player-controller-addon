@@ -10,6 +10,8 @@ extends NodeStateMachine
 @export var pad_drop_action: StringName = &"crouch"
 @export var pad_climb_up_action: StringName = &"jump"
 
+var _ledge_offset: Vector3 ## Where the ledge top was from the Player when they grabbed it, for a climb where the chest ray finds no wall.
+
 
 ## Called when there is an input event.
 func _input(event: InputEvent) -> void:
@@ -30,12 +32,13 @@ func _input(event: InputEvent) -> void:
 			player.leap_off_wall()
 			player.state_machine.travel(state, States.FALLING)
 			get_viewport().set_input_as_handled()
-		elif player.is_hanging_braced:
-			player.locomotion_state.travel("BracedHangClimbingOn")
-			player.is_climbing_on = true
-			get_viewport().set_input_as_handled()
-		elif player.is_hanging_free:
-			player.locomotion_state.travel("FreeHangingClimbingOn")
+		# Climb on where the Player hangs now, not where they grabbed the ledge: a shimmy has moved them since.
+		# detect_ledge finds the ledge top here; where the chest ray meets no wall (a thin lip, an eave) the ledge is
+		# where it was when grabbed, carried along by the shimmy.
+		elif player.is_hanging_braced or player.is_hanging_free:
+			if not player.detect_ledge():
+				player.climbing_on_target = player.global_position + _ledge_offset
+			player.locomotion_state.travel("BracedHangClimbingOn" if player.is_hanging_braced else "FreeHangingClimbingOn")
 			player.is_climbing_on = true
 			get_viewport().set_input_as_handled()
 
@@ -97,6 +100,8 @@ func start() -> void:
 	player.is_falling = false
 	player.is_climbing = false
 	player.is_climbing_on = false
+	# Climbing found this ledge the moment it handed over
+	_ledge_offset = player.climbing_on_target - player.global_position
 	# Determine if the player can hang braced
 	if player.hanging_braced_detection.is_colliding():
 		# Travel to the "hanging" (braced) locomotion state

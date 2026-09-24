@@ -69,10 +69,15 @@ func spawn_player(peer_id: int) -> void:
 		_on_spawned(player)
 
 
+## Frees the player of [param peer_id], who has left. A body it carries hangs under its hands and would be freed with
+## it on every peer, so it goes back into the world, and to the server, first; the peer that left can send nothing.
 func despawn_player(peer_id: int) -> void:
-	var player: Node = get_node(spawn_path).get_node_or_null(str(peer_id))
-	if player:
-		player.queue_free()
+	var player: Player = get_node(spawn_path).get_node_or_null(str(peer_id)) as Player
+	if player == null:
+		return
+	if player.held_object and player.held_object.is_holding_rigidbody():
+		player.held_object._release_held_rigidbody().set_multiplayer_authority(1)
+	player.queue_free()
 
 
 ## The player controlled by this peer, or null before it spawns.

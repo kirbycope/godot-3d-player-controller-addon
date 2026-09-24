@@ -1,7 +1,8 @@
 class_name InventorySave
 extends Resource
 ## What [method Inventory.save] writes to [member Inventory.save_path]: every stack with its tab and slot, and every
-## piece of equipment with whether it was equipped. A plain [code].tres[/code], so it can be read and edited by hand.
+## piece of equipment with whether it was equipped. Written as plain JSON through [method SaveGame.to_plain], so it
+## can be read and edited by hand.
 
 @export var slots: Array[ItemSlot] = []
 @export var equipment: Array[EquipmentEntry] = []

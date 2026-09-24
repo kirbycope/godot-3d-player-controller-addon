@@ -27,6 +27,7 @@ signal item_dropped(item: Item, count: int, pickup: Node3D) ## A stack (or part 
 
 const ITEM_PICKUP_SCENE: PackedScene = preload("res://addons/3d_player_controller/inventory/scenes/item_pickup.tscn")
 const ITEM_TABS: Array[Item.Category] = [Item.Category.MATERIALS, Item.Category.FOOD, Item.Category.KEY_ITEMS]
+const SAVE_VERSION: int = 1 ## The format [method save] writes, plain JSON. The .tres saves before it are not read.
 const HEAVY_TYPES: Array[Equipment.EquipmentType] = [
 	Equipment.EquipmentType.AXE_2H,
 	Equipment.EquipmentType.FISHING_ROD,
@@ -44,7 +45,7 @@ const ONE_HANDED_TYPES: Array[Equipment.EquipmentType] = [
 @export_range(1, 100) var slots_per_tab: int = 20 ## Slots on each item tab; the grid shows them all.
 @export_range(1, 100) var max_equipment: int = 8 ## Weapons and tools carried at once, equipped and stowed together; more are refused.
 @export var persist: bool = false ## Load [member save_path] on ready and write it after every change.
-@export var save_path: String = "user://inventory.tres"
+@export var save_path: String = "user://inventory.json"
 @export var next_weapon_action: StringName = &"next_weapon" ## Tap cycles forward; holding either opens the [RadialMenu].
 @export var last_weapon_action: StringName = &"last_weapon" ## Tap cycles back.
 
@@ -328,10 +329,18 @@ func stow_equipment(item: Equipment) -> void:
 
 # --- Saving ----------------------------------------------------------------------------------------------------
 
-## Writes every stack and every piece of equipment to [member save_path].
+## Writes every stack and every piece of equipment to [member save_path] as JSON, in the plain form [SaveGame]
+## writes: an item, a weapon's scene and a spell are named by their res:// path, never embedded.
 func save() -> Error:
 	_save_queued = false
-	return ResourceSaver.save(make_save(), save_path)
+	var file: FileAccess = FileAccess.open(save_path, FileAccess.WRITE)
+	if file == null:
+		return FileAccess.get_open_error()
+	var data: Dictionary = {"version": SAVE_VERSION, "inventory": SaveGame.to_plain(make_save())}
+	file.store_string(JSON.stringify(JSON.from_native(data), "	"))
+	var error: Error = file.get_error()
+	file.close()
+	return error
 
 
 ## Every stack and every piece of equipment as an [InventorySave], for [method save] and for a [SaveGame] that
@@ -363,43 +372,18 @@ func make_save() -> InventorySave:
 	return data
 
 
-## Where this folder has lived, oldest first. A save names its scripts by path, so one written before a move
-## fails to load and the player loses everything they were carrying.
-const LEGACY_PATHS: PackedStringArray = [
-	"res://addons/garp/",                        # its own addon, before it moved inside the player controller
-	"res://addons/3d_player_controller/garp/",   # inside the player controller, before the folder was renamed
-]
-const SCRIPT_PATH: String = "res://addons/3d_player_controller/inventory/"
-
-
-## Rewrites the script paths in a save written under any of [constant LEGACY_PATHS], which repairs it in
-## place rather than throwing it away. Only ever does the work once per save.
-func _migrate_legacy_save() -> void:
-	if not save_path.ends_with(".tres"): # a binary save is not ours to rewrite as text
-		return
-	var file: FileAccess = FileAccess.open(save_path, FileAccess.READ)
-	if file == null:
-		return
-	var text: String = file.get_as_text()
-	file.close()
-	var repaired: String = text
-	for legacy: String in LEGACY_PATHS:
-		repaired = repaired.replace(legacy, SCRIPT_PATH)
-	if repaired == text:
-		return
-	file = FileAccess.open(save_path, FileAccess.WRITE)
-	if file == null:
-		return
-	file.store_string(repaired)
-	file.close()
-
-
-## Replaces the inventory with what [member save_path] holds; nothing happens when there is no file.
+## Replaces the inventory with what [member save_path] holds; false, and nothing changes, when there is no file or it
+## is not a save of this version. An item, weapon or spell the game no longer has is left out and the rest loads:
+## the file names each by path, so one renamed item cannot take the whole inventory with it.
 func load_save() -> bool:
-	if not ResourceLoader.exists(save_path):
+	if not FileAccess.file_exists(save_path):
 		return false
-	_migrate_legacy_save()
-	var data: InventorySave = ResourceLoader.load(save_path, "", ResourceLoader.CACHE_MODE_IGNORE) as InventorySave
+	var json: JSON = JSON.new()
+	var parsed: Variant = JSON.to_native(json.data) if json.parse(FileAccess.get_file_as_string(save_path)) == OK else null
+	if not parsed is Dictionary or int((parsed as Dictionary).get("version", 0)) != SAVE_VERSION:
+		push_warning("Inventory: %s is not a version %d inventory save, so it is not loaded and the next save replaces it" % [save_path, SAVE_VERSION])
+		return false
+	var data: InventorySave = SaveGame.from_plain((parsed as Dictionary).get("inventory")) as InventorySave
 	if data == null:
 		return false
 	apply_save(data)

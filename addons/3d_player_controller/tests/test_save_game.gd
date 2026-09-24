@@ -195,6 +195,27 @@ func test_the_pause_menu_hides_them_without_a_save_game() -> void:
 	player.pause.hide_menu()
 
 
+## A client's world is the host's, and its own Player is named after a peer id the next session will not have, so a
+## client writes nothing: its checkpoints and its Save would otherwise overwrite the single-player save.
+func test_a_client_writes_nothing_over_the_single_player_save() -> void:
+	var branch: Node = Node.new()
+	add_child(branch)
+	var api: SceneMultiplayer = SceneMultiplayer.new()
+	get_tree().set_multiplayer(api, branch.get_path())
+	var enet: ENetMultiplayerPeer = ENetMultiplayerPeer.new()
+	assert_eq(enet.create_client("127.0.0.1", 47435), OK)
+	api.multiplayer_peer = enet
+	var client_saver: SaveGame = SAVE_GAME_SCENE.instantiate()
+	client_saver.save_path = TEST_PATH
+	branch.add_child(client_saver)
+	assert_eq(client_saver.save_game(), ERR_UNAVAILABLE, "A client's save is refused")
+	assert_false(FileAccess.file_exists(TEST_PATH), "and nothing is written")
+	enet.close()
+	var path: NodePath = branch.get_path()
+	branch.free()
+	get_tree().set_multiplayer(null, path)
+
+
 func test_a_requested_load_happens_on_ready() -> void:
 	player.warp_to(Transform3D(Basis(), Vector3(4.0, 0.0, 4.0)))
 	saver.save_game()

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Shared pieces for pull_addons.py and push_addons.py.
 
-An addon lives in one repository with the addon at its root. This project vendors a copy of that
-root into addons/<name>/, committed like any other file, so the project always opens without a
-fetch step. What is copied is the addon payload only: the repository's own demo project, CI
-workflows and git metadata stay upstream.
+An addon lives in its own repository. pull_addons.py copies the addon out of it into addons/<name>/,
+which is git-ignored here, so a fresh clone runs the pull once before the project will open; only
+tools/addons.json and tools/addons.lock.json are committed. What is copied is the addon payload only:
+the repository's own demo project, CI workflows and git metadata stay upstream.
 """
 
 from __future__ import annotations

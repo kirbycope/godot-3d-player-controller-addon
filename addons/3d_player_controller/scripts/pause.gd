@@ -74,7 +74,7 @@ func show_menu() -> void:
 	if quests_screen and player and player.quest_log == null:
 		quests_button.hide()
 	restart_button.visible = is_single_player()
-	var saver: SaveGame = SaveGame.find_in(get_tree())
+	var saver: SaveGame = SaveGame.find_in(get_tree()) if multiplayer.is_server() else null # a client's world is the host's
 	save_button.visible = saver != null
 	load_button.visible = saver != null
 	load_button.disabled = saver == null or not saver.has_save()

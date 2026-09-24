@@ -7,7 +7,7 @@ extends GutTest
 
 const DEMO_SCENE: PackedScene = preload("res://addons/3d_player_controller/inventory/scenes/demo/demo.tscn")
 const APPLE: Item = preload("res://addons/3d_player_controller/inventory/resources/items/apple.tres")
-const TEST_SAVE: String = "user://test_inventory_demo.tres" ## The demo turns persist on; this keeps it off the real save.
+const TEST_SAVE: String = "user://test_inventory_demo.json" ## The demo turns persist on; this keeps it off the real save.
 
 var demo: Node3D
 

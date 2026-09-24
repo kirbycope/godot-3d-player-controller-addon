@@ -10,7 +10,7 @@ const ORE: Item = preload("res://addons/3d_player_controller/inventory/resources
 const KEY: Item = preload("res://addons/3d_player_controller/inventory/resources/items/old_key.tres")
 const SWORD: Item = preload("res://addons/3d_player_controller/inventory/resources/items/wooden_sword.tres")
 const HEAL: Ability = preload("res://addons/3d_player_controller/resources/abilities/heal.tres")
-const TEST_SAVE: String = "user://test_inventory.tres"
+const TEST_SAVE: String = "user://test_inventory.json"
 const MODEL: String = "res://addons/3d_player_controller/assets/quaternius/paraglider/Paraglider.glb" ## A model file, no script of its own.
 const EQUIPMENT_SCRIPT: Script = preload("res://addons/3d_player_controller/scripts/equipment.gd")
 const ContractActions: GDScript = preload("res://addons/3d_player_controller/inventory/tests/contract_actions.gd")
@@ -188,33 +188,40 @@ func test_save_and_load_round_trip() -> void:
 
 
 
-## This folder was its own addon at res://addons/garp/, then res://addons/3d_player_controller/garp/ before
-## the rename. A save from either names its scripts by that path, and both have to keep loading.
-func test_a_save_written_before_inventory_moved_still_loads(legacy: String = use_parameters(Array(Inventory.LEGACY_PATHS))) -> void:
+## A save names each item by its res:// path, so an item the game has since renamed or removed is left out and
+## everything else loads. As a .tres the one missing file failed the whole load, and the player lost every item.
+func test_an_item_the_game_no_longer_has_is_skipped_and_the_rest_loads() -> void:
 	inventory.add_item(APPLE, 5)
+	inventory.add_item(KEY)
 	inventory.add_item(SWORD)
 	assert_eq(inventory.save(), OK)
-
-	# Rewind the file to how it was written under the older path.
-	var file: FileAccess = FileAccess.open(TEST_SAVE, FileAccess.READ)
-	var text: String = file.get_as_text()
-	file.close()
-	assert_true(text.contains(Inventory.SCRIPT_PATH), "The save names its scripts by path")
-	file = FileAccess.open(TEST_SAVE, FileAccess.WRITE)
-	file.store_string(text.replace(Inventory.SCRIPT_PATH, legacy))
+	var text: String = FileAccess.get_file_as_string(TEST_SAVE)
+	assert_true(text.contains(APPLE.resource_path), "Items are named by path, not embedded")
+	var file: FileAccess = FileAccess.open(TEST_SAVE, FileAccess.WRITE)
+	file.store_string(text.replace(APPLE.resource_path, "res://items/renamed_since.tres"))
 	file.close()
 
 	var loaded: Player = _spawn_player()
 	await wait_physics_frames(2)
-	assert_true(loaded.inventory.load_save(), "The old paths are repaired rather than throwing the save away")
-	assert_eq(loaded.inventory.count_of(APPLE), 5)
+	assert_true(loaded.inventory.load_save(), "The save still loads")
+	assert_eq(loaded.inventory.count_of(APPLE), 0, "without the item that is gone")
+	assert_true(loaded.inventory.has_item(KEY), "and with everything else")
 	assert_true(loaded.inventory.has_equipment(Equipment.EquipmentType.SWORD_1H))
 
-	file = FileAccess.open(TEST_SAVE, FileAccess.READ)
-	var repaired: String = file.get_as_text()
+
+## A file that is not a save of this version, an old .tres or anything else, is left alone rather than guessed at.
+func test_a_file_that_is_not_an_inventory_save_is_refused() -> void:
+	var file: FileAccess = FileAccess.open(TEST_SAVE, FileAccess.WRITE)
+	file.store_string('[gd_resource type="Resource" format=3]')
 	file.close()
-	assert_false(repaired.contains(legacy), "And the repair is written back, so it runs once")
-	assert_true(repaired.contains(Inventory.SCRIPT_PATH), "naming the scripts where they live now")
+	inventory.add_item(APPLE, 2)
+	assert_false(inventory.load_save(), "Refused")
+	assert_eq(inventory.count_of(APPLE), 2, "and what the Player carries is untouched")
+	file = FileAccess.open(TEST_SAVE, FileAccess.WRITE)
+	file.store_string(JSON.stringify(JSON.from_native({"version": Inventory.SAVE_VERSION + 1, "inventory": {}})))
+	file.close()
+	assert_false(inventory.load_save(), "A save of another version is refused too")
+	assert_eq(inventory.count_of(APPLE), 2)
 
 
 func test_persist_writes_the_file_on_every_change_and_reads_it_on_ready() -> void:

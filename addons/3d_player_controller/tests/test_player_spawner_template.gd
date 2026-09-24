@@ -73,3 +73,27 @@ func test_a_spawner_without_a_player_child_warns_and_spawns_nothing() -> void:
 	assert_null(spawner.get_local_player())
 	var complete: PlayerSpawner = autofree(_spawner_with_template())
 	assert_eq(complete._get_configuration_warnings().size(), 0, "A Player child clears it")
+
+
+## A peer that quits with a crate in its hands: the crate hangs under that Player's hands, so freeing the Player
+## freed it too, on every peer. It goes back into the world, and to the server, before the Player goes.
+func test_a_body_carried_by_a_player_who_leaves_stays_in_the_world() -> void:
+	var spawner: PlayerSpawner = _spawner_with_template()
+	root.add_child(spawner)
+	var player: Player = root.get_node("Players/1") as Player
+	var crate: RigidBody3D = RigidBody3D.new()
+	var shape: CollisionShape3D = CollisionShape3D.new()
+	shape.shape = BoxShape3D.new()
+	crate.add_child(shape)
+	root.add_child(crate)
+	player.held_object._pickup_rigidbody(crate)
+	crate.set_multiplayer_authority(7) # a carried body answers to its carrier's peer, as _carry hands it over
+	assert_true(player.held_object.is_holding_rigidbody(), "In the Player's hands")
+	spawner.despawn_player(1)
+	await wait_process_frames(2)
+	assert_false(is_instance_valid(player), "The Player is gone")
+	assert_true(is_instance_valid(crate), "but the crate it carried is not")
+	if not is_instance_valid(crate):
+		return
+	assert_eq(crate.get_parent(), root, "It is back where it lived")
+	assert_eq(crate.get_multiplayer_authority(), 1, "and the server's again")

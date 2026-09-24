@@ -7,7 +7,7 @@ const PLAYER_SCENE: PackedScene = preload("res://addons/3d_player_controller/sce
 const DEMO_TREE: SpellTree = preload("res://addons/3d_player_controller/inventory/resources/spell_tree_demo.tres")
 const STEALTH: Ability = preload("res://addons/3d_player_controller/resources/abilities/stealth.tres")
 const HEAL: Ability = preload("res://addons/3d_player_controller/resources/abilities/heal.tres")
-const TEST_SAVE: String = "user://test_spells.tres"
+const TEST_SAVE: String = "user://test_spells.json"
 const ContractActions: GDScript = preload("res://addons/3d_player_controller/inventory/tests/contract_actions.gd")
 
 var root: Node3D
@@ -167,7 +167,8 @@ func test_persist_writes_after_an_unlock() -> void:
 	spellbook.unlock(STEALTH)
 	await wait_process_frames(1) # the write is deferred to the end of the frame
 	assert_true(FileAccess.file_exists(TEST_SAVE), "Unlocking saved")
-	var data: InventorySave = ResourceLoader.load(TEST_SAVE, "", ResourceLoader.CACHE_MODE_IGNORE)
+	var saved: Dictionary = JSON.to_native(JSON.parse_string(FileAccess.get_file_as_string(TEST_SAVE)))
+	var data: InventorySave = SaveGame.from_plain(saved["inventory"]) as InventorySave
 	assert_true(data.spells_saved)
 	assert_eq(data.unlocked_spells, [STEALTH] as Array[Ability])
 	assert_eq(data.skill_points, 2)

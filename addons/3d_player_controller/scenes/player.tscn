@@ -2181,7 +2181,9 @@ billboard = 1
 text = "Name"
 
 [node name="TargetDetection" type="Area3D" parent="." unique_id=803010061]
-editor_description = "The sphere Focus watches for lock-on candidates; its body_entered and body_exited are wired to Focus. The camera reads its radius to size the focus window."
+editor_description = "The sphere Focus watches for lock-on candidates; its body_entered and body_exited are wired to Focus. The camera reads its radius to size the focus window. It is on no layer and not monitorable, so rounds, rays and the camera pass through it rather than hitting the Player 5 m out."
+collision_layer = 0
+monitorable = false
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="TargetDetection" unique_id=442436861]
 editor_description = "The lock-on sphere. The Camera reads its radius to work out how far off centre a target may drift before focus lets go."
@@ -2504,6 +2506,7 @@ replication_config = SubResource("SceneReplicationConfig_player")
 [connection signal="area_exited" from="UpdraftDetection" to="." method="_on_updraft_detection_area_exited"]
 
 [connection signal="typing_changed" from="Hud/Chat" to="." method="_on_chat_typing_changed"]
+[connection signal="typing_changed" from="Hud/Chat" to="VoiceChat" method="_on_chat_typing_changed"]
 [connection signal="equipment_changed" from="Hud/Inventory" to="." method="refresh_contextual_controls"]
 [connection signal="equipment_changed" from="Hud/Inventory" to="Focus" method="_on_equipment_changed"]
 [connection signal="equipment_changed" from="Hud/Inventory" to="HitDetection" method="_on_equipment_changed"]

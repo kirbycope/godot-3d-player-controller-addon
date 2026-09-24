@@ -16,8 +16,9 @@ extends Node
 ## [member save_on_checkpoint] every [Checkpoint] writes as it is taken. A title screen's Continue sets
 ## [member load_requested] before the world loads; the SaveGame loads once this peer's Player is in. A world that
 ## spawns its Players wires its [PlayerSpawner]'s local_player_spawned to [method load_for_player] in the scene; a
-## Player standing in the scene is there already. Over the network only what this peer owns is saved or loaded; the
-## host's world state is the host's to save.
+## Player standing in the scene is there already. Over the network only the host saves: a client is in the host's
+## world, and its own Player is named after a peer id the next session will not have. Loading applies only to what
+## this peer owns.
 
 signal saved(path: String) ## The file was written.
 signal loaded(path: String) ## The file was read and applied.
@@ -78,14 +79,18 @@ func load_for_player(_player: Player) -> void:
 		load_game.call_deferred()
 
 
-## Writes every Saveable's state to [member save_path].
+## Writes every Saveable's state to [member save_path]. A client in somebody else's session writes nothing
+## (ERR_UNAVAILABLE): the world is the host's, and the client's own Player would go in under a peer id the next
+## session will not have, over the single-player save at the same path.
 func save_game() -> Error:
+	if not multiplayer.is_server():
+		return ERR_UNAVAILABLE
 	var scene: Node = get_tree().current_scene
 	var data: Dictionary = {
 		"version": VERSION,
 		"saved_at": Time.get_datetime_string_from_system(true),
 		"scene_path": scene.scene_file_path if scene else "",
-		"states": _to_plain(collect_states()),
+		"states": to_plain(collect_states()),
 	}
 	var file: FileAccess = FileAccess.open(save_path, FileAccess.WRITE)
 	var error: Error = FileAccess.get_open_error() if file == null else OK
@@ -111,7 +116,7 @@ func read_save() -> Dictionary:
 	if not data is Dictionary or int((data as Dictionary).get("version", 0)) != VERSION or not (data as Dictionary).get("states") is Dictionary:
 		push_warning("SaveGame: %s is not a version %d save; it is left alone" % [save_path, VERSION])
 		return {}
-	data["states"] = _from_plain(data["states"])
+	data["states"] = from_plain(data["states"])
 	return data
 
 
@@ -174,7 +179,7 @@ func _update_timer() -> void:
 
 ## [param value] with every Resource in it made plain: one saved under res:// becomes {"@path": its path}, one made
 ## at run time {"@script": its script's res:// path} plus its stored properties. Any other object is dropped.
-static func _to_plain(value: Variant) -> Variant:
+static func to_plain(value: Variant) -> Variant:
 	if value is Resource:
 		var resource: Resource = value
 		if resource.resource_path.begins_with("res://") and not resource.resource_path.contains("::"):
@@ -185,30 +190,30 @@ static func _to_plain(value: Variant) -> Variant:
 		var plain: Dictionary = {"@script": script.resource_path}
 		for property: Dictionary in resource.get_property_list():
 			if property.usage & PROPERTY_USAGE_SCRIPT_VARIABLE and property.usage & PROPERTY_USAGE_STORAGE:
-				plain[property.name] = _to_plain(resource.get(property.name))
+				plain[property.name] = to_plain(resource.get(property.name))
 		return plain
 	if value is Object:
 		return null
 	if value is Array:
 		var items: Array = []
 		for item: Variant in value:
-			items.append(_to_plain(item))
+			items.append(to_plain(item))
 		return items
 	if value is Dictionary:
 		var entries: Dictionary = {}
 		for key: Variant in value:
-			entries[key] = _to_plain(value[key])
+			entries[key] = to_plain(value[key])
 		return entries
 	return value
 
 
-## Undoes [method _to_plain]. Only res:// files are loaded, and only Resource scripts from res:// are instanced, so a
+## Undoes [method to_plain]. Only res:// files are loaded, and only Resource scripts from res:// are instanced, so a
 ## save can name nothing but the game's own content.
-static func _from_plain(value: Variant) -> Variant:
+static func from_plain(value: Variant) -> Variant:
 	if value is Array:
 		var items: Array = []
 		for item: Variant in value:
-			items.append(_from_plain(item))
+			items.append(from_plain(item))
 		return items
 	if not value is Dictionary:
 		return value
@@ -225,7 +230,7 @@ static func _from_plain(value: Variant) -> Variant:
 		for key: Variant in plain:
 			if key == "@script":
 				continue
-			var restored: Variant = _from_plain(plain[key])
+			var restored: Variant = from_plain(plain[key])
 			var current: Variant = resource.get(key)
 			if current is Array and restored is Array:
 				(current as Array).assign(restored) # a typed array property takes the elements, not a plain Array
@@ -234,5 +239,5 @@ static func _from_plain(value: Variant) -> Variant:
 		return resource
 	var entries: Dictionary = {}
 	for key: Variant in plain:
-		entries[key] = _from_plain(plain[key])
+		entries[key] = from_plain(plain[key])
 	return entries

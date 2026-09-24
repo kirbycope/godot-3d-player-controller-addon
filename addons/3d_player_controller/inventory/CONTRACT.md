@@ -27,6 +27,13 @@ not the inventory's to use; widen the table before widening the code.
 | `warp_to(target)` | `(Transform3D) -> void` | Tests move the Player onto and off dropped equipment |
 | native | `is_multiplayer_authority()`, `get_multiplayer_authority()`, `up_direction`, `global_position`, `get_parent()`, `is_node_ready()` | `Inventory`, `ItemPickup` (the server grants a take only to the Player's own peer), `Spellbook` |
 
+## SaveGame (`scripts/save_game.gd`, `class_name SaveGame extends Node`)
+
+| Member | Type | Needed for |
+|---|---|---|
+| `to_plain(value)` | `static (Variant) -> Variant` | `Inventory.save` turns its `InventorySave` into plain JSON: a `res://` resource becomes its path, a run-time one its script's path and stored properties |
+| `from_plain(value)` | `static (Variant) -> Variant` | `Inventory.load_save` and `test_spellbook.gd` read it back; a path that is gone comes back null, so a missing item is skipped |
+
 ## Controls (`scripts/controls.gd`, `class_name Controls extends CanvasLayer`)
 
 | Member | Type | Needed for |

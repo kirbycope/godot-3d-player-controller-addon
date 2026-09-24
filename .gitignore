@@ -22,3 +22,6 @@ test-results/
 addons/controls/
 addons/gta/
 addons/gut/
+
+# Peer review reports written by Claude Code, for reading rather than committing.
+reviews/

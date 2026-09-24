@@ -157,6 +157,38 @@ func test_tab_cycles_and_the_right_mouse_button_is_the_camera_not_a_tap() -> voi
 	Input.flush_buffered_events()
 
 
+func test_an_analog_trigger_pull_is_one_tap_however_many_events_it_sends() -> void:
+	player.control_scheme = WOW
+	var near: Node3D = _dummy("Near", Vector3(0.0, 0.0, -3.0))
+	var far: Node3D = _dummy("Far", Vector3(0.0, 0.0, -8.0))
+	# A scheme an earlier test chose (Dark Souls puts Focus on the stick click) stays in the InputMap
+	var trigger: InputEventJoypadMotion = InputEventJoypadMotion.new()
+	trigger.axis = JOY_AXIS_TRIGGER_LEFT
+	trigger.axis_value = 1.0
+	var bound_here: bool = not InputMap.action_has_event(&"focus", trigger)
+	if bound_here:
+		InputMap.action_add_event(&"focus", trigger)
+	await wait_physics_frames(1)
+	for value: float in [0.3, 0.6, 0.8, 1.0]:
+		await _pull_focus_trigger(value)
+	assert_eq(player.selected_target, near, "One pull of the trigger selects the nearest and goes no further")
+	await _pull_focus_trigger(0.0)
+	await _pull_focus_trigger(1.0)
+	assert_eq(player.selected_target, far, "Let go and pulled again, it is the next tap")
+	await _pull_focus_trigger(0.0)
+	if bound_here:
+		InputMap.action_erase_event(&"focus", trigger)
+
+
+func _pull_focus_trigger(value: float) -> void:
+	var motion: InputEventJoypadMotion = InputEventJoypadMotion.new()
+	motion.axis = JOY_AXIS_TRIGGER_LEFT
+	motion.axis_value = value
+	Input.parse_input_event(motion)
+	Input.flush_buffered_events()
+	await wait_process_frames(1)
+
+
 func test_tab_skips_friends_and_escape_clears_before_the_menu() -> void:
 	player.control_scheme = WOW
 	var friend: Player = PLAYER_SCENE.instantiate()
@@ -192,6 +224,17 @@ func test_a_selection_persists_and_drops_when_the_body_dies() -> void:
 	dummy.remove_from_group("Focusable") # what an enemy does when it dies
 	await wait_physics_frames(2)
 	assert_null(player.selected_target, "A body that can no longer be targeted is dropped")
+
+
+func test_held_focus_is_no_lock_on_in_a_scheme_that_frees_the_cursor() -> void:
+	player.control_scheme = WOW
+	Input.action_press("focus")
+	assert_false(player.is_focusing, "Under a free cursor Focus is a tap that picks the Target, never a held lock-on")
+	Input.action_release("focus")
+	player.control_scheme = ZELDA
+	Input.action_press("focus")
+	assert_true(player.is_focusing, "Under Zelda the same hold is the lock-on")
+	Input.action_release("focus")
 
 
 func test_held_focus_is_the_target_in_a_scheme_that_locks_on() -> void:
@@ -262,3 +305,18 @@ func test_auto_target_takes_the_nearest_fitting_body_in_range() -> void:
 	assert_eq(seeking.get_target(player), near, "On, it takes the nearest enemy in range, passing the friend by")
 	seeking.cast_range = 2.0
 	assert_null(seeking.get_target(player), "but not one out of range")
+
+
+## The lock-on sphere reaches 5 m out. On layer 1 it stopped every ray and round that sees areas, so a bullet aimed
+## at an enemy beside another player hit that player, and the camera's ray found nothing past it.
+func test_a_ray_that_sees_areas_passes_the_lock_on_sphere() -> void:
+	var detection: Area3D = player.get_node("TargetDetection")
+	assert_eq(detection.collision_layer, 0, "On no layer")
+	assert_false(detection.monitorable, "and nothing detects it")
+	assert_true(detection.monitoring, "It still watches for bodies to lock on to")
+	await wait_physics_frames(2)
+	var at: Vector3 = player.global_position + Vector3(0.0, 1.0, 0.0)
+	var query: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.create(at + Vector3(0.0, 0.0, -20.0), at)
+	query.collide_with_areas = true
+	var hit: Dictionary = player.get_world_3d().direct_space_state.intersect_ray(query)
+	assert_ne(hit.get("collider"), detection, "A ray from 20 m out is not stopped 5 m short of the Player")

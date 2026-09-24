@@ -157,7 +157,7 @@ func test_a_boss_enemy_shows_its_health_on_the_hunted_players_bar() -> void:
 	enemy.is_boss = true
 	assert_true(enemy.health.health_changed.is_connected(enemy.boss._on_health_changed), "The scene wires the Boss to the Health")
 	enemy.register_weapon_hit(player, null)
-	assert_true(player.boss_bar.bar.visible, "Hunted, the Player sees the boss bar")
+	assert_true(player.boss_bar.visible, "Hunted, the Player sees the boss bar")
 	var ratio: float = enemy.health.health / enemy.health.max_health
 	assert_almost_eq(player.boss_bar.health_bar.value, ratio, 0.001)
 	enemy.take_hit(10.0, player.global_position)

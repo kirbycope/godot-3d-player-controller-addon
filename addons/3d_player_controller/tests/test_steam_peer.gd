@@ -199,3 +199,27 @@ func test_an_accepted_invite_leaves_the_old_lobby_and_joins_the_new_one() -> voi
 	assert_eq(steamworks.get("lobby_id"), 9, "Steam's answer makes it the lobby")
 	steamworks._on_lobby_joined(11, 0, false, 5)
 	assert_eq(steamworks.get("lobby_id"), 9, "A failed join changes nothing")
+
+
+## Records when the lobby is joined instead of joining it; this build has no SteamMultiplayerPeer to join with.
+class JoinRecorder:
+	extends SteamPeer
+
+	var order: Array[String] = []
+
+	func connect_to_lobby(lobby_id: int) -> void:
+		order.append("joined %d" % lobby_id)
+
+
+## A PlayerSpawner or SyncedBody placed above the SteamPeer readies after the session is joined, not before: from
+## _ready, a joining client's spawner would ready offline and spawn a local Player "1" of its own.
+func test_the_lobby_is_joined_before_any_node_above_it_readies() -> void:
+	_add_steamworks(77)
+	var world: Node = Node.new()
+	var above: Node = Node.new()
+	var peer: JoinRecorder = JoinRecorder.new()
+	above.ready.connect(func() -> void: peer.order.append("ready above"))
+	world.add_child(above)
+	world.add_child(peer)
+	add_child_autofree(world)
+	assert_eq(peer.order, ["joined 77", "ready above"] as Array[String], "The session is in place before the node above it readies")

@@ -13,7 +13,7 @@ extends Node
 ## Invites are accepted here. An invite taken in the Steam overlay ([code]join_requested[/code]) and a launch by
 ## one ([code]+connect_lobby <id>[/code] on the command line) both join that lobby, leaving the one we were in.
 ## Every lobby joined becomes [member lobby_id]. When the invite's lobby is joined while a world with a
-## [SteamPeer] is up, that session closes and the scene loads again, joining the new lobby as it readies;
+## [SteamPeer] is up, that session closes and the scene loads again, joining the new lobby as it enters the tree;
 ## anywhere else (a title screen) a [LobbyExplorer] in the tree loads its world, as for a lobby from its list.
 
 signal steam_ready ## Emitted once Steam is up and [member steam_id] and [member username] are filled.

@@ -39,23 +39,31 @@ func _ready() -> void:
 	voice_playback = audio_player.get_stream_playback() as AudioStreamGeneratorPlayback
 
 
-## Push-to-talk voice broadcasting (action="broadcast", key="V"), held back while paused, typing or ragdolling.
+## Push-to-talk voice broadcasting (action="broadcast", key="V"). Only the press is held back while paused, typing
+## or ragdolling: a release always closes the channel, or letting go behind a menu would leave the mic open.
 func _unhandled_input(event: InputEvent) -> void:
-	if player and (player.is_paused or player.is_typing or player.is_ragdolling):
-		return
-	if event.is_action_pressed(&"broadcast"):
+	if event.is_action_released(&"broadcast"):
+		stop_broadcasting()
+	elif event.is_action_pressed(&"broadcast") and not (player and (player.is_paused or player.is_typing or player.is_ragdolling)):
 		start_broadcasting()
-	elif event.is_action_released(&"broadcast"):
+
+
+## Wired to Chat.typing_changed. The chat row is a Window of its own, so a talk key let go while typing never
+## reaches this node; opening the row closes the channel instead.
+func _on_chat_typing_changed(typing: bool) -> void:
+	if typing:
 		stop_broadcasting()
 
 
 ## Captures and sends the voice while the channel is open or voice activation is listening.
 func _process(delta: float) -> void:
 	var listening: bool = is_broadcasting or voice_activation_enabled()
-	var steam: Object = SteamPeer.session(self) if listening else null
-	_set_recording(steam, steam != null)
+	# Looked up while capture is on too, so the frame the channel closes can turn Steam's capture off; left on, it
+	# buffers everything said with the key up and sends it on the next press
+	var steam: Object = SteamPeer.session(self) if listening or _recording else null
+	_set_recording(steam, listening)
 	var packet_arrived: bool = false
-	if steam:
+	if steam and listening:
 		var available_voice: Dictionary = steam.getAvailableVoice()
 		# GodotSteam returns "size" here, not "written". Reading the wrong key meant this was always 0, so the
 		# capture below never ran and push-to-talk sent nothing at all.

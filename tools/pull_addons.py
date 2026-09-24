@@ -43,7 +43,7 @@ from addon_common import (
 )
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Vendor the addons into addons/")
     parser.add_argument("names", nargs="*", help="Only these addons (default: all)")
     parser.add_argument("--dry-run", action="store_true", help="Report, change nothing")
@@ -59,7 +59,7 @@ def main() -> int:
         help="Overwrite files edited here and delete local files that are not upstream. Without it, "
         "a pull that would destroy either stops so the work can be pushed first.",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     addons = load_manifest()
     if args.names:
@@ -73,7 +73,7 @@ def main() -> int:
     pulled_at = load_pulled()
     changed = False
     blocked = False
-    failed = False
+    failed = False  # an addon that could not be fetched or checked out leaves addons/ incomplete
 
     print(f"Project:  {ROOT}")
     print(f"Addons:   {len(addons)}")
@@ -244,23 +244,23 @@ def main() -> int:
     save_lock(lock)
     save_pulled(pulled_at)
 
+    # A partial addons/ must not pass for a whole one: CI would carry on and test against whatever
+    # happened to arrive.
     if failed:
-        # A partial addons/ must not pass for a whole one: CI would carry on and test against what is missing.
-        print("Some addons FAILED to pull; addons/ is incomplete.")
-        return 1
-
+        print("Some addons FAILED to arrive, so addons/ is incomplete.")
     if blocked:
         print("Some addons were left alone because a pull would have deleted local work.")
         print("Send it upstream with tools/push_addons.py, then pull again.")
+    if failed or blocked:
         return 1
 
     if not changed:
         print("Everything already matches upstream.")
         return 0
 
-    print("Vendored copies updated. Review and commit:")
-    print("  git add addons tools/addons.lock.json")
-    print('  git commit -m "Update the vendored addons"')
+    print("Vendored copies updated. addons/ is git-ignored, so only the lock is committed:")
+    print("  git add tools/addons.lock.json")
+    print('  git commit -m "Update the addons"')
     return 0
 
 

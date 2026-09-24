@@ -215,8 +215,13 @@ var is_focusing: bool: ## Is the Player currently focusing (forward or on a targ
 			return false
 		if held_object and held_object.is_holding_object():
 			return false
-		# While the cursor is visible, right-click is reserved for camera rotation.
-		if DisplayServer.get_name() != "headless" and Input.mouse_mode == Input.MOUSE_MODE_VISIBLE:
+		# While the cursor is visible, right-click is the camera drag. Only that button is held back, so a pad or the
+		# touch slot still focuses on a web page before its first click, and on a phone, where the cursor never hides.
+		if uses_mouse and DisplayServer.get_name() != "headless" and Input.mouse_mode == Input.MOUSE_MODE_VISIBLE \
+				and Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
+			return false
+		# A scheme that frees the cursor makes Focus a tap that picks the Target ([Focus]), never a held lock-on
+		if control_scheme and control_scheme.frees_cursor:
 			return false
 		# Also suppressed during the temporary right-click capture used for camera rotation.
 		if camera is Camera and (camera as Camera).is_temporarily_captured:
@@ -354,7 +359,13 @@ var is_paused: bool = false: ## Is the Player currently paused?
 			paused_changed.emit(value)
 var is_typing: bool = false ## Is the local Player typing in the chat window? Gameplay input is blocked while true.
 var is_pushing: bool = false ## Is the Player currently pushing?
-var is_ragdolling: bool = false ## Is the Player currently ragdolling?
+var is_ragdolling: bool = false: ## Is the Player currently ragdolling? Replicated, and the setter drops or lifts the body on every peer, so another player's copy ragdolls where they do.
+	set(value):
+		if value == is_ragdolling:
+			return
+		is_ragdolling = value
+		if is_node_ready():
+			_set_ragdoll_physics(value)
 var requires_shoot_release_after_throw: bool = false ## Set during a throw to require releasing the shoot button before shooting weapons.
 var selected_throwable: Item = null ## The throwable [Item] the seeker wheel picked; "throw" throws it when the equipped equipment is not throwable (see [HeldObject]).
 var is_shooting: bool: ## Is the Player currently shooting? Replicated: a puppet reads what the authority sent.
@@ -458,7 +469,7 @@ var _ragdoll_was_enabled: bool = true ## enable_ragdoll before death forced it o
 @onready var focus: Focus = $Focus
 @onready var held_object: HeldObject = $HeldObject
 @onready var seeker_wheel: SeekerWheel = get_node_or_null("Hud/SeekerWheel") as SeekerWheel ## The ammunition and throwable picker, held open with "seeker".
-@onready var initial_player_model_transform: Transform3D = player_model.transform
+var initial_player_model_transform: Transform3D ## The model's rest transform from the scene, read as the Player first enters the tree: a late joiner's spawn state moves the model before ready.
 @onready var paraglider_raycast: RayCast3D = $ParagliderRaycast
 @onready var projectile_raycast: RayCast3D = $CameraMount/ProjectileRaycast
 @onready var skeleton: Skeleton3D = $PlayerModel/Armature/GeneralSkeleton
@@ -525,6 +536,9 @@ var current_water_area: Area3D = null
 func _enter_tree() -> void:
 	if str(name).is_valid_int():
 		set_multiplayer_authority(str(name).to_int())
+	# Children enter after this, and the synchronizer applies a spawn state as it does
+	if not is_node_ready():
+		initial_player_model_transform = (get_node(^"PlayerModel") as Node3D).transform
 
 
 ## Called when the node enters the scene tree for the first time.
@@ -539,6 +553,10 @@ func _ready() -> void:
 	display_name = display_name
 	if updraft_aura:
 		_show_updraft_aura(false)
+
+	# A late joiner's copy of a player lying in a ragdoll: the spawn state set the flag before the body could drop
+	if is_ragdolling:
+		_set_ragdoll_physics(true)
 
 	# Do nothing if not the authority
 	if not is_multiplayer_authority():
@@ -1633,6 +1651,34 @@ func register_projectile_hit(projectile: Projectile, point: Vector3, _normal: Ve
 	# A round on the Head hurtbox kills outright
 	var headshot: bool = projectile.hit_part != null and projectile.hit_part.name == "Head"
 	take_hit(health.max_health if headshot else projectile.damage, point, projectile.shooter.get_path() if is_instance_valid(projectile.shooter) else ^"")
+
+
+## The body's side of a ragdoll, on every peer ([member is_ragdolling]'s setter): the model detached so the Player
+## can follow the hips, the animation stopped, the physical bones colliding and simulating, the capsule off; or all
+## of it undone, the model back at its rest transform. A detached model's replicated position is a world one, which
+## is why a puppet must detach its own too.
+func _set_ragdoll_physics(on: bool) -> void:
+	if player_model:
+		# A copy's model may already hold the owner's detached, world-space position as a local one; the bones would
+		# start at twice the distance. Back at rest first, detaching keeps it where the body is.
+		if on and not is_multiplayer_authority():
+			player_model.position = initial_player_model_transform.origin
+		player_model.top_level = on
+		if not on:
+			player_model.transform = initial_player_model_transform
+	if animation_tree:
+		animation_tree.active = not on # also stops method tracks playing audio on a limp body
+	if physical_bone_simulator:
+		if not on:
+			physical_bone_simulator.physical_bones_stop_simulation()
+		# The scene ships the bones on no layer, so they collide only while the ragdoll simulates
+		for bone: Node in physical_bone_simulator.find_children("*", "PhysicalBone3D", true, false):
+			(bone as PhysicalBone3D).set_collision_layer_value(1, on)
+			(bone as PhysicalBone3D).set_collision_mask_value(1, on)
+		if on:
+			physical_bone_simulator.physical_bones_start_simulation()
+	if collision_shape:
+		collision_shape.disabled = on
 
 
 ## Wired to Health.died: the body drops into the ragdoll and the RespawnTimer brings the Player back.

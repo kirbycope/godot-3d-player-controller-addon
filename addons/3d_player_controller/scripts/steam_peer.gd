@@ -6,7 +6,7 @@ extends Node
 ## connects to that id rather than to the lobby's owner, since ownership can move to somebody who is not hosting.
 ## Steam is reached only through [method session] and [code]/root/Steamworks[/code], so the node is inert on web
 ## exports and whenever no lobby is active. Call [method host] once a lobby has been created locally, or rely on
-## [method _ready] when the world loads after joining a lobby.
+## [method _enter_tree] when the world loads after joining a lobby.
 ##
 ## The session ends through [method end_session]: the lobby menu's Leave calls it, and so does the host going away
 ## or a join that fails. The peer goes back to an [OfflineMultiplayerPeer] and [signal session_ended] fires, which
@@ -23,15 +23,21 @@ static var steam_override: Object = null ## Stands in for the Steam singleton wh
 @export var virtual_port: int = 0 ## Steam networking virtual port shared by host and clients.
 
 
+## Joins the lobby's session on entering the tree rather than on ready. Every node in the world enters the tree
+## before any of them readies, so a PlayerSpawner or SyncedBody readies with the session already in place wherever
+## this node sits; from _ready, the ones above it would ready offline and spawn a local Player "1" on a client.
+func _enter_tree() -> void:
+	var lobby_id: int = lobby_of(self)
+	if lobby_id != 0 and not has_session():
+		connect_to_lobby(lobby_id)
+
+
 func _ready() -> void:
 	add_to_group(GROUP)
 	# The MultiplayerAPI is no node, so these cannot be wired in a scene. Deferred, so the peer is replaced once the
 	# poll that reported the loss has finished.
 	multiplayer.server_disconnected.connect(end_session, CONNECT_DEFERRED)
 	multiplayer.connection_failed.connect(end_session, CONNECT_DEFERRED)
-	var lobby_id: int = lobby_of(self)
-	if lobby_id != 0 and not has_session():
-		connect_to_lobby(lobby_id)
 
 
 ## The Steam singleton while the Steamworks session is up, else null. The extension being loaded is not enough:
