@@ -457,6 +457,26 @@ func test_a_weapon_whose_scene_is_a_model_file_survives_a_save_and_a_load() -> v
 	assert_eq(loaded.inventory.origin_of(loaded.inventory.get_equipment_by_type(Equipment.EquipmentType.AXE_1H)), String(axe.get_path()))
 
 
+## A taken weapon stays in the level hidden, and its shapes used to stay too: a sword's blade or a bow's template
+## arrow went on stopping rounds where it had lain. A copy made from it for a drop or a peer is whole again.
+func test_a_taken_weapon_leaves_no_collider_behind_and_a_copy_of_it_is_whole() -> void:
+	var axe: Equipment = _model_weapon("WorldAxe")
+	var body: AnimatableBody3D = AnimatableBody3D.new()
+	body.name = "WeaponBody"
+	var blade: CollisionShape3D = CollisionShape3D.new()
+	blade.shape = BoxShape3D.new()
+	body.add_child(blade)
+	axe.add_child(body)
+	assert_true(axe.equip(player), "The Player picks the axe up")
+	axe._vanish()
+	await wait_physics_frames(2)
+	assert_true(blade.disabled, "The blade of the spent pickup no longer collides")
+	var copy: Equipment = Inventory.pickup_from(String(axe.get_path()), root)
+	var copied: CollisionShape3D = copy.get_node("WeaponBody").get_child(0) as CollisionShape3D
+	assert_false(copied.disabled, "while a copy of it can be walked over and swung again")
+	copy.free()
+
+
 ## An instance of a scene that turns out to be no Equipment (a bare model file) is freed, not left lying about.
 func test_a_scene_that_is_no_equipment_is_freed_rather_than_leaked() -> void:
 	var orphans: int = int(Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT))

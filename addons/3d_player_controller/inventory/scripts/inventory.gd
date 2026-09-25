@@ -846,6 +846,8 @@ static func pickup_from(origin: String, from: Node) -> Equipment:
 		var detection: Area3D = pickup.get_node_or_null("PlayerDetection") as Area3D
 		if detection:
 			detection.monitoring = true
+		for shape: Node in pickup.find_children("*", "CollisionShape3D", true, false):
+			(shape as CollisionShape3D).disabled = false
 		pickup.set_meta("origin", origin)
 		return pickup
 	var node: Node = (load(origin) as PackedScene).instantiate() if _is_scene_path(origin) else null

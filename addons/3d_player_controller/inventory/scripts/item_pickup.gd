@@ -113,6 +113,9 @@ func _set_count(left: int) -> void:
 	if owner != null or (spawned and not multiplayer.is_server()):
 		hide()
 		player_detection.set_deferred(&"monitoring", false)
+		# Nor can it be hit: the Player's ProjectileRaycast collides with areas, and a spent stack's reach
+		# would otherwise catch every round aimed through where it lay.
+		player_detection.set_deferred(&"monitorable", false)
 	else:
 		queue_free()
 

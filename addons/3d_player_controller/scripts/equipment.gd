@@ -132,6 +132,10 @@ func _vanish() -> void:
 	hide()
 	if player_detection:
 		player_detection.set_deferred(&"monitoring", false)
+	# Hidden is not gone: every shape it carries (the pickup volume, a blade, a bow's template arrow) would go on
+	# stopping rounds, the aim ray and anything rolling through where it lay. Inventory.pickup_from turns them back on.
+	for shape: Node in find_children("*", "CollisionShape3D", true, false):
+		shape.set_deferred(&"disabled", true)
 	if owner and multiplayer.is_server() and not multiplayer.peer_connected.is_connected(_tell_joiner):
 		multiplayer.peer_connected.connect(_tell_joiner)
 
