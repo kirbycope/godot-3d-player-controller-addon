@@ -66,7 +66,7 @@ func test_holding_rigidbody_with_bow_equipped_blocks_bow_draw():
 	assert_true(player.held_object.is_holding_object(), "Player should be holding an object.")
 	assert_false(player.is_shooting, "is_shooting should be false while holding object.")
 	assert_false(player.is_drawing_arrow, "is_drawing_arrow should be false while holding object.")
-	assert_true(player.look_at_modifier.active, "Picking up should point the look-at modifier at the body.")
+	assert_true(player.head_look_at_modifier.active, "Picking up should turn the head to the body.")
 
 	player.start_charging_throw()
 	assert_true(player.held_object.is_charging_throw, "Throw should be charging.")

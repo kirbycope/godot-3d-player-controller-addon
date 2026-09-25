@@ -55,6 +55,7 @@ var throw_charge_time: float = 0.0 ## Elapsed charge duration for the current th
 var throw_power: float = 1.0 ## Throw power multiplier (MIN_THROW_POWER to MAX_THROW_POWER).
 var queued_throw_direction: Vector3 = Vector3.ZERO ## Direction applied when executing a queued throw.
 var held_rigidbody: RigidBody3D = null
+var _last_held: RigidBody3D = null ## What the head was pointed at on pickup, so letting go clears only that.
 var held_throwable: Node3D = null ## The model of the inventory item or equipment in the throwing hand while its throw charges.
 var throwable_item: Item = null ## The item [member held_throwable] is one of; null for equipment.
 var throwable_equipment: PackedScene = null ## The scene the equipment in hand was equipped from; null for items.
@@ -599,7 +600,10 @@ func _pickup_rigidbody(body: RigidBody3D) -> void:
 		emote_state.start(HOLD_EMOTE)
 		player.is_emoting = true
 		player.has_started_emoting = false
-	player.set_look_at_target(body)
+	# The head follows what is held, not the spine: bending the torso toward a body that is often below the
+	# chest folded the Player over it. The head's own limits keep the neck plausible.
+	_last_held = body
+	player.set_head_look_at_target(body)
 	if player.is_multiplayer_authority():
 		refresh_contextual_controls()
 
@@ -641,7 +645,12 @@ func _end_hold() -> void:
 		player.emote_spine_blend = 0.0
 		player.is_emoting = false
 		player.has_started_emoting = false
-	player.set_look_at_target(null)
+	# Only if the head is still on what was held, so a screen being read keeps the head it asked for.
+	var head: LookAtModifier3D = player.head_look_at_modifier
+	var looking_at: Node = head.get_node_or_null(head.target_node) if head and not head.target_node.is_empty() else null
+	if head and (looking_at == null or looking_at == _last_held):
+		player.set_head_look_at_target(null)
+	_last_held = null
 	if not player.is_multiplayer_authority():
 		return
 	# Hand the control labels back to the active state.

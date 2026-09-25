@@ -2310,7 +2310,7 @@ wait_time = 0.5
 one_shot = true
 
 [node name="HeldObject" type="Node" parent="." unique_id=194795531 node_paths=PackedStringArray("player", "throw_charge_bar", "throw_hand")]
-editor_description = "The thing in the Player's hands, carried, and thrown. It points the spine LookAtModifier3D while a body is held."
+editor_description = "The thing in the Player's hands, carried, and thrown. It points the head LookAtModifier3D at a body while it is held."
 script = ExtResource("239_xq7w3")
 player = NodePath("..")
 throw_charge_bar = NodePath("../Hud/ThrowChargeBar")
