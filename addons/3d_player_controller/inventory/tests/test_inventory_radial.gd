@@ -77,6 +77,35 @@ class TestRadialMenuHold:
 class TestCycleAndBackpack:
 	extends InventoryTestBase
 
+	## A sword and a shield are out together on two bones; forward used to step onto the shield, already out, and stop.
+	func test_cycling_forward_from_a_sword_and_shield_moves_on():
+		var inventory: Inventory = player_instance.inventory
+		var bow = make_equipment(Equipment.EquipmentType.BOW, "LeftHand")
+		var pistol = make_equipment(Equipment.EquipmentType.PISTOL, "RightHand")
+		var sword = make_equipment(Equipment.EquipmentType.SWORD_1H, "RightHand")
+		var shield = make_equipment(Equipment.EquipmentType.SWORD_AND_SHIELD, "LeftLowerArm")
+		for item: Equipment in [bow, pistol, sword, shield]:
+			inventory.equip_pickup(item)
+		assert_true(inventory.has_equipment(Equipment.EquipmentType.SWORD_1H), "The sword is out")
+		assert_true(inventory.has_equipment(Equipment.EquipmentType.SWORD_AND_SHIELD), "and the shield with it")
+
+		inventory.cycle_weapon(1)
+		assert_true(inventory.is_unarmed(), "Forward past the last weapon is empty hands")
+		inventory.cycle_weapon(1)
+		assert_true(inventory.has_equipment(Equipment.EquipmentType.BOW), "then round to the first, the bow")
+		inventory.cycle_weapon(1)
+		assert_true(inventory.has_equipment(Equipment.EquipmentType.PISTOL), "then the pistol")
+
+	func test_cycling_back_from_a_sword_and_shield_reaches_the_pistol():
+		var inventory: Inventory = player_instance.inventory
+		var pistol = make_equipment(Equipment.EquipmentType.PISTOL, "RightHand")
+		var sword = make_equipment(Equipment.EquipmentType.SWORD_1H, "RightHand")
+		var shield = make_equipment(Equipment.EquipmentType.SWORD_AND_SHIELD, "LeftLowerArm")
+		for item: Equipment in [pistol, sword, shield]:
+			inventory.equip_pickup(item)
+		inventory.cycle_weapon(-1)
+		assert_true(inventory.has_equipment(Equipment.EquipmentType.PISTOL), "Back from the sword and shield is the pistol")
+
 	func test_cycle_weapon_and_equip_from_backpack_emit_equipment_changed():
 		var inventory: Inventory = player_instance.inventory
 		var sword = make_equipment(Equipment.EquipmentType.SWORD_1H, "RightHand")

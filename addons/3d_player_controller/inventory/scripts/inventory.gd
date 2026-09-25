@@ -460,11 +460,15 @@ func cycle_weapon(direction: int) -> void:
 	var all_weapons: Array[Equipment] = get_all_weapons()
 	if all_weapons.is_empty():
 		return
+	# With two pieces out at once (a sword and a shield) the step starts past the last of them going forward, or
+	# before the first going back. Starting at the first either way stepped onto the shield, already out, and
+	# forward never got any further.
 	var current_index: int = -1
 	for i: int in all_weapons.size():
 		if equipment.has(all_weapons[i]):
 			current_index = i
-			break
+			if direction < 0:
+				break
 	var new_index: int = posmod(current_index + 1 + direction, all_weapons.size() + 1) - 1
 	if new_index == -1:
 		unequip_all()
