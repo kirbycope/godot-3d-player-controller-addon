@@ -395,6 +395,15 @@ func test_a_save_keeps_its_preview_beside_it() -> void:
 	_without_slots(was)
 
 
+func test_no_saves_folder_yet_lists_nothing_quietly() -> void:
+	var was: String = SaveGame.SAVES_DIR
+	SaveGame.SAVES_DIR = "user://no_such_saves_folder"
+	assert_eq(SaveGame.list_saves().size(), 0, "Before the first save there is nothing to list")
+	assert_eq(SaveGame.next_free_slot(), 1, "and a new game takes save 1")
+	assert_engine_error_count(0, "without an error for the folder not being there")
+	SaveGame.SAVES_DIR = was
+
+
 func test_the_level_name_reads_well() -> void:
 	assert_eq(SaveGame.level_name_of("res://scenes/snow_demo.tscn"), "Snow Demo")
 	assert_eq(SaveGame.level_name_of("res://scenes/world.tscn"), "World")

@@ -92,6 +92,8 @@ static func preview_path(number: int) -> String:
 ## screen needs to list them. A file that is not a save of this version is left out.
 static func list_saves() -> Array[Dictionary]:
 	var saves: Array[Dictionary] = []
+	if not DirAccess.dir_exists_absolute(SAVES_DIR):
+		return saves # Nothing saved yet; asking for the files of a folder that is not there logs an error
 	for file: String in DirAccess.get_files_at(SAVES_DIR):
 		if not (file.begins_with("slot_") and file.ends_with(".json")):
 			continue
