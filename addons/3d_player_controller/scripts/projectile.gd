@@ -1,8 +1,10 @@
 class_name Projectile
 extends RigidBody3D
 ## A physical projectile (bullet, arrow) with a swept ray between physics steps so fast rounds
-## never tunnel through thin or small targets such as balloons. Projectile scenes sit on no collision
-## layer (mask 1), so rounds pass through each other and only collide with the world.
+## never tunnel through thin or small targets such as balloons. Projectile scenes sit on
+## [constant PROJECTILE_LAYER] alone and mask layer 1, so rounds pass through each other and only collide with
+## the world, while an area that watches every layer (a snow field, a grass field) still sees them go by.
+## On no layer at all, as they used to be, no area could.
 ##
 ## Characters wear hurtboxes, Area3Ds on bone attachments on [constant HURTBOX_LAYER]: when the sweep lands on a
 ## CharacterBody3D the same ray is cast again for the hurtbox behind the capsule, and [member hit_part] tells the
@@ -16,6 +18,7 @@ signal hit(collider: Node, point: Vector3, normal: Vector3) ## Emitted once when
 const SHOOTER_EXCEPTION_SECONDS: float = 0.15 ## How long the projectile ignores the body that fired it.
 const MAX_AREA_SKIPS: int = 4 ## Areas without a hit handler (water, weather zones) are skipped up to this many times per step.
 const HURTBOX_LAYER: int = 2 ## Physics layer of the hurtbox areas that report which body part a round hit.
+const PROJECTILE_LAYER: int = 12 ## The layer projectile scenes sit on. No body masks it, so nothing collides with a round but the world it hits.
 
 @export var is_template: bool = false ## A frozen display copy (the arrow shown on the bow model); never flies.
 @export var lifetime: float = 5.0 ## Seconds before an unlanded projectile frees itself.

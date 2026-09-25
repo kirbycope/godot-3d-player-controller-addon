@@ -18,7 +18,7 @@ bottom_radius = 0.01
 height = 0.667
 
 [node name="Arrow" type="RigidBody3D"]
-collision_layer = 0
+collision_layer = 2048
 mass = 0.05
 continuous_cd = true
 contact_monitor = true

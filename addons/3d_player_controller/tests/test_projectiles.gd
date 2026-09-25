@@ -5,6 +5,7 @@ extends GutTest
 ## along the Player's projectile ray while showing the laser sight.
 
 const BULLET_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/projectile/bullet.tscn")
+const ARROW_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/projectile/arrow.tscn")
 const LASER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/vfx/laser_sight.tscn")
 const PLAYER_SCENE: PackedScene = preload("res://addons/3d_player_controller/scenes/player.tscn")
 const FIREARM_SCRIPT: Script = preload("res://addons/3d_player_controller/scripts/firearm.gd")
@@ -45,6 +46,16 @@ func _shoot(from: Vector3, direction: Vector3, speed: float) -> Projectile:
 	root.add_child(bullet)
 	bullet.launch(Transform3D(Basis.IDENTITY, from), direction, speed, null)
 	return bullet
+
+
+## Rounds used to sit on no layer at all, which no area can detect: a snow or grass field never saw a shot go by.
+func test_rounds_sit_on_their_own_layer_which_they_do_not_collide_with() -> void:
+	for scene: PackedScene in [BULLET_SCENE, ARROW_SCENE]:
+		var round_body: Projectile = scene.instantiate()
+		var layer_bit: int = 1 << (Projectile.PROJECTILE_LAYER - 1)
+		assert_eq(round_body.collision_layer, layer_bit, "%s is on the projectile layer, so an area can see it" % scene.resource_path.get_file())
+		assert_eq(round_body.collision_mask & layer_bit, 0, "and does not mask it, so rounds still pass through each other")
+		round_body.free()
 
 
 func test_fast_bullet_hits_small_area_target_via_sweep() -> void:
