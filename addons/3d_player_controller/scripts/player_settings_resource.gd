@@ -5,6 +5,7 @@ static var SAVE_PATH: String = "user://settings.tres" ## Where the settings live
 const MSAA_VALUES: Array[Viewport.MSAA] = [Viewport.MSAA_DISABLED, Viewport.MSAA_2X, Viewport.MSAA_4X, Viewport.MSAA_8X] ## Indexed by [member msaa_index].
 const SSAA_SCALES: Array[float] = [1.0, 1.5, 2.0] ## Indexed by [member ssaa_index].
 const TOON_NEWSPAPER: int = 1 ## ToonFilter.Mode.NEWSPAPER, what an old saved toon_enabled = true meant.
+const MINIMAP_GROUP: StringName = &"minimap" ## The group a minimap joins (the minimap addon's does) for [member rotate_minimap] to reach it.
 
 static var _cached: PlayerSettingsResource ## One shared instance so every menu edits and saves the same settings.
 
@@ -27,6 +28,7 @@ static var _cached: PlayerSettingsResource ## One shared instance so every menu 
 @export var taa_enabled: bool = false
 @export var fsr_index: int = 0 ## [enum Viewport.Scaling3DMode] index; mutually exclusive with [member ssaa_index].
 @export var toon_mode: int = 0 ## [enum ToonFilter.Mode] of the [ToonFilter] under the Player's camera; local to this machine like the rest.
+@export var rotate_minimap: bool = false ## Turn the game's minimap with the Player rather than keeping north up. Handed to every node in [constant MINIMAP_GROUP] as its [code]rotate_with_target[/code], so this addon needs no minimap of its own and a game without one never sees the setting.
 
 # Chat Settings
 @export var chat_rect: Rect2 = Rect2() ## Where the [ChatWindow] sits and how big it is; zero size means bottom-left at the default size.
@@ -112,6 +114,13 @@ func apply_video_settings(viewport: Viewport) -> void:
 	RenderingServer.screen_space_roughness_limiter_set_active(ssrl_enabled, 0.25, 0.18)
 	viewport.use_taa = taa_enabled
 	apply_ui_scale(viewport.get_window())
+	apply_minimap(viewport.get_tree())
+
+
+## Hands [member rotate_minimap] to every minimap in [param tree] (the nodes in [constant MINIMAP_GROUP]).
+func apply_minimap(tree: SceneTree) -> void:
+	if tree != null:
+		tree.call_group(MINIMAP_GROUP, &"set", &"rotate_with_target", rotate_minimap)
 
 
 ## The factor for a window of [param window_size]: the chosen one, or on Auto the shorter side over

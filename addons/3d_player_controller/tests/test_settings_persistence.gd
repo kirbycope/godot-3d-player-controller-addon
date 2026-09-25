@@ -211,3 +211,30 @@ func test_the_settings_path_can_be_redirected() -> void:
 	assert_true(FileAccess.file_exists("user://test_redirected_settings.tres"), "The file goes where the path points")
 	DirAccess.remove_absolute("user://test_redirected_settings.tres")
 	PlayerSettingsResource.SAVE_PATH = was
+
+
+## Rotate Minimap: shown only while the game has a node in the minimap group (the minimap addon's is), handed to
+## every such node as rotate_with_target, and kept with the other video settings.
+func test_the_rotate_minimap_toggle_reaches_the_minimap_and_persists() -> void:
+	var video_settings: PlayerMenuLayer = VIDEO_SETTINGS_SCENE.instantiate() as PlayerMenuLayer
+	add_child_autofree(video_settings)
+	video_settings.show_menu()
+	assert_false(video_settings.rotate_minimap_button.visible, "No minimap in the game, no toggle")
+	video_settings.hide_menu()
+	var minimap := Node.new()
+	var script := GDScript.new()
+	script.source_code = "extends Node\nvar rotate_with_target: bool = false\n"
+	script.reload()
+	minimap.set_script(script)
+	minimap.add_to_group(PlayerSettingsResource.MINIMAP_GROUP)
+	add_child_autofree(minimap)
+	video_settings.show_menu()
+	assert_true(video_settings.rotate_minimap_button.visible, "With one, the toggle is offered")
+	video_settings._on_rotate_minimap_toggled(true)
+	assert_true(minimap.get("rotate_with_target"), "and turning it on turns the minimap with the Player")
+	video_settings.hide_menu()
+	var loaded: PlayerSettingsResource = ResourceLoader.load(PlayerSettingsResource.SAVE_PATH, "", ResourceLoader.CACHE_MODE_IGNORE)
+	assert_true(loaded.rotate_minimap, "The choice is saved")
+	minimap.set("rotate_with_target", false)
+	PlayerSettingsResource.load_or_create().apply_video_settings(get_viewport())
+	assert_true(minimap.get("rotate_with_target"), "and applied again with the other video settings, as a game starts")

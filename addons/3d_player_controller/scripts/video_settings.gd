@@ -9,6 +9,7 @@ extends PlayerMenuLayer
 @onready var ssrl_button: CheckButton = $Panel/VBoxContainer/SSRL
 @onready var taa_button: CheckButton = $Panel/VBoxContainer/TAA
 @onready var fsr_button: OptionButton = $Panel/VBoxContainer/FSR
+@onready var rotate_minimap_button: CheckButton = $Panel/VBoxContainer/RotateMinimap ## Shown only while the game has a minimap.
 
 var settings_res: PlayerSettingsResource
 
@@ -38,6 +39,27 @@ func _ready() -> void:
 	taa_button.set_pressed_no_signal(settings_res.taa_enabled)
 	fsr_button.visible = is_forward_plus
 	fsr_button.selected = settings_res.fsr_index
+	rotate_minimap_button.set_pressed_no_signal(settings_res.rotate_minimap)
+	_update_minimap_availability()
+
+
+## Opens the menu with the minimap toggle shown only if the game has a minimap now.
+func show_menu() -> void:
+	_update_minimap_availability()
+	super()
+
+
+func _update_minimap_availability() -> void:
+	rotate_minimap_button.visible = is_inside_tree() and get_tree().get_first_node_in_group(PlayerSettingsResource.MINIMAP_GROUP) != null
+
+
+func _on_rotate_minimap_toggled(toggled_on: bool) -> void:
+	settings_res.rotate_minimap = toggled_on
+	_apply_and_save()
+
+
+func _on_rotate_minimap_touch_screen_button_pressed() -> void:
+	_on_rotate_minimap_toggled(not rotate_minimap_button.button_pressed)
 
 
 ## Applies the whole resource to the viewport (the resource owns the value tables) and persists it.
