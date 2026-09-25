@@ -19,7 +19,11 @@ extends Node
 ## Player standing in the scene is there already. Over the network every peer keeps its own save of what it owns: the
 ## host (and single player) in [member save_path], a client in [member client_save_path], so joining a friend's game
 ## never writes over the single-player save. A spawned Player is keyed [constant PLAYER_KEY] rather than by its peer
-## id, which the next session will not repeat.
+## id, which the next session will not repeat. In a networked game every peer loads its own save as its Player comes
+## in, no Continue needed, so a friend joining brings their inventory, health and quests along.
+##
+## A save taken in another level brings the Player's things but not its place: [constant PLACE_KEYS] are left out, so
+## the Player stays where the level spawned it, and the other Saveables, which belong to that other level, are skipped.
 ##
 ## Several saves, Minecraft style: set [member slot] and the host writes [code]user://saves/slot_N.json[/code] instead of
 ## [member save_path], with a preview [code]slot_N.png[/code] beside it (the frame [method capture_preview] took, which the
@@ -33,6 +37,7 @@ signal load_failed(path: String) ## There was no file, or it could not be read.
 const GROUP: StringName = &"Saveable"
 const VERSION: int = 2 ## The file format; 1 was the SaveGameData resource, which is no longer read.
 const PLAYER_KEY: String = "@player" ## The key this peer's own spawned Player is saved under, whatever its peer id.
+const PLACE_KEYS: PackedStringArray = ["transform", "respawn_transform", "facing", "camera_rotation"] ## A Player's state that only means something in the level it was saved in.
 
 static var DEFAULT_SAVE_PATH: String = "user://savegame.json" ## Where a SaveGame writes unless told otherwise; a test run points it elsewhere.
 static var DEFAULT_CLIENT_SAVE_PATH: String = "user://savegame_client.json" ## Where a client in somebody else's game writes.
@@ -151,12 +156,18 @@ func has_save() -> bool:
 
 
 ## Wire a [PlayerSpawner]'s local_player_spawned here in the scene: a Continue waiting on [member load_requested]
-## loads once this peer's Player is in. A connection made in the scene exists before any node readies, so it hears
-## the spawn even when the spawner sits earlier in the tree and spawns in its own _ready, before this one's.
+## loads once this peer's Player is in, and in a networked game so does any peer that has a save. A connection made in
+## the scene exists before any node readies, so it hears the spawn even when the spawner sits earlier in the tree and
+## spawns in its own _ready, before this one's.
 func load_for_player(_player: Player) -> void:
-	if load_requested:
+	if load_requested or (is_networked() and has_save()):
 		load_requested = false
 		load_game.call_deferred()
+
+
+## True in a game with other peers in it or on the way: hosting or joining, not single player.
+func is_networked() -> bool:
+	return multiplayer.has_multiplayer_peer() and not multiplayer.multiplayer_peer is OfflineMultiplayerPeer
 
 
 ## Writes every Saveable this peer owns to [method current_path].
@@ -232,13 +243,18 @@ func read_save() -> Dictionary:
 	return data
 
 
-## Reads [method current_path] back into the Saveables that are there; false when there is nothing to read.
+## Reads [method current_path] back into the Saveables that are there; false when there is nothing to read. A save
+## from another level brings only the Player's things, not its place.
 func load_game() -> bool:
 	var data: Dictionary = read_save()
 	if data.is_empty():
 		load_failed.emit(current_path())
 		return false
-	apply_states(data["states"])
+	var states: Dictionary = data["states"]
+	var scene: Node = get_tree().current_scene
+	if str(data.get("scene_path", "")) != (scene.scene_file_path if scene else ""):
+		states = carried_states(states)
+	apply_states(states)
 	loaded.emit(current_path())
 	return true
 
@@ -262,6 +278,16 @@ func collect_states() -> Dictionary:
 		var key: String = PLAYER_KEY if node is Player and str(node.name).is_valid_int() else String(base.get_path_to(node))
 		states[key] = node.save_state()
 	return states
+
+
+## What of [param states] a Player carries into another level: its own state without [constant PLACE_KEYS].
+static func carried_states(states: Dictionary) -> Dictionary:
+	if not states.get(PLAYER_KEY) is Dictionary:
+		return {}
+	var carried: Dictionary = (states[PLAYER_KEY] as Dictionary).duplicate()
+	for place: String in PLACE_KEYS:
+		carried.erase(place)
+	return {PLAYER_KEY: carried}
 
 
 ## Hands each state to the Saveable at its path, if it is still there and this peer owns it; [constant PLAYER_KEY]

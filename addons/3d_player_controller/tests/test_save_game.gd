@@ -344,6 +344,75 @@ func test_a_spawned_player_is_saved_under_a_key_its_next_session_can_find() -> v
 	assert_eq(player.health.health, 40.0, "and applied to this peer's own Player")
 
 
+
+## A save taken in another level brings the Player's health and inventory but not its place: it stays where this
+## level put it.
+func test_a_save_from_another_level_brings_the_things_not_the_place() -> void:
+	player.name = "1" # spawned, as in a networked game
+	player.warp_to(Transform3D(Basis(), Vector3(8.0, 0.0, 8.0)))
+	player.health.health = 40.0
+	player.inventory.add_item(APPLE, 3)
+	assert_eq(saver.save_game(), OK)
+	var data: Variant = JSON.to_native(JSON.parse_string(FileAccess.get_file_as_string(TEST_PATH)))
+	data["scene_path"] = "res://some/other_level.tscn"
+	var file: FileAccess = FileAccess.open(TEST_PATH, FileAccess.WRITE)
+	file.store_string(JSON.stringify(JSON.from_native(data)))
+	file.close()
+	player.warp_to(Transform3D(Basis(), Vector3(-2.0, 0.0, 1.0)))
+	player.health.health = player.health.max_health
+	player.inventory.remove_item(APPLE, 3)
+	assert_true(saver.load_game())
+	assert_eq(player.health.health, 40.0, "The health comes along")
+	assert_eq(player.inventory.count_of(APPLE), 3, "and the inventory")
+	assert_almost_eq(player.global_position, Vector3(-2.0, 0.0, 1.0), Vector3.ONE * 0.01, "but the Player stays at this level's spawn")
+
+
+## A friend joining a game brings their things with them: as a client's Player spawns, its own save loads without
+## anyone picking Continue, and in the same level it puts them back where they were.
+func test_a_client_loads_its_own_save_as_it_joins() -> void:
+	var branch: Node3D = Node3D.new()
+	add_child(branch)
+	var api: SceneMultiplayer = SceneMultiplayer.new()
+	get_tree().set_multiplayer(api, branch.get_path())
+	var enet: ENetMultiplayerPeer = ENetMultiplayerPeer.new()
+	assert_eq(enet.create_client("127.0.0.1", 47436), OK)
+	api.multiplayer_peer = enet
+	var client_player: Player = PLAYER_SCENE.instantiate()
+	client_player.name = str(api.get_unique_id())
+	client_player.set_multiplayer_authority(api.get_unique_id())
+	branch.add_child(client_player)
+	var client_saver: SaveGame = SAVE_GAME_SCENE.instantiate()
+	client_saver.save_path = TEST_PATH
+	client_saver.client_save_path = TEST_CLIENT_PATH
+	branch.add_child(client_saver)
+	await wait_physics_frames(2)
+	client_player.warp_to(Transform3D(Basis(), Vector3(3.0, 0.0, -4.0)))
+	client_player.health.health = 25.0
+	assert_eq(client_saver.save_game(), OK)
+	client_player.warp_to(Transform3D(Basis(), Vector3.ZERO))
+	client_player.health.health = client_player.health.max_health
+	watch_signals(client_saver)
+	assert_false(SaveGame.load_requested, "Nobody picked Continue")
+	client_saver.load_for_player(client_player)
+	await wait_process_frames(2)
+	assert_signal_emitted(client_saver, "loaded", "The client's own save loads as its Player comes in")
+	assert_eq(client_player.health.health, 25.0, "with its health")
+	assert_almost_eq(client_player.global_position.x, 3.0, 0.05, "and, in the same level, where it stood")
+	DirAccess.remove_absolute(TEST_CLIENT_PATH)
+	enet.close()
+	var path: NodePath = branch.get_path()
+	branch.free()
+	get_tree().set_multiplayer(null, path)
+
+
+## Single player waits for Continue: a New Game's Player does not pick up an old save on its own.
+func test_single_player_does_not_load_without_continue() -> void:
+	assert_eq(saver.save_game(), OK)
+	watch_signals(saver)
+	saver.load_for_player(player)
+	await wait_process_frames(2)
+	assert_signal_not_emitted(saver, "loaded")
+
 #region Numbered saves
 
 const TEST_SAVES_DIR: String = "user://test_saves"

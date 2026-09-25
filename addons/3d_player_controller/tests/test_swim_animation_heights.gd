@@ -50,22 +50,33 @@ const HIPS_TRACK: String = "%GeneralSkeleton:Hips"
 ## get reverted three times and said nothing.
 const EXPECTED_TUNED: Dictionary = {
 	"Backflip": [0.9305699, 0.6450410, 1.3755330],
+	"Bow Standing Aim Idle 01": [0.9323989, 0.9300874, 0.9374508],
+	"Bow Standing Idle 01": [0.9057015, 0.8958216, 0.9057016],
 	"Bow Standing Jump Running To Run Forward": [0.8787579, 0.8170261, 1.2609407],
 	"Bow Standing Jumping": [0.9059604, 0.6815044, 1.2559845],
+	"Boxing Idle": [0.8539546, 0.8533829, 0.9244993],
+	"Crouching Idle": [0.5100191, 0.5084273, 0.5100191],
 	"Driving": [0.6188195, 0.6188195, 0.6188195],
 	"Entering Car": [0.9920238, 0.7420000, 1.0130469],
+	"Fishing Idle": [0.9840188, 0.9840188, 0.9840188],
+	"Great Sword Idle": [0.9484802, 0.9484802, 0.9508491],
 	"Great Sword Jump": [0.9484800, 0.9053215, 1.3391531],
 	"Great Sword Jump Attack": [0.9468914, 0.8564712, 1.1684833],
 	"Great Sword Jump Forward": [0.9468913, 0.9468912, 1.1508582],
+	"Idle": [0.9920238, 0.9920238, 0.9920238],
 	"Jump": [0.8938875, 0.7940333, 1.4365578],
 	"Jumping Up": [0.9305623, 0.5556197, 1.4869212],
+	"Mutant Breathing Idle": [0.8775857, 0.8775857, 0.8881663],
+	"Pistol Aimed Idle": [0.9525013, 0.9486916, 0.9541759],
 	"Pistol Jump": [0.9525008, 0.5582689, 1.3935983],
 	"Pistol Jump Forward": [0.9157895, 0.8392248, 1.3117052],
 	"Ready To Cast Spell Standing Idle": [0.8914642, 0.8442172, 0.8951364],
 	"Rifle Aiming Jump": [0.9153314, 0.7656575, 1.0098870],
+	"Rifle Aiming Standing Idle": [0.9612249, 0.9612249, 0.9633280],
 	"Rifle Jump Backward": [0.9331605, 0.9039738, 1.0851871],
 	"Rifle Jump Forward": [0.8126116, 0.7970697, 1.2510505],
 	"Rifle Jump Up": [0.9398913, 0.6895890, 0.9398913],
+	"Rifle Standing Idle": [0.9398697, 0.9332166, 0.9398697],
 	"Running": [0.9219201, 0.9032632, 0.9703432],
 	"Running Forward Flip": [0.9208747, 0.7412975, 1.7819712],
 	"Running Jump": [0.8596953, 0.8596953, 1.3047173],
@@ -74,6 +85,8 @@ const EXPECTED_TUNED: Dictionary = {
 	"Swimming": [1.0995283, 1.0838133, 1.1031445],
 	"Swimming At Edge": [1.2018158, 1.1959828, 1.2044084],
 	"Swimming To Edge": [1.1010405, 1.0896482, 1.1420684],
+	"Sword And Shield Block Idle": [0.7323731, 0.7323730, 0.7361287],
+	"Sword And Shield Idle": [0.8496349, 0.8496348, 0.8578424],
 	"Sword And Shield Jump Attack": [0.9028425, 0.3710695, 1.7480969],
 	"Sword and Shield Jump": [0.8496348, 0.8051223, 1.3529737],
 	"Sword and Shield Jump Forward": [0.9019135, 0.9019135, 1.5937138],
@@ -89,22 +102,33 @@ const EXPECTED_TUNED: Dictionary = {
 ## cannot drift on its own: a re-export rounds values, it does not add or remove keys.
 const EXPECTED_KEYS: Dictionary = {
 	"Backflip": 2849,
+	"Bow Standing Aim Idle 01": 1691,
+	"Bow Standing Idle 01": 2898,
 	"Bow Standing Jump Running To Run Forward": 2086,
 	"Bow Standing Jumping": 1715,
+	"Boxing Idle": 1621,
+	"Crouching Idle": 1153,
 	"Driving": 1392,
 	"Entering Car": 6159,
+	"Fishing Idle": 862,
+	"Great Sword Idle": 595,
 	"Great Sword Jump": 693,
 	"Great Sword Jump Attack": 1866,
 	"Great Sword Jump Forward": 524,
+	"Idle": 859,
 	"Jump": 1494,
 	"Jumping Up": 1167,
+	"Mutant Breathing Idle": 1695,
+	"Pistol Aimed Idle": 500,
 	"Pistol Jump": 1446,
 	"Pistol Jump Forward": 614,
 	"Ready To Cast Spell Standing Idle": 2694,
 	"Rifle Aiming Jump": 1969,
+	"Rifle Aiming Standing Idle": 508,
 	"Rifle Jump Backward": 889,
 	"Rifle Jump Forward": 1250,
 	"Rifle Jump Up": 446,
+	"Rifle Standing Idle": 693,
 	"Running": 883,
 	"Running Forward Flip": 1335,
 	"Running Jump": 1518,
@@ -113,11 +137,21 @@ const EXPECTED_KEYS: Dictionary = {
 	"Swimming": 5799,
 	"Swimming At Edge": 978,
 	"Swimming To Edge": 3358,
+	"Sword And Shield Block Idle": 816,
+	"Sword And Shield Idle": 1447,
 	"Sword And Shield Jump Attack": 2488,
 	"Sword and Shield Jump": 1014,
 	"Sword and Shield Jump Forward": 664,
 	"Throw": 2561,
 }
+
+## The standing idles, flattened: their Root keeps its height but no longer sways sideways, since movement is root
+## motion and an idle should not carry the Player anywhere.
+const STANDING_IDLES: PackedStringArray = [
+	"Boxing Idle", "Bow Standing Aim Idle 01", "Bow Standing Idle 01", "Crouching Idle", "Fishing Idle",
+	"Great Sword Idle", "Idle", "Mutant Breathing Idle", "Pistol Aimed Idle", "Ready To Cast Spell Standing Idle",
+	"Rifle Aiming Standing Idle", "Rifle Standing Idle", "Sword And Shield Block Idle", "Sword And Shield Idle",
+]
 
 ## Loose enough to survive a re-save rounding the float, tight enough that a raw capture fails: the
 ## smallest offset being guarded is 0.298.
@@ -335,3 +369,21 @@ func _hand_owned_import_files() -> PackedStringArray:
 		if claimed:
 			owned.append(file)
 	return owned
+
+
+func test_no_standing_idle_moves_the_player() -> void:
+	for name: String in STANDING_IDLES:
+		var animation: Animation = _tuned(name)
+		assert_not_null(animation, "%s is hand-owned in tuned/" % name)
+		if animation == null:
+			continue
+		var root: int = animation.find_track(NodePath("%GeneralSkeleton:Root"), Animation.TYPE_POSITION_3D)
+		assert_gte(root, 0, "%s has its Root track" % name)
+		if root < 0:
+			continue
+		var first: Vector3 = animation.track_get_key_value(root, 0)
+		var sway: float = 0.0
+		for k: int in animation.track_get_key_count(root):
+			var v: Vector3 = animation.track_get_key_value(root, k)
+			sway = maxf(sway, Vector2(v.x - first.x, v.z - first.z).length())
+		assert_lt(sway, 0.0001, "%s's Root does not sway sideways, so an idle Player stays where it stands" % name)

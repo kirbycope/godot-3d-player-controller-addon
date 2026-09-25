@@ -42,8 +42,8 @@ func _dummy(name: String, offset: Vector3) -> CharacterBody3D:
 	var shape: CollisionShape3D = CollisionShape3D.new()
 	shape.shape = SphereShape3D.new()
 	body.add_child(shape)
+	body.position = player.global_position + offset # placed before it is in, or it lands under the Player and carries it off
 	root.add_child(body)
-	body.global_position = player.global_position + offset
 	return body
 
 
