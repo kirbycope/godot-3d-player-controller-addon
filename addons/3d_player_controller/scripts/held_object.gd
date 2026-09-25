@@ -29,9 +29,9 @@ const HOLD_EMOTE: StringName = &"ReadyToCastSpell" ## Emote pose played while ca
 @export var player: Player
 @export var connector_origin: Node3D
 @export var throw_charge_bar: ProgressBar ## Charge indicator; hidden whenever a charge ends.
-@export var throw_force: float = 5.0 ## Impulse strength applied to thrown [RigidBody3D] objects.
+@export var throw_arm_mass: float = 2.4 ## Effective mass of the throwing arm (kg). A thrown [RigidBody3D] leaves at [method release_speed]: the arm puts about the same energy into any throw, so a heavier body leaves slower. 2.4 kg is what a casual 7.26 kg shot put at 7 m/s implies, near a real arm's 3.5 kg.
 @export var throw_hand: Node3D ## Where a throwable item sits while its throw charges (a bone attachment on the throwing hand); the Player model when unset.
-@export var throw_speed: float = 14.0 ## Speed (m/s) of a thrown inventory item or piece of equipment at full charge.
+@export var throw_speed: float = 14.0 ## Speed (m/s) of the throwing hand at full charge, about 50 km/h, a casual adult throw: a thrown inventory item or piece of equipment leaves at it, and a held body at [method release_speed].
 @export var connector_origin_height: float = 1.0 ## Fallback height when connector_origin is unset.
 @export_group("Held Object Controls")
 @export var held_move_speed: float = 1.5
@@ -486,6 +486,14 @@ func _icon_in_hand(item: Item) -> Node3D:
 	return sprite
 
 
+## Speed (m/s) a body of [param mass] kg leaves a full-charge throw at. The arm and the body share the energy an unladen
+## arm would have at [member throw_speed], so (arm + body) v^2 = arm * throw_speed^2: a baseball leaves at 13.6 m/s, a
+## football at 12.9, a 1.4 kg snowball at 11.1, a 7.26 kg shot at 7.0, a 37 kg ball of snow at 3.5. It used to be one
+## 5 N s impulse for everything, which put a 0.2 kg beach ball at 25 m/s and a snowball at 3.6.
+func release_speed(mass: float) -> float:
+	return throw_speed * sqrt(throw_arm_mass / (throw_arm_mass + maxf(mass, 0.0)))
+
+
 ## Throws the held node, preferring its own throw methods over a raw impulse.
 func _throw_held_node(held_node: Node, throw_dir: Vector3, power: float) -> void:
 	if held_node.has_method("throw_with_direction"):
@@ -493,7 +501,7 @@ func _throw_held_node(held_node: Node, throw_dir: Vector3, power: float) -> void
 	elif held_node.has_method("throw"):
 		held_node.call("throw", throw_dir)
 	elif held_node == held_rigidbody:
-		_let_go(throw_dir * throw_force * power)
+		_let_go(throw_dir * held_rigidbody.mass * release_speed(held_rigidbody.mass) * power)
 
 
 ## Gets the throw direction from the camera crosshair, falling back to the facing direction.

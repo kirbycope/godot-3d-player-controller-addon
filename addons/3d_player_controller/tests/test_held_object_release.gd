@@ -130,3 +130,34 @@ func test_letting_go_leaves_a_head_something_else_asked_for() -> void:
 	var head: LookAtModifier3D = player.head_look_at_modifier
 	assert_eq(head.get_node_or_null(head.target_node), screen, "Letting go leaves the screen's look alone")
 	screen.free()
+
+
+## Throw speeds come from an arm, not a fixed shove: the lighter the body the faster it leaves, but never faster
+## than the hand. One 5 N s impulse for everything used to put a 0.2 kg beach ball at 25 m/s and a snowball at 3.6.
+func test_a_thrown_body_leaves_at_what_an_arm_gives_it() -> void:
+	var held: HeldObject = player.held_object
+	assert_almost_eq(held.release_speed(0.145), 13.6, 0.1, "A baseball at a casual 13.6 m/s")
+	assert_almost_eq(held.release_speed(1.39), 11.1, 0.1, "a football-sized snowball at 11")
+	assert_almost_eq(held.release_speed(7.26), 7.0, 0.1, "a shot put at 7")
+	assert_lt(held.release_speed(0.0), held.throw_speed + 0.001, "and nothing faster than the hand")
+
+
+func test_a_held_body_is_thrown_at_its_release_speed() -> void:
+	body.mass = 1.39
+	player.held_object._pickup_rigidbody(body)
+	await wait_physics_frames(2)
+	player.held_object.execute_instant_throw(Vector3.FORWARD, HeldObject.MAX_THROW_POWER)
+	await wait_physics_frames(2)
+	assert_almost_eq(body.linear_velocity.length(), player.held_object.release_speed(1.39), 1.0, "A full throw sends it off at the arm's speed for its mass")
+
+
+## Like aiming, carrying turns the Player to face what is carried, so nothing is held behind a shoulder.
+func test_the_player_turns_to_face_what_it_holds() -> void:
+	player.held_object._pickup_rigidbody(body)
+	player.camera_mount.rotation = Vector3.ZERO
+	player.held_object._held_offset = Vector2(1.0, 0.0) # pushed well off to the right
+	await wait_physics_frames(60)
+	var facing: Vector3 = player.player_model.global_basis.z.slide(Vector3.UP).normalized()
+	var to_body: Vector3 = (body.global_position - player.global_position).slide(Vector3.UP).normalized()
+	assert_gt(facing.dot(to_body), 0.95, "The body faces the carried object")
+	player.held_object.drop_held_rigidbody()

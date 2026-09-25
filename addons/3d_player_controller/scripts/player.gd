@@ -749,13 +749,17 @@ func apply_input(delta: float) -> void:
 	target_motion *= movement_scale
 
 	# Handle movement is strafing
-	if not is_riding and (is_shooting or is_focusing or is_first_person):
-		# Rotate to face the target, or the camera direction when shooting or in first person
+	var carrying: Node3D = held_rigidbody if held_object and held_object.is_holding_object() else null
+	if not is_riding and (is_shooting or is_focusing or is_first_person or carrying != null):
+		# Rotate to face the target, or the camera direction when shooting or in first person, or what is held, so a
+		# body carried off to the side is in front of the Player rather than over a shoulder
 		if not is_firing_arrow and not is_hanging_braced and not is_hanging_free and not is_climbing:
 			var look_dir: Vector3 = Vector3.ZERO
 			
 			if is_focusing and is_instance_valid(current_focus_target):
 				look_dir = (get_focus_target_position() - global_position).slide(up_direction)
+			elif carrying != null and (carrying.global_position - global_position).slide(up_direction).length_squared() > 0.04:
+				look_dir = (carrying.global_position - global_position).slide(up_direction)
 			else:
 				var camera_basis: Basis = spring_arm.global_transform.basis
 				look_dir = - camera_basis.z
