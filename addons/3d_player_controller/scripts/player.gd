@@ -746,7 +746,7 @@ func apply_input(delta: float) -> void:
 			target_motion *= 1.5
 
 	# A slow scales the wish, so the blend walks where it would run
-	target_motion *= movement_scale
+	target_motion *= movement_scale * terrain_speed_scale
 
 	# Handle movement is strafing
 	var carrying: Node3D = held_rigidbody if held_object and held_object.is_holding_object() else null
@@ -1551,6 +1551,7 @@ func _leave_water_if_out() -> void:
 
 
 var movement_scale: float = 1.0 ## Fraction of normal movement speed; [method slow] lowers it for a while.
+var terrain_speed_scale: float = 1.0 ## Fraction of normal movement speed the ground allows, set by whatever the Player is wading through: the snow addon's FootStamper lowers it in snow above the knee. Separate from [member movement_scale], which [method slow] owns and resets, and multiplied with it.
 var _slow_timer: SceneTreeTimer
 
 
