@@ -1215,12 +1215,11 @@ func _on_attack_sequence_timer_timeout() -> void:
 	attack_sequence = 0
 
 
-## True when the floor the last move found is a [RigidBody3D]: a ball, a crate, a snowball, rather than the ground or a
-## moving platform.
-func is_standing_on_rigid_body() -> bool:
+## True when the last move touched a [RigidBody3D] (a ball, a crate, a snowball) as floor or as wall. Godot takes
+## platform velocity from either, so a ball the Player is only walking into counts too.
+func is_touching_rigid_body() -> bool:
 	for i: int in get_slide_collision_count():
-		var c: KinematicCollision3D = get_slide_collision(i)
-		if c.get_collider() is RigidBody3D and c.get_normal().angle_to(up_direction) <= floor_max_angle + 0.01:
+		if get_slide_collision(i).get_collider() is RigidBody3D:
 			return true
 	return false
 
@@ -1233,10 +1232,14 @@ func update_movement_and_rotation(delta: float) -> void:
 		global_basis = Basis(q_align_body) * global_basis
 
 	var pre_velocity: Vector3 = velocity
-	# A rigid body is a prop, not a lift. Stepping off a rolling ball or a tumbling crate must not throw
-	# the Player with the speed of its surface: a snowball rolling away, whose back comes up as it turns,
-	# used to launch the Player a metre and a half into the air.
-	platform_on_leave = PLATFORM_ON_LEAVE_DO_NOTHING if is_standing_on_rigid_body() else PLATFORM_ON_LEAVE_ADD_VELOCITY
+	# A rigid body is a prop, not a lift. A rolling ball or a tumbling crate must not carry the Player with the
+	# speed of its surface, nor throw them with it on parting: a snowball the Player walked into, whose back
+	# comes up as it rolls away, handed over 1.4 m/s upward and launched the Player a metre and a half into the
+	# air. Moving platforms (AnimatableBody3D) still carry the Player as they always have.
+	var on_prop: bool = is_touching_rigid_body()
+	platform_floor_layers = 0 if on_prop else 0xFFFFFFFF
+	# Both: the velocity a leave adds is the one recorded last frame, before the layers were cleared.
+	platform_on_leave = PLATFORM_ON_LEAVE_DO_NOTHING if on_prop else PLATFORM_ON_LEAVE_ADD_VELOCITY
 	move_and_slide()
 
 	for i: int in get_slide_collision_count():
