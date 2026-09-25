@@ -13,6 +13,7 @@ signal paused_changed(is_paused: bool) ## Emitted when [member is_paused] change
 signal whistled(player: Player) ## Emitted on the authority when the `whistle` action is pressed on foot (not while riding); the world decides who answers.
 signal respawned ## Emitted on the authority when [method respawn] has put the Player back on their feet.
 signal checkpoint_changed(transform: Transform3D) ## Emitted on the authority when [member respawn_transform] changes.
+signal scoping_changed(is_scoping: bool) ## Emitted when [member is_scoping] changes, on every peer; the [Spyglass] is wired to it.
 
 const EMOTE_STATE_PLAYBACK_PATH: String = "parameters/EmoteStateMachine/playback"
 const CAST_CHANNEL_EMOTE: StringName = &"ReadyToCastSpell" ## Upper-body pose held while an unarmed cast channels.
@@ -62,6 +63,7 @@ var uses_mouse: bool: ## Whether the mouse is this Player's: only a Player on th
 @export_category("Enable Settings")
 @export var enable_flying: bool = false
 @export var enable_paraglider: bool = false
+@export var enable_spyglass: bool = false ## The [code]scope[/code] action raises the [Spyglass] on the right hand: first person, zoomed, through a porthole.
 @export var enable_ragdoll: bool = false
 @export var enable_stamina: bool = false
 @export var enable_double_jump: bool = false ## Jump again in the air, [member air_jumps] times before landing (a platformer's double jump).
@@ -352,6 +354,11 @@ var is_navigating: bool = false: ## Is the Player currently navigating (click to
 			is_navigating = value
 			navigating_changed.emit(value)
 var is_paragliding: bool = false ## Is the Player currently paragliding?
+var is_scoping: bool = false: ## Is the Player looking through the [Spyglass]? It stands still meanwhile. Replicated, so every peer sees it raised.
+	set(value):
+		if value != is_scoping:
+			is_scoping = value
+			scoping_changed.emit(value)
 var is_paused: bool = false: ## Is the Player currently paused?
 	set(value):
 		if value != is_paused:
@@ -721,8 +728,9 @@ func apply_input(delta: float) -> void:
 		smoothed_motion = Vector2.ZERO
 		is_sprinting = false
 
-	# If the player is mining, logging, or flipping, block regular locomotion transitions by setting the `target_motion` to zero.
-	if is_mining or is_logging or is_flipping:
+	# If the player is mining, logging, flipping or looking through the spyglass, block regular locomotion transitions by
+	# setting the `target_motion` to zero.
+	if is_mining or is_logging or is_flipping or is_scoping:
 		target_motion = Vector2.ZERO
 
 	# Smoothly interpolate the target_motion for more gradual changes in animation blending and rotation.

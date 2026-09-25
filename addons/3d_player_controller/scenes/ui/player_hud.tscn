@@ -28,10 +28,14 @@
 [ext_resource type="Script" uid="uid://ck08322tms20v" path="res://addons/3d_player_controller/scripts/stamina.gd" id="236_12agc"]
 [ext_resource type="Shader" uid="uid://dqf0e65tkjhcf" path="res://addons/3d_player_controller/assets/shaders/underwater_overlay.gdshader" id="261_dd4mk"]
 [ext_resource type="PackedScene" uid="uid://dlx4dimavq18t" path="res://addons/3d_player_controller/scenes/ui/target_frame.tscn" id="target_frame"]
+[ext_resource type="Shader" path="res://addons/3d_player_controller/assets/shaders/spyglass_overlay.gdshader" id="spyglass_overlay_shader"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_fk680"]
 atlas = ExtResource("228_5acoi")
 region = Rect2(4, 75, 52, 52)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_spyglass"]
+shader = ExtResource("spyglass_overlay_shader")
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_underwater"]
 shader = ExtResource("261_dd4mk")
@@ -176,6 +180,40 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+
+[node name="SpyglassOverlay" type="CanvasLayer" parent="."]
+editor_description = "The porthole while the Player looks through the Spyglass: the view in a round lens with a brass ring, black beyond it, and the magnification under it. Under the rest of the HUD, so the buttons still show. The Spyglass shows and hides it."
+layer = -1
+visible = false
+
+[node name="Lens" type="ColorRect" parent="SpyglassOverlay"]
+material = SubResource("ShaderMaterial_spyglass")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Zoom" type="Label" parent="SpyglassOverlay"]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -60.0
+offset_top = -64.0
+offset_right = 60.0
+offset_bottom = -30.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.93, 0.84, 0.62, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 24
+text = "4.0x"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [connection signal="equipment_changed" from="Inventory" to="Abilities" method="_on_equipment_changed"]
 [connection signal="died" from="Health" to="DeathScreen" method="_on_health_died"]

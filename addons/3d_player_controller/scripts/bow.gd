@@ -121,7 +121,7 @@ func _on_perspective_changed(_perspective: int) -> void:
 func _update_first_person_rig() -> void:
 	if player == null or not is_instance_valid(player.left_hand_ik):
 		return
-	var on: bool = player.is_first_person and player.inventory.equipment.has(self) \
+	var on: bool = player.is_first_person and player.inventory.equipment.has(self) and not player.is_scoping \
 			and not (player.held_object and player.held_object.is_holding_object())
 	if on == _first_person_rig:
 		return

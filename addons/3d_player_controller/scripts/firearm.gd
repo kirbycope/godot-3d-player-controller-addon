@@ -119,7 +119,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _physics_process(_delta: float) -> void:
 	var shooting: bool = player.is_shooting
 	var aiming: bool = shooting or player.is_focusing
-	_set_aiming(aiming or player.is_first_person)
+	_set_aiming((aiming or player.is_first_person) and not player.is_scoping) # the spyglass has the hands while it is up
 	if laser_sight:
 		laser_sight.visible = aiming
 		if laser_sight.visible:

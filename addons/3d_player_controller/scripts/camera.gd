@@ -25,6 +25,7 @@ const FOCUS_AIM_WORLD_RADIUS: float = 0.5 ## World-space radius in units/meters 
 @export var joypad_sensitivity: float = 100.0
 @export var held_joypad_look_multiplier: float = 0.45
 @export var mouse_sensitivity: float = 0.1
+var look_scale: float = 1.0 ## Multiplies how fast the view turns; a [Spyglass] slows it by its magnification.
 @export var default_fov: float = 75.0 ## Base third-person FOV.
 @export var aim_fov: float = 58.0 ## Narrowed FOV when aiming/shooting (over-the-shoulder).
 @export var default_h_offset: float = 0.0 ## Base horizontal offset.
@@ -152,7 +153,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		interaction_target = null
 
 	# Perspective { Microsoft: ⧉, Nintendo: ⊝, Sony: ⦀, Keyboard: [F5] }
-	if event.is_action_pressed(&"perspective"):
+	if event.is_action_pressed(&"perspective") and not player.is_scoping:
 		toggle_perspective()
 
 	# The mouse is one local player's; a pad player's camera ignores it (see Player.uses_mouse)
@@ -338,10 +339,10 @@ func rotate_camera_using_joypad_motion(delta: float) -> void:
 	var joypad_motion_input: Vector2 = player.get_vector(&"look_left", &"look_right", &"look_up", &"look_down")
 	# Rotate the [Camera3D]'s [CameraMount] horizontally using the joypad motion input's x value
 	if joypad_motion_input.x != 0:
-		camera_mount.rotate_y(deg_to_rad(-joypad_motion_input.x * joypad_sensitivity * delta))
+		camera_mount.rotate_y(deg_to_rad(-joypad_motion_input.x * joypad_sensitivity * look_scale * delta))
 	# Rotate the [Camera3D]'s [CameraMount] vertically using the joypad motion input's y value
 	if joypad_motion_input.y != 0:
-		var new_rotation_x: float = camera_mount.rotation_degrees.x - joypad_motion_input.y * joypad_sensitivity * delta
+		var new_rotation_x: float = camera_mount.rotation_degrees.x - joypad_motion_input.y * joypad_sensitivity * look_scale * delta
 		# Clamp the rotation to prevent flipping
 		camera_mount.rotation_degrees.x = clampf(new_rotation_x, -89.0, 89.0)
 
@@ -351,9 +352,9 @@ func rotate_camera_using_mouse_motion(event: InputEventMouseMotion) -> void:
 	# Get the input from the mouse motion event
 	var mouse_motion_input: Vector2 = event.relative
 	# Rotate the [Camera3D]'s [CameraMount] horizontally using the mouse motion input's x value
-	camera_mount.rotate_y(deg_to_rad(-mouse_motion_input.x * mouse_sensitivity))
+	camera_mount.rotate_y(deg_to_rad(-mouse_motion_input.x * mouse_sensitivity * look_scale))
 	# Rotate the [Camera3D]'s [CameraMount] vertically using the mouse motion input's y value
-	var new_rotation_x: float = camera_mount.rotation_degrees.x - mouse_motion_input.y * mouse_sensitivity
+	var new_rotation_x: float = camera_mount.rotation_degrees.x - mouse_motion_input.y * mouse_sensitivity * look_scale
 	# Clamp the rotation to prevent flipping
 	camera_mount.rotation_degrees.x = clampf(new_rotation_x, -89.0, 89.0)
 

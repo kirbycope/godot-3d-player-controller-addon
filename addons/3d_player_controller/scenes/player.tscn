@@ -249,6 +249,7 @@
 [ext_resource type="AnimationNodeBlendTree" uid="uid://c8uh3alyfnbea" path="res://addons/3d_player_controller/resources/animation/player_animation_tree.tres" id="anim_tree"]
 [ext_resource type="PackedScene" uid="uid://c25vl8otl1rj5" path="res://addons/3d_player_controller/scenes/ui/player_hud.tscn" id="hud_scene"]
 [ext_resource type="PackedScene" uid="uid://bra3khigbuanl" path="res://addons/3d_player_controller/scenes/equipment/paraglider.tscn" id="paraglider_scene"]
+[ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/equipment/spyglass.tscn" id="spyglass_scene"]
 [ext_resource type="Script" uid="uid://btounlitfq7nm" path="res://addons/3d_player_controller/scripts/voice_chat.gd" id="voice_chat_script"]
 [ext_resource type="Script" uid="uid://dixkn2wah2qjq" path="res://addons/3d_player_controller/scripts/stealth_look.gd" id="stealth_look_script"]
 
@@ -683,6 +684,9 @@ properties/40/replication_mode = 2
 properties/41/path = NodePath("Hud/Inventory:synced_equipment")
 properties/41/spawn = true
 properties/41/replication_mode = 2
+properties/42/path = NodePath(".:is_scoping")
+properties/42/spawn = true
+properties/42/replication_mode = 2
 
 [node name="Player" type="CharacterBody3D" unique_id=548622605 node_paths=PackedStringArray("animation_tree") groups=["Focusable", "Player", "Saveable"]]
 script = ExtResource("1_2qx4v")
@@ -1732,7 +1736,52 @@ editor_description = "The hand a spell leaves from, so a cast starts at the fing
 bone_name = "RightHand"
 bone_idx = 35
 
-[node name="HeadLookAtModifier3D" type="LookAtModifier3D" parent="PlayerModel/Armature/GeneralSkeleton" index="15" unique_id=1009984629]
+[node name="SpyglassHandIK" type="TwoBoneIK3D" parent="PlayerModel/Armature/GeneralSkeleton" index="15"]
+editor_description = "Brings the right hand to the face while the Spyglass is up, aimed out to the side by SpyglassElbowPole. After every other right hand modifier, so it wins over a gun's or a bow's grip while it blends in; the Spyglass tweens its influence, which is the raise."
+active = false
+influence = 0.0
+setting_count = 1
+settings/0/target_node = NodePath("../../../../SpyglassHandTarget")
+settings/0/pole_node = NodePath("../../../SpyglassElbowPole")
+settings/0/root_bone_name = "RightUpperArm"
+settings/0/root_bone = 33
+settings/0/middle_bone_name = "RightLowerArm"
+settings/0/middle_bone = 34
+settings/0/pole_direction = 0
+settings/0/end_bone_name = "RightHand"
+settings/0/end_bone = 35
+settings/0/use_virtual_end = false
+settings/0/extend_end_bone = false
+
+[node name="SpyglassHandRotation" type="CopyTransformModifier3D" parent="PlayerModel/Armature/GeneralSkeleton" index="16"]
+editor_description = "Turns the right hand the way SpyglassHandTarget faces once SpyglassHandIK has put it there, so the spyglass in it points where the Player looks. Blends in with the IK."
+active = false
+influence = 0.0
+setting_count = 1
+settings/0/apply_bone_name = "RightHand"
+settings/0/apply_bone = 35
+settings/0/reference_type = 1
+settings/0/reference_node = NodePath("../../../../SpyglassHandTarget")
+settings/0/copy = 2
+settings/0/axes = 7
+
+[node name="SpyglassBoneAttachment" type="BoneAttachment3D" parent="PlayerModel/Armature/GeneralSkeleton" index="17"]
+editor_description = "Rides the RightHand bone and carries the Spyglass, after the spyglass IK so it follows the hand to the face."
+bone_name = "RightHand"
+bone_idx = 35
+
+[node name="Spyglass" parent="PlayerModel/Armature/GeneralSkeleton/SpyglassBoneAttachment" node_paths=PackedStringArray("overlay", "zoom_label", "hand_ik", "hand_rotation", "hand_target", "eyes") instance=ExtResource("spyglass_scene")]
+editor_description = "Nina Shaw's spyglass, held in the fist with the fingers up and the palm toward the face, the eyepiece past the thumb, so at the eye the forearm hangs straight down from the wrist. Saved hidden; the Player's scoping_changed is wired to it, so on every peer it comes up to the eye while this Player is scoping (enable_spyglass lets the scope action start it). This peer's own view then goes first person through the Hud's SpyglassOverlay and the spyglass hides."
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 0.07, 0.085, 0.035)
+visible = false
+overlay = NodePath("../../../../../Hud/SpyglassOverlay")
+zoom_label = NodePath("../../../../../Hud/SpyglassOverlay/Zoom")
+hand_ik = NodePath("../../SpyglassHandIK")
+hand_rotation = NodePath("../../SpyglassHandRotation")
+hand_target = NodePath("../../../../../SpyglassHandTarget")
+eyes = NodePath("../../FirstPersonCameraBoneAttachment/FirstPersonEyes")
+
+[node name="HeadLookAtModifier3D" type="LookAtModifier3D" parent="PlayerModel/Armature/GeneralSkeleton" index="18" unique_id=1009984629]
 editor_description = "Bends the Head alone, and is deliberately the last child of the skeleton so it applies after the spine look-at and the hand IK. Narrower limits than the spine one (about 70 degrees across, 60 up and down) so a target behind the Player is simply not followed. Driven by Player.set_head_look_at_target, which is how the Player can read a screen while their hands keep typing."
 active = false
 bone_name = "Head"
@@ -1962,6 +2011,10 @@ editor_description = "Looks for a wall in front while hanging, which is what tel
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0)
 visible = false
 target_position = Vector3(0, 0, 1)
+
+[node name="SpyglassElbowPole" type="Marker3D" parent="PlayerModel"]
+editor_description = "Where SpyglassHandIK points the right elbow while the spyglass is up: low and in front of the chest, so the forearm stands straight up under the fist holding the spyglass and the wrist stays straight."
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1, 0.9, 0.6)
 
 [node name="HandIKPole" type="Marker3D" parent="PlayerModel" unique_id=1287346059]
 editor_description = "The pole target aiming the elbows, so RightHandIK and LeftHandIK bend an arm the way an elbow bends: low and in front, which both arms share."
@@ -2241,6 +2294,9 @@ one_shot = true
 editor_description = "Five times a second (timeout goes to _update_updraft_vfx) decides whether the optional UpdraftAura a game hangs on the Player shows, rather than testing every frame, since the aura only needs to appear promptly, not instantly."
 wait_time = 0.2
 autostart = true
+
+[node name="SpyglassHandTarget" type="Marker3D" parent="."]
+editor_description = "Where the right hand goes while the Spyglass is up. The Spyglass places it every frame from the eyes, the way the Player faces and its own grip in the hand, so the eyepiece lands at the right eye."
 
 [node name="Hud" parent="." unique_id=1124481983 node_paths=PackedStringArray("player") instance=ExtResource("hud_scene")]
 editor_description = "The screen: every 2D thing the Player draws, in scenes/ui/player_hud.tscn. The Player reaches each child through its own properties."
@@ -2524,3 +2580,4 @@ replication_config = SubResource("SceneReplicationConfig_player")
 [connection signal="input_type_changed" from="Hud/Controls" to="." method="_on_controls_input_type_changed"]
 [editable path="PlayerModel"]
 [editable path="Hud"]
+[connection signal="scoping_changed" from="." to="PlayerModel/Armature/GeneralSkeleton/SpyglassBoneAttachment/Spyglass" method="_on_player_scoping_changed"]

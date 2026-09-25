@@ -509,9 +509,11 @@ func test_an_unarmed_channel_holds_the_ready_to_cast_emote() -> void:
 
 ## The body's meshes: everything under the skeleton but the packed-away glider, whose fabric is a shader of its own
 ## and so ghosts plain white.
+## The body's own meshes: not the glider or the spyglass the hand carries, which wear materials of their own.
 func _body_meshes(who: Player) -> Array:
 	var glider: Node = who.get_node("PlayerModel/Armature/GeneralSkeleton/ParagliderBoneAttachment")
-	return who.skeleton.find_children("*", "MeshInstance3D").filter(func(mesh: Node) -> bool: return not glider.is_ancestor_of(mesh))
+	var spyglass: Node = who.get_node("PlayerModel/Armature/GeneralSkeleton/SpyglassBoneAttachment")
+	return who.skeleton.find_children("*", "MeshInstance3D").filter(func(mesh: Node) -> bool: return not glider.is_ancestor_of(mesh) and not spyglass.is_ancestor_of(mesh))
 
 
 ## Every surface of the body wears the ghost, a depth pass with the stealth shader after it carrying the surface's

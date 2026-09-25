@@ -10,6 +10,7 @@ Third-party work in this repository: who made it, where it came from, its licenc
 | `inventory/` Equipment tab and the demo's wooden sword (`inventory_screen.tscn`, `scenes/demo/wooden_sword.tscn`, `resources/items/wooden_sword.tres`) use `assets/game_icons/gladius.svg` | [game-icons.net](https://game-icons.net/) (Skoll) | CC BY 3.0 |
 | `assets/kenney_nl/` (incl. `Lobby Icons/`, copied from Kenney's Game Icons pack; the Input Prompts icons moved to the [Controls addon](https://github.com/kirbycope/godot-controls)) | [Kenney](https://www.kenney.nl/) | CC0 |
 | `assets/quaternius/` (characters, `paraglider/`) | [Quaternius](https://quaternius.com/) | CC0 1.0 |
+| `assets/nina_shaw/spyglass/` (the spyglass: `spyglass.fbx` and its 2K texture set, used by `scenes/equipment/spyglass.tscn`) | [Nina Shaw](https://www.patreon.com/ninashaw/posts/stylized-44362165) (Stylized Spyglass, also on [Sketchfab](https://sketchfab.com/3d-models/stylized-spyglass-tutorial-included-f5ecca8e7b6244f0bda5c3f5f2a08655)) | Royalty free, per the Sketchfab listing; Patreon download, no license file |
 | `assets/freesound/72853__benboncan__parachute.wav` | [Benboncan on Freesound](https://freesound.org/s/72853/) | CC BY 4.0 |
 | `assets/freesound/570701__robinhood76__10136-flag-flicking-on-strong-wind-isolated.wav` | [Robinhood76 on Freesound](https://freesound.org/s/570701/) | CC BY-NC 4.0 (non-commercial) |
 | `assets/tommusic/` | [TomMusic](https://tommusic.itch.io/) | Not stated (the pack's `ReadMe.txt` contains no license) |

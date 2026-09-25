@@ -29,6 +29,7 @@ extends Node
 @onready var abilities: Abilities = $Abilities
 @onready var quest_tracker: QuestTracker = $QuestTracker
 @onready var underwater_overlay: CanvasLayer = $UnderwaterOverlay
+@onready var spyglass_overlay: CanvasLayer = $SpyglassOverlay
 @onready var death_screen: DeathScreen = $DeathScreen
 @onready var pause: PlayerMenuLayer = $Pause
 @onready var settings: PlayerMenuLayer = $Settings
