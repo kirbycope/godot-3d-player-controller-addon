@@ -1215,6 +1215,16 @@ func _on_attack_sequence_timer_timeout() -> void:
 	attack_sequence = 0
 
 
+## True when the floor the last move found is a [RigidBody3D]: a ball, a crate, a snowball, rather than the ground or a
+## moving platform.
+func is_standing_on_rigid_body() -> bool:
+	for i: int in get_slide_collision_count():
+		var c: KinematicCollision3D = get_slide_collision(i)
+		if c.get_collider() is RigidBody3D and c.get_normal().angle_to(up_direction) <= floor_max_angle + 0.01:
+			return true
+	return false
+
+
 ## Applies the current velocity, moves the player, and updates the orientation to match the up_direction.
 func update_movement_and_rotation(delta: float) -> void:
 	var current_body_up: Vector3 = global_basis.y
@@ -1223,6 +1233,10 @@ func update_movement_and_rotation(delta: float) -> void:
 		global_basis = Basis(q_align_body) * global_basis
 
 	var pre_velocity: Vector3 = velocity
+	# A rigid body is a prop, not a lift. Stepping off a rolling ball or a tumbling crate must not throw
+	# the Player with the speed of its surface: a snowball rolling away, whose back comes up as it turns,
+	# used to launch the Player a metre and a half into the air.
+	platform_on_leave = PLATFORM_ON_LEAVE_DO_NOTHING if is_standing_on_rigid_body() else PLATFORM_ON_LEAVE_ADD_VELOCITY
 	move_and_slide()
 
 	for i: int in get_slide_collision_count():
