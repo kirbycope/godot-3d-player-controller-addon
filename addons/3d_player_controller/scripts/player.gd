@@ -1785,6 +1785,8 @@ func set_checkpoint(transform: Transform3D) -> void:
 func save_state() -> Dictionary:
 	var state: Dictionary = {
 		"transform": global_transform,
+		"facing": player_model.global_basis, # the body keeps its up; which way the model faces is the model's own
+		"camera_rotation": camera_mount.rotation,
 		"respawn_transform": respawn_transform,
 		"health": health.health,
 		"energy": health.energy,
@@ -1807,6 +1809,11 @@ func load_state(state: Dictionary) -> void:
 		dismount(true)
 	if state.has("transform"):
 		warp_to(state["transform"])
+	if state.get("facing") is Basis:
+		orientation.basis = state["facing"]
+		player_model.global_basis = state["facing"]
+	if state.get("camera_rotation") is Vector3:
+		camera_mount.rotation = state["camera_rotation"]
 	var saved_health: float = float(state.get("health", health.max_health))
 	health.health = saved_health if saved_health > 0.0 else health.max_health
 	health.energy = float(state.get("energy", health.max_energy))

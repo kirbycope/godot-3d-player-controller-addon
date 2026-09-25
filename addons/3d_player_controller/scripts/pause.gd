@@ -68,6 +68,10 @@ func _add_screens() -> void:
 ## The Spells button only makes sense with a [Spellbook] under the Inventory; decided here, once the Player's
 ## own ready has filled its inventory node.
 func show_menu() -> void:
+	# Before the menu is drawn: the frame on screen is the game, which is what a save's preview should be.
+	var saving: SaveGame = SaveGame.find_in(get_tree())
+	if saving:
+		saving.capture_preview()
 	super()
 	if spells_screen and player and player.inventory and player.inventory.spellbook == null:
 		spells_button.hide()
@@ -216,7 +220,11 @@ func _on_unstuck_touch_screen_button_pressed() -> void:
 	_on_unstuck_pressed()
 
 
+## Save and quit, Minecraft style: where there is a SaveGame the game is written, preview and all, before it closes.
 func _on_quit_pressed() -> void:
+	var saver: SaveGame = SaveGame.find_in(get_tree())
+	if saver and is_single_player():
+		saver.save_game()
 	get_tree().quit()
 
 

@@ -342,3 +342,75 @@ func test_a_spawned_player_is_saved_under_a_key_its_next_session_can_find() -> v
 	player.health.health = player.health.max_health
 	saver.apply_states(states)
 	assert_eq(player.health.health, 40.0, "and applied to this peer's own Player")
+
+
+#region Numbered saves
+
+const TEST_SAVES_DIR: String = "user://test_saves"
+
+
+func _with_slots() -> String:
+	var was: String = SaveGame.SAVES_DIR
+	SaveGame.SAVES_DIR = TEST_SAVES_DIR
+	for file: String in DirAccess.get_files_at(TEST_SAVES_DIR):
+		DirAccess.remove_absolute(TEST_SAVES_DIR.path_join(file))
+	return was
+
+
+func _without_slots(was: String) -> void:
+	for file: String in DirAccess.get_files_at(TEST_SAVES_DIR):
+		DirAccess.remove_absolute(TEST_SAVES_DIR.path_join(file))
+	SaveGame.SAVES_DIR = was
+	SaveGame.slot = 0
+
+
+func test_each_numbered_save_is_its_own_file_with_its_level() -> void:
+	var was: String = _with_slots()
+	SaveGame.slot = 2
+	assert_eq(saver.current_path(), SaveGame.slot_path(2), "Save 2 writes its own file")
+	assert_eq(saver.save_game(), OK)
+	SaveGame.slot = 1
+	assert_eq(saver.save_game(), OK)
+	var saves: Array[Dictionary] = SaveGame.list_saves()
+	assert_eq(saves.size(), 2, "Both are listed")
+	assert_eq(int(saves[0]["slot"]), 1, "lowest first")
+	assert_eq(saves[1]["path"], SaveGame.slot_path(2))
+	assert_true(saves[0].has("saved_at") and saves[0].has("scene_path") and saves[0].has("level_name"), "each with when and where it was taken")
+	assert_eq(SaveGame.next_free_slot(), 3, "A new game takes the next number free")
+	_without_slots(was)
+
+
+func test_a_save_keeps_its_preview_beside_it() -> void:
+	var was: String = _with_slots()
+	SaveGame.slot = 1
+	var picture: Image = Image.create_empty(64, 36, false, Image.FORMAT_RGB8)
+	picture.fill(Color.CORNFLOWER_BLUE)
+	saver.set_preview(picture)
+	assert_eq(saver.save_game(), OK)
+	assert_true(FileAccess.file_exists(SaveGame.preview_path(1)), "The preview is written beside the save")
+	var written: Image = Image.load_from_file(ProjectSettings.globalize_path(SaveGame.preview_path(1)))
+	assert_eq(written.get_size(), SaveGame.PREVIEW_SIZE, "at the preview's size")
+	saver.delete_save()
+	assert_false(FileAccess.file_exists(SaveGame.preview_path(1)), "and goes with it")
+	_without_slots(was)
+
+
+func test_the_level_name_reads_well() -> void:
+	assert_eq(SaveGame.level_name_of("res://scenes/snow_demo.tscn"), "Snow Demo")
+	assert_eq(SaveGame.level_name_of("res://scenes/world.tscn"), "World")
+
+
+func test_the_player_comes_back_facing_the_way_it_was() -> void:
+	var facing: Basis = Basis(Vector3.UP, deg_to_rad(120.0))
+	player.player_model.global_basis = facing
+	player.orientation.basis = facing
+	player.camera_mount.rotation = Vector3(deg_to_rad(-20.0), deg_to_rad(75.0), 0.0)
+	assert_eq(saver.save_game(), OK)
+	player.player_model.global_basis = Basis()
+	player.camera_mount.rotation = Vector3.ZERO
+	assert_true(saver.load_game())
+	assert_almost_eq(player.player_model.global_basis.z.angle_to(facing.z), 0.0, 0.01, "The model faces the way it did")
+	assert_almost_eq(player.camera_mount.rotation.y, deg_to_rad(75.0), 0.001, "and the camera looks where it did")
+	assert_almost_eq(player.camera_mount.rotation.x, deg_to_rad(-20.0), 0.001)
+
+#endregion

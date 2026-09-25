@@ -20,6 +20,11 @@ extends Node
 ## host (and single player) in [member save_path], a client in [member client_save_path], so joining a friend's game
 ## never writes over the single-player save. A spawned Player is keyed [constant PLAYER_KEY] rather than by its peer
 ## id, which the next session will not repeat.
+##
+## Several saves, Minecraft style: set [member slot] and the host writes [code]user://saves/slot_N.json[/code] instead of
+## [member save_path], with a preview [code]slot_N.png[/code] beside it (the frame [method capture_preview] took, which the
+## pause menu does as it opens so the preview never shows the menu). The file keeps the level it was taken in, so a
+## title screen lists them with [method list_saves] and loads the one picked into its own level.
 
 signal saved(path: String) ## The file was written.
 signal loaded(path: String) ## The file was read and applied.
@@ -32,6 +37,9 @@ const PLAYER_KEY: String = "@player" ## The key this peer's own spawned Player i
 static var DEFAULT_SAVE_PATH: String = "user://savegame.json" ## Where a SaveGame writes unless told otherwise; a test run points it elsewhere.
 static var DEFAULT_CLIENT_SAVE_PATH: String = "user://savegame_client.json" ## Where a client in somebody else's game writes.
 static var load_requested: bool = false ## Continue was picked: the next SaveGame loads its file once this peer's Player is in.
+static var SAVES_DIR: String = "user://saves" ## Where numbered saves live; a test run points it elsewhere.
+static var slot: int = 0 ## The numbered save this game writes and reads; 0 keeps to [member save_path].
+const PREVIEW_SIZE: Vector2i = Vector2i(480, 270) ## A save's preview, 16:9 like the window it is taken from.
 
 @export var save_path: String = DEFAULT_SAVE_PATH ## The host's and single player's save.
 @export var client_save_path: String = DEFAULT_CLIENT_SAVE_PATH ## This peer's save while it is a client in somebody else's game.
@@ -70,9 +78,70 @@ static func find_in(tree: SceneTree) -> SaveGame:
 	return tree.get_first_node_in_group(&"SaveGame") as SaveGame
 
 
-## [member save_path] on the host and in single player, [member client_save_path] on a client.
+## The file of save number [param number].
+static func slot_path(number: int) -> String:
+	return SAVES_DIR.path_join("slot_%d.json" % number)
+
+
+## The preview picture beside save number [param number].
+static func preview_path(number: int) -> String:
+	return SAVES_DIR.path_join("slot_%d.png" % number)
+
+
+## Every numbered save, lowest first, each as {slot, path, preview, scene_path, level_name, saved_at}: what a title
+## screen needs to list them. A file that is not a save of this version is left out.
+static func list_saves() -> Array[Dictionary]:
+	var saves: Array[Dictionary] = []
+	for file: String in DirAccess.get_files_at(SAVES_DIR):
+		if not (file.begins_with("slot_") and file.ends_with(".json")):
+			continue
+		var number: String = file.trim_prefix("slot_").trim_suffix(".json")
+		if not number.is_valid_int():
+			continue
+		var json: JSON = JSON.new()
+		if json.parse(FileAccess.get_file_as_string(SAVES_DIR.path_join(file))) != OK:
+			continue
+		var native: Variant = JSON.to_native(json.data) # written with from_native, so read back the same way
+		if not native is Dictionary:
+			continue
+		var data: Dictionary = native
+		if int(data.get("version", 0)) != VERSION:
+			continue
+		var scene_path: String = str(data.get("scene_path", ""))
+		saves.append({
+			"slot": int(number),
+			"path": SAVES_DIR.path_join(file),
+			"preview": preview_path(int(number)),
+			"scene_path": scene_path,
+			"level_name": str(data.get("level_name", level_name_of(scene_path))),
+			"saved_at": str(data.get("saved_at", "")),
+		})
+	saves.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return int(a["slot"]) < int(b["slot"]))
+	return saves
+
+
+## The lowest save number not yet taken, for a New Game.
+static func next_free_slot() -> int:
+	var taken: Array[int] = []
+	for save: Dictionary in list_saves():
+		taken.append(int(save["slot"]))
+	var number: int = 1
+	while number in taken:
+		number += 1
+	return number
+
+
+## A readable name for the level at [param scene_path]: its file name, words capitalised ("snow_demo" is "Snow Demo").
+static func level_name_of(scene_path: String) -> String:
+	return scene_path.get_file().get_basename().capitalize()
+
+
+## [member save_path] on the host and in single player, or save number [member slot] when one is set;
+## [member client_save_path] on a client.
 func current_path() -> String:
-	return save_path if multiplayer.is_server() else client_save_path
+	if not multiplayer.is_server():
+		return client_save_path
+	return slot_path(slot) if slot > 0 else save_path
 
 
 func has_save() -> bool:
@@ -96,8 +165,10 @@ func save_game() -> Error:
 		"version": VERSION,
 		"saved_at": Time.get_datetime_string_from_system(true),
 		"scene_path": scene.scene_file_path if scene else "",
+		"level_name": level_name_of(scene.scene_file_path) if scene else "",
 		"states": to_plain(collect_states()),
 	}
+	DirAccess.make_dir_recursive_absolute(path.get_base_dir())
 	var file: FileAccess = FileAccess.open(path, FileAccess.WRITE)
 	var error: Error = FileAccess.get_open_error() if file == null else OK
 	if file:
@@ -105,10 +176,42 @@ func save_game() -> Error:
 		error = file.get_error()
 		file.close()
 	if error == OK:
+		_write_preview(path.get_basename() + ".png")
 		saved.emit(path)
 	else:
 		push_error("SaveGame: could not write %s (%s)" % [path, error_string(error)])
 	return error
+
+
+## Takes the frame on screen now as the next save's preview. The pause menu calls it as it opens, before it is drawn,
+## so the preview is the game and not the menu. Returns false where there is no frame to take (headless).
+func capture_preview() -> bool:
+	if DisplayServer.get_name() == "headless":
+		return false # Nothing is drawn, and reading the texture only logs an error.
+	var viewport: Viewport = get_viewport()
+	var texture: ViewportTexture = viewport.get_texture() if viewport else null
+	var image: Image = texture.get_image() if texture else null
+	if image == null or image.is_empty():
+		return false
+	set_preview(image)
+	return true
+
+
+## Uses [param image] as the next save's preview, scaled to [constant PREVIEW_SIZE].
+func set_preview(image: Image) -> void:
+	_preview = image.duplicate() as Image
+	_preview.resize(PREVIEW_SIZE.x, PREVIEW_SIZE.y, Image.INTERPOLATE_LANCZOS)
+
+
+var _preview: Image = null
+
+
+## Writes the preview beside the save: the one [method capture_preview] took, or the frame on screen now.
+func _write_preview(path: String) -> void:
+	if _preview == null and not capture_preview():
+		return
+	_preview.save_png(path)
+	_preview = null
 
 
 ## What [method current_path] holds (version, saved_at, scene_path and states), or an empty Dictionary when there is
@@ -141,6 +244,9 @@ func load_game() -> bool:
 func delete_save() -> void:
 	if has_save():
 		DirAccess.remove_absolute(current_path())
+		var preview: String = current_path().get_basename() + ".png"
+		if FileAccess.file_exists(preview):
+			DirAccess.remove_absolute(preview)
 
 
 ## Every Saveable this peer owns, keyed by its path from this node's parent; a spawned Player, named after its peer
