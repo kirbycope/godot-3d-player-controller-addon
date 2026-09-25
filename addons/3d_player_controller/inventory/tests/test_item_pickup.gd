@@ -167,7 +167,8 @@ func test_an_emptied_level_pickup_stays_hidden_instead_of_freed() -> void:
 	assert_true(is_instance_valid(pickup), "It stays in the tree")
 	assert_false(pickup.visible, "hidden")
 	assert_false(pickup.player_detection.monitoring, "and nobody takes it again")
-	assert_false(pickup.player_detection.monitorable, "nor does its reach catch the aim ray, which collides with areas")
+	var reach: CollisionShape3D = pickup.player_detection.get_child(0) as CollisionShape3D
+	assert_true(reach.disabled, "nor does its reach catch the aim ray, which collides with areas")
 	assert_false(pickup.action_prompt.visible, "The prompt went with it")
 
 

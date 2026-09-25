@@ -114,8 +114,10 @@ func _set_count(left: int) -> void:
 		hide()
 		player_detection.set_deferred(&"monitoring", false)
 		# Nor can it be hit: the Player's ProjectileRaycast collides with areas, and a spent stack's reach
-		# would otherwise catch every round aimed through where it lay.
-		player_detection.set_deferred(&"monitorable", false)
+		# would otherwise catch every round aimed through where it lay. A ray still hits an area that is
+		# not monitorable, so the shape itself goes.
+		for shape: Node in player_detection.find_children("*", "CollisionShape3D", true, false):
+			shape.set_deferred(&"disabled", true)
 	else:
 		queue_free()
 
