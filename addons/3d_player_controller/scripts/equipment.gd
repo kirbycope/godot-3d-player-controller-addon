@@ -36,6 +36,7 @@ enum EquipmentType {
 @export var can_log: bool = false ## Can this equipment chop down trees? (See [Choppable].)
 @export var can_mine: bool = false ## Can this equipment mine ore? (See [Mineable].)
 @export var can_shoot: bool = false ## Does this equipment have a shooting/ranged action that the player can perform?
+@export var is_metal: bool = false ## Made of metal: held in a thunderstorm it draws the lightning, as in Breath of the Wild ([method Player.attracts_lightning]).
 @export var display_name: String = "" ## Name displayed in the UI. If empty, falls back to equipment type name.
 @export_multiline var description: String = "" ## Flavour text under the name in the inventory.
 @export var model_scene: PackedScene ## A 3D model the inventory shows turning in place of the icon; empty keeps the icon.

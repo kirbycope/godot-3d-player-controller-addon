@@ -96,7 +96,9 @@ func test_first_person_sits_at_the_eyes_and_stays_there_looking_down() -> void:
 
 	player.camera_mount.rotation.x = deg_to_rad(-60.0)
 	await wait_physics_frames(3)
-	assert_almost_eq(camera.global_position.y, eyes.y, 0.05,
+	# The head tips down with the camera now, and the eyes ride it, so they dip a few centimetres; nothing like the
+	# 26 cm drop into the chest this guards against
+	assert_almost_eq(camera.global_position.y, eyes.y, 0.08,
 			"Looking down leaves the camera at the eyes; it used to drop 26 cm into the chest")
 	assert_almost_eq(rad_to_deg(camera.global_rotation.x), -60.0, 1.0, "and the view is the mount's pitch")
 

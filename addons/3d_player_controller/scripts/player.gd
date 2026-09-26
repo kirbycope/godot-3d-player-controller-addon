@@ -17,6 +17,7 @@ signal scoping_changed(is_scoping: bool) ## Emitted when [member is_scoping] cha
 
 const EMOTE_STATE_PLAYBACK_PATH: String = "parameters/EmoteStateMachine/playback"
 const CAST_CHANNEL_EMOTE: StringName = &"ReadyToCastSpell" ## Upper-body pose held while an unarmed cast channels.
+const GUARD_EMOTE: StringName = &"ShieldBlock" ## Upper-body pose held while the shield is raised ([member is_guarding]).
 const LOCOMOTION_STATE_PLAYBACK_PATH: String = "parameters/LocomotionStateMachine/playback"
 const ARCHERY_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/Bow/ArcheryLocomotion/blend_position"
 const BOW_LOCOMOTION_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMachine/Bow/BowLocomotion/blend_position"
@@ -67,6 +68,7 @@ var uses_mouse: bool: ## Whether the mouse is this Player's: only a Player on th
 @export var enable_spyglass: bool = false ## The [code]scope[/code] action raises the [Spyglass] on the right hand: first person, zoomed, through a porthole.
 @export var enable_ragdoll: bool = false
 @export var enable_stamina: bool = false
+@export var enable_temperature: bool = false ## Cold and heat hurt, as in Breath of the Wild ([BodyTemperature]), reading the WeatherFX when there is one.
 @export var enable_double_jump: bool = false ## Jump again in the air, [member air_jumps] times before landing (a platformer's double jump).
 @export var air_jumps: int = 1 ## Jumps allowed off nothing before the feet touch ground again.
 @export var jump_speed: float = 5.0 ## The upward speed a jump starts with, on the ground (at the clip's keyframe) or in the air (at once).
@@ -366,7 +368,15 @@ var surf_spin: float = 0.0: ## How far round the rider is in a shield-surf spin 
 			surf_spin = value
 			_apply_surf_spin()
 var _spin_rests: Dictionary = {} ## The Armature's and the ShieldSurfMount's own transforms, which a spin turns from.
+var is_guarding: bool = false: ## Is the shield raised ([ShieldGuard])? Replicated, so every peer shows the guard pose.
+	set(value):
+		if value != is_guarding:
+			is_guarding = value
+			_show_guard(value)
 var _surf_shield: Equipment = null ## The shield under the feet during a ride.
+var _screamed: bool = false ## This fall's scream has gone out.
+var footstep_override: AudioStream = null ## Steps a surface lends the Player while it stands on it (the snow addon's FootStamper sets its crunch in snow), played instead of the ground's own, so only one step sounds.
+var knockback_velocity: Vector3 = Vector3.ZERO ## A shove from a hit, on top of the walking speed the animation gives, dying away at [member knockback_damping].
 var _surf_shield_home: Node = null ## Where the surfed shield hangs when it is not under the feet: its bone attachment.
 var _surf_shield_transform: Transform3D = Transform3D.IDENTITY
 var is_scoping: bool = false: ## Is the Player looking through the [Spyglass]? It stands still meanwhile. Replicated, so every peer sees it raised.
@@ -498,6 +508,9 @@ var initial_player_model_transform: Transform3D ## The model's rest transform fr
 @onready var head_attachment: BoneAttachment3D = $PlayerModel/Armature/GeneralSkeleton/HeadAttachment ## Follows the Head bone; what a [TalkingNpc] looks at, and where the headshot area sits.
 @onready var look_at_modifier: LookAtModifier3D = $PlayerModel/Armature/GeneralSkeleton/LookAtModifier3D
 @onready var head_look_at_modifier: LookAtModifier3D = $PlayerModel/Armature/GeneralSkeleton/HeadLookAtModifier3D ## Turns the head alone; the spine one above is for aiming.
+@onready var body_temperature: BodyTemperature = get_node_or_null("BodyTemperature") as BodyTemperature ## Cold and heat hurt ([member enable_temperature]).
+@onready var shield_guard: ShieldGuard = get_node_or_null("ShieldGuard") as ShieldGuard ## Guard and parry with a shield on the arm.
+@onready var sfx_fall_scream: AudioStreamPlayer3D = get_node_or_null("SFX_FallScream") as AudioStreamPlayer3D ## Screams once on a fall that will kill ([method scream_if_doomed]).
 @onready var head_look_target: Marker3D = get_node_or_null("HeadLookTarget") as Marker3D ## Where the head looks when nothing else claims it: ahead, at the camera's pitch ([method Camera._sync_head_look_target]).
 @onready var right_hand_ik: TwoBoneIK3D = $PlayerModel/Armature/GeneralSkeleton/RightHandIK
 @onready var left_hand_ik: TwoBoneIK3D = $PlayerModel/Armature/GeneralSkeleton/LeftHandIK ## First person with a gun: the support hand on the grip (see [method set_first_person_hands]).
@@ -612,6 +625,8 @@ func _ready() -> void:
 
 	# The head looks up and down with the camera from the start
 	set_head_look_at_target(null)
+	# Metal in hand draws a storm's lightning (a weather addon asks, through the group)
+	add_to_group(&"LightningAttractor")
 
 	# Ensure PhysicalBone3D nodes never collide with the player CharacterBody3D
 	if physical_bone_simulator:
@@ -684,6 +699,8 @@ func _physics_process(delta: float) -> void:
 	# A frozen clock (a menu holding Engine.time_scale at zero) moves nothing, and root motion is divided by delta
 	if delta <= 0.0:
 		return
+	# A shove dies away whatever the Player is doing, so one taken on the glider is not saved for the landing
+	knockback_velocity = knockback_velocity.move_toward(Vector3.ZERO, knockback_damping * delta)
 	# Track which weapon group has finished its draw so re-entering it skips the redraw.
 	var root_locomotion_node: String = sync_locomotion_node.get_slice("/", 0)
 	if root_locomotion_node in LOCOMOTION_GROUPS:
@@ -874,7 +891,7 @@ func apply_input(delta: float) -> void:
 		vertical_speed = h_velocity.dot(up_direction) + swim_vertical_speed
 	else:
 		vertical_speed += get_gravity().dot(up_direction) * 1.5 * delta
-	velocity = h_velocity.slide(up_direction) + (up_direction * vertical_speed)
+	velocity = (h_velocity + knockback_velocity).slide(up_direction) + (up_direction * vertical_speed)
 	last_fall_speed = - vertical_speed
 	update_movement_and_rotation(delta)
 
@@ -1473,7 +1490,11 @@ func set_head_look_at_target(target: Node3D) -> void:
 @export_category("Combat")
 @export var skill_level: int = 0 ## Marksmanship: shrinks the spread of ranged equipment per its [Accuracy] resource (0 novice, expert at the resource's expert_level).
 @export_category("Traversal")
-@export var lethal_fall_speed: float = 15.0 ## Landing at or above this downward speed (m/s) ragdolls the player.
+@export var lethal_fall_speed: float = 15.0 ## Landing at or above this downward speed (m/s), about an 11.5 m drop, costs the whole of the health ([method take_fall]).
+@export var parry_recoil: float = 5.0 ## Speed (m/s) this Player is thrown back when another Player parries its swing.
+@export var hit_knockback: float = 4.0 ## Speed (m/s) a hit shoves the Player away from where it came from, dying away at [member knockback_damping].
+@export var knockback_damping: float = 12.0 ## How fast (m/s²) a shove dies away.
+@export var safe_fall_speed: float = 10.0 ## Landing slower than this (m/s), about a 5 m drop, hurts nothing; from here to [member lethal_fall_speed] the damage rises to all of the health.
 @export var wall_leap_horizontal_speed: float = 5.0 ## Horizontal impulse away from the wall on a climbing/hanging back-eject.
 @export var wall_leap_vertical_speed: float = 3.5 ## Vertical impulse on a climbing/hanging back-eject.
 
@@ -1631,11 +1652,33 @@ func take_hit(damage: float, from: Vector3, source_path: NodePath = ^"") -> void
 		return
 	if not health.is_alive() or dodge_invulnerable:
 		return
+	# A raised shield facing the hit catches it: blocked, or parried
+	if shield_guard and shield_guard.intercept(from, source_path):
+		return
 	health.damage(maxf(damage, 0.0), from)
-	var away: Vector3 = (global_position - from).slide(up_direction)
-	if away.length_squared() > 0.001:
-		velocity += away.normalized() * 4.0 + up_direction * 1.5
+	knock_back(from, hit_knockback)
 	controls.rumble(0.6, 0.8, 0.25)
+
+
+## Shoves the Player [param speed] m/s away from [param from], with a little lift, on its own peer (a copy sends it
+## there, as [method take_hit] does). The shove rides on top of the walking speed and dies away, rather than being set
+## once and overwritten by the next step's root motion.
+func knock_back(from: Vector3, speed: float, source_path: NodePath = ^"") -> void:
+	if not is_multiplayer_authority():
+		_knock_back.rpc_id(get_multiplayer_authority(), from, speed, source_path)
+		return
+	var away: Vector3 = (global_position - from).slide(up_direction)
+	if away.length_squared() < 0.001 or speed <= 0.0:
+		return
+	knockback_velocity = away.normalized() * speed
+	velocity += up_direction * speed * 0.35
+
+
+## [method knock_back] arriving from another peer; see [method _may_affect].
+@rpc("any_peer", "reliable")
+func _knock_back(from: Vector3, speed: float, source_path: NodePath) -> void:
+	if is_multiplayer_authority() and _may_affect(source_path):
+		knock_back(from, speed, source_path)
 
 
 ## [method take_hit] arriving from another peer; see [method _may_affect].
@@ -1789,6 +1832,79 @@ func try_dodge(from_state: NodeStateMachine.States) -> bool:
 	return true
 
 
+## Wired to Inventory.item_used: a [FoodItem] eaten, [param count] of it, restores its health, mana, hunger and
+## thirst, on the Player's own peer (the Inventory is the owner's). Anything else is some other listener's business.
+func _on_inventory_item_used(item: Item, count: int) -> void:
+	if not item is FoodItem or not is_multiplayer_authority():
+		return
+	var food: FoodItem = item as FoodItem
+	if food.health > 0.0:
+		heal(food.health * count)
+	if food.mana > 0.0 and health.max_energy > 0.0:
+		health.energy += food.mana * count
+	var vitals: Vitals = get_vitals()
+	if vitals:
+		if food.hunger > 0.0:
+			vitals.eat(food.hunger * count)
+		if food.thirst > 0.0:
+			vitals.drink(food.thirst * count)
+
+
+## The Player's [Vitals] (hunger and thirst), a child a survival game adds; null without one.
+func get_vitals() -> Vitals:
+	for child: Node in get_children():
+		if child is Vitals:
+			return child as Vitals
+	return null
+
+
+## Whether this Player draws a thunderstorm's lightning: holding metal ([member Equipment.is_metal]) in hand, as in
+## Breath of the Wild. A weather addon's lightning asks every node in the "LightningAttractor" group; WeatherFX sparks
+## the metal for a few seconds, then strikes it.
+func attracts_lightning() -> bool:
+	if inventory == null or not health.is_alive():
+		return false
+	for item: Equipment in inventory.equipment:
+		if is_instance_valid(item) and item.is_metal and item.is_visible_in_tree():
+			return true
+	return false
+
+
+## The shield on the arm to guard with: a sword-and-shield piece for the left arm, in hand; null without one.
+func get_guard_shield() -> Equipment:
+	if inventory == null:
+		return null
+	for item: Equipment in inventory.equipment:
+		if is_instance_valid(item) and item.equipment_type == Equipment.EquipmentType.SWORD_AND_SHIELD \
+				and item.bone_attachment_bone_name.contains("Left"):
+			return item
+	return null
+
+
+## This Player's swing was parried by the Player at [param by_path] (from this node): thrown back from them, on this
+## Player's own peer, as a knock-back from them.
+func parried(by_path: NodePath) -> void:
+	var by: Node3D = get_node_or_null(by_path) as Node3D
+	if by:
+		knock_back(by.global_position, parry_recoil, get_path_to(by))
+
+
+## Raises the shield on the upper body or lowers it, on every peer ([member is_guarding]'s setter); a carried body keeps
+## the carrying pose instead.
+func _show_guard(on: bool) -> void:
+	if animation_tree == null or (held_object and held_object.is_holding_object()):
+		return
+	var emote_state: AnimationNodeStateMachinePlayback = animation_tree.get(EMOTE_STATE_PLAYBACK_PATH)
+	if emote_state == null:
+		return
+	if on:
+		emote_spine_blend = 1.0
+		emote_state.start(GUARD_EMOTE)
+	elif emote_state.get_current_node() == GUARD_EMOTE:
+		emote_state.start("Idle")
+		emote_spine_blend = 0.0
+
+
 ## The shield a ride would be on: the sword-and-shield piece for the left arm, in hand or stowed (Link surfs on the
 ## shield off his back as readily as the one on his arm), or any sword-and-shield piece; null without one.
 func get_surf_shield() -> Equipment:
@@ -1849,6 +1965,34 @@ func _place_surf_shield(on: bool) -> void:
 					child.queue_free() # its arm is gone (the Player was re-equipped meanwhile)
 		_surf_shield = null
 		_surf_shield_home = null
+
+
+## Hurts the Player for landing at [param speed] (m/s, downward), on its own peer: nothing below
+## [member safe_fall_speed], rising to the whole of the health at [member lethal_fall_speed], as a fall in Breath of the
+## Wild hurts and then kills. Water breaks any fall. The landing states call it as they touch down.
+func take_fall(speed: float) -> void:
+	_screamed = false
+	if not is_multiplayer_authority() or is_swimming or speed < safe_fall_speed or not health.is_alive():
+		return
+	var share: float = clampf((speed - safe_fall_speed) / maxf(lethal_fall_speed - safe_fall_speed, 0.01), 0.0, 1.0)
+	health.damage(health.max_health * share, global_position)
+	controls.rumble(0.8, 1.0, 0.3)
+
+
+## A fall that has passed [member lethal_fall_speed] is going to end badly: the Player screams, once, on every peer, while
+## there is still time to hear it (The Wilhelm Scream, in [code]SFX_FallScream[/code]). The air states call it every
+## step with how fast the Player is coming down.
+func scream_if_doomed(fall_speed: float) -> void:
+	if _screamed or fall_speed < lethal_fall_speed or not is_multiplayer_authority() or is_paragliding:
+		return
+	_screamed = true
+	_fall_scream.rpc()
+
+
+@rpc("authority", "call_local", "unreliable")
+func _fall_scream() -> void:
+	if sfx_fall_scream and sfx_fall_scream.stream:
+		sfx_fall_scream.play()
 
 
 ## A dive from the air, Odyssey's move: the air states call it on Sprint, or Throw with Crouch held, while off the

@@ -23,7 +23,12 @@ const SKATEBOARDING_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMac
 @export var pad_spin_action: StringName = &"attack" ## Y, as in the games.
 
 @export_group("Surf Physics")
-@export_range(0.0, 1.0, 0.01) var friction: float = 0.3 ## The shield's sliding friction on the snow: this times gravity's push into the slope is the speed it loses every second, so only a slope steeper than about 17 degrees speeds it up.
+@export_range(0.0, 1.0, 0.01) var friction: float = 0.6 ## The shield's sliding friction on ground [member surface_friction] does not name (rock, stone, anything unmarked): this times gravity's push into the slope is the speed it loses every second.
+## Friction by surface, as in Breath of the Wild, where snow and sand run fast and rock grinds: the first of these groups
+## the ground under the shield is in (the groups footsteps go by) sets it. Snow's 0.3 runs any slope steeper than about
+## 17 degrees; rock's 0.6 only one steeper than about 31.
+@export var surface_friction: Dictionary[StringName, float] = {&"ICE": 0.1, &"SNOW": 0.3, &"SAND": 0.35, &"GRASS": 0.5, &"DIRT": 0.5, &"WOOD": 0.55}
+@export_range(0.0, 1.0, 0.01) var rain_friction_scale: float = 0.8 ## Friction in the rain, as a share of dry: wet ground runs faster, as in the games.
 @export_range(0.0, 0.5, 0.005) var drag: float = 0.04 ## The snow ploughed and the air pushing back, harder the faster it goes: this times the speed squared is the speed lost every second. Each slope settles at a speed of its own, about 8 m/s on 30 degrees and 10 on 40, and 8 m/s on the flat stops in about two seconds.
 @export var max_speed: float = 14.0 ## m/s it never goes past, however steep.
 @export var turn_rate: float = 2.2 ## How fast the stick turns the ride, in radians per second.
@@ -78,9 +83,13 @@ func _physics_process(delta: float) -> void:
 			_grounded = false
 			on_floor = false # up and away this step, not laid back on the slope
 	elif on_floor:
-		if _fall_speed >= player.lethal_fall_speed:
-			player.state_machine.travel(state, States.RAGDOLLING)
-			return
+		if _fall_speed > 0.0:
+			player.take_fall(_fall_speed)
+			if not player.health.is_alive():
+				return
+			if _fall_speed >= player.lethal_fall_speed:
+				player.state_machine.travel(state, States.RAGDOLLING)
+				return
 		_fall_speed = 0.0
 		var normal: Vector3 = player.get_floor_normal()
 		# The ride keeps its own speed and heading on the ground: the body hands its velocity back with the part into
@@ -90,7 +99,8 @@ func _physics_process(delta: float) -> void:
 		# Down the slope, gravity's share along it; against the ride, friction in proportion to how hard it presses in.
 		along += gravity.slide(normal) * delta
 		var speed: float = along.length()
-		speed -= (friction * absf(gravity.dot(normal)) + drag * speed * speed) * delta
+		var grip: float = surface_friction_under()
+		speed -= (grip * absf(gravity.dot(normal)) + drag * speed * speed) * delta
 		var heading: Vector3 = along.normalized() if along.length_squared() > 1e-6 else player.get_facing_direction().slide(normal).normalized()
 		# Leaning: the stick's push along the ride speeds it up, its pull back brakes.
 		var wish: Vector3 = _wish(normal)
@@ -104,7 +114,7 @@ func _physics_process(delta: float) -> void:
 		_grounded = true
 		# Too slow on ground too gentle to get it going again: the ride is over. On a slope it only turns and runs
 		# back down, as a stall going uphill does.
-		var rolls: bool = gravity.slide(normal).length() > friction * absf(gravity.dot(normal))
+		var rolls: bool = gravity.slide(normal).length() > grip * absf(gravity.dot(normal))
 		_slow_for = _slow_for + delta if speed < stop_speed and not rolls else 0.0
 		if _slow_for >= stop_time or _ran_into_a_wall(heading):
 			_end()
@@ -115,6 +125,7 @@ func _physics_process(delta: float) -> void:
 		_grounded = false
 		velocity += gravity * delta
 		_fall_speed = -velocity.dot(up)
+		player.scream_if_doomed(_fall_speed)
 		var flat: Vector3 = velocity.slide(up)
 		if flat.length_squared() > 1e-4:
 			var turned: Vector3 = _steer(flat.normalized(), _wish(up), up, delta * 0.5)
@@ -127,6 +138,31 @@ func _physics_process(delta: float) -> void:
 	var speed_share: float = clampf(flat_velocity.length() / max_speed, 0.0, 1.0)
 	player.animation_tree.set(SKATEBOARDING_BLEND_POSITION_PATH, lerpf(0.4, 1.1, sqrt(speed_share)))
 	player.update_movement_and_rotation(delta)
+
+
+## The friction of the ground the shield rides now: [member surface_friction] for the group its body is in, else
+## [member friction], times [member rain_friction_scale] in the rain.
+func surface_friction_under() -> float:
+	var grip: float = friction
+	var ground: Node = _ground_under()
+	if ground:
+		for group: StringName in surface_friction:
+			if ground.is_in_group(group):
+				grip = surface_friction[group]
+				break
+	if player.get_precipitation_strength() >= 0.3:
+		grip *= rain_friction_scale
+	return grip
+
+
+## The body under the shield, or null in the air: a ray down with what the Player collides with, which while surfing
+## on snow is the snow's packed floor. The slide reports nothing on a smooth slope, the floor being held by snapping.
+func _ground_under() -> Node:
+	var space: PhysicsDirectSpaceState3D = player.get_world_3d().direct_space_state
+	var from: Vector3 = player.global_position + player.up_direction * 0.5
+	var query: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.create(from, from - player.up_direction * 1.5, player.collision_mask, [player.get_rid()])
+	var hit: Dictionary = space.intersect_ray(query)
+	return hit.get("collider") as Node
 
 
 ## Where the stick points, relative to the camera and along the surface under [param normal], as long as the stick

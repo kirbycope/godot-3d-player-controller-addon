@@ -227,6 +227,9 @@
 [ext_resource type="Script" uid="uid://c6mt7ujyuf5lm" path="res://addons/3d_player_controller/scripts/jumping.gd" id="250_gtex3"]
 [ext_resource type="Script" uid="uid://7oyjxd1xp6wx" path="res://addons/3d_player_controller/scripts/paragliding.gd" id="251_srgrd"]
 [ext_resource type="Script" uid="uid://c77ykpdfuub0c" path="res://addons/3d_player_controller/scripts/surfing.gd" id="surfing_gd"]
+[ext_resource type="Script" uid="uid://dwwjgrxrofitg" path="res://addons/3d_player_controller/scripts/shield_guard.gd" id="shield_guard_gd"]
+[ext_resource type="Script" uid="uid://dki310rfjnqb6" path="res://addons/3d_player_controller/scripts/body_temperature.gd" id="body_temperature_gd"]
+[ext_resource type="AudioStream" uid="uid://2u13pyvp150t" path="res://addons/3d_player_controller/assets/wikimedia/wilhelm_scream.ogg" id="wilhelm_ogg"]
 [ext_resource type="Script" uid="uid://dpu8h1ngv3sta" path="res://addons/3d_player_controller/scripts/pushing.gd" id="252_dt765"]
 [ext_resource type="Script" uid="uid://de52b2wmdepsr" path="res://addons/3d_player_controller/scripts/ragdolling.gd" id="253_tmk5t"]
 [ext_resource type="Script" uid="uid://cki15rkegdlgq" path="res://addons/3d_player_controller/scripts/sitting.gd" id="254_72kyu"]
@@ -697,6 +700,9 @@ properties/44/replication_mode = 2
 properties/45/path = NodePath(".:surf_spin")
 properties/45/spawn = true
 properties/45/replication_mode = 2
+properties/46/path = NodePath(".:is_guarding")
+properties/46/spawn = true
+properties/46/replication_mode = 2
 
 [node name="Player" type="CharacterBody3D" unique_id=548622605 node_paths=PackedStringArray("animation_tree") groups=["Focusable", "Player", "Saveable"]]
 script = ExtResource("1_2qx4v")
@@ -2213,6 +2219,26 @@ editor_description = "The spell arriving on whatever it hit, played where it lan
 editor_description = "The Player's own sound: footsteps, landings, the voice one-shots the states fire."
 player = NodePath("..")
 
+[node name="ShieldGuard" type="Node" parent="." node_paths=PackedStringArray("player")]
+editor_description = "Breath of the Wild's shield: Focus held with a shield on the arm raises it (Player.is_guarding, replicated), a hit from in front does no damage, and Action just before it lands parries, throwing the attacker back. The Player's take_hit asks it first."
+script = ExtResource("shield_guard_gd")
+player = NodePath("..")
+
+[node name="BlockAudio" type="AudioStreamPlayer3D" parent="ShieldGuard"]
+editor_description = "The shield ringing on a block, higher on a parry, on every peer. The sword impact stands in until there is a shield clang."
+stream = ExtResource("266_l6fg8")
+bus = &"SFX"
+
+[node name="BodyTemperature" type="Node" parent="." node_paths=PackedStringArray("player")]
+editor_description = "Breath of the Wild's temperature: below 0 and above 40 degrees the air costs health, fast below -10 and above 50, with any HeatSource (a campfire) warming it. The air is the WeatherFX's where there is one. Off unless Player.enable_temperature; the body wears nothing, so its resistances are 0."
+script = ExtResource("body_temperature_gd")
+player = NodePath("..")
+
+[node name="SFX_FallScream" type="AudioStreamPlayer3D" parent="."]
+editor_description = "The Wilhelm Scream, once, on a fall that has passed the lethal landing speed (Player.scream_if_doomed), on every peer."
+stream = ExtResource("wilhelm_ogg")
+bus = &"SFX"
+
 [node name="SFX_Weapons" type="Node3D" parent="." unique_id=2023830106 node_paths=PackedStringArray("player")]
 editor_description = "Weapon sound: drawing, stowing, swinging and landing a hit, with a settle timer so a stow that follows a draw does not talk over it."
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
@@ -2603,6 +2629,7 @@ replication_config = SubResource("SceneReplicationConfig_player")
 [connection signal="cast_interrupted" from="Hud/Abilities" to="." method="_on_abilities_cast_interrupted"]
 [connection signal="cast_started" from="Hud/Abilities" to="." method="_on_abilities_cast_started"]
 [connection signal="died" from="Hud/Health" to="." method="_on_health_died"]
+[connection signal="item_used" from="Hud/Inventory" to="." method="_on_inventory_item_used"]
 [connection signal="energy_changed" from="Hud/Health" to="StatusBars3D" method="set_energy"]
 [connection signal="health_changed" from="Hud/Health" to="StatusBars3D" method="set_health"]
 [connection signal="input_type_changed" from="Hud/Controls" to="." method="_on_controls_input_type_changed"]

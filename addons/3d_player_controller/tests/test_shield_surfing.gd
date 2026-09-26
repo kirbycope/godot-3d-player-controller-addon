@@ -21,8 +21,10 @@ func after_each() -> void:
 
 
 ## Ground tilted [param degrees] about X, falling away toward +Z, and a Player dropped onto it from [param height].
-func _ground(degrees: float, height: float = 1.5) -> void:
+func _ground(degrees: float, height: float = 1.5, surface: StringName = &"SNOW") -> void:
 	var ground := StaticBody3D.new()
+	if surface != &"":
+		ground.add_to_group(surface) # the rides here are on snow unless a test says otherwise
 	var shape := CollisionShape3D.new()
 	shape.shape = BoxShape3D.new()
 	(shape.shape as BoxShape3D).size = Vector3(40.0, 1.0, 200.0)
@@ -227,3 +229,35 @@ func test_leaning_in_speeds_the_ride_and_pulling_back_brakes_it() -> void:
 	var braking: float = await _flat_run(&"move_down")
 	assert_gt(leaning, coasting + 1.0, "Pushing the stick along the ride keeps it going faster")
 	assert_lt(braking, coasting - 1.0, "pulling it back brakes")
+
+
+## Speed two seconds into a ride down 30 degrees of [param surface].
+func _run_on(surface: StringName) -> float:
+	await _ground(30.0, 1.5, surface)
+	_equip_shield()
+	await _surf_from_the_air()
+	await wait_seconds(2.0)
+	return player.velocity.length()
+
+
+func test_snow_runs_faster_than_grass_and_rock_grinds() -> void:
+	var on_snow: float = await _run_on(&"SNOW")
+	root.free()
+	root = Node3D.new()
+	add_child_autofree(root)
+	var on_grass: float = await _run_on(&"GRASS")
+	root.free()
+	root = Node3D.new()
+	add_child_autofree(root)
+	var on_rock: float = await _run_on(&"")
+	assert_gt(on_snow, on_grass + 0.5, "Snow runs faster than grass")
+	assert_gt(on_grass, on_rock, "and grass than bare rock, which grinds")
+
+
+func test_the_ground_under_the_shield_sets_the_friction() -> void:
+	await _ground(10.0, 1.5, &"ICE")
+	_equip_shield()
+	await _surf_from_the_air()
+	await wait_seconds(0.5)
+	var surfing: Surfing = player.get_node("NodeStateMachine/Surfing")
+	assert_eq(surfing.surface_friction_under(), surfing.surface_friction[&"ICE"], "On ice, ice's friction")

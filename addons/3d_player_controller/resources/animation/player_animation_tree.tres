@@ -71,6 +71,9 @@ animation = &"Male Reaction Hit On The Right Side/mixamo_com"
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_5hbgk"]
 animation = &"Ready To Cast Spell Standing Idle/mixamo_com"
 
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_shield_block"]
+animation = &"Sword And Shield Block Idle/mixamo_com"
+
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_mihb1"]
 animation = &"Rifle Aiming Standing Idle/mixamo_com"
 
@@ -210,6 +213,8 @@ states/ReactionHitOnRightSide/node = SubResource("AnimationNodeAnimation_1gjxa")
 states/ReactionHitOnRightSide/position = Vector2(741.14197, 373.675)
 states/ReadyToCastSpell/node = SubResource("AnimationNodeAnimation_5hbgk")
 states/ReadyToCastSpell/position = Vector2(132.17847, 16.5625)
+states/ShieldBlock/node = SubResource("AnimationNodeAnimation_shield_block")
+states/ShieldBlock/position = Vector2(306.67896, 373.675)
 states/RifleAimingStandingIdle/node = SubResource("AnimationNodeAnimation_mihb1")
 states/RifleAimingStandingIdle/position = Vector2(741.14813, -27.4375)
 states/RifleFiringStanding/node = SubResource("AnimationNodeAnimation_xsdw7")

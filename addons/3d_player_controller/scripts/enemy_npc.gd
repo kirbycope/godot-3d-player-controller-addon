@@ -37,6 +37,10 @@ const AGGRO_AREA_THREAT: float = 1.0 ## What walking into the aggro area is wort
 @export var accuracy: Accuracy ## Spread cone of the weapon it shoots, the same resource the Player's copy uses; empty fires dead straight.
 @export var skill_level: int = 0 ## Marksmanship: shrinks [member accuracy]'s spread (0 novice, expert at the resource's expert_level).
 @export var melee_hit_damage: float = 25.0 ## Damage taken from one of the Player's melee swings.
+@export var hit_knockback: float = 3.0 ## Speed (m/s) a hit shoves the enemy away from whoever landed it.
+@export var parry_recoil: float = 5.0 ## Speed (m/s) a parried swing throws the enemy back.
+@export var parry_stagger: float = 1.5 ## Seconds a parried enemy reels before it can attack again; it stands still for the first half.
+@export var hit_stun: float = 0.35 ## Seconds a hit holds the enemy still, so the shove carries it back instead of it walking straight back in.
 @export var leash_distance: float = 30.0 ## A target further than this from the post is given up on; the enemy resets.
 @export var patrol_points: Node3D ## With nobody to hunt, walks its [Node3D] children in a loop; empty stands at the post.
 @export var patrol_wait: float = 1.5 ## Seconds paused at each patrol point.
@@ -80,6 +84,8 @@ var _burn_tick_damage: float = 0.0
 @onready var mannequin: Node3D = $Mannequin_M ## The animated model; root motion is in its space.
 @onready var animation_tree: AnimationTree = $AnimationTree
 @onready var playback: AnimationNodeStateMachinePlayback = animation_tree.get("parameters/playback")
+var _staggered_until: float = 0.0 ## Engine seconds until a parried enemy may attack again.
+var _stunned_until: float = 0.0 ## Engine seconds until a struck or parried enemy moves again.
 @onready var attack_timer: Timer = $AttackTimer ## Cooldown between attacks.
 @onready var strike_timer: Timer = $StrikeTimer ## Delay from the swing's start to its hit or shot.
 @onready var muzzle: Marker3D = $Muzzle ## Where projectiles leave.
@@ -120,6 +126,13 @@ func _physics_process(delta: float) -> void:
 			_face_player(delta)
 		_stop_moving()
 		return
+	if Time.get_ticks_msec() / 1000.0 < _stunned_until:
+		# Reeling from a hit or a parry: it stands its ground while the shove carries it back
+		if not is_on_floor():
+			velocity += get_gravity() * delta
+		_stop_moving()
+		_update_locomotion()
+		return
 	if is_returning_home:
 		_return_home(delta)
 		_update_locomotion()
@@ -138,7 +151,8 @@ func _physics_process(delta: float) -> void:
 		return
 	super(delta)
 	_update_locomotion()
-	if target == null or target.get("is_stealthed") or not attack_timer.is_stopped():
+	if target == null or target.get("is_stealthed") or not attack_timer.is_stopped() \
+			or Time.get_ticks_msec() / 1000.0 < _staggered_until:
 		return
 	if not caster.abilities.is_empty() and caster.try_cast(target):
 		attack_timer.start()
@@ -331,6 +345,42 @@ func register_weapon_hit(equipment: Node = null, _hit_node: Node = null) -> void
 	take_hit(damage, from, attacker.get_path() if attacker is Node else ^"")
 
 
+## Its swing was parried by the Player at [param by_path] (from this node): on the server, the swing goes nowhere, the
+## enemy is thrown back and reels for [member parry_stagger] before it can attack again. A client's parry (the guarding
+## Player's own peer decides it) is sent to the server, which takes it only from that Player's peer.
+func parried(by_path: NodePath) -> void:
+	if is_dead:
+		return
+	if not multiplayer.is_server():
+		_request_parried.rpc_id(1, by_path)
+		return
+	var by: Node3D = get_node_or_null(by_path) as Node3D
+	if by == null or by.global_position.distance_to(global_position) > maxf(attack_range * 3.0, 4.0):
+		return
+	strike_timer.stop()
+	caster.interrupt()
+	_staggered_until = Time.get_ticks_msec() / 1000.0 + parry_stagger
+	_stunned_until = Time.get_ticks_msec() / 1000.0 + parry_stagger * 0.5
+	knock_back(by.global_position, parry_recoil)
+	anim_state = "GettingHit"
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _request_parried(by_path: NodePath) -> void:
+	if multiplayer.is_server() and _may_affect(by_path):
+		parried(by_path)
+
+
+## Shoves the enemy [param speed] m/s away from [param from], on the server, where it moves; its position reaches the
+## peers as it always does. The shove rides on its walking speed and dies away at [member knockback_damping].
+func knock_back(from: Vector3, speed: float) -> void:
+	if not multiplayer.is_server() or speed <= 0.0:
+		return
+	var away: Vector3 = (global_position - from).slide(up_direction)
+	if away.length_squared() > 0.001:
+		apply_impulse(away.normalized() * speed + up_direction * speed * 0.25)
+
+
 ## Called by a landing [Projectile] (its authority's copy alone); one on the Head hurtbox kills outright.
 func register_projectile_hit(projectile: Projectile, point: Vector3, _normal: Vector3) -> void:
 	var damage: float = projectile.damage
@@ -355,6 +405,8 @@ func take_hit(damage: float, from: Vector3, source_path: NodePath = ^"") -> void
 	if not health.is_alive():
 		return
 	caster.interrupt()
+	_stunned_until = maxf(_stunned_until, Time.get_ticks_msec() / 1000.0 + hit_stun)
+	knock_back(from, hit_knockback)
 	var side: float = global_transform.basis.x.dot(global_position.direction_to(from))
 	anim_state = "ReactionHitOnRightSide" if side > 0.35 else ("ReactionHitOnLeftSide" if side < -0.35 else "GettingHit")
 

@@ -12,6 +12,12 @@ extends NodeStateMachine
 @export var pad_hop_action: StringName = &"jump"
 @export var pad_sprint_action: StringName = &"sprint"
 
+@export_group("Climbing Jump")
+## Stamina a hop up, left or right off the wall costs, as Breath of the Wild's climbing jump takes a chunk of the wheel
+## at once. Its exact figure is not published, so this is a tunable; the hop that pays the last of it still goes, and
+## leaves the Player exhausted. Leaping back off the wall is free.
+@export var hop_stamina_cost: float = 15.0
+
 @export_group("Rain Slipping")
 @export var rain_slip_enabled: bool = true ## BotW-style slipping on wet walls during rain.
 @export var rain_slip_precipitation_threshold: float = 0.4 ## Precipitation strength at which walls become slippery.
@@ -52,6 +58,11 @@ func _input(event: InputEvent) -> void:
 		var hop_right: bool = motion.x > HOP_INPUT_DEADZONE and absf(motion.x) > absf(motion.y)
 		# Check: Up input past deadzone, and |y| > |x| ensures vertical input dominance (<45° angle to +Y).
 		var hop_up: bool = motion == Vector2.ZERO or (motion.y > HOP_INPUT_DEADZONE and absf(motion.y) > absf(motion.x))
+		# A hop is a climbing jump, and costs its chunk of stamina; an exhausted Player cannot make one
+		var climbing_on: bool = player.is_hanging_braced and player.ledge_detection_vertical and player.ledge_detection_vertical.is_colliding()
+		if not leap_back and not climbing_on and (hop_left or hop_right or hop_up) and not player.stamina.spend(hop_stamina_cost):
+			get_viewport().set_input_as_handled()
+			return
 		# Determine which hop direction to take based on input
 		if leap_back:
 			player.leap_off_wall()

@@ -49,6 +49,10 @@ func _physics_process(_delta: float) -> void:
 
 	# Check if the player has reached the floor
 	if player.is_on_floor() and not player.is_jump_queued:
+		# The landing hurts, and a hard enough one kills: the death takes it from there
+		player.take_fall(player.last_fall_speed)
+		if not player.health.is_alive():
+			return
 		if player.last_fall_speed >= player.lethal_fall_speed:
 			player.state_machine.travel(state, States.RAGDOLLING)
 		else:

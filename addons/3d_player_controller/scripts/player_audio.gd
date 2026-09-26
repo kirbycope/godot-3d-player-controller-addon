@@ -10,6 +10,7 @@ const BUSES: Array[StringName] = [&"Dialog", &"Menu", &"Music", &"SFX", &"Voice"
 @onready var sfx_footsteps_stone: AudioStreamPlayer3D = $SFX_Footsteps_Stone
 @onready var sfx_footsteps_water: AudioStreamPlayer3D = $SFX_Footsteps_Water
 @onready var sfx_footsteps_wood: AudioStreamPlayer3D = $SFX_Footsteps_Wood
+@onready var sfx_footsteps_surface: AudioStreamPlayer3D = get_node_or_null("SFX_Footsteps_Surface") as AudioStreamPlayer3D ## Plays [member Player.footstep_override].
 
 
 ## Called when the node enters the scene tree for the first time.
@@ -25,6 +26,13 @@ func _ready() -> void:
 func play_footstep(collider: Node3D = null) -> void:
 	if not collider and player and player.paraglider_raycast and player.paraglider_raycast.is_colliding():
 		collider = player.paraglider_raycast.get_collider() as Node3D
+
+	# A surface that lends its own steps (snow) sounds instead of the ground under it
+	if player and player.footstep_override and sfx_footsteps_surface:
+		if sfx_footsteps_surface.stream != player.footstep_override:
+			sfx_footsteps_surface.stream = player.footstep_override
+		sfx_footsteps_surface.play()
+		return
 
 	if collider and (collider.is_in_group("DIRT") or collider.is_in_group("GRASS")):
 		sfx_footsteps_grass.play()

@@ -15,6 +15,7 @@ Third-party work in this repository: who made it, where it came from, its licenc
 | `assets/freesound/570701__robinhood76__10136-flag-flicking-on-strong-wind-isolated.wav` | [Robinhood76 on Freesound](https://freesound.org/s/570701/) | CC BY-NC 4.0 (non-commercial) |
 | `assets/tommusic/` | [TomMusic](https://tommusic.itch.io/) | Not stated (the pack's `ReadMe.txt` contains no license) |
 | `assets/mixamo/` | [Adobe Mixamo](https://www.mixamo.com/) | Adobe Mixamo terms |
+| `assets/wikimedia/wilhelm_scream.ogg` (The Wilhelm Scream, played on a fall that will kill, `SFX_FallScream` in `player.tscn`) | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Wilhelm_Scream.ogg), from the Internet Archive's SSE Library; likely Sheb Wooley, 1951 | CC0 1.0 |
 | `assets/pixabay/` (arrow swish and twang) | [djartmusic on Pixabay](https://pixabay.com) | Not recorded - fill in |
 | `assets/shaders/botw_toon.gdshader` (the `BOTW` toon look, written for this addon after NekotoArts' [TRUE BoTW Toon Shader](https://godotshaders.com/shader/update-botw-toon-shader/), CC0) | This addon | MIT (the addon's) |
 | `assets/shaders/binbun_stylized.gdshader` (the `BINBUN` toon look: a copy of the Ultimate Toon Shader's `stylized.gdshader`, so the addon stands alone) | [Binbun (Binbun3D)](https://binbun3d.itch.io/godot-ultimate-toon-shader) | Not recorded - fill in (itch.io pack, no license file) |
