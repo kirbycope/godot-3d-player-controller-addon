@@ -88,14 +88,15 @@ func test_without_a_shield_or_the_feature_nothing_happens() -> void:
 
 
 func test_a_downhill_speeds_the_ride_up() -> void:
-	await _ground(20.0)
+	await _ground(30.0)
 	_equip_shield()
 	await _surf_from_the_air()
 	await wait_seconds(0.5)
 	var early: float = player.velocity.length()
 	await wait_seconds(1.5)
 	assert_eq(player.current_state, NodeStateMachine.States.SURFING, "Still riding down the slope")
-	assert_gt(player.velocity.length(), early + 2.0, "and going faster")
+	assert_gt(player.velocity.length(), early + 1.5, "and going faster")
+	assert_lt(player.velocity.length(), 10.0, "but no faster than the snow lets it on 30 degrees")
 
 
 func test_flat_ground_brings_it_to_a_stop_and_the_shield_back_to_the_arm() -> void:
@@ -142,3 +143,66 @@ func test_the_ride_holds_the_skateboard_stance() -> void:
 	await wait_seconds(1.0)
 	var playback: AnimationNodeStateMachinePlayback = player.animation_tree.get(Player.LOCOMOTION_STATE_PLAYBACK_PATH)
 	assert_eq(playback.get_current_node(), &"SkateboardingLocomotion", "Surfing, the Player stands as on a skateboard")
+
+
+func test_the_hud_names_the_ride_s_own_buttons() -> void:
+	await _ground(20.0)
+	_equip_shield()
+	await _surf_from_the_air()
+	var controls: Controls = player.controls
+	assert_eq(controls.left_joystick_label.text, "Steer / Lean")
+	assert_eq(controls.action_label(&"jump").text, "Hop", "Jump hops, and says so in a word the HUD shows")
+	assert_eq(controls.action_label(&"attack").text, "Spin")
+	assert_eq(controls.action_label(&"crouch").text, "Get Off", "On the keyboard Crouch steps off")
+	for label: Label in [controls.action_label(&"jump"), controls.action_label(&"attack"), controls.action_label(&"crouch")]:
+		assert_true(controls.is_label_contextual(label), "%s differs from the button's own word, so it is shown" % label.text)
+
+
+func test_attack_spins_the_rider_round_once() -> void:
+	await _ground(20.0)
+	_equip_shield()
+	await _surf_from_the_air()
+	await wait_seconds(0.5)
+	var before: Vector3 = player.player_model.global_basis.z
+	_send(&"attack")
+	await wait_physics_frames(1)
+	_send(&"attack", false)
+	await wait_seconds(0.2)
+	var during: Vector3 = player.player_model.global_basis.z
+	await wait_seconds(0.6)
+	var after: Vector3 = player.player_model.global_basis.z
+	assert_gt(rad_to_deg(before.angle_to(during)), 60.0, "Mid-spin the rider faces well away from the ride")
+	assert_lt(rad_to_deg(before.angle_to(after)), 20.0, "and comes round to face it again")
+	assert_true(player.is_shield_surfing, "still on the shield")
+
+
+## Speed after a second on the flat from 6 m/s along the camera's forward, the stick held on [param stick] or not.
+func _flat_run(stick: StringName) -> float:
+	await _ground(0.0)
+	_equip_shield()
+	await _surf_from_the_air()
+	await wait_physics_frames(20)
+	var forward: Vector3 = (player.spring_arm.global_basis * Vector3.FORWARD).slide(Vector3.UP).normalized()
+	player.velocity = forward * 6.0
+	var surf: Node = player.get_node("NodeStateMachine/Surfing")
+	surf.set("_heading", forward)
+	surf.set("_speed", 6.0)
+	if stick != &"":
+		Input.action_press(stick)
+	await wait_seconds(1.0)
+	Input.action_release(stick) if stick != &"" else null
+	return surf.get("_speed")
+
+
+func test_leaning_in_speeds_the_ride_and_pulling_back_brakes_it() -> void:
+	var coasting: float = await _flat_run(&"")
+	root.free()
+	root = Node3D.new()
+	add_child_autofree(root)
+	var leaning: float = await _flat_run(&"move_up")
+	root.free()
+	root = Node3D.new()
+	add_child_autofree(root)
+	var braking: float = await _flat_run(&"move_down")
+	assert_gt(leaning, coasting + 1.0, "Pushing the stick along the ride keeps it going faster")
+	assert_lt(braking, coasting - 1.0, "pulling it back brakes")
