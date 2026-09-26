@@ -694,6 +694,9 @@ properties/43/replication_mode = 1
 properties/44/path = NodePath(".:is_shield_surfing")
 properties/44/spawn = true
 properties/44/replication_mode = 2
+properties/45/path = NodePath(".:surf_spin")
+properties/45/spawn = true
+properties/45/replication_mode = 2
 
 [node name="Player" type="CharacterBody3D" unique_id=548622605 node_paths=PackedStringArray("animation_tree") groups=["Focusable", "Player", "Saveable"]]
 script = ExtResource("1_2qx4v")

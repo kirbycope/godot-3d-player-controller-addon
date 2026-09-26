@@ -158,21 +158,42 @@ func test_the_hud_names_the_ride_s_own_buttons() -> void:
 		assert_true(controls.is_label_contextual(label), "%s differs from the button's own word, so it is shown" % label.text)
 
 
-func test_attack_spins_the_rider_round_once() -> void:
+func test_attack_spins_the_body_round_once_not_the_facing() -> void:
 	await _ground(20.0)
 	_equip_shield()
 	await _surf_from_the_air()
 	await wait_seconds(0.5)
-	var before: Vector3 = player.player_model.global_basis.z
+	var armature: Node3D = player.get_node("PlayerModel/Armature")
+	var facing: Vector3 = player.player_model.global_basis.z
+	var body_before: Vector3 = armature.global_basis.z
 	_send(&"attack")
 	await wait_physics_frames(1)
 	_send(&"attack", false)
 	await wait_seconds(0.2)
-	var during: Vector3 = player.player_model.global_basis.z
+	assert_gt(rad_to_deg(body_before.angle_to(armature.global_basis.z)), 60.0, "Mid-spin the body faces well away from the ride")
+	assert_lt(rad_to_deg(facing.angle_to(player.player_model.global_basis.z)), 20.0, "while the Player's facing, which the camera follows, does not turn")
+	assert_ne(player.surf_spin, 0.0, "and the spin is in the replicated angle, for every peer")
 	await wait_seconds(0.6)
-	var after: Vector3 = player.player_model.global_basis.z
-	assert_gt(rad_to_deg(before.angle_to(during)), 60.0, "Mid-spin the rider faces well away from the ride")
-	assert_lt(rad_to_deg(before.angle_to(after)), 20.0, "and comes round to face it again")
+	assert_eq(player.surf_spin, 0.0, "Round once, it is done")
+	assert_lt(rad_to_deg(player.player_model.global_basis.z.angle_to(armature.global_basis.z)), 5.0, "and the body faces the ride again")
+	assert_true(player.is_shield_surfing, "still on the shield")
+
+
+func test_jump_hops_without_getting_off() -> void:
+	await _ground(20.0)
+	_equip_shield()
+	await _surf_from_the_air()
+	await wait_seconds(0.8)
+	assert_true(player.is_on_floor(), "Riding the slope")
+	_send(&"jump")
+	await wait_physics_frames(1)
+	_send(&"jump", false)
+	var highest: float = 0.0
+	for frame: int in 30:
+		await wait_physics_frames(1)
+		var ground: float = -player.global_position.z * tan(deg_to_rad(20.0)) # the slope falls 20 degrees toward +Z
+		highest = maxf(highest, player.global_position.y - ground)
+	assert_gt(highest, 0.4, "Jump lifts the rider clear of the slope")
 	assert_true(player.is_shield_surfing, "still on the shield")
 
 

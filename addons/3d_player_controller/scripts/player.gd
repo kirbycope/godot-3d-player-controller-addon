@@ -360,6 +360,12 @@ var is_shield_surfing: bool = false: ## Is the Player riding their shield down a
 		if value != is_shield_surfing:
 			is_shield_surfing = value
 			_place_surf_shield(value)
+var surf_spin: float = 0.0: ## How far round the rider is in a shield-surf spin ([Surfing]), in radians. Replicated, so every peer turns the body (the Armature) and the shield under it; the Player's facing, and the camera that follows it, stay put.
+	set(value):
+		if value != surf_spin:
+			surf_spin = value
+			_apply_surf_spin()
+var _spin_rests: Dictionary = {} ## The Armature's and the ShieldSurfMount's own transforms, which a spin turns from.
 var _surf_shield: Equipment = null ## The shield under the feet during a ride.
 var _surf_shield_home: Node = null ## Where the surfed shield hangs when it is not under the feet: its bone attachment.
 var _surf_shield_transform: Transform3D = Transform3D.IDENTITY
@@ -1807,6 +1813,17 @@ func try_shield_surf(from_state: NodeStateMachine.States) -> bool:
 		return false
 	state_machine.travel(from_state, NodeStateMachine.States.SURFING)
 	return is_shield_surfing
+
+
+## Turns the body and the shield under it [member surf_spin] round the model's up, from where they rest.
+func _apply_surf_spin() -> void:
+	for path: String in ["PlayerModel/Armature", "PlayerModel/ShieldSurfMount"]:
+		var node: Node3D = get_node_or_null(path) as Node3D
+		if node == null:
+			continue
+		if not _spin_rests.has(node):
+			_spin_rests[node] = node.transform
+		node.transform = Transform3D(Basis(Vector3.UP, surf_spin), Vector3.ZERO) * (_spin_rests[node] as Transform3D)
 
 
 ## Puts the shield under the feet for a ride, at the model's ShieldSurfMount, or back on its arm after one. Runs on

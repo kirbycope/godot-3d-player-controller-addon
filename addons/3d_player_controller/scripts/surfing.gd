@@ -43,6 +43,7 @@ var _fall_speed: float = 0.0 ## How fast it was coming down in the air, for a la
 var _saved_constant_speed: bool = true
 var _facing: Vector3 = Vector3.ZERO ## Which way the Player faces on the shield, turning after the ride.
 var _spin_left: float = 0.0 ## Seconds left of a spin, 0 when not spinning.
+var _hop_queued: bool = false ## Jump was pressed on the ground; the next physics step launches it.
 
 
 func _input(event: InputEvent) -> void:
@@ -52,8 +53,8 @@ func _input(event: InputEvent) -> void:
 		_end()
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed(action(keyboard_jump_action, pad_jump_action)) and not event.is_echo() and player.is_on_floor():
-		player.velocity = _heading * _speed + player.up_direction * jump_speed
-		_grounded = false
+		# Launched from the physics step: set here, the ride's own ground step that follows would lay it flat again
+		_hop_queued = true
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed(action(keyboard_spin_action, pad_spin_action)) and not event.is_echo() and _spin_left <= 0.0:
 		_spin_left = spin_time
@@ -70,7 +71,13 @@ func _physics_process(delta: float) -> void:
 	var gravity: Vector3 = player.get_gravity()
 	var velocity: Vector3 = player.velocity
 	var on_floor: bool = player.is_on_floor()
-	if on_floor:
+	if _hop_queued:
+		_hop_queued = false
+		if on_floor:
+			velocity = _heading * _speed + up * jump_speed
+			_grounded = false
+			on_floor = false # up and away this step, not laid back on the slope
+	elif on_floor:
 		if _fall_speed >= player.lethal_fall_speed:
 			player.state_machine.travel(state, States.RAGDOLLING)
 			return
@@ -143,7 +150,8 @@ func _steer(heading: Vector3, wish: Vector3, normal: Vector3, delta: float) -> V
 	return heading.rotated(normal, clampf(across, -1.0, 1.0) * turn_rate * delta).normalized()
 
 
-## Faces the model the way the ride goes, turning after it, and round once more while a spin lasts.
+## Faces the model the way the ride goes, turning after it. A spin turns the body and the shield under it round once
+## ([member Player.surf_spin]), not the Player's facing, so the camera and the steering stay where they are.
 func _turn_model(flat_velocity: Vector3, delta: float) -> void:
 	var up: Vector3 = player.up_direction
 	if flat_velocity.length_squared() > 0.01:
@@ -156,8 +164,9 @@ func _turn_model(flat_velocity: Vector3, delta: float) -> void:
 	var turn: float = 0.0
 	if _spin_left > 0.0:
 		_spin_left = maxf(_spin_left - delta, 0.0)
-		turn = TAU * (1.0 - _spin_left / spin_time)
-	player.orientation.basis = Basis.looking_at(-_facing, up).rotated(up, turn)
+		turn = TAU * (1.0 - _spin_left / spin_time) if _spin_left > 0.0 else 0.0
+	player.surf_spin = turn
+	player.orientation.basis = Basis.looking_at(-_facing, up)
 
 
 ## True when the move just made ran the ride into something standing in its way.
@@ -181,6 +190,7 @@ func start() -> void:
 	_grounded = false
 	_fall_speed = maxf(-player.velocity.dot(player.up_direction), 0.0)
 	_spin_left = 0.0
+	_hop_queued = false
 	_facing = player.get_facing_direction().slide(player.up_direction).normalized()
 	_saved_constant_speed = player.floor_constant_speed
 	player.floor_constant_speed = false # the speed along a slope is the ride's own, not walking's
@@ -194,6 +204,7 @@ func start() -> void:
 func stop() -> void:
 	super.stop()
 	player.is_shield_surfing = false
+	player.surf_spin = 0.0
 	player.floor_constant_speed = _saved_constant_speed
 
 
