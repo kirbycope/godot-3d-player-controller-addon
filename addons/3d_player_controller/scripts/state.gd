@@ -22,6 +22,7 @@ enum States {
 	SPRINTING,
 	STANDING,
 	SWIMMING,
+	SURFING, ## Last rather than in order, so the states before it keep the numbers saves and peers already use.
 }
 
 @export var player: Player
@@ -55,6 +56,7 @@ func travel(from_state: States, to_state: States) -> void:
 	match to_state:
 		States.FLYING when not player.enable_flying: return
 		States.PARAGLIDING when not player.enable_paraglider: return
+		States.SURFING when not player.enable_shield_surfing or player.get_surf_shield() == null: return
 		States.RAGDOLLING when not player.enable_ragdoll or (player.health.is_alive() \
 				and (player.is_paused or player.is_typing or (player.pause and player.pause.visible))): return
 	if player.is_ragdolling and to_state != States.RAGDOLLING and from_state != States.RAGDOLLING:

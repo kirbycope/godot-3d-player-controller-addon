@@ -63,6 +63,7 @@ var uses_mouse: bool: ## Whether the mouse is this Player's: only a Player on th
 @export_category("Enable Settings")
 @export var enable_flying: bool = false
 @export var enable_paraglider: bool = false
+@export var enable_shield_surfing: bool = false ## With a shield on the left arm, Focus held in the air and Action rides it down the slope ([Surfing]), as in Breath of the Wild.
 @export var enable_spyglass: bool = false ## The [code]scope[/code] action raises the [Spyglass] on the right hand: first person, zoomed, through a porthole.
 @export var enable_ragdoll: bool = false
 @export var enable_stamina: bool = false
@@ -354,6 +355,14 @@ var is_navigating: bool = false: ## Is the Player currently navigating (click to
 			is_navigating = value
 			navigating_changed.emit(value)
 var is_paragliding: bool = false ## Is the Player currently paragliding?
+var is_shield_surfing: bool = false: ## Is the Player riding their shield down a slope ([Surfing])? Replicated, so every peer puts the shield under the feet; the snow addon's FootStamper reads it by name to cut a groove instead of footprints.
+	set(value):
+		if value != is_shield_surfing:
+			is_shield_surfing = value
+			_place_surf_shield(value)
+var _surf_shield: Equipment = null ## The shield under the feet during a ride.
+var _surf_shield_home: Node = null ## Where the surfed shield hangs when it is not under the feet: its bone attachment.
+var _surf_shield_transform: Transform3D = Transform3D.IDENTITY
 var is_scoping: bool = false: ## Is the Player looking through the [Spyglass]? It stands still meanwhile. Replicated, so every peer sees it raised.
 	set(value):
 		if value != is_scoping:
@@ -483,6 +492,7 @@ var initial_player_model_transform: Transform3D ## The model's rest transform fr
 @onready var head_attachment: BoneAttachment3D = $PlayerModel/Armature/GeneralSkeleton/HeadAttachment ## Follows the Head bone; what a [TalkingNpc] looks at, and where the headshot area sits.
 @onready var look_at_modifier: LookAtModifier3D = $PlayerModel/Armature/GeneralSkeleton/LookAtModifier3D
 @onready var head_look_at_modifier: LookAtModifier3D = $PlayerModel/Armature/GeneralSkeleton/HeadLookAtModifier3D ## Turns the head alone; the spine one above is for aiming.
+@onready var head_look_target: Marker3D = get_node_or_null("HeadLookTarget") as Marker3D ## Where the head looks when nothing else claims it: ahead, at the camera's pitch ([method Camera._sync_head_look_target]).
 @onready var right_hand_ik: TwoBoneIK3D = $PlayerModel/Armature/GeneralSkeleton/RightHandIK
 @onready var left_hand_ik: TwoBoneIK3D = $PlayerModel/Armature/GeneralSkeleton/LeftHandIK ## First person with a gun: the support hand on the grip (see [method set_first_person_hands]).
 @onready var first_person_right_hand_rotation: CopyTransformModifier3D = $PlayerModel/Armature/GeneralSkeleton/FirstPersonRightHandRotation ## Turns the right hand with the view once the IK has placed it.
@@ -593,6 +603,9 @@ func _ready() -> void:
 
 	# Ensure the projectile RayCast3D doesn't collide with the player
 	projectile_raycast.add_exception(self)
+
+	# The head looks up and down with the camera from the start
+	set_head_look_at_target(null)
 
 	# Ensure PhysicalBone3D nodes never collide with the player CharacterBody3D
 	if physical_bone_simulator:
@@ -740,7 +753,7 @@ func apply_input(delta: float) -> void:
 
 	# While riding, paragliding, flying, or ragdolling, block regular locomotion.
 	# Riding.gd / Paragliding.gd / Flying.gd / Ragdolling.gd will handle movement.
-	if (is_riding and not is_mounting and not is_dismounting) or is_paragliding or is_flying or is_ragdolling or is_sitting:
+	if (is_riding and not is_mounting and not is_dismounting) or is_paragliding or is_shield_surfing or is_flying or is_ragdolling or is_sitting:
 		return
 
 	# Sprint logic
@@ -1435,17 +1448,20 @@ func _release_right_hand() -> void:
 	first_person_right_hand_rotation.active = false
 
 
-## Points the head [LookAtModifier3D] at [param target], or clears it when [param target] is null. Separate
-## from [method set_look_at_target], which turns the spine to aim: this one turns the head only, so it can sit
-## on top of whatever the body is doing (reading a screen while the hands keep typing). The modifier is last
-## among the skeleton's children so it applies after the spine look-at and the hand IK, and its angle limits
-## keep the neck inside a plausible range, so a target behind the Player is simply not followed all the way.
+## Points the head [LookAtModifier3D] at [param target], or, when [param target] is null, back at
+## [member head_look_target], where the camera's pitch puts it, so the head looks up and down with the camera
+## whenever nothing else claims it. Separate from [method set_look_at_target], which turns the spine to aim: this
+## one turns the head only, so it can sit on top of whatever the body is doing (reading a screen while the hands
+## keep typing). The modifier is last among the skeleton's children so it applies after the spine look-at and the
+## hand IK, and its angle limits keep the neck inside a plausible range, so a target behind the Player is simply
+## not followed all the way.
 func set_head_look_at_target(target: Node3D) -> void:
 	var modifier: LookAtModifier3D = head_look_at_modifier as LookAtModifier3D
 	if modifier == null:
 		return
-	modifier.target_node = modifier.get_path_to(target) if target else NodePath("")
-	modifier.active = target != null
+	var looked_at: Node3D = target if target else head_look_target
+	modifier.target_node = modifier.get_path_to(looked_at) if looked_at else NodePath("")
+	modifier.active = looked_at != null
 
 
 @export_category("Combat")
@@ -1698,6 +1714,8 @@ func _set_ragdoll_physics(on: bool) -> void:
 			player_model.transform = initial_player_model_transform
 	if animation_tree:
 		animation_tree.active = not on # also stops method tracks playing audio on a limp body
+	if head_look_at_modifier:
+		head_look_at_modifier.active = not on # it applies after the physical bones, and would hold a limp head up
 	if physical_bone_simulator:
 		if not on:
 			physical_bone_simulator.physical_bones_stop_simulation()
@@ -1763,6 +1781,57 @@ func try_dodge(from_state: NodeStateMachine.States) -> bool:
 	dive_from_air = false
 	state_machine.travel(from_state, NodeStateMachine.States.DODGING)
 	return true
+
+
+## The shield a ride would be on: the sword-and-shield piece for the left arm, in hand or stowed (Link surfs on the
+## shield off his back as readily as the one on his arm), or any sword-and-shield piece; null without one.
+func get_surf_shield() -> Equipment:
+	if is_shield_surfing and is_instance_valid(_surf_shield):
+		return _surf_shield # under the feet, out of the backpack's reach
+	if inventory == null:
+		return null
+	var found: Equipment = null
+	for item: Equipment in inventory.get_all_weapons():
+		if is_instance_valid(item) and item.equipment_type == Equipment.EquipmentType.SWORD_AND_SHIELD:
+			if item.bone_attachment_bone_name.contains("Left"):
+				return item
+			found = item
+	return found
+
+
+## Shield surfing's way in, as in Breath of the Wild: Focus (ZL) held in the air and Action (A) pressed. The air
+## states and the glider call it on Action; with [member enable_shield_surfing] and a shield ([method get_surf_shield])
+## the Player drops onto it ([Surfing]). Returns true when it took.
+func try_shield_surf(from_state: NodeStateMachine.States) -> bool:
+	if not enable_shield_surfing or is_on_floor() or is_paused or is_typing or is_riding or is_swimming or is_climbing 			or is_flying or is_shield_surfing or not is_focusing or get_surf_shield() == null:
+		return false
+	state_machine.travel(from_state, NodeStateMachine.States.SURFING)
+	return is_shield_surfing
+
+
+## Puts the shield under the feet for a ride, at the model's ShieldSurfMount, or back on its arm after one. Runs on
+## every peer from [member is_shield_surfing]'s setter.
+func _place_surf_shield(on: bool) -> void:
+	var mount: Node3D = get_node_or_null("PlayerModel/ShieldSurfMount") as Node3D
+	if on:
+		var shield: Equipment = get_surf_shield()
+		if shield == null or mount == null:
+			return
+		_surf_shield = shield
+		_surf_shield_home = shield.get_parent()
+		_surf_shield_transform = shield.transform
+		shield.reparent(mount, false)
+		shield.transform = Transform3D(Basis.from_scale(_surf_shield_transform.basis.get_scale()), Vector3.ZERO) # the mount lays it flat
+	elif mount != null:
+		for child: Node in mount.get_children():
+			if child is Equipment:
+				if is_instance_valid(_surf_shield_home):
+					child.reparent(_surf_shield_home, false)
+					(child as Node3D).transform = _surf_shield_transform
+				else:
+					child.queue_free() # its arm is gone (the Player was re-equipped meanwhile)
+		_surf_shield = null
+		_surf_shield_home = null
 
 
 ## A dive from the air, Odyssey's move: the air states call it on Sprint, or Throw with Crouch held, while off the

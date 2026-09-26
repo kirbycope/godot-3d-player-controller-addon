@@ -108,7 +108,7 @@ func test_the_arm_aims_at_an_object_moved_beside_the_player_and_a_wall_there_sto
 
 
 ## The head follows what is held, not the spine: bending the torso toward a body below the chest folded the Player
-## over it. Letting go gives the head back.
+## over it. Letting go gives the head back to the camera's pitch.
 func test_the_head_not_the_spine_follows_what_is_held() -> void:
 	player.held_object._pickup_rigidbody(body)
 	var head: LookAtModifier3D = player.head_look_at_modifier
@@ -117,7 +117,7 @@ func test_the_head_not_the_spine_follows_what_is_held() -> void:
 	assert_false((player.look_at_modifier as LookAtModifier3D).active, "while the spine is left to the pose")
 	player.held_object.drop_held_rigidbody()
 	await wait_physics_frames(3)
-	assert_false(head.active, "Letting go gives the head back")
+	assert_eq(head.get_node_or_null(head.target_node), player.head_look_target, "Letting go gives the head back to the camera")
 
 
 func test_letting_go_leaves_a_head_something_else_asked_for() -> void:

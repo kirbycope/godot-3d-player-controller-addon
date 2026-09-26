@@ -85,9 +85,11 @@ func test_the_head_modifier_is_its_own_node_on_the_head_bone() -> void:
 	assert_ne(head, spine, "Aiming already owns the spine modifier; the head needs its own")
 	assert_eq(head.bone_name, "Head")
 	assert_eq(spine.bone_name, "Spine")
-	assert_false(head.active, "It should be off until something asks for it")
-	assert_eq(head.primary_damp_threshold, 1.0,
-			"Damping below 1 stops the head reaching the target; the spine modifier uses 1 too")
+	assert_eq(head.get_node(head.target_node), player.head_look_target,
+			"Until something asks for it, it follows the camera's pitch")
+	for damp: float in [head.primary_positive_damp_threshold, head.primary_negative_damp_threshold,
+			head.secondary_positive_damp_threshold, head.secondary_negative_damp_threshold]:
+		assert_eq(damp, 1.0, "Damping below 1 stops the head reaching the target; the spine modifier uses 1 too")
 
 
 func test_set_head_look_at_target_points_and_clears_it() -> void:
@@ -101,8 +103,8 @@ func test_set_head_look_at_target_points_and_clears_it() -> void:
 	assert_eq(head.get_node(head.target_node), target)
 
 	player.set_head_look_at_target(null)
-	assert_false(head.active)
-	assert_eq(head.target_node, NodePath(""))
+	assert_true(head.active, "Cleared, the head goes back to following the camera")
+	assert_eq(head.get_node(head.target_node), player.head_look_target)
 
 
 func test_the_head_modifier_is_aimed_and_bounded_the_way_it_was_tuned() -> void:
@@ -111,9 +113,11 @@ func test_the_head_modifier_is_aimed_and_bounded_the_way_it_was_tuned() -> void:
 	# leaves the neck screwed round backwards, and the angle limit then clamps it near the rest pose, which
 	# reads as "nearly right" instead of obviously wrong.
 	assert_eq(head.forward_axis, 4, "PLUS_Z is the face direction on this rig")
-	assert_between(rad_to_deg(head.primary_limit_angle), 45.0, 90.0,
+	assert_false(head.symmetry_limitation, "Up and down are limited apart, since the head rests tipped forward")
+	assert_between(rad_to_deg(head.primary_positive_limit_angle + head.primary_negative_limit_angle), 45.0, 90.0,
 			"A neck that can swing further than this follows targets it should just ignore")
-	assert_between(rad_to_deg(head.secondary_limit_angle), 30.0, 75.0)
+	assert_between(rad_to_deg(head.secondary_positive_limit_angle), 30.0, 60.0, "Down from rest")
+	assert_between(rad_to_deg(head.secondary_negative_limit_angle), 45.0, 75.0, "and up")
 	# Last of the skeleton's children, so it lands on top of the spine look-at and the hand IK
 	var skeleton: Skeleton3D = player.get_node("PlayerModel/Armature/GeneralSkeleton")
 	assert_eq(skeleton.get_child(skeleton.get_child_count() - 1), head,

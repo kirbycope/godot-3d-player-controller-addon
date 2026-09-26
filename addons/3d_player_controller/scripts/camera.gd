@@ -12,6 +12,7 @@ enum Perspective {
 
 const REACH_GROUP: StringName = &"InteractionReach" ## Anything in it has an [InteractionReach], so the ray alone does not reach it.
 const FOCUS_AIM_WORLD_RADIUS: float = 0.5 ## World-space radius in units/meters that the aim can deviate from the target center.
+const HEAD_LOOK_DISTANCE: float = 2.0 ## Metres ahead of the head the camera-driven [member Player.head_look_target] sits.
 
 @export var camera_mount: Node3D
 @export var camera_spring_arm: SpringArm3D
@@ -279,6 +280,7 @@ func _physics_process(_delta: float) -> void:
 		move_camera_to_player_head()
 
 	_sync_item_spring_arm()
+	_sync_head_look_target()
 
 	# Keep the projectile ray on the camera's centre line (shoulder offset, first-person head), so the crosshair is where rounds go
 	var centre: Vector2 = get_viewport().get_visible_rect().size * 0.5
@@ -407,6 +409,19 @@ func _sync_item_spring_arm() -> void:
 	# The authored local orientation (a 180 degree yaw) keeps the arm extending along its +Z, in front of the view
 	item_spring_arm.global_transform = Transform3D(Basis.looking_at(direction, arm_up) * item_spring_arm_initial_transform.basis, origin)
 	item_spring_arm.spring_length = reach.length()
+
+
+## Puts the Player's [member Player.head_look_target] two metres ahead of the head, along the way the body faces,
+## raised or lowered by the camera's pitch: the head looks up and down with the camera, in either perspective, and
+## never sideways. The modifier's own limits stop the neck bending past what a neck does.
+func _sync_head_look_target() -> void:
+	var target: Marker3D = player.head_look_target
+	if not is_instance_valid(target) or not is_instance_valid(first_person_bone_attachment):
+		return
+	var up: Vector3 = player.up_direction
+	var facing: Vector3 = player.player_model.global_basis.z.slide(up).normalized()
+	var pitch: float = asin(clampf((-camera_mount.global_basis.z).dot(up), -1.0, 1.0))
+	target.global_position = first_person_bone_attachment.global_position + (facing * cos(pitch) + up * sin(pitch)) * HEAD_LOOK_DISTANCE
 
 
 ## Updates the [RayCast3D] position and target_position based on current perspective/depth.

@@ -1857,7 +1857,7 @@ advance_expression = "false"
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_sjfj8"]
 advance_mode = 2
-advance_expression = "!is_riding"
+advance_expression = "!is_riding and !is_shield_surfing"
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_nlnto"]
 xfade_time = 0.2

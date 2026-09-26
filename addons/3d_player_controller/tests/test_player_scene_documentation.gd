@@ -85,5 +85,8 @@ func test_the_two_look_at_modifiers_say_how_they_differ() -> void:
 	assert_ne(spine.editor_description, head.editor_description, "They do different jobs and should read differently")
 	assert_eq(spine.bone_name, "Spine", "The spine modifier still bends the Spine")
 	assert_eq(head.bone_name, "Head", "and the head modifier the Head")
-	assert_gt(spine.primary_limit_angle, head.primary_limit_angle,
+	# The spine's limit is symmetric, a whole angle across; the head's has a side each way, since it tips further up
+	# than down from a rest pose that already leans forward.
+	assert_gt(spine.primary_limit_angle * 0.5, head.primary_positive_limit_angle,
 		"The neck is the tighter of the two, so a target behind the Player is not followed all the way round")
+	assert_gt(spine.primary_limit_angle * 0.5, head.primary_negative_limit_angle, "either way")

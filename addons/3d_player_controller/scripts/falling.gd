@@ -14,6 +14,11 @@ func _input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 
+	# Shield surfing: Focus held and Action pressed in the air drops the Player onto their shield
+	if event.is_action_pressed(&"action") and not event.is_echo() and player.try_shield_surf(state):
+		get_viewport().set_input_as_handled()
+		return
+
 	# Jump action triggers while falling
 	if event.is_action_pressed(&"jump"):
 		# A game with a double jump means the jump, wall or no wall

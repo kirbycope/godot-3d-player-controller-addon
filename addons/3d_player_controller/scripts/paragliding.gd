@@ -33,6 +33,11 @@ func _input(event: InputEvent) -> void:
 	# Do nothing if the player is not set or is paused/ragdolling
 	if not player or player.is_paused or player.is_typing or player.is_ragdolling: return
 
+	# Off the glider onto the shield: Focus held and Action pressed, as in Breath of the Wild
+	if event.is_action_pressed(&"action") and not event.is_echo() and player.try_shield_surf(state):
+		get_viewport().set_input_as_handled()
+		return
+
 	# Stop "paragliding" and start "falling"
 	if event.is_action_pressed(action(keyboard_stop_action, pad_stop_action)) and not event.is_echo():
 		player.state_machine.travel(state, States.FALLING)

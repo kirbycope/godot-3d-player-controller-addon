@@ -226,6 +226,7 @@
 [ext_resource type="Script" uid="uid://difhaam5qdn4r" path="res://addons/3d_player_controller/scripts/hanging.gd" id="249_0d6rr"]
 [ext_resource type="Script" uid="uid://c6mt7ujyuf5lm" path="res://addons/3d_player_controller/scripts/jumping.gd" id="250_gtex3"]
 [ext_resource type="Script" uid="uid://7oyjxd1xp6wx" path="res://addons/3d_player_controller/scripts/paragliding.gd" id="251_srgrd"]
+[ext_resource type="Script" uid="uid://c77ykpdfuub0c" path="res://addons/3d_player_controller/scripts/surfing.gd" id="surfing_gd"]
 [ext_resource type="Script" uid="uid://dpu8h1ngv3sta" path="res://addons/3d_player_controller/scripts/pushing.gd" id="252_dt765"]
 [ext_resource type="Script" uid="uid://de52b2wmdepsr" path="res://addons/3d_player_controller/scripts/ragdolling.gd" id="253_tmk5t"]
 [ext_resource type="Script" uid="uid://cki15rkegdlgq" path="res://addons/3d_player_controller/scripts/sitting.gd" id="254_72kyu"]
@@ -687,6 +688,12 @@ properties/41/replication_mode = 2
 properties/42/path = NodePath(".:is_scoping")
 properties/42/spawn = true
 properties/42/replication_mode = 2
+properties/43/path = NodePath("HeadLookTarget:position")
+properties/43/spawn = true
+properties/43/replication_mode = 1
+properties/44/path = NodePath(".:is_shield_surfing")
+properties/44/spawn = true
+properties/44/replication_mode = 2
 
 [node name="Player" type="CharacterBody3D" unique_id=548622605 node_paths=PackedStringArray("animation_tree") groups=["Focusable", "Player", "Saveable"]]
 script = ExtResource("1_2qx4v")
@@ -1782,18 +1789,22 @@ hand_target = NodePath("../../../../../SpyglassHandTarget")
 eyes = NodePath("../../FirstPersonCameraBoneAttachment/FirstPersonEyes")
 
 [node name="HeadLookAtModifier3D" type="LookAtModifier3D" parent="PlayerModel/Armature/GeneralSkeleton" index="18" unique_id=1009984629]
-editor_description = "Bends the Head alone, and is deliberately the last child of the skeleton so it applies after the spine look-at and the hand IK. Narrower limits than the spine one (about 70 degrees across, 60 up and down) so a target behind the Player is simply not followed. Driven by Player.set_head_look_at_target, which is how the Player can read a screen while their hands keep typing."
+editor_description = "Bends the Head alone, and is deliberately the last child of the skeleton so it applies after the spine look-at and the hand IK. 35 degrees either way across, so a target behind the Player is simply not followed, and 45 down and 60 up from the head's rest pose, which already tips it forward: level ahead, the head follows the camera from about 65 degrees below level to 40 above, as far as a neck goes. Driven by Player.set_head_look_at_target: at the camera's HeadLookTarget whenever nothing else claims it, which is how the head looks up and down with the camera, and at a held body or a screen when one does."
 active = false
 bone_name = "Head"
 bone = 6
 duration = 0.35
 ease_type = 2
 use_angle_limitation = true
-symmetry_limitation = true
-primary_limit_angle = 1.2217305
-primary_damp_threshold = 1.0
-secondary_limit_angle = 1.0471976
-secondary_damp_threshold = 1.0
+symmetry_limitation = false
+primary_positive_limit_angle = 0.61086524
+primary_positive_damp_threshold = 1.0
+primary_negative_limit_angle = 0.61086524
+primary_negative_damp_threshold = 1.0
+secondary_positive_limit_angle = 0.7853982
+secondary_positive_damp_threshold = 1.0
+secondary_negative_limit_angle = 1.0471976
+secondary_negative_damp_threshold = 1.0
 
 [node name="AnimationPlayer" parent="PlayerModel" index="1" unique_id=657601189]
 editor_description = "Holds the animation libraries, one per clip. The 29 hand-tuned ones come from assets/mixamo/animations/tuned; the rest are read straight from their .glb."
@@ -2016,6 +2027,10 @@ target_position = Vector3(0, 0, 1)
 editor_description = "Where SpyglassHandIK points the right elbow while the spyglass is up: low and in front of the chest, so the forearm stands straight up under the fist holding the spyglass and the wrist stays straight."
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1, 0.9, 0.6)
 
+[node name="ShieldSurfMount" type="Marker3D" parent="PlayerModel"]
+editor_description = "Where the shield rides while shield surfing: under the feet, laid flat. Player._place_surf_shield moves the shield here for the ride, keeping its own scale, and back where it came from after, so the shield's lie on the ground is this node's transform: its face (the shield's own X) up and its length (its Y) along the way the Player travels, which is how the skateboard stance spreads the feet."
+transform = Transform3D(0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0.12, 0)
+
 [node name="HandIKPole" type="Marker3D" parent="PlayerModel" unique_id=1287346059]
 editor_description = "The pole target aiming the elbows, so RightHandIK and LeftHandIK bend an arm the way an elbow bends: low and in front, which both arms share."
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0.8)
@@ -2090,6 +2105,10 @@ animation_path = NodePath("../AnimationTree")
 
 [node name="NavigationAgent3D" type="NavigationAgent3D" parent="." unique_id=350131034]
 editor_description = "Pathfinding for a Player driven by something other than a person: the click-to-move demo and any scripted walk."
+
+[node name="HeadLookTarget" type="Marker3D" parent="."]
+editor_description = "What the head looks at when nothing is held: two metres ahead of the head along the way the body faces, raised or lowered by the camera's pitch, so the head looks up and down with the camera in any perspective and never turns sideways. The Camera places it on the Player's own peer; the synchronizer carries its position to everyone else, whose HeadLookAtModifier3D follows it the same way."
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 2)
 
 [node name="CameraMount" type="Node3D" parent="." unique_id=1567725441]
 editor_description = "The yaw pivot the look input turns. Everything to do with the view hangs off it, so the Player's own model can face somewhere else while the camera does not."
@@ -2460,6 +2479,12 @@ player = NodePath("../..")
 process_mode = 4
 editor_description = "Movement state: under the glider, including the lift a thermal gives. Owns its own transitions, so it can be changed without touching its neighbours."
 script = ExtResource("251_srgrd")
+player = NodePath("../..")
+
+[node name="Surfing" type="Node" parent="NodeStateMachine" node_paths=PackedStringArray("player")]
+process_mode = 4
+editor_description = "Movement state: riding the shield down a slope, Breath of the Wild's shield surf, in the skateboard's stance. Owns its own transitions, so it can be changed without touching its neighbours."
+script = ExtResource("surfing_gd")
 player = NodePath("../..")
 
 [node name="Pushing" type="Node" parent="NodeStateMachine" unique_id=1918273645 node_paths=PackedStringArray("player")]
