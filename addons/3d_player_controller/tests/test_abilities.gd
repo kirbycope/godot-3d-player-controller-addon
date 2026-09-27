@@ -82,6 +82,33 @@ func test_holding_ability_opens_the_wheel_and_a_tap_casts() -> void:
 	assert_true(player.is_stealthed, "A tap casts the picked ability")
 
 
+## M10: a pad's ability button behind the pause menu or the chat casts nothing and opens no wheel, as the
+## Inventory's button does; in multiplayer the tree is not paused, so the flags are what stop it.
+func test_paused_or_typing_blocks_the_ability_button() -> void:
+	player.is_paused = true
+	sender.action_down("ability")
+	await wait_physics_frames(1)
+	sender.action_up("ability")
+	await wait_physics_frames(1)
+	assert_false(player.is_stealthed, "A tap behind the pause menu casts nothing")
+	player.is_paused = false
+
+	player.is_typing = true
+	sender.action_down("ability")
+	await wait_seconds(0.3)
+	assert_false(abilities.radial_menu.is_open(), "A hold while typing opens no wheel")
+	sender.action_up("ability")
+	await wait_physics_frames(1)
+	assert_false(player.is_stealthed, "and its release casts nothing")
+	player.is_typing = false
+
+	sender.action_down("ability")
+	await wait_physics_frames(1)
+	sender.action_up("ability")
+	await wait_physics_frames(1)
+	assert_true(player.is_stealthed, "Out of the menu and the chat, a tap casts again")
+
+
 func test_stealth_toggles_fades_the_model_and_costs_mana_not_stamina() -> void:
 	watch_signals(abilities)
 	var before: float = player.health.energy

@@ -15,9 +15,9 @@
 [ext_resource type="Script" uid="uid://csk7f7mtnyu03" path="res://addons/3d_player_controller/scripts/npc_caster.gd" id="npc_caster_script"]
 [ext_resource type="SceneReplicationConfig" path="res://addons/3d_player_controller/resources/replication/character_body_replication.tres" id="body_sync"]
 [ext_resource type="SceneReplicationConfig" path="res://addons/3d_player_controller/resources/replication/enemy_replication.tres" id="state_sync"]
-[ext_resource type="PackedScene" uid="uid://dt6iufipvx42w" path="res://addons/3d_player_controller/scenes/ui/health.tscn" id="health_scene"]
+[ext_resource type="PackedScene" uid="uid://c7health000001" path="res://addons/3d_player_controller/scenes/ui/health.tscn" id="health_scene"]
 [ext_resource type="PackedScene" uid="uid://b7nievqli2b5" path="res://addons/3d_player_controller/scenes/ui/status_bars_3d.tscn" id="bars_scene"]
-[ext_resource type="PackedScene" uid="uid://doh12l1pvx42w" path="res://addons/3d_player_controller/scenes/npc/boss.tscn" id="boss_scene"]
+[ext_resource type="PackedScene" uid="uid://c7boss00000001" path="res://addons/3d_player_controller/scenes/npc/boss.tscn" id="boss_scene"]
 [ext_resource type="PackedScene" uid="uid://dy6tmyh7o8s0w" path="res://addons/3d_player_controller/scenes/npc/melee_hitbox.tscn" id="hitbox_scene"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_nkhb5"]

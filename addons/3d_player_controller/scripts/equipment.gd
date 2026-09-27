@@ -6,7 +6,8 @@ extends Node3D
 ## [method _on_player_detection_body_entered] in the scene) equips a copy on the first Player to walk over it, and the
 ## pickup then vanishes on every peer, so each pickup is taken once with no prompt or button. One standing in the
 ## world stays in the tree, hidden and no longer monitoring, because peers, saves and drops re-create the piece from
-## it by path; a peer joining later is told it is spent. A dropped one is freed ([method _vanish]).
+## it by path; a peer joining later is told it is spent. A dropped one is freed ([method _vanish]). The take goes
+## through the server, which checks the taker is the sender's own Player before spending the pickup anywhere.
 ##
 ## Melee weapons that should register hits need a child [Area3D] named "Hitbox"; [HitDetection]
 ## enables its monitoring during attack swings. A weapon that should shove props needs a child
@@ -99,10 +100,22 @@ func _update_attachment_offsets() -> void:
 
 
 ## Wired to PlayerDetection.body_entered: the Player that walked over the pickup takes it, and the pickup is spent
-## on every peer. A Player who just dropped it ([method set_dropped_by]) has to step away first.
+## on every peer once the server has heard it was this Player's own take ([method _request_vanish]). A Player who
+## just dropped it ([method set_dropped_by]) has to step away first.
 func _on_player_detection_body_entered(body: Node3D) -> void:
 	if body is Player and body.is_multiplayer_authority() and not (has_meta("dropped_by") and get_meta("dropped_by") == body) and equip(body):
-		_vanish.rpc()
+		_request_vanish.rpc_id(1, get_path_to(body))
+
+
+## The server's half of a take, as [method ItemPickup._request_take] is: the Player at [param taker_path] (from this
+## node, the same on every peer) must be the sender's own, and then every peer's copy of the pickup goes. A call
+## from any other peer, or one naming somebody else's Player, is ignored.
+@rpc("any_peer", "call_local", "reliable")
+func _request_vanish(taker_path: NodePath) -> void:
+	var taker: Player = get_node_or_null(taker_path) as Player
+	if not multiplayer.is_server() or taker == null or taker.get_multiplayer_authority() != multiplayer.get_remote_sender_id():
+		return
+	_vanish.rpc()
 
 
 ## A drop at [param dropper]'s feet: walking over it takes nothing for them until they have stepped off it once.
@@ -120,11 +133,11 @@ func _on_player_detection_body_exited(body: Node3D) -> void:
 		remove_meta("dropped_by")
 
 
-## The piece went to the taker alone, so the taker tells every peer's copy of the pickup to go. A drop, which no
+## The piece went to the taker alone, so the server tells every peer's copy of the pickup to go. A drop, which no
 ## worn piece names as its origin, is freed, by the server alone for a [member spawned] one (that frees it
 ## everywhere). A pickup standing in the world hides and stops monitoring instead, since worn pieces are re-created
 ## from it by path; one saved in the level is hidden on every later joiner as well, told by the server.
-@rpc("any_peer", "call_local", "reliable")
+@rpc("authority", "call_local", "reliable")
 func _vanish() -> void:
 	var dropped: bool = owner == null and (Inventory.has_own_scene(self) or has_meta("origin"))
 	if dropped and (multiplayer.is_server() or not spawned):

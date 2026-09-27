@@ -205,7 +205,7 @@
 [ext_resource type="AnimationLibrary" uid="uid://b05nay4slsc80" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Walking Backwards.glb" id="203_jyf3j"]
 [ext_resource type="AnimationLibrary" uid="uid://bfj3c8tq3weh8" path="res://addons/3d_player_controller/assets/mixamo/animations/root_motion/Waving.glb" id="204_1rgp6"]
 [ext_resource type="Script" uid="uid://c7sgvm3s5tfny" path="res://addons/3d_player_controller/scripts/camera.gd" id="205_kvjo7"]
-[ext_resource type="PackedScene" uid="uid://cnpigaeaycrc7" path="res://addons/3d_player_controller/scenes/vfx/toon_filter.tscn" id="206_e4ijf"]
+[ext_resource type="PackedScene" uid="uid://ctoonfilter001" path="res://addons/3d_player_controller/scenes/vfx/toon_filter.tscn" id="206_e4ijf"]
 [ext_resource type="Texture2D" uid="uid://dsy7pc3ak6vqf" path="res://addons/3d_player_controller/assets/kenney_nl/2D assets/Game Icons/PNG/White/2x/down.png" id="207_qjp1g"]
 [ext_resource type="PackedScene" uid="uid://df238kae0f5ab" path="res://addons/3d_player_controller/scenes/player_audio.tscn" id="208_qghyb"]
 [ext_resource type="Texture2D" uid="uid://clfmrpwxhmva" path="res://addons/3d_player_controller/assets/kenney_nl/2D assets/Game Icons/PNG/White/2x/audioOn.png" id="209_2t2ob"]

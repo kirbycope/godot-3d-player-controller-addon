@@ -363,6 +363,21 @@ func test_a_walk_over_weapon_taken_on_a_client_vanishes_on_every_peer() -> void:
 	assert_false(on_client.player_detection.monitoring)
 
 
+## H10: the take goes through the server, which spends the pickup only for the sender's own Player. A client
+## naming somebody else's Player, the host's here, is ignored, so nobody can hide a world weapon they never took.
+func test_a_forged_take_for_another_players_pickup_is_ignored() -> void:
+	var swords: Array = _in_both(_world_sword)
+	var on_host: Equipment = swords[0]
+	var on_client: Equipment = swords[1]
+	await wait_process_frames(5)
+	on_client._request_vanish.rpc_id(1, on_client.get_path_to(_host_on_client()))
+	await wait_process_frames(30)
+	assert_true(on_host.visible, "The host's copy stays: the host's Player is not the client's to take with")
+	assert_true(on_client.visible, "and so does the client's")
+	assert_true(on_host.player_detection.monitoring, "still there to be taken")
+	assert_false(_host_on_client().inventory.has_equipment(Equipment.EquipmentType.SWORD_1H), "and nobody got a sword")
+
+
 ## L1: talk and end_talk go to the server, which starts and ends the conversation on every peer, one talker at a time.
 func test_a_talking_npc_talks_to_one_player_at_a_time_as_the_server_decides() -> void:
 	var npcs: Array = _in_both(func() -> Node:

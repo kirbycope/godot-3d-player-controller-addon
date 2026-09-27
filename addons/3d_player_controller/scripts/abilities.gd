@@ -81,7 +81,8 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if player == null or player.riding_blocks_hands() or player.held_object.is_holding_object():
+	# A menu or the chat blocks the button, as the Inventory's does: in multiplayer the tree is not paused
+	if player == null or player.is_paused or player.is_typing or player.riding_blocks_hands() or player.held_object.is_holding_object():
 		hold_timer.stop()
 		return
 

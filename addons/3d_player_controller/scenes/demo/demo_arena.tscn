@@ -1,10 +1,10 @@
 [gd_scene format=3 uid="uid://b5beu1u526phm"]
 
 [ext_resource type="Script" uid="uid://u3e0nx3vxenl" path="res://addons/3d_player_controller/scenes/demo/demo_arena.gd" id="1_arena"]
-[ext_resource type="PackedScene" uid="uid://cnx71qvyglb5" path="res://addons/3d_player_controller/scenes/npc/talking_npc.tscn" id="4_talker"]
-[ext_resource type="PackedScene" uid="uid://dpamk5qeelx2w" path="res://addons/3d_player_controller/scenes/prop/checkpoint.tscn" id="6_checkpoint"]
-[ext_resource type="PackedScene" uid="uid://dxbtulpdax42w" path="res://addons/3d_player_controller/scenes/prop/kill_zone.tscn" id="7_killzone"]
-[ext_resource type="PackedScene" uid="uid://bn81yd2prab5" path="res://addons/3d_player_controller/scenes/ui/save_game.tscn" id="8_savegame"]
+[ext_resource type="PackedScene" uid="uid://c7talkingnpc01" path="res://addons/3d_player_controller/scenes/npc/talking_npc.tscn" id="4_talker"]
+[ext_resource type="PackedScene" uid="uid://c7checkpoint01" path="res://addons/3d_player_controller/scenes/prop/checkpoint.tscn" id="6_checkpoint"]
+[ext_resource type="PackedScene" uid="uid://c7killzone0001" path="res://addons/3d_player_controller/scenes/prop/kill_zone.tscn" id="7_killzone"]
+[ext_resource type="PackedScene" uid="uid://c7savegame0001" path="res://addons/3d_player_controller/scenes/ui/save_game.tscn" id="8_savegame"]
 [ext_resource type="PackedScene" path="res://addons/3d_player_controller/scenes/ability_library.tscn" id="9_library"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_demo"]
