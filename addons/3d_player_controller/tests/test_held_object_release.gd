@@ -54,6 +54,29 @@ func test_looking_down_keeps_the_held_object_above_the_ground_and_out_of_the_pla
 	player.held_object.drop_held_rigidbody()
 
 
+func test_a_big_body_is_held_out_past_the_player_and_further_as_it_grows() -> void:
+	var sphere: SphereShape3D = (body.get_child(0) as CollisionShape3D).shape as SphereShape3D
+	sphere.radius = 1.0
+	player.held_object._pickup_rigidbody(body)
+	player.held_object._held_distance = player.held_object.held_min_distance
+	await wait_physics_frames(3)
+	assert_almost_eq(player.held_object.held_extent(), 1.0, 0.001, "The body reaches a metre from its middle")
+	var offset: Vector3 = body.global_position - player.global_position
+	var near: float = Vector2(offset.x, offset.z).length()
+	assert_gt(near, 1.2, "so pulled in as close as it goes, a metre-wide ball is still held out past the Player, not round them")
+	sphere.radius = 1.5 # a snowball grows while it is pushed along
+	await wait_physics_frames(3)
+	offset = body.global_position - player.global_position
+	assert_gt(Vector2(offset.x, offset.z).length(), near + 0.4, "and it is held further out as it grows")
+	player.camera_mount.rotation.x = -1.4 # looking down, the arm shortens against the floor
+	await wait_physics_frames(3)
+	assert_almost_eq(player.item_spring_arm.margin, 1.5, 0.001, "The arm keeps the body's own reach from what it hits")
+	assert_gt(body.global_position.y, 1.5 - 0.1, "so looking down, the ball rests on the floor rather than in it")
+	player.held_object.drop_held_rigidbody()
+	await wait_physics_frames(1)
+	assert_almost_eq(player.item_spring_arm.margin, 0.4, 0.001, "Let go of, the arm has its own margin back")
+
+
 func test_a_released_body_passes_through_the_player_for_a_moment() -> void:
 	player.held_object._pickup_rigidbody(body)
 	await wait_physics_frames(3)

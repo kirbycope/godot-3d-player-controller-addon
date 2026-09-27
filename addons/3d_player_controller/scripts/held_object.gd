@@ -40,6 +40,7 @@ const HOLD_EMOTE: StringName = &"ReadyToCastSpell" ## Emote pose played while ca
 @export var held_rotation_speed: float = 90.0
 @export var held_min_distance: float = 0.5
 @export var held_max_distance: float = 5.0
+@export var held_clearance: float = 0.7 ## Metres kept between the arm's origin and the middle of a held body beyond the body's own reach ([method held_extent]): the Player's half width and a little air, so a big body (a snowball grown past a metre) is held out past the Player rather than round them.
 @export var held_max_offset: Vector2 = Vector2(1.5, 1.0)
 @export var rotation_snap_angle: float = 45.0 ## Degrees to rotate per discrete D-pad press in rotation mode.
 @export var use_discrete_rotation_snap: bool = true ## When true, D-pad presses snap rotation in discrete 45-degree increments.
@@ -195,7 +196,34 @@ func get_held_distance(fallback_distance: float) -> float:
 func get_held_offset(fallback_distance: float) -> Vector3:
 	if not is_holding_object():
 		return Vector3(0.0, 0.0, fallback_distance)
-	return Vector3(_held_offset.x, -_held_offset.y, _held_distance)
+	return Vector3(_held_offset.x, -_held_offset.y, maxf(_held_distance, held_extent() + held_clearance))
+
+
+## How far the held body reaches from its middle, from its collision shapes: a sphere's radius, half a box's diagonal,
+## half a capsule's height. A body with no shape to measure reaches nothing. Read every frame, since a snowball grows
+## while it is pushed along.
+func held_extent() -> float:
+	if not is_holding_rigidbody():
+		return 0.0
+	var reach: float = 0.0
+	for owner_id: int in held_rigidbody.get_shape_owners():
+		var scale: Vector3 = held_rigidbody.shape_owner_get_transform(owner_id).basis.get_scale()
+		var grow: float = maxf(maxf(scale.x, scale.y), scale.z)
+		for i: int in held_rigidbody.shape_owner_get_shape_count(owner_id):
+			var shape: Shape3D = held_rigidbody.shape_owner_get_shape(owner_id, i)
+			var extent: float = 0.0
+			if shape is SphereShape3D:
+				extent = (shape as SphereShape3D).radius
+			elif shape is BoxShape3D:
+				extent = (shape as BoxShape3D).size.length() * 0.5
+			elif shape is CapsuleShape3D:
+				extent = (shape as CapsuleShape3D).height * 0.5
+			elif shape is CylinderShape3D:
+				extent = Vector2((shape as CylinderShape3D).radius, (shape as CylinderShape3D).height * 0.5).length()
+			elif shape is ConvexPolygonShape3D or shape is ConcavePolygonShape3D:
+				extent = shape.get_debug_mesh().get_aabb().get_longest_axis_size() * 0.5
+			reach = maxf(reach, extent * grow)
+	return reach
 
 
 ## Starts charging a throw when the shoot button is pressed.
@@ -675,7 +703,7 @@ func _update_held_object_transform(delta: float) -> void:
 		held_rigidbody.rotate_object_local(Vector3.RIGHT, deg_to_rad(rotation_delta.y))
 		held_rigidbody.rotate_object_local(Vector3.UP, deg_to_rad(-rotation_delta.x))
 	else:
-		_held_distance = clampf(_held_distance - dpad_input.y * held_depth_speed * delta, held_min_distance, held_max_distance)
+		_held_distance = clampf(_held_distance - dpad_input.y * held_depth_speed * delta, held_min_distance, held_max_distance + held_extent())
 
 	var move_input: Vector2 = Vector2.ZERO if player.is_typing else player.get_vector(&"look_left", &"look_right", &"look_up", &"look_down")
 	var move_multiplier: float = 1.0

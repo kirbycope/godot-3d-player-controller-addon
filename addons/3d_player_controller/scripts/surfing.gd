@@ -3,7 +3,8 @@ extends NodeStateMachine
 ## Shield surfing, as in Breath of the Wild and Tears of the Kingdom: with a shield on the left arm, hold Focus (ZL) in
 ## the air, off a jump, a fall or the glider, and press Action (A), and the Player rides the shield down the slope
 ## ([method Player.try_shield_surf]). A downhill speeds it up, flat ground slows it and an uphill stops it. The stick
-## steers and leans: pushed along the ride it speeds up, pulled back it brakes. Jump hops without getting off, Attack
+## steers and leans: pushed along the ride it speeds up, pulled back it brakes. Jump hops without getting off, with the
+## jump clip's own push-off the way a jump from the feet and the skateboard's ollie have it, Attack
 ## spins the Player round once on the shield (Breath of the Wild's Y spin, for show here), and Get Off (B, or Crouch
 ## on the keyboard) steps off; coming to a stop or running into a wall ends it too. The pose is the skateboard's,
 ## crouching lower the faster it goes, and the shield goes under the feet ([member Player.is_shield_surfing],
@@ -25,14 +26,15 @@ const SKATEBOARDING_BLEND_POSITION_PATH: String = "parameters/LocomotionStateMac
 @export_group("Surf Physics")
 @export_range(0.0, 1.0, 0.01) var friction: float = 0.6 ## The shield's sliding friction on ground [member surface_friction] does not name (rock, stone, anything unmarked): this times gravity's push into the slope is the speed it loses every second.
 ## Friction by surface, as in Breath of the Wild, where snow and sand run fast and rock grinds: the first of these groups
-## the ground under the shield is in (the groups footsteps go by) sets it. Snow's 0.3 runs any slope steeper than about
-## 17 degrees; rock's 0.6 only one steeper than about 31.
-@export var surface_friction: Dictionary[StringName, float] = {&"ICE": 0.1, &"SNOW": 0.3, &"SAND": 0.35, &"GRASS": 0.5, &"DIRT": 0.5, &"WOOD": 0.55}
+## the ground under the shield is in (the groups footsteps go by) sets it. Snow's 0.12 runs any slope steeper than about
+## 7 degrees, so a snowfield's every hillside is a ride; rock's 0.6 only one steeper than about 31.
+@export var surface_friction: Dictionary[StringName, float] = {&"ICE": 0.05, &"SNOW": 0.12, &"SAND": 0.3, &"GRASS": 0.5, &"DIRT": 0.5, &"WOOD": 0.55}
 @export_range(0.0, 1.0, 0.01) var rain_friction_scale: float = 0.8 ## Friction in the rain, as a share of dry: wet ground runs faster, as in the games.
-@export_range(0.0, 0.5, 0.005) var drag: float = 0.04 ## The snow ploughed and the air pushing back, harder the faster it goes: this times the speed squared is the speed lost every second. Each slope settles at a speed of its own, about 8 m/s on 30 degrees and 10 on 40, and 8 m/s on the flat stops in about two seconds.
-@export var max_speed: float = 14.0 ## m/s it never goes past, however steep.
+@export_range(0.0, 0.5, 0.005) var drag: float = 0.025 ## The snow ploughed and the air pushing back, harder the faster it goes: this times the speed squared is the speed lost every second. Each slope settles at a speed of its own: on snow about 12 m/s on 30 degrees and 15 on 40, a run and a half of Breath of the Wild's, and 8 m/s on the flat stops in about five seconds.
+@export var max_speed: float = 18.0 ## m/s it never goes past, however steep.
 @export var turn_rate: float = 2.2 ## How fast the stick turns the ride, in radians per second.
-@export var jump_speed: float = 5.0 ## Upward speed of a hop off the shield (m/s).
+@export var jump_speed: float = 5.0 ## Upward speed of a hop off the shield (m/s), given on the jump clip's push-off keyframe.
+const HOP_FALLBACK: float = 0.6 ## Seconds after the press a hop launches even if the jump clip's push-off never came.
 @export var stop_speed: float = 1.0 ## Slower than this on the ground, the ride is over.
 @export var stop_time: float = 0.35 ## Seconds it has to stay that slow before it ends, so the dip at the bottom of a slope does not.
 @export var launch_speed: float = 3.0 ## Speed a ride starting from a standstill in the air gets along the way the Player faces.
@@ -48,7 +50,8 @@ var _fall_speed: float = 0.0 ## How fast it was coming down in the air, for a la
 var _saved_constant_speed: bool = true
 var _facing: Vector3 = Vector3.ZERO ## Which way the Player faces on the shield, turning after the ride.
 var _spin_left: float = 0.0 ## Seconds left of a spin, 0 when not spinning.
-var _hop_queued: bool = false ## Jump was pressed on the ground; the next physics step launches it.
+var _hop_queued: bool = false ## Jump was pressed on the ground; the jump clip's push-off keyframe launches it.
+var _hop_wait: float = 0.0 ## Seconds since that press.
 
 
 func _input(event: InputEvent) -> void:
@@ -58,8 +61,13 @@ func _input(event: InputEvent) -> void:
 		_end()
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed(action(keyboard_jump_action, pad_jump_action)) and not event.is_echo() and player.is_on_floor():
-		# Launched from the physics step: set here, the ride's own ground step that follows would lay it flat again
+		# The jump clip plays (the tree's SkateboardingLocomotion to Jump edge goes on is_jumping) and its push-off keyframe
+		# clears the queue, which is when the physics step launches the hop: set here, the ride's own ground step that
+		# follows would lay it flat again
 		_hop_queued = true
+		_hop_wait = 0.0
+		player.is_jump_queued = true
+		player.is_jumping = true
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed(action(keyboard_spin_action, pad_spin_action)) and not event.is_echo() and _spin_left <= 0.0:
 		_spin_left = spin_time
@@ -76,12 +84,17 @@ func _physics_process(delta: float) -> void:
 	var gravity: Vector3 = player.get_gravity()
 	var velocity: Vector3 = player.velocity
 	var on_floor: bool = player.is_on_floor()
+	var launch: bool = false
 	if _hop_queued:
-		_hop_queued = false
-		if on_floor:
-			velocity = _heading * _speed + up * jump_speed
-			_grounded = false
-			on_floor = false # up and away this step, not laid back on the slope
+		_hop_wait += delta
+		if not player.is_jump_queued or _hop_wait >= HOP_FALLBACK: # the clip pushed off, or never came
+			_hop_queued = false
+			player.is_jump_queued = false
+			launch = on_floor
+	if launch:
+		velocity = _heading * _speed + up * jump_speed
+		_grounded = false
+		on_floor = false # up and away this step, not laid back on the slope
 	elif on_floor:
 		if _fall_speed > 0.0:
 			player.take_fall(_fall_speed)
@@ -239,6 +252,9 @@ func start() -> void:
 ## Stop "surfing": the shield back on the arm.
 func stop() -> void:
 	super.stop()
+	if _hop_queued:
+		_hop_queued = false
+		player.is_jump_queued = false
 	player.is_shield_surfing = false
 	player.surf_spin = 0.0
 	player.floor_constant_speed = _saved_constant_speed

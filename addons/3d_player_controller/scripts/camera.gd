@@ -73,6 +73,7 @@ var interaction_target: Node3D = null: ## The one thing the action button acts o
 @onready var first_person_eyes: Marker3D = %FirstPersonEyes ## The eye point on the Head bone the first person camera sits at.
 @onready var item_spring_arm: SpringArm3D = %ItemSpringArm
 @onready var item_spring_arm_initial_transform: Transform3D = item_spring_arm.transform
+@onready var item_spring_arm_margin: float = item_spring_arm.margin ## The arm's own margin, kept for bodies smaller than it.
 
 
 ## Returns the maximum angular aim offset (in radians) based on distance to target.
@@ -404,11 +405,22 @@ func _sync_item_spring_arm() -> void:
 	var offset: Vector3 = player.held_object.get_held_offset(fallback_length) if player.held_object else Vector3(0.0, 0.0, fallback_length)
 	var right: Vector3 = forward.cross(up).normalized()
 	var reach: Vector3 = forward * offset.z + right * offset.x + up * offset.y
+	# A body reaching further down than the Player's feet (a snowball grown past a metre, held low) is raised until
+	# it rests at their level: pitched down, the arm alone would stand it in the ground, and the Player on it.
+	var extent: float = player.held_object.held_extent() if player.held_object else 0.0
+	if extent > 0.0:
+		var below_feet: float = extent - (origin + reach - player.global_position).dot(up)
+		if below_feet > 0.0:
+			reach += up * below_feet
 	var direction: Vector3 = reach.normalized()
 	var arm_up: Vector3 = up if absf(direction.dot(up)) < 0.99 else global_basis.y
 	# The authored local orientation (a 180 degree yaw) keeps the arm extending along its +Z, in front of the view
 	item_spring_arm.global_transform = Transform3D(Basis.looking_at(direction, arm_up) * item_spring_arm_initial_transform.basis, origin)
 	item_spring_arm.spring_length = reach.length()
+	# Against the ground or a wall the arm stops the held body's middle its margin short of the hit, so a body bigger
+	# than that (a snowball grown past a metre) sat buried in the ground under the Player's feet: the margin is the
+	# body's own reach when that is larger.
+	item_spring_arm.margin = maxf(item_spring_arm_margin, player.held_object.held_extent() if player.held_object else 0.0)
 
 
 ## Puts the Player's [member Player.head_look_target] two metres ahead of the head, along the way the body faces,

@@ -190,12 +190,14 @@ func test_jump_hops_without_getting_off() -> void:
 	_send(&"jump")
 	await wait_physics_frames(1)
 	_send(&"jump", false)
+	var clip: bool = await wait_until(func() -> bool: return player.current_locomotion_node == "Jump", 0.5)
+	assert_true(clip, "The jump clip plays, as on the skateboard")
 	var highest: float = 0.0
-	for frame: int in 30:
+	for frame: int in 60:
 		await wait_physics_frames(1)
 		var ground: float = -player.global_position.z * tan(deg_to_rad(20.0)) # the slope falls 20 degrees toward +Z
 		highest = maxf(highest, player.global_position.y - ground)
-	assert_gt(highest, 0.4, "Jump lifts the rider clear of the slope")
+	assert_gt(highest, 0.4, "and its push-off lifts the rider clear of the slope")
 	assert_true(player.is_shield_surfing, "still on the shield")
 
 
