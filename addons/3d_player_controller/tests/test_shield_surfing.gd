@@ -192,13 +192,19 @@ func test_jump_hops_without_getting_off() -> void:
 	_send(&"jump", false)
 	var clip: bool = await wait_until(func() -> bool: return player.current_locomotion_node == "Jump", 0.5)
 	assert_true(clip, "The jump clip plays, as on the skateboard")
+	var mount: Node3D = player.get_node("PlayerModel/ShieldSurfMount")
 	var highest: float = 0.0
+	var mount_highest: float = 0.0
 	for frame: int in 60:
 		await wait_physics_frames(1)
 		var ground: float = -player.global_position.z * tan(deg_to_rad(20.0)) # the slope falls 20 degrees toward +Z
 		highest = maxf(highest, player.global_position.y - ground)
+		mount_highest = maxf(mount_highest, mount.position.y)
 	assert_gt(highest, 0.4, "and its push-off lifts the rider clear of the slope")
+	assert_gt(mount_highest, 0.12 + 0.05, "with the shield following the feet up, not left on the ground")
 	assert_true(player.is_shield_surfing, "still on the shield")
+	await wait_seconds(1.0)
+	assert_almost_eq(mount.position.y, 0.12, 0.02, "Landed, the shield rests under the feet again")
 
 
 ## Speed after a second on the flat from 6 m/s along the camera's forward, the stick held on [param stick] or not.

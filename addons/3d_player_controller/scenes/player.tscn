@@ -2580,6 +2580,7 @@ editor_description = "Replicates the state every other peer has to see: the anim
 replication_config = SubResource("SceneReplicationConfig_player")
 
 [connection signal="locomotion_node_changed" from="." to="Hud/Controls" method="_on_locomotion_node_changed"]
+[connection signal="skeleton_updated" from="PlayerModel/Armature/GeneralSkeleton" to="." method="_follow_feet_with_surf_shield"]
 [connection signal="locomotion_node_changed" from="." to="Hud/Abilities" method="_on_locomotion_node_changed"]
 [connection signal="locomotion_node_changed" from="." to="HitDetection" method="_on_locomotion_node_changed"]
 [connection signal="timeout" from="HitDetection/StrikeTimer" to="HitDetection" method="_strike_ahead"]

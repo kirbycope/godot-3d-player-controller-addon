@@ -379,6 +379,8 @@ var footstep_override: AudioStream = null ## Steps a surface lends the Player wh
 var knockback_velocity: Vector3 = Vector3.ZERO ## A shove from a hit, on top of the walking speed the animation gives, dying away at [member knockback_damping].
 var _surf_shield_home: Node = null ## Where the surfed shield hangs when it is not under the feet: its bone attachment.
 var _surf_shield_transform: Transform3D = Transform3D.IDENTITY
+var _surf_mount_lift: float = 0.0 ## How far the ShieldSurfMount rides above its rest, following the feet through a hop.
+var _surf_feet_rest: float = INF ## The lower foot's height in the model on the ground in the stance, which the lift is measured from; INF until the ride has stood on the ground.
 var is_scoping: bool = false: ## Is the Player looking through the [Spyglass]? It stands still meanwhile. Replicated, so every peer sees it raised.
 	set(value):
 		if value != is_scoping:
@@ -1939,13 +1941,42 @@ func _apply_surf_spin() -> void:
 			continue
 		if not _spin_rests.has(node):
 			_spin_rests[node] = node.transform
-		node.transform = Transform3D(Basis(Vector3.UP, surf_spin), Vector3.ZERO) * (_spin_rests[node] as Transform3D)
+		var lift: Vector3 = Vector3(0.0, _surf_mount_lift, 0.0) if path.ends_with("ShieldSurfMount") else Vector3.ZERO
+		node.transform = Transform3D(Basis(Vector3.UP, surf_spin), lift) * (_spin_rests[node] as Transform3D)
+
+
+## Keeps the shield under the feet through a hop. The mount rests at the model's origin, and the jump clip lifts the
+## legs, so the shield stayed on the ground while the rider rose off it: as the skeleton updates (wired in the scene)
+## the mount rides as far above its rest as the lower foot is above where it stands in the stance. Never below it.
+func _follow_feet_with_surf_shield() -> void:
+	if not is_shield_surfing or skeleton == null or player_model == null:
+		return
+	var lowest: float = INF
+	for bone: StringName in [&"LeftFoot", &"RightFoot"]:
+		var index: int = skeleton.find_bone(bone)
+		if index >= 0:
+			var in_model: Vector3 = player_model.global_transform.affine_inverse() * (skeleton.global_transform * skeleton.get_bone_global_pose(index).origin)
+			lowest = minf(lowest, in_model.y)
+	if lowest == INF:
+		return
+	if _surf_feet_rest == INF:
+		if not is_on_floor() or current_locomotion_node != "SkateboardingLocomotion":
+			return # the stance on the ground is what the feet rest at; a ride starts in the air
+		_surf_feet_rest = lowest
+	var lift: float = maxf(lowest - _surf_feet_rest, 0.0)
+	if not is_equal_approx(lift, _surf_mount_lift):
+		_surf_mount_lift = lift
+		_apply_surf_spin()
 
 
 ## Puts the shield under the feet for a ride, at the model's ShieldSurfMount, or back on its arm after one. Runs on
 ## every peer from [member is_shield_surfing]'s setter.
 func _place_surf_shield(on: bool) -> void:
 	var mount: Node3D = get_node_or_null("PlayerModel/ShieldSurfMount") as Node3D
+	_surf_feet_rest = INF
+	if _surf_mount_lift != 0.0:
+		_surf_mount_lift = 0.0
+		_apply_surf_spin()
 	if on:
 		var shield: Equipment = get_surf_shield()
 		if shield == null or mount == null:
