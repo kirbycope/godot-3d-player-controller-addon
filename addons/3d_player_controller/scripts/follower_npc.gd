@@ -79,8 +79,6 @@ func _physics_process(delta: float) -> void:
 	elif not is_on_floor():
 		velocity += get_gravity() * delta
 
-	knockback_velocity = knockback_velocity.move_toward(Vector3.ZERO, knockback_damping * delta)
-
 	if not player or player.is_stealthed or (player.riding_blocks_hands() and not follow_while_driving):
 		_stop_moving()
 		return
@@ -202,8 +200,11 @@ func _end_slow(timer: SceneTreeTimer) -> void:
 		movement_scale = 1.0
 
 
-## Moves with the given control velocity on top of knockback and vertical motion.
+## Moves with the given control velocity on top of knockback and vertical motion. The knockback decays here, since
+## every branch of every NPC's physics step ends in this call: an enemy that is stunned, casting, patrolling or
+## walking home used to keep its full shove for good, because the decay sat in the hunting branch alone.
 func _move_with_control(control_velocity: Vector3) -> void:
+	knockback_velocity = knockback_velocity.move_toward(Vector3.ZERO, knockback_damping * get_physics_process_delta_time())
 	velocity = control_velocity.slide(up_direction) + knockback_velocity + velocity.project(up_direction)
 	var movement_velocity: Vector3 = velocity
 	move_and_slide()

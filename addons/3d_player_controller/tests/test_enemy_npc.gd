@@ -139,6 +139,19 @@ func test_the_enemy_lets_go_of_a_hunted_player_who_leaves_the_game() -> void:
 	assert_true(enemy.is_returning_home, "and the enemy heads back to its post")
 
 
+## A shove dies away whatever the enemy is doing: the decay lives in the move every branch ends with, so an enemy
+## knocked back while walking home no longer slides away from its post for good.
+func test_a_shove_dies_away_while_the_enemy_walks_home() -> void:
+	enemy.register_weapon_hit(player, null)
+	player.queue_free()
+	await wait_physics_frames(2)
+	assert_true(enemy.is_returning_home, "The enemy is walking home")
+	enemy.knock_back(enemy.global_position + Vector3(0.0, 0.0, 1.0), enemy.hit_knockback)
+	assert_gt(enemy.knockback_velocity.length(), 0.5, "and takes the shove")
+	var settled: bool = await wait_until(func() -> bool: return enemy.knockback_velocity.is_zero_approx(), 2.0)
+	assert_true(settled, "which dies away within two seconds, while it is still walking home")
+
+
 ## A swing from a Player this enemy is not hunting is a sneak attack; the striker's own Player says who hunts it,
 ## so a client's swing, registered on the client's copy that never hunts anyone, is weighed the same way.
 func test_a_sneak_attack_lands_harder_only_on_an_enemy_not_hunting_the_striker() -> void:
