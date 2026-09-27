@@ -143,6 +143,24 @@ func test_user_text_cannot_inject_bbcode() -> void:
 	assert_string_contains(chat.history.get_parsed_text(), "[color=red]x[/color]", "Brackets render literally")
 
 
+## The chat's own commands act on the local Player alone: where it stands, its health, its checkpoint, its history.
+func test_whereami_heal_respawn_and_clear_act_on_the_local_player() -> void:
+	player.controls.current_input_type = Controls.InputType.KEYBOARD_MOUSE
+	chat.send("/whereami")
+	assert_string_contains(chat.history.get_parsed_text(), "You are at", "/whereami says where the Player stands")
+	player.health.damage(30.0)
+	chat.send("/heal")
+	assert_almost_eq(player.health.health, player.health.max_health, 0.01, "/heal fills the health")
+	assert_string_contains(chat.history.get_parsed_text(), "Healed to", "and says so")
+	var post: Transform3D = player.respawn_transform
+	player.global_position = post.origin + Vector3(5.0, 0.0, 5.0)
+	chat.send("/respawn")
+	await wait_physics_frames(2)
+	assert_almost_eq(player.global_position.x, post.origin.x, 0.5, "/respawn puts the Player back at the checkpoint")
+	chat.send("/clear")
+	assert_eq(chat.history.get_parsed_text(), "", "/clear empties the history")
+
+
 ## A game's own command, registered before the chat is ready, runs with the chat bound and is listed by /help.
 func test_a_registered_command_runs_with_the_chat_and_is_listed_by_help() -> void:
 	var heard: Array = []

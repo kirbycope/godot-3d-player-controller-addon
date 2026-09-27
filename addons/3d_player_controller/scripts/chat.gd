@@ -41,6 +41,10 @@ const MAX_MESSAGE_LENGTH: int = 500 ## Longer messages from a peer are cut here.
 @onready var commands: Dictionary[String, Array] = {
 	"help": [_command_help, "/help: lists the commands"],
 	"teleport": [_command_teleport, "/teleport x y z: moves you to that position"],
+	"whereami": [_command_whereami, "/whereami: says where you stand"],
+	"heal": [_command_heal, "/heal: full health"],
+	"respawn": [_command_respawn, "/respawn: back to the last checkpoint"],
+	"clear": [_command_clear, "/clear: empties the history"],
 }
 
 ## Commands a game adds without editing this file: name -> [callable, help line]. Register them before any chat is
@@ -209,6 +213,34 @@ func _command_teleport(args: PackedStringArray) -> void:
 	target.origin = Vector3(args[0].to_float(), args[1].to_float(), args[2].to_float())
 	player.warp_to(target)
 	append_system("Teleported to %s" % target.origin)
+
+
+func _command_whereami(_args: PackedStringArray) -> void:
+	if not is_instance_valid(player):
+		return
+	var at: Vector3 = player.global_position
+	append_system("You are at %.1f %.1f %.1f, facing %.0f degrees" % [at.x, at.y, at.z, fmod(rad_to_deg(player.rotation.y) + 360.0, 360.0)])
+
+
+## Heals this Player alone, on the peer that owns it; the Health node carries the change to the others.
+func _command_heal(_args: PackedStringArray) -> void:
+	if not is_instance_valid(player) or player.health == null:
+		return
+	if player.health.heal(player.health.max_health):
+		append_system("Healed to %.0f" % player.health.max_health)
+	else:
+		append_system("Cannot heal now")
+
+
+func _command_respawn(_args: PackedStringArray) -> void:
+	if not is_instance_valid(player):
+		return
+	player.respawn()
+	append_system("Respawned at the last checkpoint")
+
+
+func _command_clear(_args: PackedStringArray) -> void:
+	history.clear()
 
 
 func _fade_to(alpha: float, seconds: float) -> void:
