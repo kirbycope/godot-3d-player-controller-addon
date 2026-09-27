@@ -43,6 +43,12 @@ const MAX_MESSAGE_LENGTH: int = 500 ## Longer messages from a peer are cut here.
 	"teleport": [_command_teleport, "/teleport x y z: moves you to that position"],
 }
 
+## Commands a game adds without editing this file: name -> [callable, help line]. Register them before any chat is
+## ready, the way [method PlayerControls.register_scheme] is called from a game's root node in [method Node._enter_tree];
+## each joins [member commands] on ready with this chat bound as the callable's last argument, so a game command reads
+## [code]func level(args: PackedStringArray, chat: ChatWindow)[/code] and answers through [method append_system].
+static var _registered: Dictionary[String, Array] = {}
+
 var settings_res: PlayerSettingsResource
 var is_hovered: bool = false ## The mouse is over the window, which keeps it visible so the history can be scrolled.
 var _fade_tween: Tween
@@ -53,6 +59,8 @@ var _visible_before_pause: bool = false ## What the window was before a menu ope
 func _ready() -> void:
 	if player == null and get_parent() is Player:
 		player = get_parent() as Player
+	for command_name: String in _registered:
+		commands[command_name] = [(_registered[command_name][0] as Callable).bind(self), _registered[command_name][1]]
 	# A remote Player's copy only relays RPCs; it never shows
 	if not is_multiplayer_authority():
 		return
@@ -164,6 +172,17 @@ func _append_line(bbcode: String) -> void:
 	history.append_text(bbcode)
 	_fade_to(1.0, fade_in_seconds)
 	idle_timer.start()
+
+
+## Adds "/[param command_name]" to every chat made from now on: [param callable] takes the typed arguments and the
+## chat, [param help] is its /help line. A game registers its own commands (a level select, a debug spawn) here.
+static func register_command(command_name: String, help: String, callable: Callable) -> void:
+	_registered[command_name.to_lower()] = [callable, help]
+
+
+## Drops every command a game registered; for tests.
+static func forget_registered_commands() -> void:
+	_registered.clear()
 
 
 func _run_command(line: String) -> void:

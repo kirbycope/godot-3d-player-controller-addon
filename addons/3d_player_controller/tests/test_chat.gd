@@ -143,6 +143,32 @@ func test_user_text_cannot_inject_bbcode() -> void:
 	assert_string_contains(chat.history.get_parsed_text(), "[color=red]x[/color]", "Brackets render literally")
 
 
+## A game's own command, registered before the chat is ready, runs with the chat bound and is listed by /help.
+func test_a_registered_command_runs_with_the_chat_and_is_listed_by_help() -> void:
+	var heard: Array = []
+	ChatWindow.register_command("Wave", "/wave name: waves at somebody", func(args: PackedStringArray, window: ChatWindow) -> void:
+		heard.append([args, window])
+		window.append_system("Waved at " + (args[0] if not args.is_empty() else "nobody")))
+	var fresh: ChatWindow = CHAT_SCENE.instantiate()
+	fresh.player = player
+	add_child_autofree(fresh)
+	await wait_process_frames(1)
+	fresh.send("/wave Kirby")
+	assert_eq(heard.size(), 1, "The registered command ran")
+	if heard.size() == 1:
+		assert_eq((heard[0][0] as PackedStringArray)[0], "Kirby", "with the typed arguments")
+		assert_eq(heard[0][1], fresh, "and the chat it was typed into")
+	assert_string_contains(fresh.history.get_parsed_text(), "Waved at Kirby", "and it answered in the history")
+	fresh.send("/help")
+	assert_string_contains(fresh.history.get_parsed_text(), "/wave name: waves at somebody", "and /help lists it")
+	ChatWindow.forget_registered_commands()
+	var later: ChatWindow = CHAT_SCENE.instantiate()
+	later.player = player
+	add_child_autofree(later)
+	await wait_process_frames(1)
+	assert_false(later.commands.has("wave"), "A chat made after the commands are forgotten does not carry it")
+
+
 func test_help_and_unknown_commands_print_locally_and_are_not_sent() -> void:
 	chat.send("/help")
 	var text: String = chat.history.get_parsed_text()
