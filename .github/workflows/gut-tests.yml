@@ -2,9 +2,7 @@ name: GUT Unit Tests
 
 # The addon's scenes are saved by a Godot 4.8 build (nodes carry a unique_id), so the 4.7 container the
 # other addons here test in cannot parse them. This downloads the same Godot the Pages workflow uses.
-#
-# which inherits the Controls addon's controls.tscn, so the checkout has to be recursive or the demo
-# project cannot open.
+# The Controls addon the player controller needs is committed at addons/controls; only GUT is fetched.
 
 on:
   push:
@@ -24,10 +22,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
-      - name: Fetch the addon dependencies
+      - name: Fetch GUT
         shell: bash
-        run: python tools/pull_addons.py
-
+        run: |
+          set -euo pipefail
+          git clone --quiet --depth 1 --branch v9.7.1 https://github.com/bitwes/Gut.git /tmp/gut
+          cp -R /tmp/gut/addons/gut addons/gut
 
       - name: Install Godot
         shell: bash

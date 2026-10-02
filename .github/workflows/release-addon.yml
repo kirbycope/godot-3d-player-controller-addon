@@ -83,15 +83,15 @@ jobs:
           version="${{ steps.version.outputs.version }}"
 
           rm -rf dist
-          mkdir -p dist
-          # The addon is addons/3d_player_controller/ now, the layout the Asset Library
-          # expects, so the zip is a copy of that folder rather than an rsync that has to
-          # exclude the repository's own scaffolding.
-          cp -R addons/3d_player_controller dist/3d_player_controller
+          mkdir -p dist/addons
+          # The zip unpacks over a project root: the player controller and the Controls addon it
+          # needs, both under addons/, the way the Asset Library installs them.
+          cp -R addons/3d_player_controller dist/addons/3d_player_controller
+          cp -R addons/controls dist/addons/controls
 
           (
             cd dist
-            zip -r "../3d_player_controller-v${version}.zip" "3d_player_controller"
+            zip -r "../3d_player_controller-v${version}.zip" addons
           )
 
       - name: Publish GitHub release

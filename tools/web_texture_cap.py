@@ -29,7 +29,7 @@ ROOT = Path(__file__).resolve().parent.parent
 PROJECT_SETTING = re.compile(r'(&"process/size_limit":\s*)(\d+)')
 IMPORT_SETTING = re.compile(r'^(process/size_limit=)(\d+)$', re.MULTILINE)
 
-SKIP_DIRS = {".git", ".godot", ".addon_cache", "build", "__pycache__"}
+SKIP_DIRS = {".git", ".godot", "build", "__pycache__"}
 
 
 def cap_project_file(project_file: Path, size: int) -> bool:

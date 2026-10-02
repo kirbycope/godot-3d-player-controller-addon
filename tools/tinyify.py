@@ -30,7 +30,7 @@ META_OPTIMIZED = "TINYIFY_OPTIMIZED"
 META_METHOD = "TINYIFY_METHOD"
 META_ORIGINAL_SIZE = "TINYIFY_ORIGINAL_SIZE"
 
-SKIP_DIRS = {".git", ".godot", ".addon_cache", "build", "__pycache__", "node_modules"}
+SKIP_DIRS = {".git", ".godot", "build", "__pycache__", "node_modules"}
 
 
 def get_pillow_modules():

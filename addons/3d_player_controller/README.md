@@ -388,8 +388,8 @@ clone it, open it in Godot and edit the addon in place. Nothing is copied anywhe
 ```
 project.godot                    the demo project, which is this repository
 addons/3d_player_controller/     the addon, plugin.cfg and all
-addons/controls/                 what the addon needs, fetched rather than committed
-addons/gut/                      the test runner, fetched the same way
+addons/controls/                 the Controls addon the player controller needs, committed too
+addons/gut/                      the test runner, cloned rather than committed
 ```
 
 Installing from the Asset Library takes `addons/` and leaves the rest; Godot flags the root
@@ -601,11 +601,10 @@ Adding more here:
 ## Testing
 
 The controller carries its own test suite, powered by [GUT (Godot Unit Test)](https://github.com/bitwes/Gut)
-9.7.1. GUT is not committed: `python tools/pull_addons.py` fetches it into `addons/gut/` at the tag
-`tools/addons.json` pins, along with the Controls addon at `addons/controls` and the other addons the
-tests use, so run it once before anything else (it exits non-zero when any of them fails to arrive). The
-tests belong to this repository and run here, not from a game that consumes the addon: this project
-imports a fraction of a full game's assets, so a run answers in seconds rather than minutes.
+9.7.1. GUT is not committed: clone it once into `addons/gut/` (the repository README has the one-line
+clone) before anything else. The tests belong to this repository and run here, not from a game that
+consumes the addon: this project imports a fraction of a full game's assets, so a run answers in
+seconds rather than minutes.
 
 ### Running the tests headless
 
