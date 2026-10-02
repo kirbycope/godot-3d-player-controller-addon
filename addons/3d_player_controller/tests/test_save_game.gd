@@ -421,16 +421,23 @@ const TEST_SAVES_DIR: String = "user://test_saves"
 func _with_slots() -> String:
 	var was: String = SaveGame.SAVES_DIR
 	SaveGame.SAVES_DIR = TEST_SAVES_DIR
-	for file: String in DirAccess.get_files_at(TEST_SAVES_DIR):
-		DirAccess.remove_absolute(TEST_SAVES_DIR.path_join(file))
+	_clear_slots()
 	return was
 
 
 func _without_slots(was: String) -> void:
-	for file: String in DirAccess.get_files_at(TEST_SAVES_DIR):
-		DirAccess.remove_absolute(TEST_SAVES_DIR.path_join(file))
+	_clear_slots()
 	SaveGame.SAVES_DIR = was
 	SaveGame.slot = 0
+
+
+## Empties the test saves folder. A fresh machine (CI) has no such folder before the first save, and
+## listing a folder that is not there logs an engine error, which GUT counts as a failure.
+func _clear_slots() -> void:
+	if not DirAccess.dir_exists_absolute(TEST_SAVES_DIR):
+		return
+	for file: String in DirAccess.get_files_at(TEST_SAVES_DIR):
+		DirAccess.remove_absolute(TEST_SAVES_DIR.path_join(file))
 
 
 func test_each_numbered_save_is_its_own_file_with_its_level() -> void:
