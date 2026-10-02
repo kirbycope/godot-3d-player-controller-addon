@@ -28,10 +28,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
-      - name: Fetch the addon dependencies
-        shell: bash
-        run: python tools/pull_addons.py
-
 
       - name: Install Godot and its export templates
         shell: bash

@@ -1,2 +1,7 @@
 # Normalize EOL for all files that Git considers text files.
 * text=auto eol=lf
+
+# The archive GitHub hands the Asset Library carries the addons alone: the demo project, the tools
+# and the workflows stay out of the game that installs it.
+/* export-ignore
+/addons !export-ignore

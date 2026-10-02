@@ -11,7 +11,6 @@ Compressed alone, that it does not reach into an addon pulled from another repos
 
 from __future__ import annotations
 
-import json
 import sys
 import tempfile
 import unittest
@@ -22,7 +21,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from texture_import_policy import (  # noqa: E402
     fix_import_files,
     fix_project_file,
-    vendored_addons,
 )
 
 LOSSY_IMPORT = """[remap]
@@ -123,23 +121,6 @@ class TextureImportPolicyTests(unittest.TestCase):
         self.assertEqual(fixed, 1, "detect_3d/compress_to 0 is off policy even on a lossless texture")
         self.assertIn("detect_3d/compress_to=1", path.read_text())
         self.assertIn("compress/mode=0", path.read_text())
-
-    def test_an_addon_pulled_from_another_repository_is_not_rewritten(self) -> None:
-        self.write(
-            "tools/addons.json",
-            json.dumps({"addons": [{"name": "controls", "repo": "x", "ref": "main"}]}),
-        )
-        vendored = self.write("addons/controls/icon.svg.import", LOSSY_IMPORT)
-        ours = self.write("addons/gut/icon.png.import", LOSSY_IMPORT)
-
-        fixed, _ = fix_import_files(self.root)
-
-        self.assertEqual(fixed, 1, "only the addon that is not pulled from elsewhere")
-        self.assertEqual(vendored.read_text(), LOSSY_IMPORT, "the pull would undo it anyway")
-        self.assertIn("compress/mode=0", ours.read_text(), "a third-party addon committed here is ours to fix")
-
-    def test_without_a_manifest_nothing_counts_as_vendored(self) -> None:
-        self.assertEqual(vendored_addons(self.root), set())
 
     def test_the_project_defaults_are_put_back_on_policy(self) -> None:
         project = self.write("project.godot", FORCED_PROJECT)

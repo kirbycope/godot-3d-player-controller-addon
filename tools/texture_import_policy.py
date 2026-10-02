@@ -48,23 +48,7 @@ IMPORT_COMPRESS = re.compile(r"^(compress/mode=)(\d+)$", re.MULTILINE)
 IMPORT_DETECT_3D = re.compile(r"^(detect_3d/compress_to=)(\d+)$", re.MULTILINE)
 IMPORT_SIZE_LIMIT = re.compile(r"^(process/size_limit=)(\d+)$", re.MULTILINE)
 
-SKIP_DIRS = {".git", ".godot", ".addon_cache", "build", "__pycache__"}
-
-
-def vendored_addons(root: Path) -> set[Path]:
-    """The addon folders this project pulls from elsewhere, which are not ours to change here.
-
-    A vendored addon is fixed in the repository it comes from; editing the copy would only be
-    undone by the next `pull_addons.py`. Everything else under addons/ is either the repository's
-    own addon, when this is an addon repository, or a third-party one committed here, and both do
-    need fixing. tools/addons.json is what tells the two apart, so a repository without one has
-    nothing vendored.
-    """
-    manifest = root / "tools" / "addons.json"
-    if not manifest.exists():
-        return set()
-    entries = json.loads(manifest.read_text(encoding="utf-8"))["addons"]
-    return {(root / "addons" / entry["name"]).resolve() for entry in entries}
+SKIP_DIRS = {".git", ".godot", "build", "__pycache__"}
 
 
 def read_mode(text: str) -> int | None:
@@ -107,12 +91,9 @@ def fix_import_files(root: Path, dry_run: bool = False) -> tuple[int, int]:
     """
     fixed: int = 0
     vram: int = 0
-    vendored: set[Path] = vendored_addons(root)
 
     for path in sorted(root.rglob("*.import")):
         if any(part in SKIP_DIRS for part in path.parts):
-            continue
-        if any(path.resolve().is_relative_to(folder) for folder in vendored):
             continue
         text: str = path.read_text()
         mode: int | None = read_mode(text)

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- Godot Head Base -->
+  <rect x="20" y="36" width="88" height="68" rx="16" fill="#478cbf"/>
+
+  <!-- Outer Side Ears (No Center Antenna) -->
+  <rect x="36" y="20" width="12" height="18" rx="3" fill="#478cbf"/>
+  <rect x="80" y="20" width="12" height="18" rx="3" fill="#478cbf"/>
+
+  <!-- Left Eye: D-Pad -->
+  <path d="M 42 54 H 48 V 60 H 54 V 66 H 48 V 72 H 42 V 66 H 36 V 60 H 42 Z" fill="#ffffff"/>
+
+  <!-- Right Eye: 3D Axis Cube (Player / 3D Controller) -->
+  <path d="M 84 52 L 93 57 V 67 L 84 72 L 75 67 V 57 Z" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M 84 52 V 72 M 84 62 L 93 57 M 84 62 L 75 57" stroke="#ffffff" stroke-width="2.5" stroke-linejoin="round"/>
+
+  <!-- Bottom Mouth Accent -->
+  <rect x="52" y="82" width="24" height="6" rx="3" fill="#ffffff"/>
+</svg>
