@@ -34,7 +34,7 @@ newer one, copy that repository's `addons/controls/` over this one.
 
 ## Installing it in a game
 
-Install it from the Asset Library, or copy both `addons/3d_player_controller/` and `addons/controls/` into
+Install it from the [Asset Library](https://godotengine.org/asset-library/asset/5512), or copy both `addons/3d_player_controller/` and `addons/controls/` into
 your project's `addons/`. See the [addon's README](addons/3d_player_controller/README.md) for what it
 needs and how to use it.
 
